@@ -42,13 +42,6 @@ async function main() {
   const party = await db.party.createWithHash(partyData);
 
   console.log(`Created party with hash: ${party.hash}`);
-
-  await db.videosOnParties.createMany({
-    data: videosData.map((video) => ({
-      videoId: video.id,
-      partyId: party.id,
-    })),
-  });
 }
 
 main()
