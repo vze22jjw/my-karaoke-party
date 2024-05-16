@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DATABASE_URL_NON_POOLING")
 }
 
 model Post {
@@ -20,19 +21,19 @@ model Post {
 }
 
 model Video {
-    id        String            @id
+    id        String   @id
     title     String
     artist    String
     song      String
-    createdAt DateTime          @default(now())
+    createdAt DateTime @default(now())
     // parties   VideosOnParties[]
 }
 
 model Party {
-    id        Int               @id @default(autoincrement())
-    hash      String?           @unique
+    id        Int      @id @default(autoincrement())
+    hash      String?  @unique
     name      String
-    createdAt DateTime          @default(now())
+    createdAt DateTime @default(now())
     // videos    VideosOnParties[]
 
     @@index([hash])
