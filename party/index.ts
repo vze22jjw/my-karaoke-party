@@ -61,17 +61,19 @@ export default class Server implements Party.Server {
 
       switch (data.type) {
         case "add-video": {
-          this.karaokeParty.videos.push({
-            id: data.id,
-            title: "Some title",
-            artist: "Some artist",
-            song: "Song name",
-            createdAt: new Date(),
-            playedAt: null,
-          });
+          if (!this.karaokeParty.videos.find((video) => video.id === data.id)) {
+            this.karaokeParty.videos.push({
+              id: data.id,
+              title: "Some title",
+              artist: "Some artist",
+              song: "Song name",
+              createdAt: new Date(),
+              playedAt: null,
+            });
 
-          await this.savekaraokeParty();
-          this.room.broadcast(JSON.stringify(this.karaokeParty));
+            await this.savekaraokeParty();
+            this.room.broadcast(JSON.stringify(this.karaokeParty));
+          }
 
           break;
         }

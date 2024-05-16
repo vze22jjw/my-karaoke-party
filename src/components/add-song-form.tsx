@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { extractYouTubeVideoId } from "~/utils/url";
 
 export function AddSongForm({ addFn }: { addFn: (videoId: string) => void }) {
   const [videoInputValue, setVideoInputValue] = useState("");
 
   const addVideo = () => {
-    const videoId = videoInputValue.split("v=")[1];
+    const videoId = extractYouTubeVideoId(videoInputValue);
 
     if (!videoId) {
-      alert("Invalid YouTube URL");
+      alert("Invalid YouTube Video URL/ID");
       return;
     }
 
@@ -28,7 +29,7 @@ export function AddSongForm({ addFn }: { addFn: (videoId: string) => void }) {
         <input
           type="text"
           name="video-url"
-          placeholder="Paste YouTube Video URL"
+          placeholder="YouTube Video URL or ID"
           className="join-item input input-lg input-bordered w-full"
           value={videoInputValue}
           onChange={(e) => setVideoInputValue(e.target.value)}

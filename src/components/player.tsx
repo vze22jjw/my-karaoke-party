@@ -5,8 +5,6 @@
 
 import { useRef, useState } from "react";
 import usePartySocket from "partysocket/react";
-import { useIdle } from "@mantine/hooks";
-import { useRouter } from "next/navigation";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { ForwardIcon } from "@heroicons/react/24/solid";
 import { QrCode } from "./qr-code";
@@ -24,8 +22,6 @@ export function Player({
   initialPlaylist?: KaraokeParty;
 }) {
   const playerRef = useRef<YouTubePlayer>(null);
-  const idle = useIdle(5000);
-  const router = useRouter();
 
   const [playlist, setPlaylist] = useState<KaraokeParty["videos"]>(
     initialPlaylist?.videos ?? [],
@@ -43,6 +39,20 @@ export function Player({
     },
   });
 
+  const currentVideo = playlist.find((video) => !video.playedAt);
+
+  const addSong = async (videoId: string) => {
+    socket.send(JSON.stringify({ type: "add-video", id: videoId }));
+  };
+
+  const markAsPlayed = () => {
+    if (currentVideo) {
+      socket.send(
+        JSON.stringify({ type: "mark-as-played", id: currentVideo.id }),
+      );
+    }
+  };
+
   const opts: YouTubeProps["opts"] = {
     playerVars: {
       // https://developers.google.com/youtube/player_parameters
@@ -52,15 +62,6 @@ export function Player({
       controls: 0,
     },
   };
-
-  const currentVideo = playlist.find((video) => !video.playedAt);
-
-  // const markVideoAsPlayed = api.party.markVideoAsPlayed.useMutation({
-  //   onSuccess: () => {
-  //     console.log("Marked video as played");
-  //     router.refresh();
-  //   },
-  // });
 
   const onPlayerReady: YouTubeProps["onReady"] = (event) => {
     console.log("handleReady");
@@ -79,23 +80,11 @@ export function Player({
   const onPlayerEnd: YouTubeProps["onEnd"] = (_event) => {
     console.log("handleEnd");
 
-    if (currentVideo) {
-      socket.send(
-        JSON.stringify({ type: "mark-as-played", id: currentVideo.id }),
-      );
-    }
+    markAsPlayed();
   };
 
-  const skipToEnd = () => {
-    if (playerRef.current) {
-      const duration = playerRef.current.getDuration();
-      playerRef.current.seekTo(duration - 1, true);
-      playerRef.current.playVideo();
-    }
-  };
-
-  const addSong = async (videoId: string) => {
-    socket.send(JSON.stringify({ type: "add-video", id: videoId }));
+  const onNextVideoClick = () => {
+    markAsPlayed();
   };
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
@@ -141,7 +130,7 @@ export function Player({
 
       <button
         className="btn btn-accent fixed bottom-1 right-1 h-24"
-        onClick={skipToEnd}
+        onClick={onNextVideoClick}
       >
         <ForwardIcon className="h-24 w-24" />
       </button>
