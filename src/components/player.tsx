@@ -8,13 +8,13 @@ import usePartySocket from "partysocket/react";
 import { useIdle } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
-import { api } from "~/trpc/react";
 import { ForwardIcon } from "@heroicons/react/24/solid";
 import { QrCode } from "./qr-code";
 import { env } from "~/env";
-import { Party } from "@prisma/client";
-import { KaraokeParty } from "party";
+import { type Party } from "@prisma/client";
+import { type KaraokeParty } from "party";
 import { AddSongForm } from "./add-song-form";
+import { getUrl } from "~/utils/url";
 
 export function Player({
   party,
@@ -68,23 +68,16 @@ export function Player({
     playerRef.current = event.target;
   };
 
-  const onPlayerPlay: YouTubeProps["onPlay"] = (event) => {
+  const onPlayerPlay: YouTubeProps["onPlay"] = (_event) => {
     console.log("handlePlay");
-
-    // TODO: Mark video as played
   };
 
-  const onPlayerPause: YouTubeProps["onPause"] = (event) => {
+  const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
     console.log("handlePause");
-
-    // TODO: Mark video as played
   };
 
-  const onPlayerEnd: YouTubeProps["onEnd"] = (event) => {
+  const onPlayerEnd: YouTubeProps["onEnd"] = (_event) => {
     console.log("handleEnd");
-
-    // TODO: Mark video as played
-    //markVideoAsPlayed.mutate({ partyId: party.id, videoId });
 
     if (currentVideo) {
       socket.send(
@@ -105,7 +98,7 @@ export function Player({
     socket.send(JSON.stringify({ type: "add-video", id: videoId }));
   };
 
-  const joinPartyUrl = `https://www.karaokeparty.com/join/${party.hash}`;
+  const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
   if (!currentVideo) {
     return (
@@ -118,7 +111,14 @@ export function Player({
             </h2>
             <AddSongForm addFn={addSong} />
 
-            <QrCode url={`https://www.karaokeparty.com/join/${party.hash}`} />
+            <QrCode url={joinPartyUrl} />
+            <a
+              href={joinPartyUrl}
+              target="_blank"
+              className="fixed bottom-1 right-1 p-3 font-mono text-xl text-white"
+            >
+              {joinPartyUrl.split("//")[1]}
+            </a>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ export function Player({
       <QrCode url={joinPartyUrl} />
 
       <button
-        className="btn btn-secondary fixed bottom-1 right-1 h-24"
+        className="btn btn-accent fixed bottom-1 right-1 h-24"
         onClick={skipToEnd}
       >
         <ForwardIcon className="h-24 w-24" />

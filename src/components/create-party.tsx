@@ -26,19 +26,19 @@ export function CreateParty() {
     >
       <input
         type="text"
-        placeholder="Title"
+        placeholder="My Awesome Party..."
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-full px-4 py-2 text-black"
+        className="input-lg input-accent"
         minLength={3}
         required
       />
       <button
         type="submit"
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20"
+        className="btn btn-lg btn-accent"
         disabled={createParty.isPending}
       >
-        {createParty.isPending ? "Starting..." : "Start Party"}
+        {createParty.isPending ? "Creating..." : "Start Party 🎉"}
       </button>
     </form>
   );
