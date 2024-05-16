@@ -10,6 +10,8 @@ import { useRef } from "react";
 import QRCode from "react-qr-code";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { api } from "~/trpc/react";
+import { ForwardIcon } from "@heroicons/react/24/solid";
+import { QrCode } from "./qr-code";
 
 export function Player({ party, videoId }: { party: Party; videoId: string }) {
   const playerRef = useRef<YouTubePlayer>(null);
@@ -22,7 +24,7 @@ export function Player({ party, videoId }: { party: Party; videoId: string }) {
       start: 0,
       autoplay: 0,
       rel: 0,
-      controls: 1,
+      controls: 0,
     },
   };
 
@@ -71,6 +73,7 @@ export function Player({ party, videoId }: { party: Party; videoId: string }) {
   return (
     <>
       <YouTube
+        loading="eager"
         iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full -z-10"
         videoId={videoId}
         opts={opts}
@@ -79,22 +82,13 @@ export function Player({ party, videoId }: { party: Party; videoId: string }) {
         onEnd={onPlayerEnd}
         onPause={onPlayerPause}
       />
-      <div className="fixed bottom-1 left-1 bg-white p-4">
-        <QRCode
-          size={128}
-          // style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-          value={joinPartyUrl} // Create ID
-          // viewBox={`0 0 256 256`}
-        />
-        {/* <a href={joinPartyUrl} target="_blank" rel="noreferrer">
-          {joinPartyUrl}
-        </a> */}
-      </div>
+      <QrCode url={joinPartyUrl} />
+
       <button
-        className="fixed bottom-1 right-1 h-[5%] w-[10%] z-10 bg-white"
+        className="btn btn-secondary fixed bottom-1 right-1 h-24"
         onClick={skipToEnd}
       >
-        Next &gt;&gt;
+        <ForwardIcon className="h-24 w-24" />
       </button>
     </>
   );

@@ -1,8 +1,20 @@
 import "~/styles/globals.css";
 
-import { GeistSans } from "geist/font/sans";
-
 import { TRPCReactProvider } from "~/trpc/react";
+
+import { Roboto_Slab, Roboto_Mono } from "next/font/google";
+
+const roboto_slab = Roboto_Slab({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto-slab",
+});
+
+const roboto_mono = Roboto_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto-mono",
+});
 
 export const metadata = {
   title: "Create T3 App",
@@ -16,8 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
-      <body className="bg-black">
+    <html
+      lang="en"
+      data-theme="synthwave"
+      className={`${roboto_slab.variable} ${roboto_mono.variable}`}
+    >
+      <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>
