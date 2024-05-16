@@ -1,8 +1,8 @@
-import { Player } from "~/components//player";
 import { api } from "~/trpc/server";
 import { env } from "~/env";
 import { notFound } from "next/navigation";
-import { KaraokeParty } from "party";
+import { type KaraokeParty } from "party";
+import { JoinScene } from "~/components/join-scene";
 
 export default async function PartyPage({
   params,
@@ -39,7 +39,9 @@ export default async function PartyPage({
 
   console.log({ playlist });
 
-  return <Player key={party.hash} party={party} initialPlaylist={playlist} />;
+  return (
+    <JoinScene key={party.hash} party={party} initialPlaylist={playlist} />
+  );
 
   // const party = await api.party.getByHash({ hash: params.hash });
 
