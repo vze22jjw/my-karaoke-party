@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Post {
+    id        Int      @id @default(autoincrement())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+}
+
+model Video {
+    id        String            @id
+    title     String
+    artist    String
+    song      String
+    createdAt DateTime          @default(now())
+    parties   VideosOnParties[]
+}
+
+model Party {
+    id        Int               @id @default(autoincrement())
+    hash      String?           @unique
+    name      String
+    createdAt DateTime          @default(now())
+    videos    VideosOnParties[]
+
+    @@index([hash])
+}
+
+model VideosOnParties {
+    partyId  Int
+    videoId  String
+    addedAt  DateTime  @default(now())
+    playedAt DateTime?
+    video    Video     @relation(fields: [videoId], references: [id])
+    party    Party     @relation(fields: [partyId], references: [id])
+
+    @@id([partyId, videoId])
+}
