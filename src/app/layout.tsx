@@ -3,6 +3,12 @@ import "~/styles/globals.css";
 import { TRPCReactProvider } from "~/trpc/react";
 
 import { Roboto_Slab, Roboto_Mono } from "next/font/google";
+import { Metadata, Viewport } from "next";
+
+const APP_NAME = "My Karaoke Party";
+const APP_DEFAULT_TITLE = "My Karaoke Party";
+const APP_TITLE_TEMPLATE = "%s - My Karaoke Party";
+const APP_DESCRIPTION = "Host a karaoke party with your friends!";
 
 const roboto_slab = Roboto_Slab({
   subsets: ["latin"],
@@ -16,10 +22,43 @@ const roboto_mono = Roboto_Mono({
   variable: "--font-roboto-mono",
 });
 
-export const metadata = {
-  title: "My Karaoke Party",
-  description: "Host a karaoke party with your friends",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+export const metadata: Metadata = {
+  applicationName: APP_NAME,
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: APP_TITLE_TEMPLATE,
+  },
+  description: APP_DESCRIPTION,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_DEFAULT_TITLE,
+    // startUpImage: [],
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: {
+      default: APP_DEFAULT_TITLE,
+      template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary",
+    title: {
+      default: APP_DEFAULT_TITLE,
+      template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FFFFFF",
 };
 
 export default function RootLayout({

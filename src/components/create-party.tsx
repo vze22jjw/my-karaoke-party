@@ -25,6 +25,7 @@ export function CreateParty() {
       className="flex flex-col gap-2"
     >
       <input
+        name="name"
         type="text"
         placeholder="My Awesome Party..."
         value={name}
@@ -32,6 +33,7 @@ export function CreateParty() {
         className="input-lg input-accent"
         minLength={3}
         required
+        autoComplete="off"
       />
       <button
         type="submit"
