@@ -83,7 +83,7 @@ export function Player({
     markAsPlayed();
   };
 
-  const onNextVideoClick = () => {
+  const onSkipClick = () => {
     markAsPlayed();
   };
 
@@ -129,8 +129,9 @@ export function Player({
       <QrCode url={joinPartyUrl} />
 
       <button
+        name="skipBtn"
         className="btn btn-accent fixed bottom-1 right-1 h-24"
-        onClick={onNextVideoClick}
+        onClick={onSkipClick}
       >
         <ForwardIcon className="h-24 w-24" />
       </button>

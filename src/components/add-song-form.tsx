@@ -33,6 +33,8 @@ export function AddSongForm({ addFn }: { addFn: (videoId: string) => void }) {
           className="join-item input input-lg input-bordered w-full"
           value={videoInputValue}
           onChange={(e) => setVideoInputValue(e.target.value)}
+          required
+          minLength={11}
         />
         <button type="submit" className="join-item btn btn-lg btn-primary">
           Add
