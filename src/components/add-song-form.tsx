@@ -50,7 +50,7 @@ export function AddSongForm({
           value={videoInputValue}
           onChange={(e) => setVideoInputValue(e.target.value)}
           required
-          minLength={11}
+          minLength={3}
         />
         <button type="submit" className="join-item btn btn-lg btn-primary">
           Search
