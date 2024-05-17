@@ -32,7 +32,6 @@ export function AddSongForm({
   const [unavailableVideos, setUnavailableVideos] = useState<string[]>([]);
 
   const addVideo = (video: { videoId: string; title: string }) => {
-    console.log(video);
     addFn(video.videoId, video.title);
   };
 
@@ -87,7 +86,7 @@ export function AddSongForm({
                 <YouTube
                   className="relative h-full w-full rounded-lg"
                   iframeClassName="w-full h-full rounded-lg"
-                  loading="eager"
+                  loading="lazy"
                   videoId={video.id.videoId}
                   onReady={(e) => {
                     const unavailable = e.target.getPlayerState() === -1;

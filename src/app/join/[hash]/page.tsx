@@ -37,8 +37,6 @@ export default async function PartyPage({
 
   const playlist = (await req.json()) as KaraokeParty;
 
-  console.log({ playlist });
-
   return (
     <JoinScene key={party.hash} party={party} initialPlaylist={playlist} />
   );
