@@ -5,7 +5,7 @@ export const youtubeRouter = createTRPCRouter({
   search: publicProcedure
     .input(z.object({ keyword: z.string() }))
     .query(async ({ input, ctx }) => {
-      const videos = await ctx.youtube.searchVideo(input.keyword);
+      const videos = await ctx.youtube.searchVideo(input.keyword, 24);
 
       return videos;
     }),

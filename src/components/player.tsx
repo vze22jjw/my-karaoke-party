@@ -98,7 +98,7 @@ export function Player({
             <h2 className="py-6 text-2xl">
               Add more songs and keep the Karaoke Party going!
             </h2>
-            <AddSongForm addFn={addSong} />
+            <AddSongForm addFn={addSong} playlist={playlist} />
 
             <QrCode url={joinPartyUrl} />
             <a

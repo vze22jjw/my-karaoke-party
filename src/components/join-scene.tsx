@@ -34,20 +34,20 @@ export function JoinScene({
     socket.send(JSON.stringify({ type: "add-video", id: videoId, title }));
   };
 
-  const nextVideos = playlist.filter((video) => !video.playedAt);
+  // const nextVideos = playlist.filter((video) => !video.playedAt);
 
   return (
     <div className="p-5">
-      <AddSongForm addFn={addSong} />
+      <AddSongForm addFn={addSong} playlist={playlist} />
 
-      <div className="divider"></div>
+      {/* <div className="divider"></div>
 
       <h2>Next videos</h2>
       <ul>
         {nextVideos.map((video) => (
           <li key={video.id}>{video.id}</li>
         ))}
-      </ul>
+      </ul> */}
     </div>
   );
 }
