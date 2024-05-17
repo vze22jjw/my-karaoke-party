@@ -41,8 +41,8 @@ export function Player({
 
   const currentVideo = playlist.find((video) => !video.playedAt);
 
-  const addSong = async (videoId: string) => {
-    socket.send(JSON.stringify({ type: "add-video", id: videoId }));
+  const addSong = async (videoId: string, title: string) => {
+    socket.send(JSON.stringify({ type: "add-video", id: videoId, title }));
   };
 
   const markAsPlayed = () => {

@@ -30,8 +30,8 @@ export function JoinScene({
     },
   });
 
-  const addSong = async (videoId: string) => {
-    socket.send(JSON.stringify({ type: "add-video", id: videoId }));
+  const addSong = async (videoId: string, title: string) => {
+    socket.send(JSON.stringify({ type: "add-video", id: videoId, title }));
   };
 
   const nextVideos = playlist.filter((video) => !video.playedAt);

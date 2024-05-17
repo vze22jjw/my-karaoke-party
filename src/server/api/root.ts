@@ -1,5 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { partyRouter } from "./routers/party";
+import { youtubeRouter } from "./routers/youtube";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +9,7 @@ import { partyRouter } from "./routers/party";
  */
 export const appRouter = createTRPCRouter({
   party: partyRouter,
+  youtube: youtubeRouter,
 });
 
 // export type definition of API

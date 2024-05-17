@@ -7,6 +7,7 @@ const EXPIRY_PERIOD_MILLISECONDS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const AddVideo = z.object({
   type: z.literal("add-video"),
   id: z.string(),
+  title: z.string(),
 });
 
 const MarkAsPlayed = z.object({
@@ -64,7 +65,7 @@ export default class Server implements Party.Server {
           if (!this.karaokeParty.videos.find((video) => video.id === data.id)) {
             this.karaokeParty.videos.push({
               id: data.id,
-              title: "Some title",
+              title: data.title,
               artist: "Some artist",
               song: "Song name",
               createdAt: new Date(),
