@@ -11,6 +11,8 @@ export default async function Home() {
           width={666}
           height={375}
           alt="My Karaoke Party logo"
+          priority={true}
+          placeholder="blur"
         />
 
         <CreateParty />

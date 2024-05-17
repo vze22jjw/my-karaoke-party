@@ -2,7 +2,7 @@ import { Player } from "~/components//player";
 import { api } from "~/trpc/server";
 import { env } from "~/env";
 import { notFound } from "next/navigation";
-import { KaraokeParty } from "party";
+import { type KaraokeParty } from "party";
 
 export default async function PartyPage({
   params,
@@ -11,47 +11,30 @@ export default async function PartyPage({
 }) {
   const partyHash = params.hash;
 
-  const party = await api.party.getByHash({ hash: partyHash });
+  const partyPromise = api.party.getByHash({ hash: partyHash });
+
+  const req = fetch(`${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`, {
+    method: "GET",
+    next: {
+      revalidate: 0,
+    },
+  });
+
+  const [party, partyKitRes] = await Promise.all([partyPromise, req]);
 
   if (!party) {
-    return <div>Party not found</div>;
+    notFound();
   }
 
-  const req = await fetch(
-    `${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`,
-    {
-      method: "GET",
-      next: {
-        revalidate: 0,
-      },
-    },
-  );
-
-  if (!req.ok) {
-    if (req.status === 404) {
+  if (!partyKitRes.ok) {
+    if (partyKitRes.status === 404) {
       notFound();
     } else {
       throw new Error("Something went wrong.");
     }
   }
 
-  const playlist = (await req.json()) as KaraokeParty;
-
-  console.log({ playlist });
+  const playlist = (await partyKitRes.json()) as KaraokeParty;
 
   return <Player key={party.hash} party={party} initialPlaylist={playlist} />;
-
-  // const party = await api.party.getByHash({ hash: params.hash });
-
-  // if (!party) {
-  //   return <div>Party not found</div>;
-  // }
-
-  // const video = await api.party.fetchNextVideo({ partyId: party.id });
-
-  // if (!video) {
-  //   return <NoMoreVideos key={party.id} party={party} />;
-  // }
-
-  // return <Player key={video.id} party={party} videoId={video.id} />;
 }
