@@ -48,6 +48,8 @@ export function Player({
 
   const markAsPlayed = () => {
     if (currentVideo) {
+      setShowOpenInYouTubeButton(false);
+
       socket.send(
         JSON.stringify({ type: "mark-as-played", id: currentVideo.id }),
       );
@@ -200,6 +202,7 @@ export function Player({
   return (
     <>
       <YouTube
+        key={currentVideo.id}
         loading="eager"
         iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full -z-10"
         videoId={currentVideo.id}
