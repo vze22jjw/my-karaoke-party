@@ -25,6 +25,7 @@
     "@trpc/react-query": "next",
     "@trpc/server": "next",
     "@vercel/analytics": "^1.2.2",
+    "@vercel/speed-insights": "^1.0.10",
     "@vidstack/react": "^1.11.21",
     "axios": "^1.6.8",
     "geist": "^1.3.0",
