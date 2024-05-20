@@ -1,6 +1,8 @@
 import { type Config } from "tailwindcss";
 import daisyui from "daisyui";
 import typography from "@tailwindcss/typography";
+import tailwindAnimate from "tailwindcss-animate";
+import vidstackTailwind from "@vidstack/react/tailwind.cjs";
 
 export default {
   content: ["./src/**/*.tsx"],
@@ -12,7 +14,7 @@ export default {
       },
     },
   },
-  plugins: [typography, daisyui],
+  plugins: [typography, daisyui, vidstackTailwind, tailwindAnimate],
   daisyui: {
     themes: ["synthwave"],
   },

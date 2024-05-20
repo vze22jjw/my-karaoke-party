@@ -3,7 +3,8 @@ import "~/styles/globals.css";
 import { TRPCReactProvider } from "~/trpc/react";
 
 import { Roboto_Slab, Roboto_Mono } from "next/font/google";
-import { Metadata, Viewport } from "next";
+import { type Metadata, type Viewport } from "next";
+import { Analytics } from "@vercel/analytics/react";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -74,6 +75,7 @@ export default function RootLayout({
     >
       <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
+        <Analytics />
       </body>
     </html>
   );
