@@ -37,7 +37,7 @@ export function JoinScene({
   // const nextVideos = playlist.filter((video) => !video.playedAt);
 
   return (
-    <div className="p-5">
+    <div className="container mx-auto text-center p-4">
       <AddSongForm addFn={addSong} playlist={playlist} />
 
       {/* <div className="divider"></div>

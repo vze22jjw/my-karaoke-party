@@ -54,6 +54,7 @@
   ],
   "exclude": [
     "node_modules",
-    "public"
+    "public",
+    "chrome-extension"
   ]
 }

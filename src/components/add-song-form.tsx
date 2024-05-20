@@ -4,13 +4,15 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import YouTube from "react-youtube";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
   CheckIcon,
 } from "@heroicons/react/24/solid";
 import { type KaraokeParty } from "party";
+import { PreviewPlayer } from "./preview-player";
+import { removeBracketedContent } from "~/utils/string";
+import { decode } from "html-entities";
 
 export function AddSongForm({
   addFn,
@@ -29,7 +31,7 @@ export function AddSongForm({
     { refetchOnWindowFocus: false, enabled: false },
   );
 
-  const [unavailableVideos, setUnavailableVideos] = useState<string[]>([]);
+  // const [canPlayVideos, setCanPlayVideos] = useState<string[]>([]);
 
   const addVideo = (video: { videoId: string; title: string }) => {
     addFn(video.videoId, video.title);
@@ -43,12 +45,12 @@ export function AddSongForm({
         setCanFetch(false);
       }}
     >
-      <div className="join join-horizontal w-full">
+      <div className="join join-horizontal w-full lg:w-3/4">
         <input
           type="text"
           name="video-url"
           placeholder="Enter artist and/or song name..."
-          className="join-item input input-lg input-bordered w-full"
+          className="input input-lg join-item input-bordered w-full"
           value={videoInputValue}
           onChange={(e) => {
             setVideoInputValue(e.target.value);
@@ -59,7 +61,7 @@ export function AddSongForm({
         />
         <button
           type="submit"
-          className="join-item btn btn-lg btn-square btn-primary"
+          className="btn btn-square btn-primary join-item btn-lg"
           disabled={isLoading || !canFetch}
         >
           {isLoading ? (
@@ -70,43 +72,41 @@ export function AddSongForm({
         </button>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {data
-          ?.filter((v) => !unavailableVideos.includes(v.id.videoId))
-          .map((video) => {
+      {data && (
+        <div className="mt-5 grid grid-cols-1 gap-4 text-left md:grid-cols-2 xl:grid-cols-3">
+          {data.map((video) => {
             const alreadyAdded = !!playlist.find(
               (v) => v.id === video.id.videoId,
             );
 
+            const title = decode(removeBracketedContent(video.snippet.title));
+
             return (
               <div
                 key={video.id.videoId}
-                className="relative aspect-video rounded-lg"
+                className={`relative aspect-video rounded-lg`}
               >
-                <YouTube
-                  className="relative h-full w-full rounded-lg"
-                  iframeClassName="w-full h-full rounded-lg"
-                  loading="lazy"
+                <PreviewPlayer
+                  key={video.id.videoId}
                   videoId={video.id.videoId}
-                  onReady={(e) => {
-                    const unavailable = e.target.getPlayerState() === -1;
-
-                    if (unavailable) {
-                      setUnavailableVideos((prev) => [
-                        ...prev,
-                        video.id.videoId,
-                      ]);
-                      console.log(
-                        `${video.id.videoId}: ${e.target.getPlayerState()}`,
-                      );
-                    }
-                  }}
+                  title={title}
+                  thumbnail={video.snippet.thumbnails.high.url}
+                  // canPlay={(videoId) => {
+                  //   setCanPlayVideos((prev) => [...prev, videoId]);
+                  // }}
                 />
-                <div className="absolute inset-0 z-10 bg-black opacity-25"></div>
+                <div className="absolute inset-0 z-10 rounded-lg bg-black opacity-50"></div>
+
+                <div className="absolute top-0 z-30 w-full rounded-lg opacity-100">
+                  <p className="bg-black bg-opacity-70 p-3 text-2xl font-bold text-white">
+                    {title}
+                  </p>
+                </div>
+
                 <div className="absolute bottom-3 right-3 z-30 opacity-100">
                   <button
                     type="button"
-                    className="btn btn-square btn-accent shadow-xl"
+                    className="btn btn-square btn-accent shadow-xl animate-in spin-in"
                     disabled={alreadyAdded}
                     onClick={() =>
                       addVideo({
@@ -120,8 +120,52 @@ export function AddSongForm({
                 </div>
               </div>
             );
+
+            // return (
+            //   <div
+            //     key={video.id.videoId}
+            //     className="relative aspect-video rounded-lg"
+            //   >
+            //     <YouTube
+            //       className="relative h-full w-full rounded-lg"
+            //       iframeClassName="w-full h-full rounded-lg"
+            //       loading="lazy"
+            //       videoId={video.id.videoId}
+            //       onReady={(e) => {
+            //         const unavailable = e.target.getPlayerState() === -1;
+
+            //         if (unavailable) {
+            //           setUnavailableVideos((prev) => [
+            //             ...prev,
+            //             video.id.videoId,
+            //           ]);
+            //           console.log(
+            //             `${video.id.videoId}: ${e.target.getPlayerState()}`,
+            //           );
+            //         }
+            //       }}
+            //     />
+            //     <div className="absolute inset-0 z-10 bg-black opacity-25"></div>
+            //     <div className="absolute bottom-3 right-3 z-30 opacity-100">
+            //       <button
+            //         type="button"
+            //         className="btn btn-square btn-accent shadow-xl"
+            //         disabled={alreadyAdded}
+            //         onClick={() =>
+            //           addVideo({
+            //             videoId: video.id.videoId,
+            //             title: video.snippet.title,
+            //           })
+            //         }
+            //       >
+            //         {alreadyAdded ? <CheckIcon stroke="pink" /> : <PlusIcon />}
+            //       </button>
+            //     </div>
+            //   </div>
+            // );
           })}
-      </div>
+        </div>
+      )}
     </form>
   );
 }

@@ -1,8 +1,8 @@
 import QRCode from "react-qr-code";
 
-export function QrCode({ url }: { url: string }) {
+export function QrCode({ url, className }: { url: string; className?: string }) {
   return (
-    <div className="fixed bottom-1 left-1 bg-white p-3">
+    <div className={className}>
       <QRCode
         size={128}
         // style={{ height: "auto", maxWidth: "100%", width: "100%" }}

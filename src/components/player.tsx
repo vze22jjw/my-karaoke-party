@@ -13,6 +13,7 @@ import { type Party } from "@prisma/client";
 import { type KaraokeParty } from "party";
 import { AddSongForm } from "./add-song-form";
 import { getUrl } from "~/utils/url";
+import { decode } from "html-entities";
 
 export function Player({
   party,
@@ -83,7 +84,46 @@ export function Player({
     markAsPlayed();
   };
 
+  const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
+
+  const onPlayerError: YouTubeProps["onError"] = (_event) => {
+    // set showOpenInYouTubeButton state to true
+    setShowOpenInYouTubeButton(true);
+
+    // try {
+    //   setExternalWindow(
+    //     window.open(
+    //       `https://www.youtube.com/watch?v=${currentVideo.id}`,
+    //       "_blank",
+    //       "fullscreen=yes",
+    //     ),
+    //   );
+
+    //   // const checkWindowClosed = setInterval(() => {
+    //   //   if (youtubeWindow?.closed) {
+    //   //     console.log("The new window has been closed");
+    //   //     clearInterval(checkWindowClosed); // Stop checking once the window is closed
+    //   //     // Perform any additional actions here
+    //   //     console.log("marking as played");
+    //   //     markAsPlayed();
+    //   //   }
+    //   // }, 1000); // Check every second
+    // } catch (error) {
+    //   console.error("Error sending message to extension:", error);
+    //   // Handle the error, e.g., show a fallback message to the user
+    // }
+  };
+
   const onSkipClick = () => {
+    markAsPlayed();
+  };
+
+  const openYouTubeTab = () => {
+    window.open(
+      `https://www.youtube.com/watch?v=${currentVideo!.id}`,
+      "_blank",
+      "fullscreen=yes",
+    );
     markAsPlayed();
   };
 
@@ -91,24 +131,67 @@ export function Player({
 
   if (!currentVideo) {
     return (
-      <div className="hero bg-base-200 min-h-screen">
-        <div className="hero-content text-center">
-          <div className="max-w-xl">
-            <h1 className="text-5xl font-bold">Playlist is empty 😞</h1>
-            <h2 className="py-6 text-2xl">
-              Add more songs and keep the Karaoke Party going!
-            </h2>
-            <AddSongForm addFn={addSong} playlist={playlist} />
+      <div className="container mx-auto flex min-h-screen flex-col justify-between space-y-6 px-4 py-12 text-center">
+        <div>
+          <h1 className="text-5xl font-bold">Playlist is empty 😞</h1>
+          <h2 className="py-6 text-2xl">
+            Add more songs and keep the Karaoke Party going!
+          </h2>
+          <AddSongForm addFn={addSong} playlist={playlist} />
+        </div>
 
-            <QrCode url={joinPartyUrl} />
-            <a
-              href={joinPartyUrl}
-              target="_blank"
-              className="fixed bottom-1 right-1 p-3 font-mono text-xl text-white"
+        <div className="flex flex-col items-center justify-between text-center sm:flex-row">
+          <QrCode url={joinPartyUrl} className="w-fit bg-white p-2" />
+          <a
+            href={joinPartyUrl}
+            target="_blank"
+            className="font-mono text-xl text-white sm:self-end"
+          >
+            {joinPartyUrl.split("//")[1]}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (showOpenInYouTubeButton) {
+    return (
+      <div className="container mx-auto flex min-h-screen flex-col justify-between space-y-6 px-4 py-12 text-center">
+        <div>
+          <h1 className="text-5xl font-bold">{decode(currentVideo.title)}</h1>
+        </div>
+
+        <div>
+          <h2 className="py-6 text-2xl">
+            This video cannot be embedded. Click the button to open a new tab in
+            YouTube.
+          </h2>
+          <button
+            type="button"
+            className="btn btn-accent btn-lg w-fit self-center"
+            onClick={() => openYouTubeTab()}
+          >
+            Play in YouTube
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-7 w-7"
             >
-              {joinPartyUrl.split("//")[1]}
-            </a>
-          </div>
+              <path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.841Z" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center justify-between text-center sm:flex-row">
+          <QrCode url={joinPartyUrl} className="w-fit bg-white p-2" />
+          <a
+            href={joinPartyUrl}
+            target="_blank"
+            className="font-mono text-xl text-white sm:self-end"
+          >
+            {joinPartyUrl.split("//")[1]}
+          </a>
         </div>
       </div>
     );
@@ -125,12 +208,16 @@ export function Player({
         onReady={onPlayerReady}
         onEnd={onPlayerEnd}
         onPause={onPlayerPause}
+        onError={onPlayerError}
       />
-      <QrCode url={joinPartyUrl} />
+      <QrCode
+        className="fixed bottom-4 left-4 bg-white p-2"
+        url={joinPartyUrl}
+      />
 
       <button
         name="skipBtn"
-        className="btn btn-accent fixed bottom-1 right-1 h-24"
+        className="btn btn-accent fixed bottom-4 right-4 h-24"
         onClick={onSkipClick}
       >
         <ForwardIcon className="h-24 w-24" />
