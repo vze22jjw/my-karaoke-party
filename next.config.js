@@ -1,3 +1,5 @@
+import { withAxiom } from "next-axiom"
+
 // TODO: This is currently failing to build on Vercel
 // import withSerwistInit from "@serwist/next";
 
@@ -19,4 +21,4 @@ const config = {};
 
 //export default withSerwist(config);
 
-export default config;
+export default withAxiom(config);
