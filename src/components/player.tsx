@@ -122,7 +122,7 @@ export function Player({
 
   const openYouTubeTab = () => {
     window.open(
-      `https://www.youtube.com/watch?v=${currentVideo!.id}`,
+      `https://www.youtube.com/watch?v=${currentVideo!.id}#mykaraokeparty`,
       "_blank",
       "fullscreen=yes",
     );
