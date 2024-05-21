@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { getUrl } from "~/utils/url";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/party/", "/join/"],
     },
-    sitemap: getUrl("sitemap.xml"),
+    sitemap: "https://www.mykaraoke.party/sitemap.xml",
   };
 }
