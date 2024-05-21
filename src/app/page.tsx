@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { CreateParty } from "../components/create-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
+import Link from "next/link";
 
 export default async function Home() {
   return (
@@ -16,6 +17,10 @@ export default async function Home() {
         />
 
         <CreateParty />
+
+        <Link href="/terms-of-service" className="fixed bottom-4 link link-info">
+          Terms of Service
+        </Link>
       </div>
     </main>
   );

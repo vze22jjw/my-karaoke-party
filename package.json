@@ -8,6 +8,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
+    "dev:pk": "npx partykit dev",
     "dev": "next dev",
     "postinstall": "prisma generate",
     "lint": "next lint",

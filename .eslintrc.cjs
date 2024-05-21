@@ -41,6 +41,6 @@ const config = {
   },
   "ignorePatterns": [
     "/chrome-extension/**"
-  ]
+  ],
 }
 module.exports = config;
