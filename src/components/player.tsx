@@ -91,29 +91,6 @@ export function Player({
   const onPlayerError: YouTubeProps["onError"] = (_event) => {
     // set showOpenInYouTubeButton state to true
     setShowOpenInYouTubeButton(true);
-
-    // try {
-    //   setExternalWindow(
-    //     window.open(
-    //       `https://www.youtube.com/watch?v=${currentVideo.id}`,
-    //       "_blank",
-    //       "fullscreen=yes",
-    //     ),
-    //   );
-
-    //   // const checkWindowClosed = setInterval(() => {
-    //   //   if (youtubeWindow?.closed) {
-    //   //     console.log("The new window has been closed");
-    //   //     clearInterval(checkWindowClosed); // Stop checking once the window is closed
-    //   //     // Perform any additional actions here
-    //   //     console.log("marking as played");
-    //   //     markAsPlayed();
-    //   //   }
-    //   // }, 1000); // Check every second
-    // } catch (error) {
-    //   console.error("Error sending message to extension:", error);
-    //   // Handle the error, e.g., show a fallback message to the user
-    // }
   };
 
   const onSkipClick = () => {
@@ -199,12 +176,13 @@ export function Player({
     );
   }
 
+  console.log("Rendering YouTube embed...")
   return (
     <>
       <YouTube
         key={currentVideo.id}
         loading="eager"
-        iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full -z-10"
+        iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
         videoId={currentVideo.id}
         opts={opts}
         onPlay={onPlayerPlay}
