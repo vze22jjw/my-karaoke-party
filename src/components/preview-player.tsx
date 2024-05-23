@@ -54,7 +54,7 @@ export function PreviewPlayer({
 
   return (
     <MediaPlayer
-      className="ring-media-focus aspect-video w-full overflow-hidden rounded-md bg-slate-900 font-sans text-white data-[focus]:ring-4"
+      className="ring-media-focus w-full overflow-hidden rounded-md bg-slate-900 font-sans text-white data-[focus]:ring-4"
       title={title}
       src={`youtube/${videoId}`}
       crossOrigin

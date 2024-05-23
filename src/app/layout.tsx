@@ -73,9 +73,9 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="synthwave"
-      className={`${roboto_slab.variable} ${roboto_mono.variable}`}
+      className={`theme-custom ${roboto_slab.variable} ${roboto_mono.variable}`}
     >
-      <body className="min-h-screen bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
+      <body className="bg-gradient min-h-screen">
         <TRPCReactProvider>{children}</TRPCReactProvider>
         <Analytics />
         <SpeedInsights />

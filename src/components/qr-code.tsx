@@ -1,10 +1,16 @@
 import QRCode from "react-qr-code";
 
-export function QrCode({ url, className }: { url: string; className?: string }) {
+type Props = {
+  url: string;
+  size?: number;
+  className?: string;
+};
+
+export function QrCode({ url, size = 128, className }: Props) {
   return (
     <div className={className}>
       <QRCode
-        size={128}
+        size={size}
         // style={{ height: "auto", maxWidth: "100%", width: "100%" }}
         value={url} // Create ID
         // viewBox={`0 0 256 256`}

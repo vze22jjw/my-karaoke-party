@@ -4,57 +4,30 @@
 "use client";
 
 import { useRef, useState } from "react";
-import usePartySocket from "partysocket/react";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
-import { ForwardIcon } from "@heroicons/react/24/solid";
 import { QrCode } from "./qr-code";
-import { env } from "~/env";
-import { type Party } from "@prisma/client";
-import { type KaraokeParty } from "party";
-import { AddSongForm } from "./add-song-form";
-import { getUrl } from "~/utils/url";
+import { type VideoInPlaylist } from "party";
 import { decode } from "html-entities";
+import { cn } from "~/lib/utils";
+import { Button } from "./ui/ui/button";
+import { MicVocal, Youtube } from "lucide-react";
+
+type Props = {
+  joinPartyUrl: string;
+  video: VideoInPlaylist;
+  isFullscreen: boolean;
+  onPlayerEnd: () => void;
+};
 
 export function Player({
-  party,
-  initialPlaylist,
-}: {
-  party: Party;
-  initialPlaylist?: KaraokeParty;
-}) {
+  joinPartyUrl,
+  video,
+  isFullscreen = false,
+  onPlayerEnd,
+}: Props) {
   const playerRef = useRef<YouTubePlayer>(null);
 
-  const [playlist, setPlaylist] = useState<KaraokeParty["videos"]>(
-    initialPlaylist?.videos ?? [],
-  );
-
-  const socket = usePartySocket({
-    host: env.NEXT_PUBLIC_PARTYKIT_URL,
-    room: party.hash!,
-    onMessage(event) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const message = JSON.parse(event.data) as KaraokeParty;
-      if (message.videos) {
-        setPlaylist(message.videos);
-      }
-    },
-  });
-
-  const currentVideo = playlist.find((video) => !video.playedAt);
-
-  const addSong = async (videoId: string, title: string) => {
-    socket.send(JSON.stringify({ type: "add-video", id: videoId, title }));
-  };
-
-  const markAsPlayed = () => {
-    if (currentVideo) {
-      setShowOpenInYouTubeButton(false);
-
-      socket.send(
-        JSON.stringify({ type: "mark-as-played", id: currentVideo.id }),
-      );
-    }
-  };
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const opts: YouTubeProps["opts"] = {
     playerVars: {
@@ -62,7 +35,7 @@ export function Player({
       start: 0,
       autoplay: 0,
       rel: 0,
-      controls: 0,
+      controls: 1,
     },
   };
 
@@ -74,17 +47,21 @@ export function Player({
 
   const onPlayerPlay: YouTubeProps["onPlay"] = (_event) => {
     console.log("handlePlay");
+    setIsPlaying(true);
   };
 
   const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
     console.log("handlePause");
+    setIsPlaying(false);
   };
 
-  const onPlayerEnd: YouTubeProps["onEnd"] = (_event) => {
-    console.log("handleEnd");
+  // const onPlayerEnd: YouTubeProps["onEnd"] = (_event) => {
+  //   console.log("handleEnd");
 
-    markAsPlayed();
-  };
+  //   if (onPlayerEnd) {
+  //     onPlayerEnd();
+  //   }
+  // };
 
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
 
@@ -93,77 +70,61 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
-  const onSkipClick = () => {
-    markAsPlayed();
-  };
+  // const onSkipClick = () => {
+  //   markAsPlayed();
+  // };
 
   const openYouTubeTab = () => {
     window.open(
-      `https://www.youtube.com/watch?v=${currentVideo!.id}#mykaraokeparty`,
+      `https://www.youtube.com/watch?v=${video.id}#mykaraokeparty`,
       "_blank",
       "fullscreen=yes",
     );
-    markAsPlayed();
+
+    if (onPlayerEnd) {
+      onPlayerEnd();
+    }
   };
-
-  const joinPartyUrl = getUrl(`/join/${party.hash}`);
-
-  if (!currentVideo) {
-    return (
-      <div className="container mx-auto flex min-h-screen flex-col justify-between space-y-6 px-4 py-12 text-center">
-        <div>
-          <h1 className="text-5xl font-bold">Playlist is empty 😞</h1>
-          <h2 className="py-6 text-2xl">
-            Add more songs and keep the Karaoke Party going!
-          </h2>
-          <AddSongForm addFn={addSong} playlist={playlist} />
-        </div>
-
-        <div className="flex flex-col items-center justify-between text-center sm:flex-row">
-          <QrCode url={joinPartyUrl} className="w-fit bg-white p-2" />
-          <a
-            href={joinPartyUrl}
-            target="_blank"
-            className="font-mono text-xl text-white sm:self-end"
-          >
-            {joinPartyUrl.split("//")[1]}
-          </a>
-        </div>
-      </div>
-    );
-  }
 
   if (showOpenInYouTubeButton) {
     return (
-      <div className="container mx-auto flex min-h-screen flex-col justify-between space-y-6 px-4 py-12 text-center">
+      <div
+        className={cn(
+          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 px-4 text-center",
+          isFullscreen && "bg-gradient",
+        )}
+      >
         <div>
-          <h1 className="text-5xl font-bold">{decode(currentVideo.title)}</h1>
+          <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            {decode(video.title)}
+          </h1>
+          <h2 className="text-outline scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl">
+            <MicVocal className="mr-2 inline text-primary" size={32} />
+            {video.singerName}
+            <MicVocal
+              className="ml-2 inline scale-x-[-1] transform text-primary"
+              size={32}
+            />
+          </h2>
         </div>
 
         <div>
-          <h2 className="py-6 text-2xl">
+          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
             This video cannot be embedded. Click the button to open a new tab in
             YouTube.
-          </h2>
-          <button
+          </h3>
+          <Button
             type="button"
-            className="btn btn-accent btn-lg w-fit self-center"
+            className="w-fit self-center"
             onClick={() => openYouTubeTab()}
           >
             Play in YouTube
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-7 w-7"
-            >
-              <path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.841Z" />
-            </svg>
-          </button>
+            <Youtube className="ml-2" />
+          </Button>
         </div>
 
-        <div className="flex flex-col items-center justify-between text-center sm:flex-row">
-          <QrCode url={joinPartyUrl} className="w-fit bg-white p-2" />
+        <div className="flex w-full basis-1/4 flex-col items-center justify-between text-center sm:flex-row">
+          <QrCode url={joinPartyUrl} className="w-fit self-end bg-white p-2" />
           <a
             href={joinPartyUrl}
             target="_blank"
@@ -176,33 +137,90 @@ export function Player({
     );
   }
 
-  console.log("Rendering YouTube embed...")
   return (
-    <>
+    <div className="relative z-0 h-full">
       <YouTube
-        key={currentVideo.id}
+        key={video.id}
         loading="eager"
-        iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
-        videoId={currentVideo.id}
+        className="h-full w-full"
+        iframeClassName="w-full h-full"
+        // iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
+        videoId={video.id}
         opts={opts}
         onPlay={onPlayerPlay}
         onReady={onPlayerReady}
-        onEnd={onPlayerEnd}
         onPause={onPlayerPause}
         onError={onPlayerError}
+        onEnd={() => {
+          if (onPlayerEnd) {
+            onPlayerEnd();
+          }
+        }}
       />
-      <QrCode
-        className="fixed bottom-4 left-4 bg-white p-2"
-        url={joinPartyUrl}
-      />
-
-      <button
-        name="skipBtn"
-        className="btn btn-accent fixed bottom-4 right-4 h-24"
-        onClick={onSkipClick}
+      <div
+        className={cn(
+          "absolute top-0 w-full text-center",
+          isPlaying ? "hidden" : "block",
+        )}
       >
-        <ForwardIcon className="h-24 w-24" />
-      </button>
-    </>
+        <div className="flex w-full flex-col items-center justify-center bg-black bg-opacity-80 p-4">
+          <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            {decode(video.title)}
+          </h1>
+          <h2 className="text-outline scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl">
+            <MicVocal className="mr-2 inline text-primary" size={32} />
+            {video.singerName}
+            <MicVocal
+              className="ml-2 inline scale-x-[-1] transform text-primary"
+              size={32}
+            />
+          </h2>
+        </div>
+      </div>
+
+      <div className="absolute bottom-12 left-8 z-10 flex w-full flex-row justify-between px-4">
+        <QrCode url={joinPartyUrl} className="w-fit bg-white p-2" />
+        {/* <div className="self-end bg-primary p-2 bg-opacity-90">
+          <a
+            href={joinPartyUrl}
+            target="_blank"
+            className="font-mono text-xl text-white"
+          >
+            {joinPartyUrl.split("//")[1]}
+          </a>
+        </div> */}
+      </div>
+    </div>
   );
+
+  // return (
+  //   <div className="flex h-full w-full flex-col items-center p-6">
+  //     <div className="flex w-full basis-3/4 items-center justify-center">
+  //       <YouTube
+  //         key={currentVideo.id}
+  //         loading="eager"
+  //         className="h-full w-full"
+  //         iframeClassName="w-full h-full"
+  //         // iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
+  //         videoId={currentVideo.id}
+  //         opts={opts}
+  //         onPlay={onPlayerPlay}
+  //         onReady={onPlayerReady}
+  //         onEnd={onPlayerEnd}
+  //         onPause={onPlayerPause}
+  //         onError={onPlayerError}
+  //       />
+  //     </div>
+  //     <div className="flex w-full basis-1/4 flex-col items-center justify-between text-center sm:flex-row">
+  //       <QrCode url={joinPartyUrl} className="w-fit self-end bg-white p-2" />
+  //       <a
+  //         href={joinPartyUrl}
+  //         target="_blank"
+  //         className="font-mono text-xl text-white sm:self-end"
+  //       >
+  //         {joinPartyUrl.split("//")[1]}
+  //       </a>
+  //     </div>
+  //   </div>
+  // );
 }

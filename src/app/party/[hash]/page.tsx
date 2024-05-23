@@ -1,40 +1,57 @@
-import { Player } from "~/components//player";
-import { api } from "~/trpc/server";
-import { env } from "~/env";
 import { notFound } from "next/navigation";
-import { type KaraokeParty } from "party";
+import { KaraokeParty } from "party";
+import { env } from "~/env";
+import { api } from "~/trpc/server";
+import { PartyScene } from "./party-scene";
 
-export default async function PartyPage({
-  params,
-}: {
+type Props = {
   params: { hash: string };
-}) {
+};
+
+export async function generateMetadata({ params }: Props) {
   const partyHash = params.hash;
 
-  const partyPromise = api.party.getByHash({ hash: partyHash });
-
-  const req = fetch(`${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`, {
-    method: "GET",
-    next: {
-      revalidate: 0,
-    },
-  });
-
-  const [party, partyKitRes] = await Promise.all([partyPromise, req]);
+  const party = await api.party.getByHash({ hash: partyHash });
 
   if (!party) {
     notFound();
   }
 
-  if (!partyKitRes.ok) {
-    if (partyKitRes.status === 404) {
+  return {
+    title: party.name,
+  };
+}
+
+export default async function PartyHashPage({ params }: Props) {
+  const partyHash = params.hash;
+
+  const party = await api.party.getByHash({ hash: partyHash });
+
+  if (!party) {
+    return <div>Party not found</div>;
+  }
+
+  const req = await fetch(
+    `${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`,
+    {
+      method: "GET",
+      next: {
+        revalidate: 0,
+      },
+    },
+  );
+
+  if (!req.ok) {
+    if (req.status === 404) {
       notFound();
     } else {
       throw new Error("Something went wrong.");
     }
   }
 
-  const playlist = (await partyKitRes.json()) as KaraokeParty;
+  const playlist = (await req.json()) as KaraokeParty;
 
-  return <Player key={party.hash} party={party} initialPlaylist={playlist} />;
+  return (
+    <PartyScene key={party.hash} party={party} initialPlaylist={playlist} />
+  );
 }

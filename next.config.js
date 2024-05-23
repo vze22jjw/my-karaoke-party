@@ -17,7 +17,15 @@ import { withAxiom } from "next-axiom"
 await import("./src/env.js");
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  images: {
+    remotePatterns: [
+      {
+        hostname: "i.ytimg.com"
+      }
+    ]
+  }
+};
 
 //export default withSerwist(config);
 

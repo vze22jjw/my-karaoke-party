@@ -8,6 +8,8 @@ const AddVideo = z.object({
   type: z.literal("add-video"),
   id: z.string(),
   title: z.string(),
+  coverUrl: z.string(),
+  singerName: z.string(),
 });
 
 const MarkAsPlayed = z.object({
@@ -20,9 +22,14 @@ const RemoveVideo = z.object({
   id: z.string(),
 });
 
-export const Message = z.union([AddVideo, RemoveVideo, MarkAsPlayed]);
+const Message = z.union([AddVideo, RemoveVideo, MarkAsPlayed]);
 
-type VideoInPlaylist = Video & { playedAt: Date | null };
+export type Message = z.infer<typeof Message>;
+
+export type VideoInPlaylist = Video & {
+  singerName: string;
+  playedAt: Date | null;
+};
 
 export type KaraokeParty = {
   videos: VideoInPlaylist[];
@@ -50,63 +57,81 @@ export default class Server implements Party.Server {
     await this.room.storage.setAlarm(Date.now() + EXPIRY_PERIOD_MILLISECONDS);
   }
 
-  async onMessage(message: string, sender: Party.Connection) {
+  async onClose(connection: Party.Connection) {
+    // A websocket just disconnected!
+    console.log(`Disconnected: ${connection.id}`);
+  }
+
+  async onMessage(message: string, _sender: Party.Connection) {
     if (!this.karaokeParty) return;
+
+    console.log("Received message:", message);
 
     const result = Message.safeParse(JSON.parse(message));
 
-    if (result.success === true) {
-      const data = result.data;
+    if (!result.success) {
+      console.error("Invalid message!", result.error);
+      return;
+    }
 
-      await this.room.storage.setAlarm(Date.now() + EXPIRY_PERIOD_MILLISECONDS);
+    const data = result.data;
 
-      switch (data.type) {
-        case "add-video": {
-          if (!this.karaokeParty.videos.find((video) => video.id === data.id)) {
-            this.karaokeParty.videos.push({
-              id: data.id,
-              title: data.title,
-              artist: "Some artist",
-              song: "Song name",
-              createdAt: new Date(),
-              playedAt: null,
-            });
+    await this.room.storage.setAlarm(Date.now() + EXPIRY_PERIOD_MILLISECONDS);
 
-            await this.savekaraokeParty();
-            this.room.broadcast(JSON.stringify(this.karaokeParty));
-          }
+    switch (data.type) {
+      case "add-video": {
+        if (!this.karaokeParty.videos.find((video) => video.id === data.id)) {
+          // TODO: Add logic to rotate the singer (fairness)
 
-          break;
+          this.karaokeParty.videos.push({
+            id: data.id,
+            title: data.title,
+            artist: "Some artist",
+            song: "Song name",
+            createdAt: new Date(),
+            singerName: data.singerName,
+            coverUrl: data.coverUrl,
+            playedAt: null,
+          });
+
+          await this.savekaraokeParty();
+          this.room.broadcast(JSON.stringify(this.karaokeParty));
         }
 
-        case "remove-video": {
-          const index = this.karaokeParty.videos.findIndex(
-            (video) => video.id === data.id,
-          );
+        break;
+      }
 
-          if (index !== -1) {
-            this.karaokeParty.videos.splice(index, 1);
-            await this.savekaraokeParty();
-            this.room.broadcast(JSON.stringify(this.karaokeParty));
-          }
+      case "remove-video": {
+        const index = this.karaokeParty.videos.findIndex(
+          (video) => video.id === data.id,
+        );
 
-          break;
+        if (index !== -1) {
+          this.karaokeParty.videos.splice(index, 1);
+          await this.savekaraokeParty();
+          this.room.broadcast(JSON.stringify(this.karaokeParty));
         }
 
-        case "mark-as-played": {
-          const video = this.karaokeParty.videos.find(
-            (video) => video.id === data.id && !video.playedAt,
-          );
+        break;
+      }
 
-          if (video) {
-            video.playedAt = new Date();
+      case "mark-as-played": {
+        const video = this.karaokeParty.videos.find(
+          (video) => video.id === data.id && !video.playedAt,
+        );
 
-            await this.savekaraokeParty();
-            this.room.broadcast(JSON.stringify(this.karaokeParty));
-          }
+        if (video) {
+          video.playedAt = new Date();
 
-          break;
+          await this.savekaraokeParty();
+          this.room.broadcast(JSON.stringify(this.karaokeParty));
         }
+
+        break;
+      }
+
+      default: {
+        console.error("Unknown message type", data);
       }
     }
   }

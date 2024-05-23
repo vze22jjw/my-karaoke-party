@@ -28,20 +28,20 @@ const partyData = {
 };
 
 async function main() {
-  console.log(`Start seeding...`);
+  // console.log(`Start seeding...`);
 
-  await db.video.createMany({
-    data: videosData.map((video) => ({
-      id: video.id,
-      title: video.title,
-      artist: video.artist,
-      song: video.song,
-    })),
-  });
+  // await db.video.createMany({
+  //   data: videosData.map((video) => ({
+  //     id: video.id,
+  //     title: video.title,
+  //     artist: video.artist,
+  //     song: video.song,
+  //   })),
+  // });
 
-  const party = await db.party.createWithHash(partyData);
+  // const party = await db.party.createWithHash(partyData);
 
-  console.log(`Created party with hash: ${party.hash}`);
+  // console.log(`Created party with hash: ${party.hash}`);
 }
 
 main()
