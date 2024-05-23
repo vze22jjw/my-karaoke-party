@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <article className="container prose mx-auto p-6 lg:prose-xl">
+    <article className="container prose mx-auto p-6 lg:prose-xl bg-slate-100 sm:my-8 rounded-lg shadow-lg">
       <h1>Terms of Service</h1>
 
       <h2>Introduction</h2>
