@@ -19,12 +19,13 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
 
-  const { data, refetch, isLoading, isFetched } = api.youtube.search.useQuery(
-    {
-      keyword: `${videoInputValue} karaoke`,
-    },
-    { refetchOnWindowFocus: false, enabled: false },
-  );
+  const { data, isError, refetch, isLoading, isFetched } =
+    api.youtube.search.useQuery(
+      {
+        keyword: `${videoInputValue} karaoke`,
+      },
+      { refetchOnWindowFocus: false, enabled: false, retry: false },
+    );
 
   // const [canPlayVideos, setCanPlayVideos] = useState<string[]>([]);
 
@@ -60,7 +61,18 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
         </Button>
       </div>
 
-      {isFetched && !data?.length && (
+      {isError && (
+        <Alert variant={"destructive"} className="mt-4 bg-red-500 text-white">
+          <Frown className="h-4 w-4" color="white" />
+          <AlertTitle>Error!</AlertTitle>
+          <AlertDescription>
+            There was an unexpected error while searching for karaoke videos.
+            Try again later.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isFetched && !isError && !data?.length && (
         <Alert className="mt-4">
           <Frown className="h-4 w-4" />
           <AlertTitle>Nothing found!</AlertTitle>

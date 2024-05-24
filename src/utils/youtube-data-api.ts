@@ -93,20 +93,25 @@ class YouTubeDataAPI {
   // }
 
   async searchVideo(query: string, maxResults = 10) {
-    const response = await axios.get<YouTubeSearchResponse>(
-      `${this.baseUrl}/search`,
-      {
-        params: {
-          key: this.apiKey,
-          part: "snippet",
-          type: "video",
-          q: query,
-          maxResults,
+    try {
+      const response = await axios.get<YouTubeSearchResponse>(
+        `${this.baseUrl}/search`,
+        {
+          params: {
+            key: this.apiKey,
+            part: "snippet",
+            type: "video",
+            q: query,
+            maxResults,
+          },
         },
-      },
-    );
+      );
 
-    return response.data.items;
+      return response.data.items;
+    } catch (error) {
+      console.error("YouTube API search error:", error);
+      throw error;
+    }
   }
 }
 

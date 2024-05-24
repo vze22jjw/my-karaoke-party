@@ -12,6 +12,7 @@ import { ZodError } from "zod";
 
 import { db } from "~/server/db";
 import youtube from "~/utils/youtube-data-api";
+import { cache } from "../cache";
 
 /**
  * 1. CONTEXT
@@ -29,6 +30,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     db,
     youtube,
+    cache,
     ...opts,
   };
 };
