@@ -9,7 +9,10 @@ const AddVideo = z.object({
   type: z.literal("add-video"),
   id: z.string(),
   title: z.string(),
+  artist: z.string().optional(),
+  song: z.string().optional(),
   coverUrl: z.string(),
+  duration: z.string().optional(),
   singerName: z.string(),
 });
 
@@ -31,9 +34,10 @@ type KaraokePartySettings = {
 
 export type Message = z.infer<typeof Message>;
 
-export type VideoInPlaylist = Video & {
+export type VideoInPlaylist = Omit<Video, "duration"> & {
   singerName: string;
   playedAt: Date | null;
+  duration: string | undefined;
 };
 
 export type KaraokeParty = {
@@ -96,6 +100,7 @@ export default class Server implements Party.Server {
             singerName: data.singerName,
             coverUrl: data.coverUrl,
             playedAt: null,
+            duration: data.duration ?? undefined,
           });
 
           if (this.karaokeParty.settings.orderByFairness) {
