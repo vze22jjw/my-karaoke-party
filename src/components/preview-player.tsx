@@ -1,14 +1,12 @@
 import "@vidstack/react/player/styles/base.css";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   isHLSProvider,
   MediaPlayer,
   MediaProvider,
   Poster,
-  type MediaCanPlayDetail,
-  type MediaCanPlayEvent,
   type MediaPlayerInstance,
   type MediaProviderAdapter,
   type MediaProviderChangeEvent,
@@ -27,15 +25,17 @@ export function PreviewPlayer({
 
   useEffect(() => {
     // Subscribe to state updates.
-    return player.current!.subscribe(({ paused, viewType }) => {
-      // console.log('is paused?', '->', state.paused);
-      // console.log('is audio view?', '->', state.viewType === 'audio');
-    });
+    return player.current!.subscribe(
+      ({ paused: _paused, viewType: _viewType }) => {
+        // console.log('is paused?', '->', state.paused);
+        // console.log('is audio view?', '->', state.viewType === 'audio');
+      },
+    );
   }, []);
 
   function onProviderChange(
     provider: MediaProviderAdapter | null,
-    nativeEvent: MediaProviderChangeEvent,
+    _nativeEvent: MediaProviderChangeEvent,
   ) {
     // We can configure provider's here.
     if (isHLSProvider(provider)) {

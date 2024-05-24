@@ -27,8 +27,8 @@ export function PartyScene({
   const [name] = useLocalStorage<string>({ key: "name" });
   const router = useRouter();
 
-  const [playlist, setPlaylist] = useState<KaraokeParty["videos"]>(
-    initialPlaylist?.videos ?? [],
+  const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
+    initialPlaylist?.playlist ?? [],
   );
 
   useEffect(() => {
@@ -53,10 +53,12 @@ export function PartyScene({
     //   }
     // },
     onMessage(event) {
+      // TODO: Improve type safety
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const message = JSON.parse(event.data) as KaraokeParty;
-      if (message.videos) {
-        setPlaylist(message.videos);
+      const playlist = JSON.parse(event.data) as KaraokeParty["playlist"];
+      if (playlist) {
+        setPlaylist(playlist);
       }
     },
   });
@@ -133,7 +135,7 @@ export function PartyScene({
       </ul> */}
       </div>
 
-      <div className="text-primary-foreground fixed bottom-0 z-50 flex w-full items-center bg-primary p-2 text-white">
+      <div className="fixed bottom-0 z-50 flex w-full items-center bg-primary p-2 text-primary-foreground text-white">
         <Accordion type="single" collapsible className="max-h-screen w-full">
           <AccordionItem value="item-1" className="border-0">
             <AccordionTrigger disabled={nextVideos.length < 2}>
@@ -143,7 +145,7 @@ export function PartyScene({
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <ul role="list" className="divide-accent-foreground divide-y">
+              <ul role="list" className="divide-y divide-accent-foreground">
                 {nextVideos.slice(1).map((video) => (
                   <li key={video.id} className="p-2 first:pt-0 last:pb-0">
                     {decode(video.title)}

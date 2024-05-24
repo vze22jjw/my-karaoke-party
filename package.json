@@ -81,6 +81,6 @@
     "initVersion": "7.33.1"
   },
   "prisma": {
-    "seed": "bunx tsx prisma/seed.ts"
+    "seed": "pnpm dlx tsx prisma/seed.ts"
   }
 }

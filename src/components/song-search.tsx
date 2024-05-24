@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Plus, Search, Check, Loader2 } from "lucide-react";
@@ -12,14 +10,14 @@ import { Button } from "./ui/ui/button";
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
-  playlist: KaraokeParty["videos"];
+  playlist: KaraokeParty["playlist"];
 };
 
 export function SongSearch({ onVideoAdded, playlist }: Props) {
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
 
-  const { data, error, refetch, isLoading } = api.youtube.search.useQuery(
+  const { data, refetch, isLoading } = api.youtube.search.useQuery(
     {
       keyword: `${videoInputValue} karaoke`,
     },

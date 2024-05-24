@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { KaraokeParty } from "party";
+import { type KaraokeParty } from "party";
 import { env } from "~/env";
 import { api } from "~/trpc/server";
 import { PartyScene } from "./party-scene";

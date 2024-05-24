@@ -12,7 +12,7 @@ type Props = {
 export function EmptyPlayer({ joinPartyUrl, className }: Props) {
   return (
     <div
-      className={cn("flex h-full w-full flex-col items-center p-6", className)}
+      className={cn("flex h-full w-full flex-col items-center p-6 pb-1", className)}
     >
       <div className="flex w-full basis-3/4 items-center justify-center">
         <Image
@@ -22,12 +22,12 @@ export function EmptyPlayer({ joinPartyUrl, className }: Props) {
           className="mx-auto duration-1000 animate-in zoom-in-150 spin-in-180"
         />
       </div>
-      <div className="flex w-full basis-1/4 flex-col items-center justify-between text-center sm:flex-row">
-        <QrCode url={joinPartyUrl} className="w-fit self-end bg-white p-2" />
+      <div className="w-full basis-1/4 text-center flex items-end justify-center relative">
+        <QrCode url={joinPartyUrl} className="absolute left-0 bottom-4" />
         <a
           href={joinPartyUrl}
           target="_blank"
-          className="font-mono text-xl text-white sm:self-end"
+          className="font-mono text-xl text-white"
         >
           {joinPartyUrl.split("//")[1]}
         </a>

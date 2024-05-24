@@ -2,7 +2,7 @@
 
 import { useFullscreen } from "@mantine/hooks";
 import { type Party } from "@prisma/client";
-import { ListPlus, Maximize, Minimize, X } from "lucide-react";
+import { ListPlus, Maximize, Minimize, SkipForward, X } from "lucide-react";
 import Image from "next/image";
 import { type Message, type KaraokeParty } from "party";
 import usePartySocket from "partysocket/react";
@@ -20,8 +20,8 @@ type Props = {
 };
 
 export default function PlayerScene({ party, initialPlaylist }: Props) {
-  const [playlist, setPlaylist] = useState<KaraokeParty["videos"]>(
-    initialPlaylist.videos ?? [],
+  const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
+    initialPlaylist.playlist ?? [],
   );
 
   const socket = usePartySocket({
@@ -29,9 +29,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     room: party.hash!,
     onMessage(event) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const message = JSON.parse(event.data) as KaraokeParty;
-      if (message.videos) {
-        setPlaylist(message.videos);
+      const playlist = JSON.parse(event.data) as KaraokeParty["playlist"];
+      if (playlist) {
+        setPlaylist(playlist);
       }
     },
   });
@@ -93,12 +93,12 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       </div>
       <div className="grow-0 basis-2/3 overflow-clip">
         <div className="flex h-full flex-col">
-          <div className="h-5/6" ref={ref}>
+          <div className="h-5/6 relative" ref={ref}>
             <Button
               onClick={toggle}
               variant="ghost"
               size="icon"
-              className="absolute right-3 top-3 z-10"
+              className="absolute right-3 bottom-0 z-10"
             >
               {fullscreen ? <Minimize /> : <Maximize />}
             </Button>
@@ -123,10 +123,10 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
             {nextVideos.length > 0 ? (
               <>
                 <div className="no-scrollbar flex h-full flex-row space-x-2 overflow-x-scroll">
-                  {nextVideos.map((v) => (
+                  {nextVideos.map((v, i) => (
                     <div
                       key={v.id}
-                      className="text-primary-foreground relative flex aspect-[4/3] h-full items-center justify-center rounded-lg bg-slate-200 p-3 text-center animate-in slide-in-from-bottom first:border-2 first:border-amber-500"
+                      className="relative flex aspect-[4/3] h-full items-center justify-center rounded-lg bg-slate-200 p-3 text-center text-primary-foreground animate-in slide-in-from-bottom first:border-2 first:border-amber-500"
                     >
                       <Image
                         src={v.coverUrl}
@@ -136,15 +136,28 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
                       />
 
                       <Button
-                        variant="ghost"
+                        variant="link"
                         size="icon"
-                        className="absolute right-1 top-1 z-10 hover:bg-gray-400"
+                        className="absolute right-0 top-0 z-10 hover:bg-gray-400"
                         onClick={() => {
                           removeSong(v.id);
                         }}
                       >
                         <X color="red" />
                       </Button>
+
+                      {i === 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute bottom-0 right-0 z-10 rounded text-yellow-300 hover:bg-gray-400"
+                          onClick={() => {
+                            markAsPlayed();
+                          }}
+                        >
+                          <SkipForward />
+                        </Button>
+                      )}
 
                       {/* <div>{decode(v.title)}</div> */}
                     </div>
