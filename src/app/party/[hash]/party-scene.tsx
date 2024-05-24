@@ -63,40 +63,6 @@ export function PartyScene({
     },
   });
 
-  // if (!name) {
-  //   return (
-  //     <div className="container mx-auto max-w-md p-4 ">
-  //       <label className="form-control w-full">
-  //         <div className="label">
-  //           <span className="label-text">What&apos;s your name?</span>
-  //         </div>
-  //         <input
-  //           autoFocus
-  //           type="text"
-  //           placeholder="Enter your name..."
-  //           className="input input-bordered w-full"
-  //           required
-  //           minLength={2}
-  //           value={inputName}
-  //           onChange={(e) => {
-  //             setInputName(e.target.value);
-  //           }}
-  //         />
-  //       </label>
-
-  //       <button
-  //         type="button"
-  //         className="btn btn-primary btn-block mt-4 text-lg"
-  //         onClick={() => {
-  //           setName(inputName);
-  //         }}
-  //       >
-  //         Join Party
-  //       </button>
-  //     </div>
-  //   );
-  // }
-
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     socket.send(
       JSON.stringify({
@@ -124,15 +90,6 @@ export function PartyScene({
         <div className="mt-5">
           <SongSearch onVideoAdded={addSong} playlist={playlist} />
         </div>
-
-        {/* <div className="divider"></div>
-
-      <h2>Next videos</h2>
-      <ul>
-        {nextVideos.map((video) => (
-          <li key={video.id}>{video.id}</li>
-        ))}
-      </ul> */}
       </div>
 
       <div className="fixed bottom-0 z-50 flex w-full items-center bg-primary p-2 text-primary-foreground text-white">
@@ -155,29 +112,6 @@ export function PartyScene({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-
-        {/* <Drawer>
-          <DrawerTrigger className="w-full">
-            <div className="flex w-full flex-row flex-nowrap justify-between">
-              <div>{nextVideo ? nextVideo.title : "Playlist is empty"}</div>
-              <div>
-                <ChevronUp />
-              </div>
-            </div>
-          </DrawerTrigger>
-          <DrawerContent className="bg-gray-50 text-primary-foreground">
-            <DrawerHeader>
-              <DrawerTitle>Playlist</DrawerTitle>
-            </DrawerHeader>
-            <div>
-              <ul>
-                {playlist.map((video) => (
-                  <li key={video.id} className="p-4 first:bg-primary first:text-white first:font-bold border-slate-300 border-b last:border-0">{video.title}</li>
-                ))}
-              </ul>
-            </div>
-          </DrawerContent>
-        </Drawer> */}
       </div>
     </>
   );

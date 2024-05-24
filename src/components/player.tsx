@@ -102,13 +102,13 @@ export function Player({
         </div>
 
         <div>
-          <h3 className="mb-2 scroll-m-20 text-2xl font-semibold tracking-tight">
+          <h3 className="mb-2 scroll-m-20 text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
             This video cannot be embedded. Click the button to open a new tab in
             YouTube.
           </h3>
           <Button
             type="button"
-            className="w-fit self-center"
+            className="w-fit self-center animate-in fade-in zoom-in"
             onClick={() => openYouTubeTab()}
           >
             Play in YouTube
@@ -116,7 +116,7 @@ export function Player({
           </Button>
           <div className="mt-2">
             <Button
-              // className="bg-yellow-300"
+              className="animate-in fade-in zoom-in"
               variant={"secondary"}
               type="button"
               onClick={() => {
@@ -149,7 +149,7 @@ export function Player({
         key={video.id}
         loading="eager"
         // className={`h-full w-full`}
-        className={`h-full w-full ${isReady ? "visible" : "invisible"}`}
+        className={`h-full w-full animate-in fade-in ${isReady ? "visible" : "invisible"}`}
         iframeClassName="w-full h-full"
         // iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
         videoId={video.id}
@@ -164,7 +164,7 @@ export function Player({
       />
       <div
         className={cn(
-          "absolute top-0 w-full text-center",
+          "absolute top-0 w-full text-center animate-in fade-in zoom-in",
           isPlaying ? "hidden" : "block",
         )}
       >

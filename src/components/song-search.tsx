@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Plus, Search, Check, Loader2 } from "lucide-react";
+import { Plus, Search, Check, Loader2, Frown } from "lucide-react";
 import { type KaraokeParty } from "party";
 import { PreviewPlayer } from "./preview-player";
 import { removeBracketedContent } from "~/utils/string";
 import { decode } from "html-entities";
 import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
+import { Skeleton } from "./ui/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
@@ -17,7 +19,7 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
 
-  const { data, refetch, isLoading } = api.youtube.search.useQuery(
+  const { data, refetch, isLoading, isFetched } = api.youtube.search.useQuery(
     {
       keyword: `${videoInputValue} karaoke`,
     },
@@ -58,6 +60,30 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
         </Button>
       </div>
 
+      {isFetched && !data?.length && (
+        <Alert className="mt-4">
+          <Frown className="h-4 w-4" />
+          <AlertTitle>Nothing found!</AlertTitle>
+          <AlertDescription>
+            No karaoke videos found for {videoInputValue}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isLoading && (
+        <div className="my-5 flex flex-col space-y-5 overflow-hidden">
+          <Skeleton className="h-48 w-full rounded-xl" />
+
+          <Skeleton className="h-48 w-full rounded-xl" />
+
+          <Skeleton className="h-48 w-full rounded-xl" />
+
+          <Skeleton className="h-48 w-full rounded-xl" />
+
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </div>
+      )}
+
       {data && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
           {data.map((video) => {
@@ -70,7 +96,7 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
             return (
               <div
                 key={video.id.videoId}
-                className={`relative h-48 overflow-hidden rounded-lg`}
+                className={`relative h-48 overflow-hidden rounded-lg animate-in fade-in`}
               >
                 <PreviewPlayer
                   key={video.id.videoId}

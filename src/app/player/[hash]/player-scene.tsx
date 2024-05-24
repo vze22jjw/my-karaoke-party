@@ -1,6 +1,6 @@
 "use client";
 
-import { useFullscreen } from "@mantine/hooks";
+import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
 import { type Party } from "@prisma/client";
 import { ListPlus, Maximize, Minimize, SkipForward, X } from "lucide-react";
 import Image from "next/image";
@@ -42,12 +42,17 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const nextVideos = playlist.filter((video) => !video.playedAt);
 
   const addSong = (videoId: string, title: string, coverUrl: string) => {
+    const singerName = readLocalStorageValue({
+      key: "name",
+      defaultValue: "Host",
+    });
+
     socket.send(
       JSON.stringify({
         type: "add-video",
         id: videoId,
         title,
-        singerName: "Host",
+        singerName,
         coverUrl,
       } satisfies Message),
     );
@@ -93,12 +98,12 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       </div>
       <div className="grow-0 basis-2/3 overflow-clip">
         <div className="flex h-full flex-col">
-          <div className="h-5/6 relative" ref={ref}>
+          <div className="relative h-5/6" ref={ref}>
             <Button
               onClick={toggle}
               variant="ghost"
               size="icon"
-              className="absolute right-3 bottom-0 z-10"
+              className="absolute bottom-0 right-3 z-10"
             >
               {fullscreen ? <Minimize /> : <Maximize />}
             </Button>
