@@ -7,7 +7,11 @@ export const cache = {
     return value;
   },
 
-  async set<T>(key: string, value: T) {
+  async set<T>(key: string, value: T, expirationInSeconds?: number) {
     await kv.set(key, value);
+
+    if (expirationInSeconds && expirationInSeconds > 0) {
+      await kv.expire(key, expirationInSeconds);
+    }
   },
 };

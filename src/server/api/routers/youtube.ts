@@ -25,7 +25,7 @@ export const youtubeRouter = createTRPCRouter({
 
         if (videos) {
           log.info("Storing results in cache for", { keyword: input.keyword });
-          await ctx.cache.set(cacheKey, videos);
+          await ctx.cache.set(cacheKey, videos, 60 * 60 * 24); // 24h cache
         }
 
         return videos;

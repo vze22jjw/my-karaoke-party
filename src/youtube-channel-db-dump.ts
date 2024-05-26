@@ -5,13 +5,17 @@ import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import dotenv from "dotenv";
-import { Prisma } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
+import { retry, handleAll, ExponentialBackoff } from "cockatiel";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 dotenv.config();
 
 // get first Node.js command line argument
 const channelId = argv[2];
+const initialPageToken = argv[3];
+
+console.log("Initial page token: " + initialPageToken ?? "none");
 
 if (!channelId) {
   console.error("Please provide a YouTube channel ID as an argument");
@@ -46,7 +50,9 @@ if (!uploadsPlaylistId) {
   );
   process.exit(1);
 }
+
 const model = openai("gpt-4o");
+// const model = openai("gpt-3.5-turbo-0125");
 
 type VideoInput = {
   id: string;
@@ -79,6 +85,8 @@ async function getPlaylistVideos(
     item.snippet?.title?.toUpperCase().includes("KARAOKE"),
   );
 
+  if (!karaokeVideos.length) return { videos: [], nextPageToken };
+
   const contentDetails = await youtube.videos.list({
     id: karaokeVideos.map((item) => item.snippet!.resourceId!.videoId!),
     part: ["contentDetails"],
@@ -97,6 +105,8 @@ async function getPlaylistVideos(
 }
 
 async function enrichWithArtistSong(videos: VideoInput[]) {
+  if (videos.length === 0) return [];
+
   // Use Vercel AI SDK to prompt ChatGPT 4o
   const { object } = await generateObject({
     model: model,
@@ -128,56 +138,56 @@ async function writeVideosToDatabase(videos: Prisma.VideoCreateManyInput[]) {
 }
 
 // ###
-let nextPageToken: string | undefined = undefined;
+let nextPageToken = initialPageToken;
+
+const retryPolicy = retry(handleAll, {
+  maxAttempts: 3,
+  backoff: new ExponentialBackoff({ initialDelay: 1000, maxDelay: 10000 }),
+});
+
+retryPolicy.onRetry((reason) =>
+  console.log("retrying a function call:", reason),
+);
+
+const pagesFailed = Array<string>();
 
 do {
   const result = await getPlaylistVideos(uploadsPlaylistId, nextPageToken);
   const videos = result.videos;
 
-  const batch1 = videos.slice(0, 25);
-  const batch2 = videos.slice(25);
+  if (videos.length > 0) {
+    const batch1 = videos.slice(0, 25);
+    const batch2 = videos.slice(25);
 
-  const enrichBatch1 = enrichWithArtistSong(batch1);
-  const enrichBatch2 = enrichWithArtistSong(batch2);
+    const enrichBatch1 = enrichWithArtistSong(batch1);
+    const enrichBatch2 = enrichWithArtistSong(batch2);
 
-  const [enriched1, enriched2] = await Promise.all([
-    enrichBatch1,
-    enrichBatch2,
-  ]);
+    try {
+      console.log(
+        `Enriching videos with OpenAI ${model.modelId}... [${batch1.length + batch2.length}]`,
+      );
+      const [enriched1, enriched2] = await retryPolicy.execute(() =>
+        Promise.all([enrichBatch1, enrichBatch2]),
+      );
 
-  await writeVideosToDatabase([...enriched1, ...enriched2]);
+      // Promise.all([
+      //   enrichBatch1,
+      //   enrichBatch2,
+      // ]);
 
-  // let batch = videos.slice(0, 25);
-  // if (batch.length === 0) continue;
+      console.log("Writing videos to database...");
+      await writeVideosToDatabase([...enriched1, ...enriched2]);
+    } catch (error) {
+      if (error instanceof Error)
+        console.error("Error enriching videos with OpenAI:", error);
 
-  // let enriched = await enrichWithArtistSong(batch);
-  // await writeVideosToDatabase(enriched);
-
-  // batch = videos.slice(25);
-  // if (batch.length === 0) continue;
-
-  // enriched = await enrichWithArtistSong(batch);
-  // await writeVideosToDatabase(enriched);
-
-  // const [batch1, batch2] = await Promise.allSettled([
-  //   async () => {
-  //     const batch = videos.slice(0, 25);
-  //     if (batch.length === 0) return;
-
-  //     const enriched = await enrichWithArtistSong(batch);
-  //     await writeVideosToDatabase(enriched);
-  //   },
-  //   async () => {
-  //     const batch = videos.slice(25);
-  //     if (batch.length === 0) return;
-
-  //     const enriched = await enrichWithArtistSong(batch);
-  //     await writeVideosToDatabase(enriched);
-  //   },
-  // ]);
+      pagesFailed.push(nextPageToken!);
+    }
+  }
 
   nextPageToken = result.nextPageToken ?? undefined;
   console.log("nextPageToken: " + nextPageToken);
 } while (nextPageToken);
 
-console.log("Done indexing videos in channel: + channelId");
+console.log("Done indexing videos in channel:" + channelId);
+console.log({ pagesFailed });
