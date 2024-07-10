@@ -7,6 +7,7 @@ import { type Metadata, type Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AxiomWebVitals } from "next-axiom";
+import { Toaster } from "~/components/ui/ui/sonner";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -80,6 +81,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <AxiomWebVitals />
+        <Toaster />
       </body>
     </html>
   );

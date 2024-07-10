@@ -96,9 +96,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
           onVideoAdded={addSong}
         />
       </div>
-      <div className="grow-0 basis-2/3 overflow-clip">
+      <div className="grow-0 basis-2/3 overflow-auto">
         <div className="flex h-full flex-col">
-          <div className="relative h-5/6" ref={ref}>
+          <div className="relative h-5/6 min-h-[900px]" ref={ref}>
             <Button
               onClick={toggle}
               variant="ghost"
@@ -124,7 +124,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
               />
             )}
           </div>
-          <div className="h-1/6 border-t border-slate-500 p-4">
+          <div className="h-1/6 min-h-[150px] border-t border-slate-500 p-4">
             {nextVideos.length > 0 ? (
               <>
                 <div className="no-scrollbar flex h-full flex-row space-x-2 overflow-x-scroll">

@@ -12,18 +12,21 @@ type Props = {
 export function EmptyPlayer({ joinPartyUrl, className }: Props) {
   return (
     <div
-      className={cn("flex h-full w-full flex-col items-center p-6 pb-1", className)}
+      className={cn(
+        "flex h-full w-full flex-col items-center p-6 pb-1",
+        className,
+      )}
     >
       <div className="flex w-full basis-3/4 items-center justify-center">
         <Image
           src={logo}
           alt="My Karaoke Party"
           priority
-          className="mx-auto duration-1000 animate-in zoom-in-150 spin-in-180"
+          className="mx-auto object-contain duration-1000 animate-in zoom-in-150 spin-in-180"
         />
       </div>
-      <div className="w-full basis-1/4 text-center flex items-end justify-center relative">
-        <QrCode url={joinPartyUrl} className="absolute left-0 bottom-4" />
+      <div className="relative flex w-full basis-1/4 items-end justify-center text-center">
+        <QrCode url={joinPartyUrl} className="absolute bottom-4 left-0" />
         <a
           href={joinPartyUrl}
           target="_blank"

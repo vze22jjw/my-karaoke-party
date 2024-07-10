@@ -101,6 +101,9 @@ importers:
       next-axiom:
         specifier: ^1.2.0
         version: 1.2.0(@types/node@20.12.12)(next@14.2.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
+      next-themes:
+        specifier: ^0.3.0
+        version: 0.3.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       partysocket:
         specifier: 1.0.1
         version: 1.0.1
@@ -128,6 +131,9 @@ importers:
       sharp:
         specifier: ^0.33.4
         version: 0.33.4
+      sonner:
+        specifier: ^1.5.0
+        version: 1.5.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       sqids:
         specifier: ^0.3.0
         version: 0.3.0
@@ -2565,6 +2571,12 @@ packages:
       next: '>=13.4'
       react: '>=18.0.0'
 
+  next-themes@0.3.0:
+    resolution: {integrity: sha512-/QHIrsYpd6Kfk7xakK4svpDI5mmXP0gfvCoJdGpZQ2TOrQZmsW0QxjaiLn8wbIKjtm4BTSqLoix4lxYYOnLJ/w==}
+    peerDependencies:
+      react: ^16.8 || ^17 || ^18
+      react-dom: ^16.8 || ^17 || ^18
+
   next@14.2.3:
     resolution: {integrity: sha512-dowFkFTR8v79NPJO4QsBUtxv0g9BrS/phluVpMAt2ku7H+cbcBJlopXjkWlwxrk/xGqMemr7JkGPGemPrLLX7A==}
     engines: {node: '>=18.17.0'}
@@ -3101,6 +3113,12 @@ packages:
     peerDependencies:
       solid-js: ^1.2
       swr-store: ^0.10
+
+  sonner@1.5.0:
+    resolution: {integrity: sha512-FBjhG/gnnbN6FY0jaNnqZOMmB73R+5IiyYAw8yBj7L54ER7HB3fOSE5OFiQiE2iXWxeXKvg6fIP4LtVppHEdJA==}
+    peerDependencies:
+      react: ^18.0.0
+      react-dom: ^18.0.0
 
   source-map-js@1.2.0:
     resolution: {integrity: sha512-itJW8lvSA0TXEphiRoawsCksnlf8SyvmFzIhltqAHluXd88pkCd+cXJVHTDwdCr0IzwptSm035IHQktUu1QUMg==}
@@ -6035,6 +6053,11 @@ snapshots:
       - supports-color
       - terser
 
+  next-themes@0.3.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+
   next@14.2.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       '@next/env': 14.2.3
@@ -6560,6 +6583,11 @@ snapshots:
     dependencies:
       solid-js: 1.8.17
       swr-store: 0.10.6
+
+  sonner@1.5.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
 
   source-map-js@1.2.0: {}
 
