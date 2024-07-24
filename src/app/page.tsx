@@ -21,7 +21,10 @@ export default async function Home() {
               Now you can with MyKaraoke Video. It takes 2 minutes!
             </p>
             <p className="mt-4">
-              <a target="_blank" href="https://www.mykaraoke.video">
+              <a
+                target="_blank"
+                href="https://www.mykaraoke.video?ref=mykaraoke.party"
+              >
                 <Button>Try it now!</Button>
               </a>
             </p>
