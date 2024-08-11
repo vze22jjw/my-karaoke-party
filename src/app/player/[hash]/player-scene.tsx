@@ -21,7 +21,7 @@ type Props = {
 
 export default function PlayerScene({ party, initialPlaylist }: Props) {
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
-    initialPlaylist.playlist ?? [],
+    initialPlaylist.playlist ?? []
   );
 
   const socket = usePartySocket({
@@ -54,7 +54,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         title,
         singerName,
         coverUrl,
-      } satisfies Message),
+      } satisfies Message)
     );
   };
 
@@ -63,7 +63,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       JSON.stringify({
         type: "remove-video",
         id: videoId,
-      } satisfies Message),
+      } satisfies Message)
     );
   };
 
@@ -75,7 +75,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         JSON.stringify({
           type: "mark-as-played",
           id: currentVideo.id,
-        } satisfies Message),
+        } satisfies Message)
       );
     }
   };
@@ -98,7 +98,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       </div>
       <div className="grow-0 basis-2/3 overflow-auto">
         <div className="flex h-full flex-col">
-          <div className="relative h-5/6 min-h-[900px]" ref={ref}>
+          <div className="relative h-5/6" ref={ref}>
             <Button
               onClick={toggle}
               variant="ghost"

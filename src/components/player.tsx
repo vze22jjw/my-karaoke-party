@@ -71,7 +71,7 @@ export function Player({
     window.open(
       `https://www.youtube.com/watch?v=${video.id}#mykaraokeparty`,
       "_blank",
-      "fullscreen=yes",
+      "fullscreen=yes"
     );
 
     if (onPlayerEnd) {
@@ -84,7 +84,7 @@ export function Player({
       <div
         className={cn(
           "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 pb-1 text-center",
-          isFullscreen && "bg-gradient",
+          isFullscreen && "bg-gradient"
         )}
       >
         <div>
@@ -129,12 +129,12 @@ export function Player({
           </div>
         </div>
 
-        <div className="relative flex w-full basis-1/4 items-end justify-center text-center">
-          <QrCode url={joinPartyUrl} className="absolute bottom-4 left-0" />
+        <div className="relative flex w-full basis-1/4 items-end text-center">
+          <QrCode url={joinPartyUrl} />
           <a
             href={joinPartyUrl}
             target="_blank"
-            className="font-mono text-xl text-white"
+            className="font-mono text-xl text-white pl-4"
           >
             {joinPartyUrl.split("//")[1]}
           </a>
@@ -149,7 +149,9 @@ export function Player({
         key={video.id}
         loading="eager"
         // className={`h-full w-full`}
-        className={`h-full w-full animate-in fade-in ${isReady ? "visible" : "invisible"}`}
+        className={`h-full w-full animate-in fade-in ${
+          isReady ? "visible" : "invisible"
+        }`}
         iframeClassName="w-full h-full"
         // iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
         videoId={video.id}
@@ -165,11 +167,13 @@ export function Player({
       <div
         className={cn(
           "absolute top-0 w-full text-center animate-in fade-in zoom-in",
-          isPlaying ? "hidden" : "block",
+          isPlaying ? "hidden" : "block"
         )}
       >
         <div
-          className={`flex w-full flex-col items-center justify-center bg-black p-4 ${isReady ? "bg-opacity-80" : "bg-opacity-0"}`}
+          className={`flex w-full flex-col items-center justify-center bg-black p-4 ${
+            isReady ? "bg-opacity-80" : "bg-opacity-0"
+          }`}
         >
           <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
             {decode(video.title)}
@@ -195,7 +199,9 @@ export function Player({
         <QrCode url={joinPartyUrl} />
 
         <div
-          className={`self-end p-2 ${isPlaying && isFullscreen ? "hidden" : "block"}`}
+          className={`self-end p-2 ${
+            isPlaying && isFullscreen ? "hidden" : "block"
+          }`}
         >
           <Button
             // className="bg-yellow-300"
