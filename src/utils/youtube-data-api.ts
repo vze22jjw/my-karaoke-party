@@ -47,11 +47,11 @@ interface YouTubeSearchResponse {
 }
 
 class YouTubeDataAPI {
-  private apiKey: string;
+  private apiKeys: string[];
   private baseUrl = "https://www.googleapis.com/youtube/v3";
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor(apiKeys: string[]) {
+    this.apiKeys = apiKeys;
   }
 
   // async getVideoById(videoId: string): Promise<SearchResultItem> {
@@ -93,30 +93,42 @@ class YouTubeDataAPI {
   // }
 
   async searchVideo(query: string, maxResults = 10) {
-    try {
-      const response = await axios.get<YouTubeSearchResponse>(
-        `${this.baseUrl}/search`,
-        {
-          params: {
-            key: this.apiKey,
-            part: "snippet",
-            type: "video",
-            q: query,
-            maxResults,
-          },
-        },
-      );
+    let lastError: unknown;
 
-      return response.data.items;
-    } catch (error) {
-      console.error("YouTube API search error:", error);
-      throw error;
+    for (const apiKey of this.apiKeys) {
+      try {
+        const response = await axios.get<YouTubeSearchResponse>(
+          `${this.baseUrl}/search`,
+          {
+            params: {
+              key: apiKey,
+              part: "snippet",
+              type: "video",
+              q: query,
+              maxResults,
+            },
+          },
+        );
+
+        return response.data.items;
+      } catch (error) {
+        console.error("YouTube API search error: ", error);
+        lastError = error;
+        // Continue to next API key
+      }
     }
+
+    // If we get here, all API keys failed
+    throw new Error(
+      `All YouTube API keys failed. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+    );
   }
 }
 
 export { YouTubeDataAPI };
 
-const youtubeAPI = new YouTubeDataAPI(env.YOUTUBE_API_KEY);
+const apiKeys = env.YOUTUBE_API_KEY.split(",");
+
+const youtubeAPI = new YouTubeDataAPI(apiKeys);
 
 export default youtubeAPI;
