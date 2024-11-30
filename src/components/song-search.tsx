@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown } from "lucide-react";
-import { type KaraokeParty } from "party";
+import type { KaraokeParty } from "party";
 import { PreviewPlayer } from "./preview-player";
 import { removeBracketedContent } from "~/utils/string";
 import { decode } from "html-entities";
@@ -108,7 +108,7 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
             return (
               <div
                 key={video.id.videoId}
-                className={`relative h-48 overflow-hidden rounded-lg animate-in fade-in`}
+                className={"relative h-48 overflow-hidden rounded-lg animate-in fade-in"}
               >
                 <PreviewPlayer
                   key={video.id.videoId}
@@ -116,15 +116,20 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
                   title={title}
                   thumbnail={video.snippet.thumbnails.high.url}
                 />
-                <div className="absolute inset-0 z-10 rounded-lg bg-black opacity-50"></div>
+                <div className="absolute inset-0 z-10 rounded-lg bg-black opacity-50" />
 
                 <div className="absolute top-0 z-30 w-full rounded-lg opacity-100">
-                  <p className="bg-black bg-opacity-70 p-3 text-2xl font-bold text-white">
+                  <p className="bg-black bg-opacity-70 p-3 text-xl font-bold text-white">
                     {title}
                   </p>
                 </div>
 
-                <div className="absolute bottom-3 right-3 z-30 opacity-100">
+                <div className="absolute bottom-3 right-3 z-30 opacity-100 w-full flex justify-between">
+                  <div>
+                    <p className="bg-black bg-opacity-70 p-2 pl-5 text-sm text-white">
+                      {video.snippet.channelTitle}
+                    </p>
+                  </div>
                   <Button
                     type="button"
                     variant={"default"}
