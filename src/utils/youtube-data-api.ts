@@ -95,8 +95,10 @@ class YouTubeDataAPI {
   async searchVideo(query: string, maxResults = 10) {
     let lastError: unknown;
 
-    for (const apiKey of this.apiKeys) {
+    for (const [index, apiKey] of this.apiKeys.entries()) {
       try {
+        console.log(`Searching for "${query}" with API key #${index + 1}`);
+
         const response = await axios.get<YouTubeSearchResponse>(
           `${this.baseUrl}/search`,
           {
@@ -112,7 +114,7 @@ class YouTubeDataAPI {
 
         return response.data.items;
       } catch (error) {
-        console.error("YouTube API search error: ", error);
+        console.error(`Search for "${query}" with API key #${index + 1} failed: `, error);
         lastError = error;
         // Continue to next API key
       }
