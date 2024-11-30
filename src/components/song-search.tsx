@@ -100,7 +100,7 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
           {data.map((video) => {
             const alreadyAdded = !!playlist.find(
-              (v) => v.id === video.id.videoId,
+              (v) => v.id === video.id.videoId && !v.playedAt,
             );
 
             const title = decode(removeBracketedContent(video.snippet.title));
