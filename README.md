@@ -1,5 +1,22 @@
 # My Karaoke Party
 
+YouTube-based karaoke party web app with remote searching and queuing from QR code.
+
+- Host a party.
+- Join existing party via link or QR.
+- Search karaoke videos on YouTube and add them to the queue.
+- Queue is sorted by "fairness" to avoid mic hogs.
+
+## Stack
+
+Based on T3 App (https://create.t3.gg/)
+
+- Next.js 14
+- Postgres
+- Prisma
+- Tailwind
+- PartyKit
+
 ## Development
 
 1. Run `pnpm install` to install dependencies.
@@ -10,4 +27,4 @@
 
 ## Contribution
 
-I don't have time to work on this at the moment but I'll happy take in PRs and deploy changes to the live site at www.mykaraoke.party.
+I don't have time to work on this at the moment but I'll happy take in PRs and deploy changes to the live site at https://www.mykaraoke.party.
