@@ -1,5 +1,7 @@
 # My Karaoke Party
 
+![image](https://github.com/user-attachments/assets/45a1f009-d93a-487f-ada7-2b79b60dc416)
+
 YouTube-based karaoke party web app with remote searching and queuing from QR code.
 
 - Host a party.
