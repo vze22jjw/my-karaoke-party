@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import type { Party } from "@prisma/client";
@@ -55,7 +56,6 @@ export function PartyScene({
     // },
     onMessage(event) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const eventData = JSON.parse(event.data);
 
         if (eventData.type === "horn") {

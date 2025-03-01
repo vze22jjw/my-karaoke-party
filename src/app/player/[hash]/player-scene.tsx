@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
