@@ -9,7 +9,6 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
     YOUTUBE_API_KEY: z.string(),
-    OPENAI_API_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -32,7 +31,6 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_PARTYKIT_URL: process.env.NEXT_PUBLIC_PARTYKIT_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,

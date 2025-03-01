@@ -1,12 +1,14 @@
 "use client";
 
 import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
-import { type Party } from "@prisma/client";
+import type { Party } from "@prisma/client";
 import { ListPlus, Maximize, Minimize, SkipForward, X } from "lucide-react";
 import Image from "next/image";
-import { type Message, type KaraokeParty } from "party";
+import type { Message, KaraokeParty } from "party";
 import usePartySocket from "partysocket/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { toast } from "sonner";
+import useSound from "use-sound";
 import { EmptyPlayer } from "~/components/empty-player";
 import { Player } from "~/components/player";
 import { SongSearch } from "~/components/song-search";
@@ -21,17 +23,40 @@ type Props = {
 
 export default function PlayerScene({ party, initialPlaylist }: Props) {
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
-    initialPlaylist.playlist ?? []
+    initialPlaylist.playlist ?? [],
   );
+
+  const [playHorn] = useSound("/sounds/buzzer.mp3");
+  const lastHornTimeRef = useRef<number>(0);
+
+  // Throttled horn function
+  const playThrottledHorn = () => {
+    const now = Date.now();
+    const timeSinceLastHorn = now - lastHornTimeRef.current;
+
+    if (timeSinceLastHorn >= 5000) { // 5 seconds in milliseconds
+      toast.success("Someone sent a horn!");
+      playHorn();
+      lastHornTimeRef.current = now;
+    } else {
+      console.log(`Horn throttled. Try again in ${Math.ceil((5000 - timeSinceLastHorn) / 1000)} seconds.`);
+    }
+  };
 
   const socket = usePartySocket({
     host: env.NEXT_PUBLIC_PARTYKIT_URL,
-    room: party.hash!,
+    room: party.hash ?? "",
     onMessage(event) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const playlist = JSON.parse(event.data) as KaraokeParty["playlist"];
-      if (playlist) {
-        setPlaylist(playlist);
+      // TODO: Improve type safety
+      const eventData = JSON.parse(event.data);
+      console.log(eventData);
+
+      if (eventData.type === "horn") {
+        playThrottledHorn();
+      }
+
+      if (Array.isArray(eventData)) {
+        setPlaylist(eventData as KaraokeParty["playlist"]);
       }
     },
   });
@@ -54,7 +79,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         title,
         singerName,
         coverUrl,
-      } satisfies Message)
+      } satisfies Message),
     );
   };
 
@@ -63,7 +88,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       JSON.stringify({
         type: "remove-video",
         id: videoId,
-      } satisfies Message)
+      } satisfies Message),
     );
   };
 
@@ -75,7 +100,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         JSON.stringify({
           type: "mark-as-played",
           id: currentVideo.id,
-        } satisfies Message)
+        } satisfies Message),
       );
     }
   };

@@ -26,7 +26,11 @@ const RemoveVideo = z.object({
 	id: z.string(),
 });
 
-const Message = z.union([AddVideo, RemoveVideo, MarkAsPlayed]);
+const Horn = z.object({
+	type: z.literal("horn"),
+});
+
+const Message = z.union([AddVideo, RemoveVideo, MarkAsPlayed, Horn]);
 
 type KaraokePartySettings = {
 	orderByFairness: boolean;
@@ -144,6 +148,12 @@ export default class Server implements Party.Server {
 					this.room.broadcast(JSON.stringify(this.karaokeParty.playlist));
 				}
 
+				break;
+			}
+
+			case "horn": {
+				// Just broadcast the horn event to all clients
+				this.room.broadcast(JSON.stringify({ type: "horn" }));
 				break;
 			}
 

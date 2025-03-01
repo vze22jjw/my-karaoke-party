@@ -1,13 +1,13 @@
 "use client";
 
-import { type Party } from "@prisma/client";
-import { type Message, type KaraokeParty } from "party";
+import type { Party } from "@prisma/client";
+import type { Message, KaraokeParty } from "party";
 import usePartySocket from "partysocket/react";
 import { useEffect, useState } from "react";
 import { env } from "~/env";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
 import { SongSearch } from "~/components/song-search";
-import { ListMusic } from "lucide-react";
+import { ListMusic, Megaphone } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -27,6 +27,7 @@ export function PartyScene({
   const [name] = useLocalStorage<string>({ key: "name" });
   const router = useRouter();
 
+
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
     initialPlaylist?.playlist ?? [],
   );
@@ -37,11 +38,11 @@ export function PartyScene({
     if (!value) {
       router.push(`/join/${party.hash}`);
     }
-  }, [router, party.hash, name]);
+  }, [router, party.hash]);
 
   const socket = usePartySocket({
     host: env.NEXT_PUBLIC_PARTYKIT_URL,
-    room: party.hash!,
+    room: party.hash ?? "",
     // onOpen(_event) {
     //   if (name) {
     //     socket.send(
@@ -53,12 +54,22 @@ export function PartyScene({
     //   }
     // },
     onMessage(event) {
-      // TODO: Improve type safety
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        const eventData = JSON.parse(event.data);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const playlist = JSON.parse(event.data) as KaraokeParty["playlist"];
-      if (playlist) {
-        setPlaylist(playlist);
+        if (eventData.type === "horn") {
+          // toast.success("You sent a horn!");
+          // playHorn(); // Play the horn sound
+          // return;
+        }
+
+        // If it's an array, it's the playlist update
+        if (Array.isArray(eventData)) {
+          setPlaylist(eventData);
+        }
+      } catch (error) {
+        console.error("Error parsing message:", error);
       }
     },
   });
@@ -74,6 +85,14 @@ export function PartyScene({
       } satisfies Message),
     );
   };
+
+  const sendHorn = async () => {
+    socket.send(
+      JSON.stringify({
+        type: "horn",
+      } satisfies Message)
+    );
+  }
 
   const nextVideos = playlist.filter((video) => !video.playedAt);
   const nextVideo = nextVideos[0] ?? null;
@@ -92,7 +111,17 @@ export function PartyScene({
         </div>
       </div>
 
-      <div className="fixed bottom-0 z-50 flex w-full items-center bg-primary p-2 text-primary-foreground text-white">
+      <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-[100]">
+        <button
+          type="button"
+          className="rounded-full bg-yellow-200 p-2 text-black hover:text-white hover:bg-red-700 shadow-lg"
+          onClick={sendHorn}
+        >
+          <Megaphone size={32} />
+        </button>
+      </div>
+
+      <div className="fixed bottom-0 z-50 flex flex-col w-full items-center bg-primary p-2 text-primary-foreground text-white">
         <Accordion type="single" collapsible className="max-h-screen w-full">
           <AccordionItem value="item-1" className="border-0">
             <AccordionTrigger disabled={nextVideos.length < 2}>
@@ -102,7 +131,7 @@ export function PartyScene({
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <ul role="list" className="divide-y divide-accent-foreground">
+              <ul className="divide-y divide-accent-foreground">
                 {nextVideos.slice(1).map((video) => (
                   <li key={video.id} className="p-2 first:pt-0 last:pb-0">
                     {decode(video.title)}
