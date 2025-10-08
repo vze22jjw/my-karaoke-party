@@ -14,7 +14,7 @@ import {
   DrawerTrigger,
 } from "./ui/ui/drawer";
 import { Button } from "./ui/ui/button";
-import { Music, Users, Clock } from "lucide-react";
+import { Music, Clock } from "lucide-react";
 import { Skeleton } from "./ui/ui/skeleton";
 
 type Party = {
@@ -76,9 +76,8 @@ export function JoinParty() {
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
-        <ButtonHoverGradient type="button" className="w-full max-w-xs">
-          <Users className="mr-2 h-5 w-5" />
-          Join Party
+        <ButtonHoverGradient type="button">
+          Join Party 🎤
         </ButtonHoverGradient>
       </DrawerTrigger>
       <DrawerContent>

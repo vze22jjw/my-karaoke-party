@@ -17,7 +17,7 @@ export default async function Home() {
           placeholder="blur"
         />
 
-        <div className="flex flex-col gap-4 w-full items-center">
+        <div className="flex flex-col gap-2">
           <CreateParty />
           <JoinParty />
         </div>
