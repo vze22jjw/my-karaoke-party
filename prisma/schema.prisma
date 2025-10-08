@@ -22,13 +22,15 @@ model Video {
 }
 
 model Party {
-    id           Int            @id @default(autoincrement())
-    hash         String?        @unique
-    name         String
-    createdAt    DateTime       @default(now())
-    playlistItems PlaylistItem[]
+    id             Int            @id @default(autoincrement())
+    hash           String?        @unique
+    name           String
+    createdAt      DateTime       @default(now())
+    lastActivityAt DateTime       @default(now())
+    playlistItems  PlaylistItem[]
 
     @@index([hash])
+    @@index([lastActivityAt])
 }
 
 model PlaylistItem {

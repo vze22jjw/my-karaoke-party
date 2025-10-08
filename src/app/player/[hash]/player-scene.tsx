@@ -14,6 +14,7 @@ import { Player } from "~/components/player";
 import { SongSearch } from "~/components/song-search";
 import { Button } from "~/components/ui/ui/button";
 import { getUrl } from "~/utils/url";
+import { useRouter } from "next/navigation";
 
 type Props = {
   party: Party;
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export default function PlayerScene({ party, initialPlaylist }: Props) {
+  const router = useRouter();
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
     initialPlaylist.playlist ?? [],
   );
@@ -43,6 +45,25 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }, 3000);
 
     return () => clearInterval(interval);
+  }, [party.hash]);
+
+  // Send heartbeat every 60 seconds to keep party alive
+  useEffect(() => {
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        await fetch("/api/party/heartbeat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ hash: party.hash }),
+        });
+      } catch (error) {
+        console.error("Error sending heartbeat:", error);
+      }
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
 
   // Throttled horn function
@@ -157,15 +178,54 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }
   };
 
+  const handleCloseParty = async () => {
+    if (!confirm("Tem certeza que deseja fechar esta party? Todos os dados serão perdidos.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/party/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          hash: party.hash,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete party");
+      }
+
+      // Redirect to home page
+      router.push("/");
+    } catch (error) {
+      console.error("Error closing party:", error);
+      alert("Erro ao fechar a party. Tente novamente.");
+    }
+  };
+
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
   return (
     <div className="flex h-screen w-full flex-row flex-nowrap">
       <div className="grow-0 basis-1/3 overflow-y-auto border-r border-slate-500 px-4">
-        <div className="py-4 text-center">
-          <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
-            {party.name}
-          </h1>
+        <div className="py-4">
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              onClick={handleCloseParty}
+              variant="destructive"
+              size="icon"
+              className="shrink-0"
+              title="Fechar party"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
+              {party.name}
+            </h1>
+          </div>
         </div>
         <SongSearch
           key={party.hash}

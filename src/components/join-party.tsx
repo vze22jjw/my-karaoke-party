@@ -76,8 +76,8 @@ export function JoinParty() {
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
-        <div>
-          <ButtonHoverGradient type="button">
+        <div className="w-full">
+          <ButtonHoverGradient type="button" className="w-full">
             Join Party 🎤
           </ButtonHoverGradient>
         </div>

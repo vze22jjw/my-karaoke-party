@@ -47,6 +47,11 @@ export function PartyScene({
         if (response.ok) {
           const data = await response.json();
           setPlaylist(data.playlist);
+        } else if (response.status === 404) {
+          // Party was deleted
+          clearInterval(interval);
+          alert("A party foi encerrada pelo host.");
+          router.push("/");
         }
       } catch (error) {
         console.error("Error fetching playlist:", error);
@@ -54,6 +59,25 @@ export function PartyScene({
     }, 3000);
 
     return () => clearInterval(interval);
+  }, [party.hash, router]);
+
+  // Send heartbeat every 60 seconds to keep party alive
+  useEffect(() => {
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        await fetch("/api/party/heartbeat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ hash: party.hash }),
+        });
+      } catch (error) {
+        console.error("Error sending heartbeat:", error);
+      }
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {

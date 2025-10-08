@@ -40,6 +40,15 @@ export async function POST(request: Request) {
       },
     });
 
+    // Update party lastActivityAt (renew 20 min timer)
+    // @ts-ignore - Prisma Client needs regeneration after schema change
+    await db.party.update({
+      where: { id: party.id },
+      data: {
+        lastActivityAt: new Date(),
+      },
+    });
+
     log.info("Video marked as played", {
       partyHash,
       videoId,
