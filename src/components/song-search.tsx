@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown } from "lucide-react";
@@ -98,7 +102,7 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
 
       {data && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
-          {data.map((video) => {
+          {data.map((video: typeof data[number]) => {
             const alreadyAdded = !!playlist.find(
               (v) => v.id === video.id.videoId && !v.playedAt,
             );

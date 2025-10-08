@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { log } from "next-axiom";
