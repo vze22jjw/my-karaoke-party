@@ -13,6 +13,7 @@ import { EmptyPlayer } from "~/components/empty-player";
 import { Player } from "~/components/player";
 import { SongSearch } from "~/components/song-search";
 import { Button } from "~/components/ui/ui/button";
+import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 
@@ -211,20 +212,20 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   return (
     <div className="flex h-screen w-full flex-row flex-nowrap">
       <div className="grow-0 basis-1/3 overflow-y-auto border-r border-slate-500 px-4">
-        <div className="py-4">
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              onClick={handleCloseParty}
-              variant="destructive"
-              size="icon"
-              className="shrink-0"
-              title="Fechar party"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <div className="py-4 space-y-4">
+          <div className="text-center">
             <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
               {party.name}
             </h1>
+          </div>
+          <div className="flex justify-center">
+            <ButtonHoverGradient
+              onClick={handleCloseParty}
+              type="button"
+              className="bg-red-600"
+            >
+              Fechar Party ❌
+            </ButtonHoverGradient>
           </div>
         </div>
         <SongSearch
