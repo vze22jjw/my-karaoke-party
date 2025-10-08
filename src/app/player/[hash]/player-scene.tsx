@@ -57,7 +57,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         if (response.ok) {
           const data = await response.json();
           const newParticipants = data.participants as string[];
-          
+
           // Detectar novos participantes
           const previousParticipants = participants;
           const addedParticipants = newParticipants.filter(

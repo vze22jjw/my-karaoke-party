@@ -11,6 +11,7 @@ import { cn } from "~/lib/utils";
 import { Button } from "./ui/ui/button";
 import { MicVocal, SkipForward, Youtube } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
+import { getCodePenEmbedUrl } from "~/utils/youtube-embed";
 
 type Props = {
   joinPartyUrl: string;
@@ -30,6 +31,7 @@ export function Player({
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [useCodePenBypass, setUseCodePenBypass] = useState(false);
 
   const opts: YouTubeProps["opts"] = {
     playerVars: {
@@ -63,8 +65,15 @@ export function Player({
     setIsPlaying(false);
   };
 
-  const onPlayerError: YouTubeProps["onError"] = (_event) => {
-    setShowOpenInYouTubeButton(true);
+  const onPlayerError: YouTubeProps["onError"] = (event) => {
+    console.log("Player error, trying CodePen bypass", { event });
+    // Primeiro tenta o bypass do CodePen
+    if (!useCodePenBypass) {
+      setUseCodePenBypass(true);
+    } else {
+      // Se o bypass também falhou, mostra botão do YouTube
+      setShowOpenInYouTubeButton(true);
+    }
   };
 
   const openYouTubeTab = () => {
@@ -78,6 +87,50 @@ export function Player({
       onPlayerEnd();
     }
   };
+
+  // Se usar CodePen bypass, renderiza iframe customizado
+  if (useCodePenBypass && !showOpenInYouTubeButton) {
+    const codePenUrl = getCodePenEmbedUrl(video.id, {
+      autoplay: 1,
+      mute: 0,
+      controls: 1,
+      rel: 0,
+    });
+
+    return (
+      <div className="relative z-0 h-full">
+        <iframe
+          src={codePenUrl}
+          className="h-full w-full animate-in fade-in"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          style={{ border: 0 }}
+          title={decode(video.title)}
+        />
+
+        <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">
+          <QrCode url={joinPartyUrl} />
+
+          <div
+            className={`self-end p-2 ${
+              isPlaying && isFullscreen ? "hidden" : "block"
+            }`}
+          >
+            <Button
+              variant={"secondary"}
+              type="button"
+              onClick={() => {
+                onPlayerEnd();
+              }}
+            >
+              <SkipForward className="mr-2 h-5 w-5" />
+              Skip
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showOpenInYouTubeButton) {
     return (
