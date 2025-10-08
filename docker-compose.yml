@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mykaraoke-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: mykaraoke
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: mykaraoke
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mykaraoke"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mykaraoke-app
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://mykaraoke:${DB_PASSWORD}@postgres:5432/mykaraoke
+
+      # YouTube API
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+
+      # App URL (ajuste para seu domínio)
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+
+      # Node
+      NODE_ENV: production
+    networks:
+      - portainer_default
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      # Habilitar Traefik
+      - "traefik.enable=true"
+
+      # Network do Traefik (Portainer)
+      - "traefik.docker.network=portainer_default"
+
+      # Roteador HTTP (redireciona para HTTPS)
+      - "traefik.http.routers.mykaraoke-http.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.mykaraoke-http.entrypoints=web"
+      - "traefik.http.routers.mykaraoke-http.middlewares=https-redirect"
+
+      # Roteador HTTPS
+      - "traefik.http.routers.mykaraoke-https.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.mykaraoke-https.entrypoints=websecure"
+      - "traefik.http.routers.mykaraoke-https.tls=true"
+      - "traefik.http.routers.mykaraoke-https.tls.certresolver=letsencrypt"
+
+      # Serviço
+      - "traefik.http.services.mykaraoke.loadbalancer.server.port=3000"
+
+      # Middleware de redirect HTTP -> HTTPS
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+  # Cron Job para limpeza automática
+  cleanup-cron:
+    image: curlimages/curl:latest
+    container_name: mykaraoke-cleanup
+    restart: always
+    depends_on:
+      - app
+    networks:
+      - internal
+    entrypoint: /bin/sh
+    command: >
+      -c "while true; do
+        sleep 600;
+        curl -f http://app:3000/api/cron/cleanup-parties || echo 'Cleanup failed';
+      done"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  # Network do Portainer (onde o Traefik também está)
+  portainer_default:
+    external: true
+
+  # Network interna (PostgreSQL e comunicação entre containers)
+  internal:
+    driver: bridge

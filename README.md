@@ -100,7 +100,29 @@ Based on [T3 App](https://create.t3.gg/)
 - ✅ **No PartyKit required!** The app now uses REST API with polling for real-time updates
 - ✅ **Works on Windows!** 100% cross-platform compatible
 - ⚡ Playlist updates every 3 seconds via polling
-- 🔧 For production deployment, consider adding environment variable for API base URL
+- � **Docker ready!** Deploy with Traefik + Portainer
+- 🔒 **Auto SSL!** Let's Encrypt integration via Traefik
+
+## Production Deployment
+
+### Deploy with Docker + Traefik + Portainer
+
+For production deployment on your own VPS with Traefik reverse proxy:
+
+📖 **[Complete Traefik + Portainer Guide](doc/DEPLOY-TRAEFIK-PORTAINER.md)**
+
+Quick overview:
+- ✅ Traefik reverse proxy with automatic SSL
+- ✅ Portainer for container management
+- ✅ Multi-domain support
+- ✅ Auto cleanup cron job
+- ✅ Zero downtime updates
+
+### Alternative: Deploy without Docker
+
+For native deployment on Ubuntu VPS:
+
+📖 **[Ubuntu VPS Deployment Guide](doc/DEPLOY-VPS-UBUNTU.md)**
 
 ## Project Structure
 
@@ -239,7 +261,29 @@ Baseado no [T3 App](https://create.t3.gg/)
 - ✅ **PartyKit não é necessário!** O app agora usa REST API com polling para atualizações em tempo real
 - ✅ **Funciona no Windows!** 100% compatível multi-plataforma
 - ⚡ Playlist atualiza a cada 3 segundos via polling
-- 🔧 Para deploy em produção, considere adicionar variável de ambiente para URL base da API
+- � **Pronto para Docker!** Deploy com Traefik + Portainer
+- 🔒 **SSL automático!** Integração Let's Encrypt via Traefik
+
+## Deploy em Produção
+
+### Deploy com Docker + Traefik + Portainer
+
+Para deploy em produção no seu próprio VPS com Traefik como reverse proxy:
+
+📖 **[Guia Completo Traefik + Portainer](doc/DEPLOY-TRAEFIK-PORTAINER.md)**
+
+Visão geral:
+- ✅ Reverse proxy Traefik com SSL automático
+- ✅ Portainer para gerenciamento de containers
+- ✅ Suporte multi-domínios
+- ✅ Cron job de limpeza automática
+- ✅ Atualizações sem downtime
+
+### Alternativa: Deploy sem Docker
+
+Para deploy nativo em VPS Ubuntu:
+
+📖 **[Guia de Deploy Ubuntu VPS](doc/DEPLOY-VPS-UBUNTU.md)**
 
 ## Estrutura do Projeto
 

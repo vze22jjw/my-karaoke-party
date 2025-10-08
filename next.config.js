@@ -18,6 +18,9 @@ await import("./src/env.js");
 
 /** @type {import("next").NextConfig} */
 const config = {
+  // Output standalone para Docker
+  output: "standalone",
+
   images: {
     remotePatterns: [
       {
