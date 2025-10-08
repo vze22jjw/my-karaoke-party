@@ -76,9 +76,11 @@ export function JoinParty() {
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
-        <ButtonHoverGradient type="button">
-          Join Party 🎤
-        </ButtonHoverGradient>
+        <div>
+          <ButtonHoverGradient type="button">
+            Join Party 🎤
+          </ButtonHoverGradient>
+        </div>
       </DrawerTrigger>
       <DrawerContent>
         <div className="mx-auto w-full max-w-2xl">
