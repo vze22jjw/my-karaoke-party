@@ -97,6 +97,14 @@ export function Player({
       rel: 0,
     });
 
+    // Timeout de 8 segundos - se não carregar, mostra botão YouTube
+    setTimeout(() => {
+      if (useCodePenBypass && !showOpenInYouTubeButton) {
+        console.log("CodePen bypass timeout - showing YouTube button");
+        setShowOpenInYouTubeButton(true);
+      }
+    }, 8000);
+
     return (
       <div className="relative z-0 h-full">
         <iframe
@@ -106,7 +114,20 @@ export function Player({
           allowFullScreen
           style={{ border: 0 }}
           title={decode(video.title)}
+          onError={() => {
+            console.log("CodePen iframe error - showing YouTube button");
+            setShowOpenInYouTubeButton(true);
+          }}
         />
+        
+        <div className="absolute top-0 left-0 right-0 z-20 bg-black/80 p-4 text-center">
+          <p className="text-yellow-400 text-sm animate-pulse">
+            Tentando reproduzir com bypass...
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Se não funcionar em 8 segundos, abrirá no YouTube
+          </p>
+        </div>
 
         <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">
           <QrCode url={joinPartyUrl} />
@@ -154,20 +175,34 @@ export function Player({
           </h2>
         </div>
 
-        <div>
-          <h3 className="mb-2 scroll-m-20 text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
-            This video cannot be embedded. Click the button to open a new tab in
-            YouTube.
+        <div className="space-y-4">
+          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-4">
+            <h3 className="text-xl font-bold text-red-400 mb-2">
+              🚫 Reprodução Bloqueada pelo Proprietário
+            </h3>
+            <p className="text-sm text-gray-300 mb-2">
+              O proprietário deste vídeo desativou a reprodução em outros sites.
+            </p>
+            <p className="text-xs text-gray-400">
+              Tentamos: YouTube embed direto ❌ | CodePen bypass ❌
+            </p>
+          </div>
+
+          <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
+            Clique no botão para abrir no YouTube
           </h3>
+          
           <Button
             type="button"
-            className="w-fit self-center animate-in fade-in zoom-in"
+            size="lg"
+            className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
             onClick={() => openYouTubeTab()}
           >
-            Play in YouTube
-            <Youtube className="ml-2" />
+            <Youtube className="mr-2" size={24} />
+            Abrir no YouTube
           </Button>
-          <div className="mt-2">
+          
+          <div className="mt-4">
             <Button
               className="animate-in fade-in zoom-in"
               variant={"secondary"}
@@ -177,9 +212,13 @@ export function Player({
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />
-              Skip
+              Pular Música
             </Button>
           </div>
+
+          <p className="text-xs text-gray-500 mt-4">
+            💡 Dica: Escolha vídeos de canais oficiais para evitar esse problema
+          </p>
         </div>
 
         <div className="relative flex w-full basis-1/4 items-end text-center">
