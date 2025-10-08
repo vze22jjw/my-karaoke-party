@@ -27,6 +27,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
     initialPlaylist.playlist ?? [],
   );
+  const [participants, setParticipants] = useState<string[]>([]);
 
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
@@ -47,6 +48,43 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
     return () => clearInterval(interval);
   }, [party.hash]);
+
+  // Poll for participants updates every 3 seconds
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        const response = await fetch(`/api/party/participants/${party.hash}`);
+        if (response.ok) {
+          const data = await response.json();
+          const newParticipants = data.participants as string[];
+          
+          // Detectar novos participantes
+          const previousParticipants = participants;
+          const addedParticipants = newParticipants.filter(
+            (p) => !previousParticipants.includes(p)
+          );
+
+          // Mostrar toast para cada novo participante
+          addedParticipants.forEach((participant) => {
+            toast.success(`🎤 ${participant} entrou na party!`, {
+              duration: 3000,
+            });
+          });
+
+          setParticipants(newParticipants);
+        }
+      } catch (error) {
+        console.error("Error fetching participants:", error);
+      }
+    };
+
+    // Buscar imediatamente
+    fetchParticipants();
+
+    // E depois a cada 3 segundos
+    const interval = setInterval(fetchParticipants, 3000);
+    return () => clearInterval(interval);
+  }, [party.hash, participants]);
 
   // Send heartbeat every 60 seconds to keep party alive
   useEffect(() => {

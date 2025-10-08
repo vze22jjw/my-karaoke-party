@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { PreviewPlayer } from "~/components/preview-player";
 import { decode } from "html-entities";
+import { toast } from "sonner";
 
 export function PartyScene({
   party,
@@ -68,7 +69,24 @@ export function PartyScene({
         const response = await fetch(`/api/party/participants/${party.hash}`);
         if (response.ok) {
           const data = await response.json();
-          setParticipants(data.participants);
+          const newParticipants = data.participants as string[];
+          
+          // Detectar novos participantes
+          const previousParticipants = participants;
+          const addedParticipants = newParticipants.filter(
+            (p) => !previousParticipants.includes(p)
+          );
+
+          // Mostrar toast para cada novo participante (exceto você mesmo)
+          addedParticipants.forEach((participant) => {
+            if (participant !== name) {
+              toast.success(`🎤 ${participant} entrou na party!`, {
+                duration: 3000,
+              });
+            }
+          });
+
+          setParticipants(newParticipants);
         }
       } catch (error) {
         console.error("Error fetching participants:", error);
@@ -81,7 +99,7 @@ export function PartyScene({
     // E depois a cada 3 segundos
     const interval = setInterval(fetchParticipants, 3000);
     return () => clearInterval(interval);
-  }, [party.hash]);
+  }, [party.hash, participants, name]);
 
   // Poll for playlist updates every 3 seconds
   useEffect(() => {
