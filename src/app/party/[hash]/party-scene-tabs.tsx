@@ -28,15 +28,60 @@ export function PartyScene({
   );
 
   // Lista de participantes únicos (baseado em singerName)
-  const [participants, setParticipants] = useState<string[]>([]);
+  // Inicializar com participantes do initialPlaylist
+  const [participants, setParticipants] = useState<string[]>(() => {
+    if (initialPlaylist?.playlist) {
+      const uniqueParticipants = Array.from(
+        new Set(initialPlaylist.playlist.map((item) => item.singerName))
+      ).filter(Boolean) as string[];
+      return uniqueParticipants;
+    }
+    return [];
+  });
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
 
     if (!value) {
       router.push(`/join/${party.hash}`);
+    } else {
+      // Registrar participante na party
+      fetch("/api/party/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          hash: party.hash,
+          name: value,
+        }),
+      }).catch((error) => {
+        console.error("Error joining party:", error);
+      });
     }
   }, [router, party.hash]);
+
+  // Poll for participants updates every 3 seconds
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        const response = await fetch(`/api/party/participants/${party.hash}`);
+        if (response.ok) {
+          const data = await response.json();
+          setParticipants(data.participants);
+        }
+      } catch (error) {
+        console.error("Error fetching participants:", error);
+      }
+    };
+
+    // Buscar imediatamente
+    fetchParticipants();
+
+    // E depois a cada 3 segundos
+    const interval = setInterval(fetchParticipants, 3000);
+    return () => clearInterval(interval);
+  }, [party.hash]);
 
   // Poll for playlist updates every 3 seconds
   useEffect(() => {
@@ -46,12 +91,6 @@ export function PartyScene({
         if (response.ok) {
           const data = await response.json();
           setPlaylist(data.playlist);
-
-          // Extrair participantes únicos
-          const uniqueParticipants = Array.from(
-            new Set(data.playlist.map((item: any) => item.singerName))
-          ).filter(Boolean) as string[];
-          setParticipants(uniqueParticipants);
         } else if (response.status === 404) {
           // Party was deleted
           clearInterval(interval);

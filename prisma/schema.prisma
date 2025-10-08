@@ -28,9 +28,21 @@ model Party {
     createdAt      DateTime       @default(now())
     lastActivityAt DateTime       @default(now())
     playlistItems  PlaylistItem[]
+    participants   PartyParticipant[]
 
     @@index([hash])
     @@index([lastActivityAt])
+}
+
+model PartyParticipant {
+    id        Int      @id @default(autoincrement())
+    partyId   Int
+    party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+    name      String
+    joinedAt  DateTime @default(now())
+
+    @@unique([partyId, name])
+    @@index([partyId])
 }
 
 model PlaylistItem {
