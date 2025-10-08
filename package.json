@@ -9,7 +9,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "dev": "next dev",
-    "dev:full": "pwsh -File start-dev.ps1",
+    "dev:full": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",
     "dev:full:sh": "bash start-dev.sh",
     "postinstall": "prisma generate",
     "lint": "next lint",
