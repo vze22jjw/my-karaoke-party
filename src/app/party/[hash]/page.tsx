@@ -31,9 +31,9 @@ export default async function PartyHashPage({ params }: Props) {
   }
 
   // Initialize with empty playlist - will be loaded via REST API polling
-  const playlist: KaraokeParty = { 
-    playlist: [], 
-    settings: { orderByFairness: true } 
+  const playlist: KaraokeParty = {
+    playlist: [],
+    settings: { orderByFairness: true }
   };
 
   return (

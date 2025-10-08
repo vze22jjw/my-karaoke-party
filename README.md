@@ -57,27 +57,43 @@ Based on [T3 App](https://create.t3.gg/)
    - `DATABASE_URL` - PostgreSQL connection string
    - `YOUTUBE_API_KEY` - YouTube Data API v3 key
 
-4. **Start PostgreSQL with Docker**
+4. **Start everything with one command** 🚀
+
+   **Windows (PowerShell):**
+   ```powershell
+   pnpm dev:full
+   ```
+
+   **Linux/macOS:**
    ```bash
+   pnpm dev:full:sh
+   ```
+
+   This will automatically:
+   - ✅ Start PostgreSQL in Docker
+   - ✅ Sync database schema
+   - ✅ Start the development server
+
+   **Or manually:**
+   ```bash
+   # Start PostgreSQL
    docker run --name karaokeparty-postgres \
      -e POSTGRES_PASSWORD=password \
      -e POSTGRES_DB=mykaraoke_party \
      -p 5432:5432 \
      -d postgres:15
-   ```
 
-5. **Push database schema**
-   ```bash
+   # Push database schema
    pnpm db:push
-   ```
 
-6. **Start the development server**
-   ```bash
+   # Start dev server
    pnpm dev
    ```
 
-7. **Open your browser**
+5. **Open your browser**
    Navigate to `http://localhost:3000`
+
+> 📝 **Tip:** Check [SCRIPTS.md](SCRIPTS.md) for more details about the development scripts
 
 ### Important Notes
 
@@ -180,27 +196,43 @@ Baseado no [T3 App](https://create.t3.gg/)
    - `DATABASE_URL` - String de conexão PostgreSQL
    - `YOUTUBE_API_KEY` - Chave da API YouTube Data v3
 
-4. **Inicie o PostgreSQL com Docker**
+4. **Inicie tudo com um comando** 🚀
+
+   **Windows (PowerShell):**
+   ```powershell
+   pnpm dev:full
+   ```
+
+   **Linux/macOS:**
    ```bash
+   pnpm dev:full:sh
+   ```
+
+   Isso irá automaticamente:
+   - ✅ Iniciar PostgreSQL no Docker
+   - ✅ Sincronizar schema do banco
+   - ✅ Iniciar o servidor de desenvolvimento
+
+   **Ou manualmente:**
+   ```bash
+   # Iniciar PostgreSQL
    docker run --name karaokeparty-postgres \
      -e POSTGRES_PASSWORD=password \
      -e POSTGRES_DB=mykaraoke_party \
      -p 5432:5432 \
      -d postgres:15
-   ```
 
-5. **Sincronize o schema do banco**
-   ```bash
+   # Sincronizar schema
    pnpm db:push
-   ```
 
-6. **Inicie o servidor de desenvolvimento**
-   ```bash
+   # Iniciar servidor
    pnpm dev
    ```
 
-7. **Abra seu navegador**
+5. **Abra seu navegador**
    Acesse `http://localhost:3000`
+
+> 📝 **Dica:** Veja [SCRIPTS.md](SCRIPTS.md) para mais detalhes sobre os scripts de desenvolvimento
 
 ### Notas Importantes
 
