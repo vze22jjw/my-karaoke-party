@@ -124,6 +124,28 @@ For native deployment on Ubuntu VPS:
 
 📖 **[Ubuntu VPS Deployment Guide](doc/DEPLOY-VPS-UBUNTU.md)**
 
+## Admin Commands
+
+### Cleanup All Parties
+
+Delete all parties from the system:
+
+```bash
+# Preview (shows what would be deleted)
+pnpm cleanup:all
+
+# Delete all parties (with confirmation)
+pnpm cleanup:all --confirm
+```
+
+📖 **[Complete Cleanup Guide](doc/CLEANUP-ALL.md)**
+
+Features:
+- 🔍 Preview mode (safe by default)
+- ✅ Interactive confirmation
+- 🔒 Admin token protection
+- 📊 Detailed statistics
+
 ## Project Structure
 
 ```
@@ -284,6 +306,28 @@ Visão geral:
 Para deploy nativo em VPS Ubuntu:
 
 📖 **[Guia de Deploy Ubuntu VPS](doc/DEPLOY-VPS-UBUNTU.md)**
+
+## Comandos de Administração
+
+### Limpar Todas as Parties
+
+Deletar todas as parties do sistema:
+
+```bash
+# Preview (mostra o que seria deletado)
+pnpm cleanup:all
+
+# Deletar todas as parties (com confirmação)
+pnpm cleanup:all --confirm
+```
+
+📖 **[Guia Completo de Limpeza](doc/CLEANUP-ALL.md)**
+
+Funcionalidades:
+- 🔍 Modo preview (seguro por padrão)
+- ✅ Confirmação interativa
+- 🔒 Proteção com token de admin
+- 📊 Estatísticas detalhadas
 
 ## Estrutura do Projeto
 
