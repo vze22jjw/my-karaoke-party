@@ -5,16 +5,14 @@ import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import { ListPlus, Maximize, Minimize, SkipForward, X } from "lucide-react";
 import Image from "next/image";
-import type { Message, KaraokeParty } from "party";
-import usePartySocket from "partysocket/react";
-import { useState, useRef } from "react";
+import type { KaraokeParty } from "party";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import useSound from "use-sound";
 import { EmptyPlayer } from "~/components/empty-player";
 import { Player } from "~/components/player";
 import { SongSearch } from "~/components/song-search";
 import { Button } from "~/components/ui/ui/button";
-import { env } from "~/env";
 import { getUrl } from "~/utils/url";
 
 type Props = {
@@ -30,6 +28,23 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
 
+  // Poll for playlist updates every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/playlist/${party.hash}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylist(data.playlist);
+        }
+      } catch (error) {
+        console.error("Error fetching playlist:", error);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [party.hash]);
+
   // Throttled horn function
   const playThrottledHorn = () => {
     const now = Date.now();
@@ -44,65 +59,101 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }
   };
 
-  const socket = usePartySocket({
-    host: env.NEXT_PUBLIC_PARTYKIT_URL,
-    room: party.hash ?? "",
-    onMessage(event) {
-      // TODO: Improve type safety
-      const eventData = JSON.parse(event.data);
-      console.log(eventData);
-
-      if (eventData.type === "horn") {
-        playThrottledHorn();
-      }
-
-      if (Array.isArray(eventData)) {
-        setPlaylist(eventData as KaraokeParty["playlist"]);
-      }
-    },
-  });
-
   const { ref, toggle, fullscreen } = useFullscreen();
 
   const currentVideo = playlist.find((video) => !video.playedAt);
   const nextVideos = playlist.filter((video) => !video.playedAt);
 
-  const addSong = (videoId: string, title: string, coverUrl: string) => {
+  const addSong = async (videoId: string, title: string, coverUrl: string) => {
     const singerName = readLocalStorageValue({
       key: "name",
       defaultValue: "Host",
     });
 
-    socket.send(
-      JSON.stringify({
-        type: "add-video",
-        id: videoId,
-        title,
-        singerName,
-        coverUrl,
-      } satisfies Message),
-    );
+    try {
+      // Use REST API
+      const response = await fetch("/api/playlist/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          partyHash: party.hash,
+          videoId,
+          title,
+          coverUrl,
+          singerName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add song");
+      }
+
+      // Reload playlist
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      const data = await playlistResponse.json();
+      setPlaylist(data.playlist);
+    } catch (error) {
+      console.error("Error adding song:", error);
+    }
   };
 
-  const removeSong = (videoId: string) => {
-    socket.send(
-      JSON.stringify({
-        type: "remove-video",
-        id: videoId,
-      } satisfies Message),
-    );
+  const removeSong = async (videoId: string) => {
+    try {
+      // Use REST API
+      const response = await fetch("/api/playlist/remove", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          partyHash: party.hash,
+          videoId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to remove song");
+      }
+
+      // Reload playlist
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      const data = await playlistResponse.json();
+      setPlaylist(data.playlist);
+    } catch (error) {
+      console.error("Error removing song:", error);
+    }
   };
 
-  const markAsPlayed = () => {
+  const markAsPlayed = async () => {
     if (currentVideo) {
       // setShowOpenInYouTubeButton(false);
 
-      socket.send(
-        JSON.stringify({
-          type: "mark-as-played",
-          id: currentVideo.id,
-        } satisfies Message),
-      );
+      try {
+        // Use REST API
+        const response = await fetch("/api/playlist/played", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            partyHash: party.hash,
+            videoId: currentVideo.id,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to mark as played");
+        }
+
+        // Reload playlist
+        const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+        const data = await playlistResponse.json();
+        setPlaylist(data.playlist);
+      } catch (error) {
+        console.error("Error marking as played:", error);
+      }
     }
   };
 
@@ -162,6 +213,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
                       <Image
                         src={v.coverUrl}
                         fill={true}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="rounded-lg hover:opacity-50"
                         alt="Cover"
                       />

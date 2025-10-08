@@ -2,10 +2,8 @@
 "use client";
 
 import type { Party } from "@prisma/client";
-import type { Message, KaraokeParty } from "party";
-import usePartySocket from "partysocket/react";
+import type { KaraokeParty } from "party";
 import { useEffect, useState } from "react";
-import { env } from "~/env";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
 import { SongSearch } from "~/components/song-search";
 import { ListMusic, Megaphone } from "lucide-react";
@@ -41,58 +39,58 @@ export function PartyScene({
     }
   }, [router, party.hash]);
 
-  const socket = usePartySocket({
-    host: env.NEXT_PUBLIC_PARTYKIT_URL,
-    room: party.hash ?? "",
-    // onOpen(_event) {
-    //   if (name) {
-    //     socket.send(
-    //       JSON.stringify({
-    //         type: "join",
-    //         name,
-    //       }),
-    //     );
-    //   }
-    // },
-    onMessage(event) {
+  // Poll for playlist updates every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
       try {
-        const eventData = JSON.parse(event.data);
-
-        if (eventData.type === "horn") {
-          // toast.success("You sent a horn!");
-          // playHorn(); // Play the horn sound
-          // return;
-        }
-
-        // If it's an array, it's the playlist update
-        if (Array.isArray(eventData)) {
-          setPlaylist(eventData);
+        const response = await fetch(`/api/playlist/${party.hash}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylist(data.playlist);
         }
       } catch (error) {
-        console.error("Error parsing message:", error);
+        console.error("Error fetching playlist:", error);
       }
-    },
-  });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [party.hash]);
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
-    socket.send(
-      JSON.stringify({
-        type: "add-video",
-        id: videoId,
-        title,
-        singerName: name,
-        coverUrl,
-      } satisfies Message),
-    );
+    try {
+      // Use REST API
+      const response = await fetch("/api/playlist/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          partyHash: party.hash,
+          videoId,
+          title,
+          coverUrl,
+          singerName: name,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add song");
+      }
+
+      // Reload playlist
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      const data = await playlistResponse.json();
+      setPlaylist(data.playlist);
+    } catch (error) {
+      console.error("Error adding song:", error);
+      alert("Erro ao adicionar música. Tente novamente.");
+    }
   };
 
-  const sendHorn = async () => {
-    socket.send(
-      JSON.stringify({
-        type: "horn",
-      } satisfies Message)
-    );
-  }
+  // Horn feature disabled (PartyKit removed)
+  // const sendHorn = async () => {
+  //   console.log("Horn feature temporarily disabled");
+  // }
 
   const nextVideos = playlist.filter((video) => !video.playedAt);
   const nextVideo = nextVideos[0] ?? null;
@@ -111,15 +109,15 @@ export function PartyScene({
         </div>
       </div>
 
-      <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-[100]">
+      {/* Horn button disabled - PartyKit removed */}
+      {/* <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-[100]">
         <button
           type="button"
           className="rounded-full bg-yellow-200 p-2 text-black hover:text-white hover:bg-red-700 shadow-lg"
-          onClick={sendHorn}
         >
           <Megaphone size={32} />
         </button>
-      </div>
+      </div> */}
 
       <div className="fixed bottom-0 z-50 flex flex-col w-full items-center bg-primary p-2 text-primary-foreground text-white">
         <Accordion type="single" collapsible className="max-h-screen w-full">

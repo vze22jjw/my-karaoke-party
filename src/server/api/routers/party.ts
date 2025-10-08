@@ -11,21 +11,30 @@ export const partyRouter = createTRPCRouter({
 
       const party = await ctx.db.party.createWithHash(input);
 
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${party.hash}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      // Try to initialize PartyKit room, but don't fail if it's not available (dev mode)
+      try {
+        const res = await fetch(
+          `${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${party.hash}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
           },
-        },
-      );
+        );
 
-      if (!res.ok) {
-        await ctx.db.party.delete({ where: { id: party.id } });
-
-        log.error("Failed to create party", { response: res });
-        throw new Error("Failed to create party");
+        if (!res.ok) {
+          log.warn("PartyKit not available - running in local mode without real-time features", {
+            status: res.status,
+            statusText: res.statusText
+          });
+        } else {
+          log.info("PartyKit room created successfully");
+        }
+      } catch (error) {
+        log.warn("PartyKit not available - running in local mode without real-time features", {
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
 
       log.info("Party created", { party });

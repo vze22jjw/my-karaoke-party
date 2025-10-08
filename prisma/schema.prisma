@@ -22,10 +22,30 @@ model Video {
 }
 
 model Party {
-    id        Int      @id @default(autoincrement())
-    hash      String?  @unique
-    name      String
-    createdAt DateTime @default(now())
+    id           Int            @id @default(autoincrement())
+    hash         String?        @unique
+    name         String
+    createdAt    DateTime       @default(now())
+    playlistItems PlaylistItem[]
 
     @@index([hash])
+}
+
+model PlaylistItem {
+    id         Int       @id @default(autoincrement())
+    partyId    Int
+    party      Party     @relation(fields: [partyId], references: [id], onDelete: Cascade)
+    videoId    String
+    title      String
+    artist     String?
+    song       String?
+    coverUrl   String
+    duration   String?
+    singerName String
+    addedAt    DateTime  @default(now())
+    playedAt   DateTime?
+    orderIndex Int       @default(0)
+
+    @@index([partyId])
+    @@index([playedAt])
 }

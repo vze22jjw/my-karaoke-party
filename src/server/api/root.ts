@@ -1,5 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { partyRouter } from "./routers/party";
+import { playlistRouter } from "./routers/playlist";
 import { youtubeRouter } from "./routers/youtube";
 
 /**
@@ -9,6 +10,7 @@ import { youtubeRouter } from "./routers/youtube";
  */
 export const appRouter = createTRPCRouter({
   party: partyRouter,
+  playlist: playlistRouter,
   youtube: youtubeRouter,
 });
 

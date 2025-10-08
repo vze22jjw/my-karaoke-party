@@ -31,25 +31,28 @@ export default async function PartyHashPage({ params }: Props) {
     return <div>Party not found</div>;
   }
 
-  const req = await fetch(
-    `${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`,
-    {
-      method: "GET",
-      next: {
-        revalidate: 0,
+  // Try to get playlist from PartyKit, but use empty playlist if not available
+  let playlist: KaraokeParty = { playlist: [], settings: { orderByFairness: true } };
+
+  try {
+    const req = await fetch(
+      `${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`,
+      {
+        method: "GET",
+        next: {
+          revalidate: 0,
+        },
       },
-    },
-  );
+    );
 
-  if (!req.ok) {
-    if (req.status === 404) {
-      notFound();
+    if (req.ok) {
+      playlist = (await req.json()) as KaraokeParty;
     } else {
-      throw new Error("Something went wrong.");
+      console.warn("PartyKit not available - using empty playlist");
     }
+  } catch (error) {
+    console.warn("PartyKit not available - using empty playlist", error);
   }
-
-  const playlist = (await req.json()) as KaraokeParty;
 
   return (
     <PartyScene key={party.hash} party={party} initialPlaylist={playlist} />

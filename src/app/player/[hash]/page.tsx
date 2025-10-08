@@ -1,5 +1,4 @@
 import { api } from "~/trpc/server";
-import { env } from "~/env";
 import { notFound } from "next/navigation";
 import { type KaraokeParty } from "party";
 import PlayerScene from "./player-scene";
@@ -25,30 +24,33 @@ export async function generateMetadata({ params }: Props) {
 export default async function PartyPage({ params }: Props) {
   const partyHash = params.hash;
 
-  const partyPromise = api.party.getByHash({ hash: partyHash });
-
-  const req = fetch(`${env.NEXT_PUBLIC_PARTYKIT_URL}/party/${partyHash}`, {
-    method: "GET",
-    next: {
-      revalidate: 0,
-    },
-  });
-
-  const [party, partyKitRes] = await Promise.all([partyPromise, req]);
+  const party = await api.party.getByHash({ hash: partyHash });
 
   if (!party) {
     notFound();
   }
 
-  if (!partyKitRes.ok) {
-    if (partyKitRes.status === 404) {
-      notFound();
-    } else {
-      throw new Error("Something went wrong.");
-    }
-  }
+  // Try to get playlist from PartyKit, but use empty playlist if not available
+  // Fetch playlist from database via REST API
+  let playlist: KaraokeParty = { playlist: [], settings: { orderByFairness: true } };
 
-  const playlist = (await partyKitRes.json()) as KaraokeParty;
+  try {
+    const playlistRes = await fetch(`http://localhost:3000/api/playlist/${partyHash}`, {
+      method: "GET",
+      next: {
+        revalidate: 0,
+      },
+    });
+
+    if (playlistRes.ok) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const data = await playlistRes.json();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      playlist = { playlist: data.playlist, settings: { orderByFairness: true } };
+    }
+  } catch (error) {
+    console.warn("Failed to fetch playlist", error);
+  }
 
   return <PlayerScene party={party} initialPlaylist={playlist} />;
 }
