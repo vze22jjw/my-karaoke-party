@@ -15,7 +15,6 @@ export async function POST(request: Request) {
     }
 
     // Update lastActivityAt
-    // @ts-ignore - Prisma Client needs regeneration after schema change
     const party = await db.party.update({
       where: { hash },
       data: {
@@ -23,7 +22,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // @ts-ignore - Prisma Client needs regeneration after schema change
     return NextResponse.json({ success: true, lastActivityAt: party.lastActivityAt });
   } catch (error) {
     console.error("Error updating party activity:", error);

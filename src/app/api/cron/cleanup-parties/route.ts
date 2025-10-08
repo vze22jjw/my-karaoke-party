@@ -9,7 +9,6 @@ export async function GET() {
     twentyMinutesAgo.setMinutes(twentyMinutesAgo.getMinutes() - 20);
 
     // Find and delete parties with no activity for 20+ minutes
-    // @ts-ignore - Prisma Client needs regeneration after schema change
     const deletedParties = await db.party.deleteMany({
       where: {
         lastActivityAt: {

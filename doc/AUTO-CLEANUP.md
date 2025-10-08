@@ -31,33 +31,33 @@ Sistema automático para fechar parties inativas após 20 minutos sem atividade.
 
 ## Configuração do Cron Job
 
-### Opção 1: Vercel Cron Jobs (Recomendado para produção)
-Adicione ao `vercel.json`:
-```json
-{
-  "crons": [{
-    "path": "/api/cron/cleanup-parties",
-    "schedule": "*/10 * * * *"
-  }]
-}
-```
-
-### Opção 2: Cron Manual (Linux/macOS)
+### Opção 1: Servidor Linux/Ubuntu (Recomendado para VPS)
+Adicione ao crontab:
 ```bash
-*/10 * * * * curl https://seu-dominio.com/api/cron/cleanup-parties
+crontab -e
 ```
 
-### Opção 3: Windows Task Scheduler
-Crie uma tarefa que executa a cada 10 minutos:
-```powershell
-Invoke-WebRequest -Uri "https://seu-dominio.com/api/cron/cleanup-parties"
+Adicione a linha:
+```bash
+*/10 * * * * curl -X GET http://localhost:3000/api/cron/cleanup-parties >> ~/logs/cleanup-cron.log 2>&1
 ```
+
+### Opção 2: Servidor Windows
+Use Task Scheduler para criar tarefa que executa a cada 10 minutos:
+```powershell
+Invoke-WebRequest -Uri "http://localhost:3000/api/cron/cleanup-parties"
+```
+
+### Opção 3: Docker/Container
+Adicione serviço de cron no docker-compose.yml ou use crond no container.
 
 ### Opção 4: Desenvolvimento Local
 Para testar localmente, chame manualmente:
 ```bash
 curl http://localhost:3000/api/cron/cleanup-parties
 ```
+
+**Veja guia completo de deploy em:** `doc/DEPLOY-VPS-UBUNTU.md`
 
 ## Regras de Inatividade
 
