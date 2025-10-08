@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { type KaraokeParty } from "party";
 import { api } from "~/trpc/server";
-import { PartyScene } from "./party-scene";
+import { PartyScene } from "./party-scene-tabs";
 
 type Props = {
   params: { hash: string };

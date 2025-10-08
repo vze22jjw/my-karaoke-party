@@ -1,0 +1,373 @@
+/* eslint-disable */
+"use client";
+
+import type { Party } from "@prisma/client";
+import type { KaraokeParty } from "party";
+import { useEffect, useState } from "react";
+import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
+import { SongSearch } from "~/components/song-search";
+import { Monitor, Music, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { PreviewPlayer } from "~/components/preview-player";
+import { decode } from "html-entities";
+
+export function PartyScene({
+  party,
+  initialPlaylist,
+}: {
+  party: Party;
+  initialPlaylist?: KaraokeParty;
+}) {
+  const [name] = useLocalStorage<string>({ key: "name" });
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("player");
+
+  const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
+    initialPlaylist?.playlist ?? [],
+  );
+
+  // Lista de participantes únicos (baseado em singerName)
+  const [participants, setParticipants] = useState<string[]>([]);
+
+  useEffect(() => {
+    const value = readLocalStorageValue({ key: "name" });
+
+    if (!value) {
+      router.push(`/join/${party.hash}`);
+    }
+  }, [router, party.hash]);
+
+  // Poll for playlist updates every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/playlist/${party.hash}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylist(data.playlist);
+
+          // Extrair participantes únicos
+          const uniqueParticipants = Array.from(
+            new Set(data.playlist.map((item: any) => item.singerName))
+          ).filter(Boolean) as string[];
+          setParticipants(uniqueParticipants);
+        } else if (response.status === 404) {
+          // Party was deleted
+          clearInterval(interval);
+          alert("A party foi encerrada pelo host.");
+          router.push("/");
+        }
+      } catch (error) {
+        console.error("Error fetching playlist:", error);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [party.hash, router]);
+
+  // Send heartbeat every 60 seconds to keep party alive
+  useEffect(() => {
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        await fetch("/api/party/heartbeat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ hash: party.hash }),
+        });
+      } catch (error) {
+        console.error("Error sending heartbeat:", error);
+      }
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(heartbeatInterval);
+  }, [party.hash]);
+
+  const addSong = async (videoId: string, title: string, coverUrl: string) => {
+    try {
+      // Use REST API
+      const response = await fetch("/api/playlist/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          partyHash: party.hash,
+          videoId,
+          title,
+          coverUrl,
+          singerName: name,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add song");
+      }
+
+      // Reload playlist
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      const data = await playlistResponse.json();
+      setPlaylist(data.playlist);
+    } catch (error) {
+      console.error("Error adding song:", error);
+      alert("Erro ao adicionar música. Tente novamente.");
+    }
+  };
+
+  const nextVideos = playlist.filter((video) => !video.playedAt);
+  const playedVideos = playlist.filter((video) => video.playedAt);
+  const nextVideo = nextVideos[0] ?? null;
+
+  return (
+    <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
+      {/* Header */}
+      <div className="text-center mb-4">
+        <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
+          {party.name}
+        </h1>
+      </div>
+
+      {/* Tabs */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col overflow-hidden"
+      >
+        <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsTrigger value="player" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            <span className="hidden sm:inline">Tocando</span>
+          </TabsTrigger>
+          <TabsTrigger value="search" className="flex items-center gap-2">
+            <Music className="h-4 w-4" />
+            <span className="hidden sm:inline">Adicionar</span>
+          </TabsTrigger>
+          <TabsTrigger value="participants" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Participantes</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab 1: Player View */}
+        <TabsContent value="player" className="flex-1 overflow-auto mt-0">
+          <div className="space-y-4">
+            {/* Preview do que está tocando */}
+            <div className="bg-card rounded-lg p-4 border">
+              <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Tocando Agora
+              </h2>
+              {nextVideo ? (
+                <>
+                  <PreviewPlayer
+                    videoId={nextVideo.id}
+                    title={nextVideo.title}
+                    thumbnail={nextVideo.coverUrl}
+                  />
+                  <div className="mt-3">
+                    <p className="font-medium">{decode(nextVideo.title)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Cantando: {nextVideo.singerName}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <p className="text-muted-foreground">
+                    Nenhuma música na fila
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Próximas músicas */}
+            {nextVideos.length > 1 && (
+              <div className="bg-card rounded-lg p-4 border">
+                <h3 className="text-md font-semibold mb-3">
+                  Próximas na Fila ({nextVideos.length - 1})
+                </h3>
+                <ul className="space-y-2">
+                  {nextVideos.slice(1, 6).map((video, index) => (
+                    <li
+                      key={video.id}
+                      className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                        {index + 2}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {decode(video.title)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {video.singerName}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {nextVideos.length > 6 && (
+                  <p className="text-sm text-muted-foreground mt-3 text-center">
+                    E mais {nextVideos.length - 6} música(s)...
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Músicas já tocadas */}
+            {playedVideos.length > 0 && (
+              <div className="bg-card rounded-lg p-4 border opacity-75">
+                <h3 className="text-md font-semibold mb-3">
+                  Já Tocaram ({playedVideos.length})
+                </h3>
+                <ul className="space-y-1">
+                  {playedVideos.slice(-5).reverse().map((video) => (
+                    <li
+                      key={video.id}
+                      className="text-sm text-muted-foreground truncate"
+                    >
+                      • {decode(video.title)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Tab 2: Search & Add Songs */}
+        <TabsContent value="search" className="flex-1 overflow-auto mt-0">
+          <div className="space-y-4">
+            <div className="bg-card rounded-lg p-4 border">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Music className="h-5 w-5" />
+                Adicionar Música
+              </h2>
+              <SongSearch onVideoAdded={addSong} playlist={playlist} />
+            </div>
+
+            {/* Minhas músicas na fila */}
+            {name && (
+              <div className="bg-card rounded-lg p-4 border">
+                <h3 className="text-md font-semibold mb-3">
+                  Minhas Músicas na Fila
+                </h3>
+                {(() => {
+                  const mySongs = nextVideos.filter(
+                    (v) => v.singerName === name
+                  );
+                  if (mySongs.length === 0) {
+                    return (
+                      <p className="text-sm text-muted-foreground">
+                        Você ainda não adicionou músicas
+                      </p>
+                    );
+                  }
+                  return (
+                    <ul className="space-y-2">
+                      {mySongs.map((video) => (
+                        <li
+                          key={video.id}
+                          className="p-2 rounded bg-muted text-sm"
+                        >
+                          {decode(video.title)}
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Tab 3: Participants */}
+        <TabsContent value="participants" className="flex-1 overflow-auto mt-0">
+          <div className="bg-card rounded-lg p-4 border">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Participantes ({participants.length})
+            </h2>
+
+            {participants.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                Nenhum participante ainda
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {participants.map((participant) => {
+                  const participantSongs = playlist.filter(
+                    (v) => v.singerName === participant
+                  );
+                  const nextSongs = participantSongs.filter((v) => !v.playedAt);
+                  const playedSongs = participantSongs.filter(
+                    (v) => v.playedAt
+                  );
+
+                  return (
+                    <div
+                      key={participant}
+                      className="p-4 rounded-lg border bg-muted/50"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                            {participant.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold">{participant}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {participantSongs.length} música(s)
+                            </p>
+                          </div>
+                        </div>
+                        {participant === name && (
+                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                            Você
+                          </span>
+                        )}
+                      </div>
+
+                      {nextSongs.length > 0 && (
+                        <div className="mt-2 pt-2 border-t">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Na fila: {nextSongs.length}
+                          </p>
+                          <ul className="space-y-1">
+                            {nextSongs.slice(0, 3).map((song) => (
+                              <li
+                                key={song.id}
+                                className="text-xs truncate pl-2"
+                              >
+                                • {decode(song.title)}
+                              </li>
+                            ))}
+                            {nextSongs.length > 3 && (
+                              <li className="text-xs text-muted-foreground pl-2">
+                                + {nextSongs.length - 3} mais...
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {playedSongs.length > 0 && (
+                        <div className="mt-2 pt-2 border-t">
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Já cantou: {playedSongs.length}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

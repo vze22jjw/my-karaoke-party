@@ -74,8 +74,8 @@ async function main() {
   }
 
   console.log("📋 Parties abertas:");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  stats.parties.forEach((party, index) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any
+  stats.parties.forEach((/** @type {any} */ party, /** @type {any} */ index) => {
     const date = new Date(party.createdAt).toLocaleString("pt-BR");
     console.log(
       `   ${index + 1}. ${party.name} (${party.hash}) - ${party.songsCount} músicas - Criada em ${date}`
