@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { CreateParty } from "../components/create-party";
+import { JoinParty } from "../components/join-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import Link from "next/link";
 
@@ -16,7 +17,10 @@ export default async function Home() {
           placeholder="blur"
         />
 
-        <CreateParty />
+        <div className="flex flex-col gap-4 w-full items-center">
+          <CreateParty />
+          <JoinParty />
+        </div>
 
         <div>
           <Link href="/terms-of-service" className="hover:underline">

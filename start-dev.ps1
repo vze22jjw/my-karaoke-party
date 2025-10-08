@@ -40,7 +40,7 @@ else {
     else {
         Write-Host "Criando novo container do banco de dados..." -ForegroundColor Yellow
         docker run -d --name $DB_CONTAINER_NAME -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=mykaraoke_party -p 5432:5432 postgres:15 | Out-Null
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Banco de dados criado e iniciado" -ForegroundColor Green
             Write-Host "Aguardando banco de dados ficar pronto..." -ForegroundColor Yellow
