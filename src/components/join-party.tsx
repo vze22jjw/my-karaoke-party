@@ -85,9 +85,9 @@ export function JoinParty() {
       <DrawerContent>
         <div className="mx-auto w-full max-w-2xl">
           <DrawerHeader>
-            <DrawerTitle>Parties Abertas</DrawerTitle>
+            <DrawerTitle>Open Parties</DrawerTitle>
             <DrawerDescription>
-              Escolha uma party para participar
+              Choose a party to join
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 pb-0">
@@ -117,9 +117,9 @@ export function JoinParty() {
             {!loading && !error && parties.length === 0 && (
               <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
                 <Music className="mx-auto mb-2 h-12 w-12 opacity-50" />
-                <p>Nenhuma party aberta no momento</p>
+                <p>No parties open at the moment</p>
                 <p className="mt-1 text-sm">
-                  Seja o primeiro a criar uma party!
+                  Be the first to create a party!
                 </p>
               </div>
             )}
@@ -149,7 +149,7 @@ export function JoinParty() {
                       onClick={() => handleJoinParty(party.hash)}
                       variant="default"
                     >
-                      Entrar
+                      Enter
                     </Button>
                   </div>
                 ))}

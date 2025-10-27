@@ -122,10 +122,10 @@ export function Player({
         
         <div className="absolute top-0 left-0 right-0 z-20 bg-black/80 p-4 text-center">
           <p className="text-yellow-400 text-sm animate-pulse">
-            Tentando reproduzir com bypass...
+            Trying to play with bypass...
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Se não funcionar em 8 segundos, abrirá no YouTube
+            If it doesn't work in 8 seconds, it will open in YouTube
           </p>
         </div>
 
@@ -178,18 +178,18 @@ export function Player({
         <div className="space-y-4">
           <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-4">
             <h3 className="text-xl font-bold text-red-400 mb-2">
-              🚫 Reprodução Bloqueada pelo Proprietário
+              🚫 Playback Blocked by Owner
             </h3>
             <p className="text-sm text-gray-300 mb-2">
-              O proprietário deste vídeo desativou a reprodução em outros sites.
+              The owner of this video has disabled playback on other sites.
             </p>
             <p className="text-xs text-gray-400">
-              Tentamos: YouTube embed direto ❌ | CodePen bypass ❌
+              We tried: YouTube embed directly ❌ | CodePen bypass ❌
             </p>
           </div>
 
           <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
-            Clique no botão para abrir no YouTube
+            Click the button to open on YouTube
           </h3>
           
           <Button
@@ -199,7 +199,7 @@ export function Player({
             onClick={() => openYouTubeTab()}
           >
             <Youtube className="mr-2" size={24} />
-            Abrir no YouTube
+            Open on YouTube
           </Button>
           
           <div className="mt-4">
@@ -212,12 +212,12 @@ export function Player({
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />
-              Pular Música
+              Skip Song
             </Button>
           </div>
 
           <p className="text-xs text-gray-500 mt-4">
-            💡 Dica: Escolha vídeos de canais oficiais para evitar esse problema
+            💡 Tip: Choose videos from official channels to avoid this issue
           </p>
         </div>
 

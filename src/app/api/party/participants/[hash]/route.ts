@@ -28,7 +28,7 @@ export async function GET(
 
     if (!party) {
       return NextResponse.json(
-        { error: "Party não encontrada" },
+        { error: "Party not found" },
         { status: 404 }
       );
     }
@@ -50,7 +50,7 @@ export async function GET(
   } catch (error) {
     console.error("Error fetching participants:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar participantes" },
+      { error: "Error fetching participants" },
       { status: 500 }
     );
   }

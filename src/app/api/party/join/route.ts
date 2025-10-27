@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     if (!hash || !name) {
       return NextResponse.json(
-        { error: "Hash e nome são obrigatórios" },
+        { error: "Hash and name are required" },
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     if (!party) {
       return NextResponse.json(
-        { error: "Party não encontrada" },
+        { error: "Party not found" },
         { status: 404 }
       );
     }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error joining party:", error);
     return NextResponse.json(
-      { error: "Erro ao registrar participante" },
+      { error: "Error registering participant" },
       { status: 500 }
     );
   }
