@@ -63,8 +63,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copiar node_modules (para Prisma Client)
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/ ./node_modules/
 
 USER nextjs
 
@@ -74,7 +73,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Script de inicialização
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+COPY --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
