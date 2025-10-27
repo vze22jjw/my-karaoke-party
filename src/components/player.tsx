@@ -125,7 +125,7 @@ export function Player({
             Trying to play with bypass...
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            If it doesn't work in 8 seconds, it will open in YouTube
+            If it does not work in 8 seconds it will open in YouTube
           </p>
         </div>
 
