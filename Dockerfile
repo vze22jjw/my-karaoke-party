@@ -73,7 +73,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Script de inicialização
-COPY --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
+COPY --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
