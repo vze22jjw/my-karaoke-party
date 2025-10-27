@@ -66,7 +66,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
           // Mostrar toast para cada novo participante
           addedParticipants.forEach((participant) => {
-            toast.success(`🎤 ${participant} entrou na party!`, {
+            toast.success(`🎤 ${participant} joined the party!`, {
               duration: 3000,
             });
           });
@@ -218,7 +218,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   };
 
   const handleCloseParty = async () => {
-    if (!confirm("Tem certeza que deseja fechar esta party? Todos os dados serão perdidos.")) {
+    if (!confirm("Are you sure you want to close this party? All data will be lost.")) {
       return;
     }
 
@@ -241,7 +241,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       router.push("/");
     } catch (error) {
       console.error("Error closing party:", error);
-      alert("Erro ao fechar a party. Tente novamente.");
+      alert("Error closing the party. Please try again.");
     }
   };
 
@@ -262,7 +262,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
               type="button"
               className="bg-red-600"
             >
-              Fechar Party ❌
+              Close Party ❌
             </ButtonHoverGradient>
           </div>
         </div>
