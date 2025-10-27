@@ -42,7 +42,7 @@ export function JoinParty() {
       const data = (await response.json()) as Party[];
       setParties(data);
     } catch (err) {
-      setError("Erro ao carregar parties. Tente novamente.");
+      setError("Error loading parties. Please try again.");
       console.error("Error fetching parties:", err);
     } finally {
       setLoading(false);
@@ -66,11 +66,11 @@ export function JoinParty() {
       (now.getTime() - created.getTime()) / (1000 * 60)
     );
 
-    if (diffInMinutes < 1) return "agora mesmo";
-    if (diffInMinutes < 60) return `há ${diffInMinutes} min`;
+    if (diffInMinutes < 1) return "right now";
+    if (diffInMinutes < 60) return `created ${diffInMinutes} min`;
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `há ${diffInHours}h`;
-    return `há ${Math.floor(diffInHours / 24)}d`;
+    if (diffInHours < 24) return `created ${diffInHours}h`;
+    return `created ${Math.floor(diffInHours / 24)}d`;
   };
 
   return (
@@ -137,7 +137,7 @@ export function JoinParty() {
                         <span className="flex items-center gap-1">
                           <Music className="h-4 w-4" />
                           {party.songCount}{" "}
-                          {party.songCount === 1 ? "música" : "músicas"}
+                          {party.songCount === 1 ? "song" : "songs"}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
@@ -158,7 +158,7 @@ export function JoinParty() {
           </div>
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant="outline">Cancelar</Button>
+              <Button variant="outline">Cancel</Button>
             </DrawerClose>
           </DrawerFooter>
         </div>

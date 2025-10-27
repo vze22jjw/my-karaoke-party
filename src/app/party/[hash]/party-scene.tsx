@@ -50,7 +50,7 @@ export function PartyScene({
         } else if (response.status === 404) {
           // Party was deleted
           clearInterval(interval);
-          alert("A party foi encerrada pelo host.");
+          alert("The party was ended by the host.");
           router.push("/");
         }
       } catch (error) {
@@ -107,7 +107,7 @@ export function PartyScene({
       setPlaylist(data.playlist);
     } catch (error) {
       console.error("Error adding song:", error);
-      alert("Erro ao adicionar música. Tente novamente.");
+      alert("Error adding music. Please try again.");
     }
   };
 

@@ -195,15 +195,15 @@ export function PartyScene({
         <TabsList className="grid w-full grid-cols-3 mb-4">
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
-            <span className="hidden sm:inline">Tocando</span>
+            <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="hidden sm:inline">Adicionar</span>
+            <span className="hidden sm:inline">To add</span>
           </TabsTrigger>
           <TabsTrigger value="participants" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Participantes</span>
+            <span className="hidden sm:inline">Participants</span>
           </TabsTrigger>
         </TabsList>
 
@@ -214,7 +214,7 @@ export function PartyScene({
             <div className="bg-card rounded-lg p-4 border">
               <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <Monitor className="h-5 w-5" />
-                Tocando Agora
+                Playing Now
               </h2>
               {nextVideo ? (
                 <>
@@ -226,14 +226,14 @@ export function PartyScene({
                   <div className="mt-3">
                     <p className="font-medium">{decode(nextVideo.title)}</p>
                     <p className="text-sm text-muted-foreground">
-                      Cantando: {nextVideo.singerName}
+                      Singing: {nextVideo.singerName}
                     </p>
                   </div>
                 </>
               ) : (
                 <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                   <p className="text-muted-foreground">
-                    Nenhuma música na fila
+                    No songs queued
                   </p>
                 </div>
               )}
@@ -243,7 +243,7 @@ export function PartyScene({
             {nextVideos.length > 1 && (
               <div className="bg-card rounded-lg p-4 border">
                 <h3 className="text-md font-semibold mb-3">
-                  Próximas na Fila ({nextVideos.length - 1})
+                  Next in Line ({nextVideos.length - 1})
                 </h3>
                 <ul className="space-y-2">
                   {nextVideos.slice(1, 6).map((video, index) => (
@@ -267,7 +267,7 @@ export function PartyScene({
                 </ul>
                 {nextVideos.length > 6 && (
                   <p className="text-sm text-muted-foreground mt-3 text-center">
-                    E mais {nextVideos.length - 6} música(s)...
+                    And more {nextVideos.length - 6} song(s)...
                   </p>
                 )}
               </div>
@@ -277,7 +277,7 @@ export function PartyScene({
             {playedVideos.length > 0 && (
               <div className="bg-card rounded-lg p-4 border opacity-75">
                 <h3 className="text-md font-semibold mb-3">
-                  Já Tocaram ({playedVideos.length})
+                  Already Played ({playedVideos.length})
                 </h3>
                 <ul className="space-y-1">
                   {playedVideos.slice(-5).reverse().map((video) => (
@@ -300,7 +300,7 @@ export function PartyScene({
             <div className="bg-card rounded-lg p-4 border">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Music className="h-5 w-5" />
-                Adicionar Música
+                Add Songs
               </h2>
               <SongSearch onVideoAdded={addSong} playlist={playlist} />
             </div>
@@ -309,7 +309,7 @@ export function PartyScene({
             {name && (
               <div className="bg-card rounded-lg p-4 border">
                 <h3 className="text-md font-semibold mb-3">
-                  Minhas Músicas na Fila
+                  My Queued Songs
                 </h3>
                 {(() => {
                   const mySongs = nextVideos.filter(
@@ -318,7 +318,7 @@ export function PartyScene({
                   if (mySongs.length === 0) {
                     return (
                       <p className="text-sm text-muted-foreground">
-                        Você ainda não adicionou músicas
+                        You haven't added any songs yet.
                       </p>
                     );
                   }
@@ -345,12 +345,12 @@ export function PartyScene({
           <div className="bg-card rounded-lg p-4 border">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Participantes ({participants.length})
+              Participants ({participants.length})
             </h2>
 
             {participants.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                Nenhum participante ainda
+                No participants yet
               </p>
             ) : (
               <div className="space-y-3">
@@ -376,13 +376,13 @@ export function PartyScene({
                           <div>
                             <p className="font-semibold">{participant}</p>
                             <p className="text-xs text-muted-foreground">
-                              {participantSongs.length} música(s)
+                              {participantSongs.length} song(s)
                             </p>
                           </div>
                         </div>
                         {participant === name && (
                           <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                            Você
+                            You
                           </span>
                         )}
                       </div>
@@ -390,7 +390,7 @@ export function PartyScene({
                       {nextSongs.length > 0 && (
                         <div className="mt-2 pt-2 border-t">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
-                            Na fila: {nextSongs.length}
+                            In Line: {nextSongs.length}
                           </p>
                           <ul className="space-y-1">
                             {nextSongs.slice(0, 3).map((song) => (
@@ -403,7 +403,7 @@ export function PartyScene({
                             ))}
                             {nextSongs.length > 3 && (
                               <li className="text-xs text-muted-foreground pl-2">
-                                + {nextSongs.length - 3} mais...
+                                + {nextSongs.length - 3} more...
                               </li>
                             )}
                           </ul>
@@ -413,7 +413,7 @@ export function PartyScene({
                       {playedSongs.length > 0 && (
                         <div className="mt-2 pt-2 border-t">
                           <p className="text-xs font-medium text-muted-foreground">
-                            Já cantou: {playedSongs.length}
+                            Already sang: {playedSongs.length}
                           </p>
                         </div>
                       )}
