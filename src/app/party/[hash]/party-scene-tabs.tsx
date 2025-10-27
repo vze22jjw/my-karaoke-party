@@ -80,7 +80,7 @@ export function PartyScene({
           // Mostrar toast para cada novo participante (exceto você mesmo)
           addedParticipants.forEach((participant) => {
             if (participant !== name) {
-              toast.success(`🎤 ${participant} entrou na party!`, {
+              toast.success(`🎤 ${participant} joined the party!`, {
                 duration: 3000,
               });
             }
@@ -112,7 +112,7 @@ export function PartyScene({
         } else if (response.status === 404) {
           // Party was deleted
           clearInterval(interval);
-          alert("A party foi encerrada pelo host.");
+          alert("The party has been closed by the host.");
           router.push("/");
         }
       } catch (error) {
@@ -169,7 +169,7 @@ export function PartyScene({
       setPlaylist(data.playlist);
     } catch (error) {
       console.error("Error adding song:", error);
-      alert("Erro ao adicionar música. Tente novamente.");
+      alert("Error adding song. Please try again.");
     }
   };
 
