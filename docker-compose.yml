@@ -63,7 +63,7 @@ services:
     entrypoint: /bin/sh
     command: >
       -c "while true; do
-        sleep 600;
+        sleep 60d;
         curl -f http://mk-app:3000/api/cron/cleanup-parties || echo 'Cleanup failed';
       done"
 
