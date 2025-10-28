@@ -274,7 +274,7 @@ export function PartyScene({
                 </ul>
                 {nextVideos.length > 6 && (
                   <p className="text-sm text-muted-foreground mt-3 text-center">
-                    And more {nextVideos.length - 6} song(s)...
+                    And {nextVideos.length - 6} more song(s)...
                   </p>
                 )}
               </div>
@@ -396,57 +396,30 @@ export function PartyScene({
                             </span>
                           )}
 
-                          {/* Toggle button for played songs */}
-                          {playedSongs.length > 0 && (
+                          {/* Toggle button for song history */}
+                          {(playedSongs.length > 0 || nextSongs.length > 0) && (
                             <button
                               type="button"
                               onClick={() => togglePlayed(participant)}
                               className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors"
                             >
-                              {showPlayed ? "Hide history" : `Show history (${playedSongs.length})`}
+                              {showPlayed ? "Hide Songs" : `Show All Songs (${participantSongs.length})`}
                             </button>
                           )}
                         </div>
                       </div>
 
-                      {nextSongs.length > 0 && (
-                        <div className="mt-2 pt-2 border-t">
-                          <p className="text-xs font-medium text-muted-foreground mb-1">
-                            In Line: {nextSongs.length}
-                          </p>
-                          <ul className="space-y-1">
-                            {nextSongs.slice(0, 3).map((song) => (
-                              <li
-                                key={song.id}
-                                className="text-xs truncate pl-2"
-                              >
-                                • {decode(song.title)}
-                              </li>
-                            ))}
-                            {nextSongs.length > 3 && (
-                              <li className="text-xs text-muted-foreground pl-2">
-                                + {nextSongs.length - 3} more...
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Played songs dropdown */}
-                      {playedSongs.length > 0 && (
-                        <div className="mt-2 pt-2 border-t">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium text-muted-foreground">
-                              Already sang: {playedSongs.length}
-                            </p>
-                          </div>
-
-                          {showPlayed && (
-                            <ul className="space-y-1 mt-2">
-                              {playedSongs
-                                .slice(-10)
-                                .reverse()
-                                .map((song) => (
+                      {/* Show songs section */}
+                      {showPlayed ? (
+                        // Show all songs when expanded
+                        <div className="mt-2 space-y-3">
+                          {nextSongs.length > 0 && (
+                            <div className="pt-2 border-t">
+                              <p className="text-xs font-medium text-muted-foreground mb-1">
+                                In Line: {nextSongs.length}
+                              </p>
+                              <ul className="space-y-1">
+                                {nextSongs.map((song) => (
                                   <li
                                     key={song.id}
                                     className="text-xs truncate pl-2"
@@ -454,8 +427,34 @@ export function PartyScene({
                                     • {decode(song.title)}
                                   </li>
                                 ))}
-                            </ul>
+                              </ul>
+                            </div>
                           )}
+                          
+                          {playedSongs.length > 0 && (
+                            <div className="pt-2 border-t">
+                              <p className="text-xs font-medium text-muted-foreground mb-1">
+                                Already sang: {playedSongs.length}
+                              </p>
+                              <ul className="space-y-1">
+                                {playedSongs.reverse().map((song) => (
+                                  <li
+                                    key={song.id}
+                                    className="text-xs truncate pl-2 text-muted-foreground"
+                                  >
+                                    • {decode(song.title)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        // Show summary when collapsed
+                        <div className="text-xs text-muted-foreground">
+                          {nextSongs.length > 0 && `${nextSongs.length} in line`}
+                          {nextSongs.length > 0 && playedSongs.length > 0 && ' • '}
+                          {playedSongs.length > 0 && `${playedSongs.length} played`}
                         </div>
                       )}
                     </div>
