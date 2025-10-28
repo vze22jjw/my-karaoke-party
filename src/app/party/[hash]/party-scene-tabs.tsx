@@ -28,6 +28,50 @@ export function PartyScene({
     initialPlaylist?.playlist ?? [],
   );
 
+  // Sort playlist according to:
+  // 1) not-yet-sung first (playedAt === null)
+  // 2) singer who has sung less frequently (played count ascending)
+  // 3) singer with fewer total items in playlist (total count ascending)
+  // 4) tie-break by id (stable-ish)
+  const sortPlaylist = (pl: KaraokeParty["playlist"]) => {
+    if (!pl || pl.length === 0) return pl;
+
+    // Compute played counts and total counts per singer
+    const playedCountBySinger: Record<string, number> = {};
+    const totalCountBySinger: Record<string, number> = {};
+
+    for (const v of pl) {
+      const s = (v.singerName || ""); // normalize empty -> ""
+      totalCountBySinger[s] = (totalCountBySinger[s] || 0) + 1;
+      if (v.playedAt) {
+        playedCountBySinger[s] = (playedCountBySinger[s] || 0) + 1;
+      }
+    }
+
+    return [...pl].sort((a, b) => {
+      // 1) not-yet-sung first
+      const aPlayedFlag = a.playedAt ? 1 : 0;
+      const bPlayedFlag = b.playedAt ? 1 : 0;
+      if (aPlayedFlag !== bPlayedFlag) return aPlayedFlag - bPlayedFlag;
+
+      const aSinger = a.singerName || "";
+      const bSinger = b.singerName || "";
+
+      // 2) singer who has sung less frequently (played count asc)
+      const aPlayedCount = playedCountBySinger[aSinger] || 0;
+      const bPlayedCount = playedCountBySinger[bSinger] || 0;
+      if (aPlayedCount !== bPlayedCount) return aPlayedCount - bPlayedCount;
+
+      // 3) singer with fewer total items in playlist (total count asc)
+      const aTotal = totalCountBySinger[aSinger] || 0;
+      const bTotal = totalCountBySinger[bSinger] || 0;
+      if (aTotal !== bTotal) return aTotal - bTotal;
+
+      // 4) final tie-breaker: id (lexicographic)
+      return String(a.id).localeCompare(String(b.id));
+    });
+  };
+
   // Lista de participantes únicos (baseado em singerName)
   // Inicializar com participantes do initialPlaylist
   const [participants, setParticipants] = useState<string[]>(() => {
@@ -84,7 +128,7 @@ export function PartyScene({
             (p) => !previousParticipants.includes(p)
           );
 
-          // Mostrar toast para cada novo participante (exceto você mesmo)
+          // Mostrar toast para cada nuevo participante (exceto você mesmo)
           addedParticipants.forEach((participant) => {
             if (participant !== name) {
               toast.success(`🎤 ${participant} joined the party!`, {
@@ -115,12 +159,8 @@ export function PartyScene({
         const response = await fetch(`/api/playlist/${party.hash}`);
         if (response.ok) {
           const data = await response.json();
-          setPlaylist(data.playlist);
-        } else if (response.status === 404) {
-          // Party was deleted
-          clearInterval(interval);
-          alert("The party has been closed by the host.");
-          router.push("/");
+          // apply sorting on every fetch
+          setPlaylist(sortPlaylist(data.playlist));
         }
       } catch (error) {
         console.error("Error fetching playlist:", error);
@@ -173,7 +213,8 @@ export function PartyScene({
       // Reload playlist
       const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
       const data = await playlistResponse.json();
-      setPlaylist(data.playlist);
+      // apply sorting right after add
+      setPlaylist(sortPlaylist(data.playlist));
     } catch (error) {
       console.error("Error adding song:", error);
       alert("Error adding song. Please try again.");
@@ -229,56 +270,35 @@ export function PartyScene({
                     videoId={nextVideo.id}
                     title={nextVideo.title}
                     thumbnail={nextVideo.coverUrl}
+                    // onEnded={handleNext}
                   />
-                  <div className="mt-3">
-                    <p className="font-medium">{decode(nextVideo.title)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Singing: {nextVideo.singerName}
-                    </p>
+                  <div className="mt-4">
+                    <h3 className="text-md font-semibold mb-2">
+                      Next in Queue ({nextVideos.length})
+                    </h3>
+                    <ul className="space-y-1">
+                      {nextVideos.slice(0, 6).map((video) => (
+                        <li
+                          key={video.id}
+                          className="text-sm text-muted-foreground truncate"
+                        >
+                          • {decode(video.title)}
+                        </li>
+                      ))}
+                    </ul>
+                    {nextVideos.length > 6 && (
+                      <p className="text-sm text-muted-foreground mt-3 text-center">
+                        And more {nextVideos.length - 6} song(s)...
+                      </p>
+                    )}
                   </div>
                 </>
               ) : (
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">
-                    No songs queued
-                  </p>
-                </div>
+                <p className="text-muted-foreground text-sm">
+                  Waiting for the next song to be added...
+                </p>
               )}
             </div>
-
-            {/* Próximas músicas */}
-            {nextVideos.length > 1 && (
-              <div className="bg-card rounded-lg p-4 border">
-                <h3 className="text-md font-semibold mb-3">
-                  Next in Line ({nextVideos.length - 1})
-                </h3>
-                <ul className="space-y-2">
-                  {nextVideos.slice(1, 6).map((video, index) => (
-                    <li
-                      key={video.id}
-                      className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
-                    >
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                        {index + 2}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {decode(video.title)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {video.singerName}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                {nextVideos.length > 6 && (
-                  <p className="text-sm text-muted-foreground mt-3 text-center">
-                    And more {nextVideos.length - 6} song(s)...
-                  </p>
-                )}
-              </div>
-            )}
 
             {/* Músicas já tocadas */}
             {playedVideos.length > 0 && (
