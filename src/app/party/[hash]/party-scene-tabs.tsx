@@ -40,6 +40,13 @@ export function PartyScene({
     return [];
   });
 
+  // Map to control per-participant "show played songs" toggle
+  const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>({});
+
+  const togglePlayed = (participant: string) => {
+    setShowPlayedMap((prev) => ({ ...prev, [participant]: !prev[participant] }));
+  };
+
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
 
@@ -362,6 +369,7 @@ export function PartyScene({
                   const playedSongs = participantSongs.filter(
                     (v) => v.playedAt
                   );
+                  const showPlayed = !!showPlayedMap[participant];
 
                   return (
                     <div
@@ -380,11 +388,25 @@ export function PartyScene({
                             </p>
                           </div>
                         </div>
-                        {participant === name && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                            You
-                          </span>
-                        )}
+
+                        <div className="flex items-center gap-2">
+                          {participant === name && (
+                            <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                              You
+                            </span>
+                          )}
+
+                          {/* Toggle button for played songs */}
+                          {playedSongs.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => togglePlayed(participant)}
+                              className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors"
+                            >
+                              {showPlayed ? "Hide history" : `Show history (${playedSongs.length})`}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {nextSongs.length > 0 && (
@@ -410,11 +432,30 @@ export function PartyScene({
                         </div>
                       )}
 
+                      {/* Played songs dropdown */}
                       {playedSongs.length > 0 && (
                         <div className="mt-2 pt-2 border-t">
-                          <p className="text-xs font-medium text-muted-foreground">
-                            Already sang: {playedSongs.length}
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Already sang: {playedSongs.length}
+                            </p>
+                          </div>
+
+                          {showPlayed && (
+                            <ul className="space-y-1 mt-2">
+                              {playedSongs
+                                .slice(-10)
+                                .reverse()
+                                .map((song) => (
+                                  <li
+                                    key={song.id}
+                                    className="text-xs truncate pl-2"
+                                  >
+                                    • {decode(song.title)}
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
                         </div>
                       )}
                     </div>
