@@ -37,7 +37,7 @@ export function Player({
     playerVars: {
       // https://developers.google.com/youtube/player_parameters
       start: 0,
-      autoplay: 1, // Enable autoplay
+      autoplay: 0, // 1 to Enable autoplay, 0 to Disable autoplay
       rel: 0,
       controls: 1,
     },

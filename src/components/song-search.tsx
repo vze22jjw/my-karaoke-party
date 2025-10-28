@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Plus, Search, Check, Loader2, Frown } from "lucide-react";
+import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
 import type { KaraokeParty } from "party";
 import { PreviewPlayer } from "./preview-player";
 import { removeBracketedContent } from "~/utils/string";
@@ -42,20 +42,37 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
       }}
     >
       <div className="flex w-full items-center space-x-2">
-        <Input
-          type="text"
-          name="video-url"
-          placeholder="Enter artist and/or song name..."
-          className="w-full"
-          value={videoInputValue}
-          onChange={(e) => {
-            setVideoInputValue(e.target.value);
-            setCanFetch(e.target.value.length >= 3);
-          }}
-          required
-          minLength={3}
-          autoComplete="off"
-        />
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            name="video-url"
+            placeholder="Enter artist and/or song name..."
+            className="w-full pr-10"
+            value={videoInputValue}
+            onChange={(e) => {
+              setVideoInputValue(e.target.value);
+              setCanFetch(e.target.value.length >= 3);
+            }}
+            required
+            minLength={3}
+            autoComplete="off"
+          />
+
+          {videoInputValue.length > 0 && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                setVideoInputValue("");
+                setCanFetch(false);
+              }}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
         <Button type="submit" disabled={isLoading || !canFetch}>
           {isLoading ? (
             <Loader2 className="mx-1 h-6 w-6 animate-spin" />
@@ -159,3 +176,4 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
     </form>
   );
 }
+  
