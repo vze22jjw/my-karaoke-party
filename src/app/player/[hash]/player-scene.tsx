@@ -250,23 +250,29 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
   return (
-    <div className="flex h-screen w-full flex-row flex-nowrap">
-      {/* Toggle button remains the same */}
+    <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
+      {/* Toggle button - HIDDEN on mobile, centered icon on DESKTOP */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-3 left-3 z-50 bg-background/50 backdrop-blur-sm"
+        className="fixed top-3 left-3 z-50 bg-background/50 backdrop-blur-sm hidden sm:flex items-center justify-center"
         onClick={() => setShowSearch(prev => !prev)}
         aria-label={showSearch ? "Hide queue panel" : "Show queue panel"}
       >
         {showSearch ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </Button>
 
-      {/* Left panel with queue list - reduced width to 1/6 */}
+      {/* Left panel with queue list - full width on mobile, conditional width/visibility on desktop */}
       <div 
-        className={`${
-          showSearch ? 'w-1/6 opacity-100' : 'w-0 opacity-0'
-        } transition-all duration-300 overflow-hidden border-r border-border`}
+        className={`
+          w-full 
+          sm:w-1/6 
+          sm:transition-all sm:duration-300 
+          overflow-hidden border-r border-border
+          ${
+            showSearch ? 'sm:opacity-100' : 'sm:w-0 sm:opacity-0'
+          }
+        `}
       >
         <div className="p-4 mt-14">
           {/* Add party name at top */}
@@ -353,11 +359,18 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         </div>
       </div>
 
-      {/* Right panel with player - adjusted width */}
+      {/* Right panel with player - hidden on mobile, conditional width on desktop */}
       <div 
-        className={`${
-          showSearch ? 'w-5/6' : 'w-full'
-        } transition-all duration-300 mt-14`}
+        className={`
+          hidden 
+          sm:block 
+          sm:w-5/6 
+          sm:transition-all sm:duration-300 
+          mt-14 
+          ${
+            showSearch ? '' : 'sm:w-full'
+          }
+        `}
       > 
         <div className="flex h-full flex-col">
           <div className="relative h-full" ref={ref}>
