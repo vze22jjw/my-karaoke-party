@@ -3,7 +3,7 @@
 
 import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
-import { ListPlus, Maximize, Minimize, SkipForward, X } from "lucide-react";
+import { ListPlus, Maximize, Minimize, SkipForward, X, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import type { KaraokeParty } from "party";
 import { useState, useRef, useEffect } from "react";
@@ -16,6 +16,7 @@ import { Button } from "~/components/ui/ui/button";
 import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
+import { decode } from 'html-entities';
 
 type Props = {
   party: Party;
@@ -28,6 +29,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     initialPlaylist.playlist ?? [],
   );
   const [participants, setParticipants] = useState<string[]>([]);
+  const [showSearch, setShowSearch] = useState(true);
 
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
@@ -249,32 +251,116 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   return (
     <div className="flex h-screen w-full flex-row flex-nowrap">
-      <div className="grow-0 basis-1/3 overflow-y-auto border-r border-slate-500 px-4">
-        <div className="py-4 space-y-4">
-          <div className="text-center">
-            <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
-              {party.name}
-            </h1>
-          </div>
-          <div className="flex justify-center">
-            <ButtonHoverGradient
-              onClick={handleCloseParty}
-              type="button"
-              className="bg-red-600"
-            >
-              Close Party ❌
-            </ButtonHoverGradient>
+      {/* Toggle button remains the same */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-3 left-3 z-50 bg-background/50 backdrop-blur-sm"
+        onClick={() => setShowSearch(prev => !prev)}
+        aria-label={showSearch ? "Hide queue panel" : "Show queue panel"}
+      >
+        {showSearch ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </Button>
+
+      {/* Left panel with queue list - reduced width to 1/6 */}
+      <div 
+        className={`${
+          showSearch ? 'w-1/6 opacity-100' : 'w-0 opacity-0'
+        } transition-all duration-300 overflow-hidden border-r border-border`}
+      >
+        <div className="p-4 mt-14">
+          {/* Add party name at top */}
+          <h1 className="text-xl font-bold mb-4 truncate">
+            {party.name}
+          </h1>
+
+          {/* Party page link */}
+          <a 
+            href={`/party/${party.hash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mb-6 text-primary hover:text-primary/80 font-medium text-sm"
+          >
+            👉 Add Songs
+          </a>
+
+          {/* Queue list with thumbnails */}
+          <div className="space-y-4">
+            <h2 className="font-semibold text-lg">Queue</h2>
+            <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+              {nextVideos.length > 0 ? (
+                nextVideos.map((video, index) => (
+                  <div 
+                    key={video.id}
+                    className="p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
+                  >
+                    {/* Thumbnail - reduced size */}
+                    <div className="relative w-16 aspect-video flex-shrink-0">
+                      <Image
+                        src={video.coverUrl}
+                        fill={true}
+                        className="rounded-md object-cover"
+                        alt={video.title}
+                        sizes="64px"
+                      />
+                    </div>
+
+                    {/* Song info and controls - improved truncation */}
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-center gap-1 mb-1">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          #{index + 1}
+                        </span>
+                        <p className="font-medium text-xs truncate">
+                          {decode(video.title)}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground truncate">
+                          {video.singerName}
+                        </p>
+                        <div className="flex gap-1 flex-shrink-0">
+                          {index === 0 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
+                              onClick={() => markAsPlayed()}
+                            >
+                              <SkipForward className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-red-500 hover:bg-gray-400"
+                            onClick={() => removeSong(video.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No songs in queue
+                </p>
+              )}
+            </div>
           </div>
         </div>
-        <SongSearch
-          key={party.hash}
-          playlist={playlist}
-          onVideoAdded={addSong}
-        />
       </div>
-      <div className="grow-0 basis-2/3 overflow-auto">
+
+      {/* Right panel with player - adjusted width */}
+      <div 
+        className={`${
+          showSearch ? 'w-5/6' : 'w-full'
+        } transition-all duration-300 mt-14`}
+      > 
         <div className="flex h-full flex-col">
-          <div className="relative h-5/6" ref={ref}>
+          <div className="relative h-full" ref={ref}>
             <Button
               onClick={toggle}
               variant="ghost"
@@ -298,62 +384,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
                 joinPartyUrl={joinPartyUrl}
                 className={fullscreen ? "bg-gradient" : ""}
               />
-            )}
-          </div>
-          <div className="h-1/6 min-h-[150px] border-t border-slate-500 p-4">
-            {nextVideos.length > 0 ? (
-              <>
-                <div className="no-scrollbar flex h-full flex-row space-x-2 overflow-x-scroll">
-                  {nextVideos.map((v, i) => (
-                    <div
-                      key={v.id}
-                      className="relative flex aspect-[4/3] h-full items-center justify-center rounded-lg bg-slate-200 p-3 text-center text-primary-foreground animate-in slide-in-from-bottom first:border-2 first:border-amber-500"
-                    >
-                      <Image
-                        src={v.coverUrl}
-                        fill={true}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="rounded-lg hover:opacity-50"
-                        alt="Cover"
-                      />
-
-                      <Button
-                        variant="link"
-                        size="icon"
-                        className="absolute right-0 top-0 z-10 hover:bg-gray-400"
-                        onClick={() => {
-                          removeSong(v.id);
-                        }}
-                      >
-                        <X color="red" />
-                      </Button>
-
-                      {i === 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute bottom-0 right-0 z-10 rounded text-yellow-300 hover:bg-gray-400"
-                          onClick={() => {
-                            markAsPlayed();
-                          }}
-                        >
-                          <SkipForward />
-                        </Button>
-                      )}
-
-                      {/* <div>{decode(v.title)}</div> */}
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="flex aspect-[4/3] h-full items-center justify-center rounded-lg border-2 border-dashed border-slate-500 bg-slate-200 p-3 text-center text-slate-500">
-                <ListPlus
-                  size={32}
-                  strokeWidth={1.5}
-                  className="animate-bounce"
-                />
-              </div>
             )}
           </div>
         </div>
