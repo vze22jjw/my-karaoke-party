@@ -1,3 +1,4 @@
+// my-karaoke-party/src/app/party/[hash]/party-scene-tabs.tsx
 /* eslint-disable */
 "use client";
 
@@ -46,6 +47,21 @@ export function PartyScene({
   const togglePlayed = (participant: string) => {
     setShowPlayedMap((prev) => ({ ...prev, [participant]: !prev[participant] }));
   };
+  
+  // Reusable function to send heartbeat
+  const sendHeartbeat = async () => {
+    try {
+      await fetch("/api/party/heartbeat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hash: party.hash }),
+      });
+    } catch (error) {
+      console.error("Error sending heartbeat:", error);
+    }
+  };
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
@@ -53,7 +69,7 @@ export function PartyScene({
     if (!value) {
       router.push(`/join/${party.hash}`);
     } else {
-      // Registrar participante na party
+      // 1. Registrar participante na party
       fetch("/api/party/join", {
         method: "POST",
         headers: {
@@ -66,6 +82,9 @@ export function PartyScene({
       }).catch((error) => {
         console.error("Error joining party:", error);
       });
+      
+      // 2. Send an immediate heartbeat to keep party alive on mount/join
+      void sendHeartbeat();
     }
   }, [router, party.hash]);
 
@@ -132,25 +151,17 @@ export function PartyScene({
 
   // Send heartbeat every 60 seconds to keep party alive
   useEffect(() => {
-    const heartbeatInterval = setInterval(async () => {
-      try {
-        await fetch("/api/party/heartbeat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ hash: party.hash }),
-        });
-      } catch (error) {
-        console.error("Error sending heartbeat:", error);
-      }
-    }, 60000); // 60 seconds
+    // Use the reusable function
+    const heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 seconds
 
     return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
+      // Send an immediate heartbeat before adding song
+      void sendHeartbeat();
+      
       // Use REST API
       const response = await fetch("/api/playlist/add", {
         method: "POST",

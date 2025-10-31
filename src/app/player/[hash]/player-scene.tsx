@@ -3,7 +3,7 @@
 
 import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
-import { ListPlus, Maximize, Minimize, SkipForward, X, Eye, EyeOff } from "lucide-react";
+import { ListPlus, Maximize, Minimize, SkipForward, X, Eye, EyeOff, Scale } from "lucide-react";
 import Image from "next/image";
 import type { KaraokeParty } from "party";
 import { useState, useRef, useEffect } from "react";
@@ -30,6 +30,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   );
   const [participants, setParticipants] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(true);
+  
+  // New state for queue rules, defaults to true (active)
+  const [useQueueRules, setUseQueueRules] = useState(true); 
 
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
@@ -38,7 +41,8 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/playlist/${party.hash}`);
+        // Pass useQueueRules as a query parameter
+        const response = await fetch(`/api/playlist/${party.hash}?rules=${useQueueRules ? 'true' : 'false'}`);
         if (response.ok) {
           const data = await response.json();
           setPlaylist(data.playlist);
@@ -48,8 +52,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       }
     }, 3000);
 
+    // Dependency: Include useQueueRules so the interval restarts when the rule setting changes
     return () => clearInterval(interval);
-  }, [party.hash]);
+  }, [party.hash, useQueueRules]);
 
   // Poll for participants updates every 3 seconds
   useEffect(() => {
@@ -152,8 +157,8 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         throw new Error("Failed to add song");
       }
 
-      // Reload playlist
-      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      // Reload playlist, passing the rules state
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}?rules=${useQueueRules ? 'true' : 'false'}`);
       const data = await playlistResponse.json();
       setPlaylist(data.playlist);
     } catch (error) {
@@ -179,8 +184,8 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         throw new Error("Failed to remove song");
       }
 
-      // Reload playlist
-      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      // Reload playlist, passing the rules state
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}?rules=${useQueueRules ? 'true' : 'false'}`);
       const data = await playlistResponse.json();
       setPlaylist(data.playlist);
     } catch (error) {
@@ -209,8 +214,8 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
           throw new Error("Failed to mark as played");
         }
 
-        // Reload playlist
-        const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+        // Reload playlist, passing the rules state
+        const playlistResponse = await fetch(`/api/playlist/${party.hash}?rules=${useQueueRules ? 'true' : 'false'}`);
         const data = await playlistResponse.json();
         setPlaylist(data.playlist);
       } catch (error) {
@@ -251,7 +256,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
-      {/* Toggle button - HIDDEN on mobile, centered icon on DESKTOP */}
+      {/* Toggle button remains the same */}
       <Button
         variant="ghost"
         size="icon"
@@ -262,7 +267,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         {showSearch ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </Button>
 
-      {/* Left panel with queue list - full width on mobile, conditional width/visibility on desktop */}
+      {/* Left panel with queue list - reduced width to 1/6 */}
       <div 
         className={`
           w-full 
@@ -279,6 +284,20 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
           <h1 className="text-xl font-bold mb-4 truncate">
             {party.name}
           </h1>
+
+          {/* New Queue Rules Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium text-primary-foreground/80">Queue Rules</span>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setUseQueueRules(prev => !prev)}
+                aria-label={useQueueRules ? "Disable fairness rules" : "Enable fairness rules"}
+            >
+                {useQueueRules ? <Scale className="h-4 w-4 text-green-400" /> : <Scale className="h-4 w-4 text-gray-500" />}
+            </Button>
+          </div>
 
           {/* Party page link */}
           <a 
@@ -359,7 +378,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         </div>
       </div>
 
-      {/* Right panel with player - hidden on mobile, conditional width on desktop */}
+      {/* Right panel with player - adjusted width */}
       <div 
         className={`
           hidden 
