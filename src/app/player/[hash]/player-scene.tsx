@@ -1,11 +1,11 @@
 /* eslint-disable */
 "use client";
 
-import { readLocalStorageValue, useFullscreen } from "@mantine/hooks";
+import { readLocalStorageValue, useFullscreen, useLocalStorage } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import { ListPlus, Maximize, Minimize, SkipForward, X, Eye, EyeOff, Scale } from "lucide-react";
 import Image from "next/image";
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import useSound from "use-sound";
@@ -17,6 +17,9 @@ import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 import { decode } from 'html-entities';
+import { cn } from "~/lib/utils"; // Import cn for utility classes
+
+// Removed reorder helper function
 
 type Props = {
   party: Party;
@@ -31,8 +34,10 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const [participants, setParticipants] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(true);
   
-  // New state for queue rules, defaults to true (active)
-  const [useQueueRules, setUseQueueRules] = useState(true); 
+  const [useQueueRules, setUseQueueRules] = useLocalStorage({
+    key: 'karaoke-queue-rules',
+    defaultValue: true, // Default to ON (Fairness)
+  }); 
 
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
@@ -52,6 +57,13 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }
   };
 
+  // Function to process and set the new playlist from the server
+  // Revert back to simple assignment as local reordering logic is removed
+  const processAndSetPlaylist = (data: { playlist: VideoInPlaylist[] }) => {
+    setPlaylist(data.playlist);
+  };
+
+
   // Poll for playlist updates every 3 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -60,16 +72,15 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         const response = await fetch(`/api/playlist/${party.hash}?rules=${useQueueRules ? 'true' : 'false'}`);
         if (response.ok) {
           const data = await response.json();
-          setPlaylist(data.playlist);
+          processAndSetPlaylist(data);
         }
       } catch (error) {
         console.error("Error fetching playlist:", error);
       }
     }, 3000);
 
-    // Dependency: Include useQueueRules so the interval restarts when the rule setting changes
     return () => clearInterval(interval);
-  }, [party.hash, useQueueRules]);
+  }, [party.hash, useQueueRules]); // useQueueRules is in dependency array for persistence
 
   // Poll for participants updates every 3 seconds
   useEffect(() => {
@@ -88,9 +99,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
           // Mostrar toast para cada novo participante
           addedParticipants.forEach((participant) => {
-            toast.success(`🎤 ${participant} joined the party!`, {
-              duration: 3000,
-            });
+            // REMOVED: toast.success(`🎤 ${participant} joined the party!`, { duration: 3000 });
           });
 
           setParticipants(newParticipants);
@@ -115,24 +124,33 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
 
-  // Throttled horn function
-  const playThrottledHorn = () => {
-    const now = Date.now();
-    const timeSinceLastHorn = now - lastHornTimeRef.current;
-
-    if (timeSinceLastHorn >= 5000) { // 5 seconds in milliseconds
-      toast.success("Someone sent a horn!");
-      playHorn();
-      lastHornTimeRef.current = now;
-    } else {
-      console.log(`Horn throttled. Try again in ${Math.ceil((5000 - timeSinceLastHorn) / 1000)} seconds.`);
-    }
-  };
 
   const { ref, toggle, fullscreen } = useFullscreen();
 
   const currentVideo = playlist.find((video) => !video.playedAt);
   const nextVideos = playlist.filter((video) => !video.playedAt);
+  // Removed playedVideos = playlist.filter((video) => video.playedAt);
+
+
+  // Handler for the toggle button that sends an immediate heartbeat and manages order
+  const handleToggleRules = async () => {
+    const newRulesState = !useQueueRules;
+    setUseQueueRules(newRulesState); // useLocalStorage automatically saves to browser
+
+    void sendHeartbeat(); 
+
+    // Fetch the server's list immediately to reset the client list to the new sorting mode
+    try {
+        const response = await fetch(`/api/playlist/${party.hash}?rules=${newRulesState ? 'true' : 'false'}`);
+        if (response.ok) {
+            const data = await response.json();
+            setPlaylist(data.playlist);
+        }
+    } catch (error) {
+        console.error("Error fetching playlist on toggle:", error);
+    }
+  };
+
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     const singerName = readLocalStorageValue({
@@ -198,8 +216,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   const markAsPlayed = async () => {
     if (currentVideo) {
-      // setShowOpenInYouTubeButton(false);
-
       try {
         // Use REST API
         const response = await fetch("/api/playlist/played", {
@@ -226,7 +242,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       }
     }
   };
-
+  
   const handleCloseParty = async () => {
     if (!confirm("Are you sure you want to close this party? All data will be lost.")) {
       return;
@@ -257,14 +273,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
-  // Handler for the toggle button that sends an immediate heartbeat
-  const handleToggleRules = () => {
-    setUseQueueRules(prev => {
-      // Send an immediate heartbeat on user interaction
-      void sendHeartbeat(); 
-      return !prev;
-    });
-  };
+  // Removed isDraggable variable
 
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
@@ -279,118 +288,145 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         {showSearch ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </Button>
 
-      {/* Left panel with queue list - reduced width to 1/6 */}
+      {/* Left panel with queue list - FIX APPLIED HERE */}
       <div 
         className={`
           w-full 
-          sm:w-1/6 
           sm:transition-all sm:duration-300 
           overflow-hidden border-r border-border
           ${
-            showSearch ? 'sm:opacity-100' : 'sm:w-0 sm:opacity-0'
+            showSearch 
+              ? 'sm:w-1/6 sm:opacity-100' // Desktop Visible: Set width and opacity
+              : 'sm:w-0 sm:opacity-0'     // Desktop Hidden: Collapse width and hide content
           }
         `}
       >
-        <div className="p-4 mt-14">
-          {/* Add party name at top */}
-          <h1 className="text-xl font-bold mb-4 truncate">
-            {party.name}
-          </h1>
+        {/* FIX: Changed the outer div to use flex-col h-full to manage vertical space */}
+        <div className="flex flex-col h-full p-4 pt-14">
+          
+          {/* Fixed content area: flex-shrink-0 ensures it keeps its height */}
+          <div className="flex-shrink-0">
+            {/* Add party name at top - APPLIED RESPONSIVE FONT SIZE */}
+            <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center">
+              {party.name}
+            </h1>
 
-          {/* New Queue Rules Toggle */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-primary-foreground/80">Queue Rules Enabled</span>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleToggleRules}
-                aria-label={useQueueRules ? "Disable Round Robin" : "Enable Round Robin"}
+            {/* New Queue Rules Toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-primary-foreground/80">Queue Rules</span>
+              <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                      {useQueueRules ? 'ON (Fairness)' : 'OFF (Manual)'}
+                  </span>
+                  
+                  {/* Slide Toggle Switch */}
+                  <button
+                      onClick={handleToggleRules}
+                      aria-checked={useQueueRules}
+                      role="switch"
+                      className={cn(
+                          "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+                          useQueueRules ? "bg-green-500" : "bg-red-500",
+                      )}
+                  >
+                      <span className="sr-only">Toggle Queue Rules</span>
+                      <span
+                          aria-hidden="true"
+                          className={cn(
+                              "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                              useQueueRules ? "translate-x-5" : "translate-x-0",
+                          )}
+                      />
+                  </button>
+              </div>
+            </div>
+            {/* Removed Drag & Drop related messages and simulation button */}
+
+
+            {/* Party page link */}
+            <a 
+              href={`/party/${party.hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mb-6 text-primary hover:text-primary/80 font-medium text-sm"
             >
-                {/* Red circle for OFF (false), Green circle for ON (true) */}
-                <div 
-                    className={`h-4 w-4 rounded-full transition-colors ${
-                        useQueueRules ? 'bg-green-500' : 'bg-red-500'
-                    }`}
-                />
-            </Button>
+              👉 Add Songs
+            </a>
+            
+            <h2 className="font-semibold text-lg mb-2">Queue</h2>
           </div>
 
-          {/* Party page link */}
-          <a 
-            href={`/party/${party.hash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block mb-6 text-primary hover:text-primary/80 font-medium text-sm"
-          >
-            👉 Add Songs
-          </a>
+          {/* Scrollable song list container: flex-1 ensures it takes all remaining space */}
+          <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
+            {nextVideos.length > 0 ? (
+              nextVideos.map((video, index) => {
+                  const isLocked = index === 0;
 
-          {/* Queue list with thumbnails */}
-          <div className="space-y-4">
-            <h2 className="font-semibold text-lg">Queue</h2>
-            <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
-              {nextVideos.length > 0 ? (
-                nextVideos.map((video, index) => (
-                  <div 
-                    key={video.id}
-                    className="p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
-                  >
-                    {/* Thumbnail - reduced size */}
-                    <div className="relative w-16 aspect-video flex-shrink-0">
-                      <Image
-                        src={video.coverUrl}
-                        fill={true}
-                        className="rounded-md object-cover"
-                        alt={video.title}
-                        sizes="64px"
-                      />
-                    </div>
+                  // Placeholder for Drag and Drop Item
+                  return (
+                      <div 
+                          key={video.id}
+                          // Removed cn and drag-related classes (cursor-grab, hover:bg-muted)
+                          className={"p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"}
+                      >
+                          {/* Thumbnail - reduced size */}
+                          <div className="relative w-16 aspect-video flex-shrink-0">
+                              <Image
+                                  src={video.coverUrl}
+                                  fill={true}
+                                  className="rounded-md object-cover"
+                                  alt={video.title}
+                                  sizes="64px"
+                              />
+                          </div>
 
-                    {/* Song info and controls - improved truncation */}
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex items-center gap-1 mb-1">
-                        <span className="font-mono text-xs text-muted-foreground">
-                          #{index + 1}
-                        </span>
-                        <p className="font-medium text-xs truncate">
-                          {decode(video.title)}
-                        </p>
+                          {/* Song info and controls - improved truncation */}
+                          <div className="flex-1 min-w-0 flex flex-col">
+                              <div className="flex items-center gap-1 mb-1">
+                                  <span className={cn(
+                                      "font-mono text-xs text-muted-foreground",
+                                      isLocked && 'font-bold text-primary'
+                                  )}>
+                                      #{index + 1}
+                                  </span>
+                                  <p className="font-medium text-xs truncate">
+                                      {decode(video.title)}
+                                  </p>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                  <p className="text-xs text-muted-foreground truncate">
+                                      {video.singerName}
+                                  </p>
+                                  <div className="flex gap-1 flex-shrink-0">
+                                      {index === 0 && (
+                                          <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
+                                              onClick={() => markAsPlayed()}
+                                          >
+                                              <SkipForward className="h-3 w-3" />
+                                          </Button>
+                                      )}
+                                      <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 text-red-500 hover:bg-gray-400"
+                                          onClick={() => removeSong(video.id)}
+                                      >
+                                          <X className="h-3 w-3" />
+                                      </Button>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {video.singerName}
-                        </p>
-                        <div className="flex gap-1 flex-shrink-0">
-                          {index === 0 && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
-                              onClick={() => markAsPlayed()}
-                            >
-                              <SkipForward className="h-3 w-3" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-red-500 hover:bg-gray-400"
-                            onClick={() => removeSong(video.id)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No songs in queue
-                </p>
-              )}
-            </div>
+                  );
+              })
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No songs in queue
+              </p>
+            )}
           </div>
         </div>
       </div>

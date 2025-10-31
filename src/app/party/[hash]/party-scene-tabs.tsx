@@ -1,10 +1,12 @@
+// my-karaoke-party/src/app/party/[hash]/party-scene-tabs.tsx
 /* eslint-disable */
 "use client";
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty } from "party";
 import { useEffect, useState } from "react";
-import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
+// FIX: Removed unnecessary alias
+import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks"; 
 import { SongSearch } from "~/components/song-search";
 import { Monitor, Music, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,6 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { PreviewPlayer } from "~/components/preview-player";
 import { decode } from "html-entities";
 import { toast } from "sonner";
+
+// Define the localStorage key
+const QUEUE_RULES_KEY = 'karaoke-queue-rules';
 
 export function PartyScene({
   party,
@@ -27,7 +32,9 @@ export function PartyScene({
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
     initialPlaylist?.playlist ?? [],
   );
-
+  
+  // FIX: Removed the useLocalStorage hook for reading rules, will read manually in poll
+  
   // Lista de participantes únicos (baseado em singerName)
   // Inicializar com participantes do initialPlaylist
   const [participants, setParticipants] = useState<string[]>(() => {
@@ -110,9 +117,6 @@ export function PartyScene({
           // Mostrar toast para cada novo participante (exceto você mesmo)
           addedParticipants.forEach((participant) => {
             if (participant !== name) {
-              toast.success(`🎤 ${participant} joined the party!`, {
-                duration: 3000,
-              });
               
               // FIX: Add page refresh when a new person joins for all viewing clients
               router.refresh(); 
@@ -138,7 +142,12 @@ export function PartyScene({
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/playlist/${party.hash}`);
+        // FIX: Read useQueueRules directly from localStorage in the polling loop
+        // This ensures synchronization with the host's toggle state
+        const rulesEnabled = readLocalStorageValue({ key: QUEUE_RULES_KEY, defaultValue: true });
+        
+        const response = await fetch(`/api/playlist/${party.hash}?rules=${rulesEnabled ? 'true' : 'false'}`);
+        
         if (response.ok) {
           const data = await response.json();
           setPlaylist(data.playlist);
@@ -153,6 +162,7 @@ export function PartyScene({
       }
     }, 3000);
 
+    // FIX: Removed useQueueRules from dependency array
     return () => clearInterval(interval);
   }, [party.hash, router]);
 
@@ -188,8 +198,10 @@ export function PartyScene({
         throw new Error("Failed to add song");
       }
 
-      // Reload playlist
-      const playlistResponse = await fetch(`/api/playlist/${party.hash}`);
+      // Reload playlist - FIX: Read rules fresh from local storage
+      const rulesEnabled = readLocalStorageValue({ key: QUEUE_RULES_KEY, defaultValue: true });
+      const playlistResponse = await fetch(`/api/playlist/${party.hash}?rules=${rulesEnabled ? 'true' : 'false'}`);
+      
       const data = await playlistResponse.json();
       setPlaylist(data.playlist);
     } catch (error) {

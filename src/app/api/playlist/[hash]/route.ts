@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
-import { orderByAdvancedFairness, type FairnessPlaylistItem } from "~/utils/array";
+import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import type { PlaylistItem } from "@prisma/client";
 
 export async function GET(
@@ -19,7 +19,7 @@ export async function GET(
       where: { hash: partyHash },
       include: {
         playlistItems: {
-          // Fetch all items, ordered by playedAt to easily find the last singer
+          // Fetch all items, ordered by playedAt then addedAt (FIFO base order)
           orderBy: [
             { playedAt: "asc" }, 
             { addedAt: "asc" },  
@@ -59,16 +59,18 @@ export async function GET(
 
     // --- 2. Conditional Sorting Logic ---
     if (useQueueRules) {
-        // Apply Round Robin Fairness Sorting
-        sortedRemainingUnplayed = orderByAdvancedFairness(
+        // Apply Round Robin Fairness Sorting (Rules ON)
+        sortedRemainingUnplayed = orderByRoundRobin(
             allItems as FairnessPlaylistItem[],
             remainingUnplayed as FairnessPlaylistItem[],
             singerToDeprioritize 
-        );
+        ) as PlaylistItem[];
     } else {
         // Simple FIFO/AddedAt Sorting (Rules Disabled)
-        // Since the initial fetch already ordered by 'addedAt', we just use the subset directly.
-        sortedRemainingUnplayed = remainingUnplayed;
+        // FIX: Re-add explicit sort by addedAt on a copy to guarantee FIFO order.
+        sortedRemainingUnplayed = [...remainingUnplayed].sort((a, b) => 
+            a.addedAt.getTime() - b.addedAt.getTime()
+        );
     }
 
 
