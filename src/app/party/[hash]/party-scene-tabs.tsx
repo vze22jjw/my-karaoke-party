@@ -42,9 +42,29 @@ export function PartyScene({
 
   // Map to control per-participant "show played songs" toggle
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>({});
+  
+  // NEW STATE: Toggle visibility for full queue lists
+  const [showAllNextSongs, setShowAllNextSongs] = useState(false);
+  const [showAllPlayedSongs, setShowAllPlayedSongs] = useState(false);
+
 
   const togglePlayed = (participant: string) => {
     setShowPlayedMap((prev) => ({ ...prev, [participant]: !prev[participant] }));
+  };
+  
+  // Reusable function to send heartbeat
+  const sendHeartbeat = async () => {
+    try {
+      await fetch("/api/party/heartbeat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hash: party.hash }),
+      });
+    } catch (error) {
+      console.error("Error sending heartbeat:", error);
+    }
   };
 
   useEffect(() => {
@@ -53,7 +73,7 @@ export function PartyScene({
     if (!value) {
       router.push(`/join/${party.hash}`);
     } else {
-      // Registrar participante na party
+      // 1. Registrar participante na party
       fetch("/api/party/join", {
         method: "POST",
         headers: {
@@ -66,6 +86,9 @@ export function PartyScene({
       }).catch((error) => {
         console.error("Error joining party:", error);
       });
+      
+      // 2. Send an immediate heartbeat to keep party alive on mount/join
+      void sendHeartbeat();
     }
   }, [router, party.hash]);
 
@@ -90,6 +113,9 @@ export function PartyScene({
               toast.success(`🎤 ${participant} joined the party!`, {
                 duration: 3000,
               });
+              
+              // FIX: Add page refresh when a new person joins for all viewing clients
+              router.refresh(); 
             }
           });
 
@@ -106,7 +132,7 @@ export function PartyScene({
     // E depois a cada 3 segundos
     const interval = setInterval(fetchParticipants, 3000);
     return () => clearInterval(interval);
-  }, [party.hash, participants, name]);
+  }, [party.hash, participants, name, router]); // Added router to dependency array
 
   // Poll for playlist updates every 3 seconds
   useEffect(() => {
@@ -132,25 +158,17 @@ export function PartyScene({
 
   // Send heartbeat every 60 seconds to keep party alive
   useEffect(() => {
-    const heartbeatInterval = setInterval(async () => {
-      try {
-        await fetch("/api/party/heartbeat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ hash: party.hash }),
-        });
-      } catch (error) {
-        console.error("Error sending heartbeat:", error);
-      }
-    }, 60000); // 60 seconds
+    // Use the reusable function
+    const heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 seconds
 
     return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
+      // Send an immediate heartbeat before adding song
+      void sendHeartbeat();
+      
       // Use REST API
       const response = await fetch("/api/playlist/add", {
         method: "POST",
@@ -183,6 +201,10 @@ export function PartyScene({
   const nextVideos = playlist.filter((video) => !video.playedAt);
   const playedVideos = playlist.filter((video) => video.playedAt);
   const nextVideo = nextVideos[0] ?? null;
+
+  // Determine which subset of songs to show
+  const songsToShowNext = showAllNextSongs ? nextVideos.slice(1) : nextVideos.slice(1, 6);
+  const songsToShowPlayed = showAllPlayedSongs ? playedVideos.slice().reverse() : playedVideos.slice(-5).reverse();
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
@@ -249,11 +271,22 @@ export function PartyScene({
             {/* Próximas músicas */}
             {nextVideos.length > 1 && (
               <div className="bg-card rounded-lg p-4 border">
-                <h3 className="text-md font-semibold mb-3">
-                  Next in Line ({nextVideos.length - 1})
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-md font-semibold">
+                      Next in Line ({nextVideos.length - 1})
+                    </h3>
+                    {nextVideos.length > 6 && ( // Only show toggle if more than 5 songs exist
+                        <button
+                            type="button"
+                            onClick={() => setShowAllNextSongs(prev => !prev)}
+                            className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors text-white"
+                        >
+                            {showAllNextSongs ? 'Hide Queue' : `Show All (${nextVideos.length - 1})`}
+                        </button>
+                    )}
+                </div>
                 <ul className="space-y-2">
-                  {nextVideos.slice(1, 6).map((video, index) => (
+                  {songsToShowNext.map((video, index) => (
                     <li
                       key={video.id}
                       className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
@@ -272,7 +305,7 @@ export function PartyScene({
                     </li>
                   ))}
                 </ul>
-                {nextVideos.length > 6 && (
+                {!showAllNextSongs && nextVideos.length > 6 && (
                   <p className="text-sm text-muted-foreground mt-3 text-center">
                     And {nextVideos.length - 6} more song(s)...
                   </p>
@@ -283,11 +316,22 @@ export function PartyScene({
             {/* Músicas já tocadas */}
             {playedVideos.length > 0 && (
               <div className="bg-card rounded-lg p-4 border opacity-75">
-                <h3 className="text-md font-semibold mb-3">
-                  Already Played ({playedVideos.length})
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-md font-semibold">
+                      Already Played ({playedVideos.length})
+                    </h3>
+                    {playedVideos.length > 5 && ( // Only show toggle if more than 5 played songs exist
+                        <button
+                            type="button"
+                            onClick={() => setShowAllPlayedSongs(prev => !prev)}
+                            className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors text-white"
+                        >
+                            {showAllPlayedSongs ? 'Hide History' : `Show All (${playedVideos.length})`}
+                        </button>
+                    )}
+                </div>
                 <ul className="space-y-1">
-                  {playedVideos.slice(-5).reverse().map((video) => (
+                  {songsToShowPlayed.map((video) => (
                     <li
                       key={video.id}
                       className="text-sm text-muted-foreground truncate"
@@ -296,6 +340,11 @@ export function PartyScene({
                     </li>
                   ))}
                 </ul>
+                {!showAllPlayedSongs && playedVideos.length > 5 && (
+                  <p className="text-sm text-muted-foreground mt-3 text-center">
+                    And {playedVideos.length - 5} more song(s) in history...
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -401,7 +450,7 @@ export function PartyScene({
                             <button
                               type="button"
                               onClick={() => togglePlayed(participant)}
-                              className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors"
+                              className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors text-white"
                             >
                               {showPlayed ? "Hide Songs" : `Show All Songs (${participantSongs.length})`}
                             </button>

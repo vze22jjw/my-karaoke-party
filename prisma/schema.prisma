@@ -59,6 +59,7 @@ model PlaylistItem {
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
     orderIndex Int       @default(0)
+    randomBreaker Float? // New field for fair queue tie-breaker
 
     @@index([partyId])
     @@index([playedAt])

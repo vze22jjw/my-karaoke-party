@@ -55,6 +55,7 @@ export async function POST(request: Request) {
         coverUrl,
         duration: duration || "",
         singerName,
+        randomBreaker: Math.random(), // Add random breaker
       },
     });
 
