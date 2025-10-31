@@ -37,6 +37,21 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
 
+  // Reusable function to send heartbeat
+  const sendHeartbeat = async () => {
+    try {
+      await fetch("/api/party/heartbeat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hash: party.hash }),
+      });
+    } catch (error) {
+      console.error("Error sending heartbeat:", error);
+    }
+  };
+
   // Poll for playlist updates every 3 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -95,19 +110,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   // Send heartbeat every 60 seconds to keep party alive
   useEffect(() => {
-    const heartbeatInterval = setInterval(async () => {
-      try {
-        await fetch("/api/party/heartbeat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ hash: party.hash }),
-        });
-      } catch (error) {
-        console.error("Error sending heartbeat:", error);
-      }
-    }, 60000); // 60 seconds
+    const heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 seconds
 
     return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
@@ -254,6 +257,15 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
+  // Handler for the toggle button that sends an immediate heartbeat
+  const handleToggleRules = () => {
+    setUseQueueRules(prev => {
+      // Send an immediate heartbeat on user interaction
+      void sendHeartbeat(); 
+      return !prev;
+    });
+  };
+
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
       {/* Toggle button remains the same */}
@@ -287,15 +299,20 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
           {/* New Queue Rules Toggle */}
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-primary-foreground/80">Queue Rules</span>
+            <span className="text-sm font-medium text-primary-foreground/80">Queue Rules Enabled</span>
             <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setUseQueueRules(prev => !prev)}
-                aria-label={useQueueRules ? "Disable fairness rules" : "Enable fairness rules"}
+                onClick={handleToggleRules}
+                aria-label={useQueueRules ? "Disable Round Robin" : "Enable Round Robin"}
             >
-                {useQueueRules ? <Scale className="h-4 w-4 text-green-400" /> : <Scale className="h-4 w-4 text-gray-500" />}
+                {/* Red circle for OFF (false), Green circle for ON (true) */}
+                <div 
+                    className={`h-4 w-4 rounded-full transition-colors ${
+                        useQueueRules ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                />
             </Button>
           </div>
 
