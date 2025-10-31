@@ -15,8 +15,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - mykaraokenetwork
-    ports:
-      - "5432:5432"  
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mykaraoke"]
       interval: 10s
