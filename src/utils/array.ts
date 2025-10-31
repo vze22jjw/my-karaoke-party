@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-non-null-assertion */
 export function groupBy<T>(
   array: T[],
   keySelector: (item: T) => string | number | symbol,
@@ -104,8 +104,8 @@ function getSingerStats(
  * @param itemsToSort - The subset of unplayed items to be sorted (remaining queue)
  * @param singerToDeprioritize - The singer of the currently playing/last finished song (for anti-consecutive rule)
  */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-export function orderByAdvancedFairness<T extends FairnessPlaylistItem>(
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export function orderByRoundRobin<T extends FairnessPlaylistItem>(
   allItems: T[],
   itemsToSort: T[],
   singerToDeprioritize: string | null, // Accepts the current playing singer
@@ -113,61 +113,97 @@ export function orderByAdvancedFairness<T extends FairnessPlaylistItem>(
   // Calculate stats based on the ENTIRE playlist history
   const stats = getSingerStats(allItems);
 
-  // Get the unique singers who have songs in the ENTIRE unplayed queue (including the current one)
-  const allUnplayedSingers = new Set(allItems.filter(item => !item.playedAt).map(item => item.singerName));
-  const isOnlyOneSingerLeft = allUnplayedSingers.size <= 1;
+  // 1. Create the initial result/history list of singer names to calculate "distance"
+  const playedSingers = allItems
+    .filter(item => item.playedAt)
+    .sort((a, b) => a.playedAt!.getTime() - b.playedAt!.getTime())
+    .map(item => item.singerName);
 
-  // Custom sorting comparator applied to the itemsToSort array
-  itemsToSort.sort((a, b) => {
-    // Logic: stats guarantees existence of a.singerName and b.singerName
-    const aStats = stats[a.singerName]!;
-    const bStats = stats[b.singerName]!;
-    
-    const aIsDeprioritized = a.singerName === singerToDeprioritize;
-    const bIsDeprioritized = b.singerName === singerToDeprioritize;
-
-    // --- Rule 1: Anti-Consecutive Rule ---
-    if (!isOnlyOneSingerLeft) {
-        if (aIsDeprioritized !== bIsDeprioritized) {
-            // Deprioritize the singer who sang last (pushed back by 1)
-            return aIsDeprioritized ? 1 : -1;
-        }
-    }
-
-    // --- Rule 2: Least Recently Played (LRP) ---
-    const aLastPlayedTime = aStats.lastPlayed?.getTime() ?? 0;
-    const bLastPlayedTime = bStats.lastPlayed?.getTime() ?? 0;
-    
-    if (aLastPlayedTime !== bLastPlayedTime) {
-      // Lower time value (older played song or never played) means they get higher priority (-1)
-      return aLastPlayedTime - bLastPlayedTime;
-    }
-
-    // --- Rule 3: Fewest Unsung Songs (Next in Line) ---
-    if (aStats.nextCount !== bStats.nextCount) {
-      // Less songs = higher priority (-1)
-      return aStats.nextCount - bStats.nextCount; 
-    }
-
-    // --- Rule 4: Fewest Total Songs Sung (Total Played Count) ---
-    if (aStats.playedCount !== bStats.playedCount) {
-        // Less songs sung total = higher priority (-1)
-        return aStats.playedCount - bStats.playedCount;
-    }
-
-    // --- Rule 5: Random Tie Breaker ---
-    const aBreaker = a.randomBreaker ?? Math.random();
-    const bBreaker = b.randomBreaker ?? Math.random();
-    if (aBreaker !== bBreaker) {
-      // Prioritize the lower randomBreaker value
-      return aBreaker - bBreaker;
-    }
-
-    // Final Fallback: order by time added
-    return a.addedAt.getTime() - b.addedAt.getTime();
-  });
-
-  return itemsToSort; // Return the now-sorted list
-}
-/* eslint-enable @typescript-eslint/no-non-null-assertion */
+  // eslint-disable-next-line prefer-const
+  let resultByUser = [...playedSingers];
   
+  // Add the singer of the current song to history for anti-consecutive rule
+  if (singerToDeprioritize) {
+    resultByUser.push(singerToDeprioritize);
+  }
+
+  // 2. Group all songs to be sorted by singer, maintaining original order (addedAt)
+  const singerMap = new Map<string, T[]>(); 
+  
+  // Sort itemsToSort by addedAt time before grouping to ensure FIFO within a singer's turn
+  const sortedItemsToSort = [...itemsToSort].sort((a, b) => a.addedAt.getTime() - b.addedAt.getTime());
+
+  sortedItemsToSort.forEach(item => {
+    if (!singerMap.has(item.singerName)) {
+      singerMap.set(item.singerName, []);
+    }
+    singerMap.get(item.singerName)!.push(item);
+  });
+  
+  const upcoming: T[] = [];
+  
+  // 3. Iteratively build the Round Robin queue
+  while (singerMap.size > 0) {
+    let maxDistance = -1;
+    let maxSingerId: string | null = null;
+    
+    const allUnplayedSingers = Array.from(singerMap.keys());
+
+    for (const singerId of allUnplayedSingers) {
+      // Find the position of the singer's last played/queued song in the history array
+      const idx = resultByUser.lastIndexOf(singerId);
+      
+      // Distance: index of the singer + 1 (position) compared to the end of the history array
+      const distance = idx === -1 ? Infinity : resultByUser.length - idx; 
+
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        maxSingerId = singerId;
+      } else if (distance === maxDistance) {
+        // Tie-breaker 1: Fewest Unsung Songs
+        const statsA = stats[singerId]!;
+        const statsB = stats[maxSingerId!]!;
+
+        if (statsA.nextCount !== statsB.nextCount) {
+            if (statsA.nextCount < statsB.nextCount) {
+                maxSingerId = singerId;
+            }
+        } else {
+            // Tie-breaker 2: Random Breaker
+            const nextSongA = singerMap.get(singerId)![0]!;
+            const nextSongB = singerMap.get(maxSingerId!)![0]!;
+
+            if (nextSongA.randomBreaker !== nextSongB.randomBreaker) {
+                if (nextSongA.randomBreaker! < nextSongB.randomBreaker!) {
+                    maxSingerId = singerId;
+                }
+            } else {
+                // Final Tie-breaker: Fallback to earliest added song
+                if (nextSongA.addedAt.getTime() < nextSongB.addedAt.getTime()) {
+                    maxSingerId = singerId;
+                }
+            }
+        }
+      }
+    }
+
+    if (maxSingerId === null) break; 
+
+    // Take the next song for the maxSingerId (FIFO order maintained by the initial sort of itemsToSort)
+    const userItems = singerMap.get(maxSingerId)!;
+    const nextSong = userItems.shift()!;
+    upcoming.push(nextSong);
+
+    // Update the distance history for the next iteration
+    resultByUser.push(maxSingerId);
+
+    // Remove singer from map if their queue is now empty
+    if (userItems.length === 0) {
+      singerMap.delete(maxSingerId);
+    }
+  }
+
+  // FIX: Return the newly constructed 'upcoming' array
+  return upcoming; 
+}
+/* eslint-enable @typescript-eslint/no-unused-vars */
