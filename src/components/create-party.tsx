@@ -80,7 +80,7 @@ export function CreateParty() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createParty.mutate({ name });
+          createParty.mutate({ name: name.toUpperCase() });
         }}
         className="flex flex-col gap-2"
       >
@@ -93,7 +93,7 @@ export function CreateParty() {
           minLength={3}
           required
           autoComplete="off"
-          className="text-lg"
+          className="text-lg uppercase"
           autoFocus
         />
 

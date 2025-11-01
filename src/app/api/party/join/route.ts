@@ -4,13 +4,13 @@ import { db } from "~/server/db";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as { hash?: string; name?: string };
+    const body = (await request.json()) as { hash?: string; name?: string };
     const { hash, name } = body;
 
     if (!hash || !name) {
       return NextResponse.json(
         { error: "Hash and name are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!party) {
       return NextResponse.json(
         { error: "Party not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -45,13 +45,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Participante registrado",
+      message: "Singer registered",
     });
   } catch (error) {
     console.error("Error joining party:", error);
     return NextResponse.json(
-      { error: "Error registering participant" },
-      { status: 500 }
+      { error: "Error registering singer" },
+      { status: 500 },
     );
   }
 }
