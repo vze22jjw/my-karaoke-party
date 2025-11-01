@@ -14,7 +14,7 @@ import {
   DrawerTrigger,
 } from "./ui/ui/drawer";
 import { Button } from "./ui/ui/button";
-import { Music, Clock } from "lucide-react";
+import { Music, Clock, Users } from "lucide-react"; // <-- Imported Users
 import { Skeleton } from "./ui/ui/skeleton";
 
 type Party = {
@@ -22,6 +22,7 @@ type Party = {
   name: string;
   createdAt: string;
   songCount: number;
+  singerCount: number; // <-- Added this
 };
 
 export function JoinParty() {
@@ -63,7 +64,7 @@ export function JoinParty() {
     const now = new Date();
     const created = new Date(dateString);
     const diffInMinutes = Math.floor(
-      (now.getTime() - created.getTime()) / (1000 * 60)
+      (now.getTime() - created.getTime()) / (1000 * 60),
     );
 
     if (diffInMinutes < 1) return "right now";
@@ -86,9 +87,7 @@ export function JoinParty() {
         <div className="mx-auto w-full max-w-2xl">
           <DrawerHeader>
             <DrawerTitle>Open Parties</DrawerTitle>
-            <DrawerDescription>
-              Choose a party to join
-            </DrawerDescription>
+            <DrawerDescription>Choose a party to join</DrawerDescription>
           </DrawerHeader>
           <div className="p-4 pb-0">
             {loading && (
@@ -132,13 +131,20 @@ export function JoinParty() {
                     className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
                   >
                     <div className="space-y-1">
-                      <h3 className="font-semibold">{party.name}</h3>
+                      <h3 className="font-semibold uppercase">{party.name}</h3>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Music className="h-4 w-4" />
                           {party.songCount}{" "}
                           {party.songCount === 1 ? "song" : "songs"}
                         </span>
+                        {/* START: Added singer count */}
+                        <span className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          {party.singerCount}{" "}
+                          {party.singerCount === 1 ? "singer" : "singers"}
+                        </span>
+                        {/* END: Added singer count */}
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
                           {formatTimeAgo(party.createdAt)}

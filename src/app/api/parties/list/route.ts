@@ -23,6 +23,7 @@ export async function GET() {
         _count: {
           select: {
             playlistItems: true,
+            participants: true, // <-- Added this
           },
         },
       },
@@ -34,6 +35,7 @@ export async function GET() {
       name: party.name,
       createdAt: party.createdAt,
       songCount: party._count.playlistItems,
+      singerCount: party._count.participants, // <-- Added this
     }));
 
     return NextResponse.json(formattedParties);
@@ -41,7 +43,7 @@ export async function GET() {
     console.error("Error fetching parties:", error);
     return NextResponse.json(
       { error: "Failed to fetch parties" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
