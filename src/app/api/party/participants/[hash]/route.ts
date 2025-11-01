@@ -4,7 +4,7 @@ import { db } from "~/server/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { hash: string } }
+  { params }: { params: { hash: string } },
 ) {
   try {
     const { hash } = params;
@@ -29,29 +29,29 @@ export async function GET(
     if (!party) {
       return NextResponse.json(
         { error: "Party not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Combinar participantes registrados com quem tem músicas
-    const registeredParticipants = party.participants.map((p) => p.name);
-    const participantsWithSongs = [
+    const registeredSingers = party.participants.map((p) => p.name);
+    const singersWithSongs = [
       ...new Set(party.playlistItems.map((item) => item.singerName)),
     ].filter(Boolean);
 
     // Unir ambas as listas
-    const allParticipants = [
-      ...new Set([...registeredParticipants, ...participantsWithSongs]),
+    const allSingers = [
+      ...new Set([...registeredSingers, ...singersWithSongs]),
     ];
 
     return NextResponse.json({
-      participants: allParticipants,
+      singers: allSingers,
     });
   } catch (error) {
-    console.error("Error fetching participants:", error);
+    console.error("Error fetching singers:", error);
     return NextResponse.json(
-      { error: "Error fetching participants" },
-      { status: 500 }
+      { error: "Error fetching singers" },
+      { status: 500 },
     );
   }
 }
