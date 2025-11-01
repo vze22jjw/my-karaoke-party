@@ -13,6 +13,7 @@ import {
   Users,
   MicVocal,
   ChevronDown,
+  DoorOpen, // <-- Added icon
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -231,6 +232,14 @@ export function PartyScene({
     }
   };
 
+  // <-- START: Added leave party function
+  const onLeaveParty = () => {
+    if (confirm("Are you sure you want to leave this party?")) {
+      router.push("/");
+    }
+  };
+  // <-- END: Added leave party function
+
   const nextVideos = playlist.filter((video) => !video.playedAt);
   const playedVideos = playlist.filter((video) => video.playedAt);
   const nextVideo = nextVideos[0] ?? null;
@@ -438,10 +447,23 @@ export function PartyScene({
         {/* Tab 3: Singers */}
         <TabsContent value="singers" className="flex-1 overflow-auto mt-0">
           <div className="bg-card rounded-lg p-4 border">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Singers ({singers.length})
-            </h2>
+            {/* START: Updated header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Singers ({singers.length})
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onLeaveParty}
+                className="text-foreground/80 hover:text-red-500 hover:bg-red-500/10"
+                aria-label="Leave party"
+              >
+                <DoorOpen className="h-6 w-6" />
+              </Button>
+            </div>
+            {/* END: Updated header */}
 
             {singers.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
