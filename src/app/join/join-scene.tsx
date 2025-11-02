@@ -92,7 +92,8 @@ export default function JoinScene({
           {/* --- START: Conditionally render party name --- */}
           {partyName && (
             <div className="mb-4 w-full text-center">
-              <p className="text-sm text-muted-foreground">Joining:</p>
+              <p className="text-sm text-white/80">Joining:</p>
+              {/* <-- Updated text color */}
               <h1 className="text-outline scroll-m-20 text-xl font-extrabold tracking-tight uppercase break-words sm:text-2xl">
                 {partyName}
               </h1>
@@ -157,16 +158,17 @@ export default function JoinScene({
             </form>
           </Form>
 
-          {/* --- START: Added back link --- */}
+          {/* --- START: Updated back link --- */}
           {partyHash && (
             <Link
-              href="/"
-              className="mt-4 text-sm text-muted-foreground hover:text-foreground"
+              href="/?openParties=true"
+              className="mt-4 text-sm text-white/80 sm:hover:text-white sm:hover:underline"
+              replace // Use replace to not add to browser history
             >
               &larr; Back to parties list
             </Link>
           )}
-          {/* --- END: Added back link --- */}
+          {/* --- END: Updated back link --- */}
         </div>
       </div>
     </main>

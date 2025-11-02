@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ButtonHoverGradient } from "./ui/ui/button-hover-gradient";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import {
   Drawer,
   DrawerClose,
@@ -12,25 +12,43 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "./ui/ui/drawer";
-import { Button } from "./ui/ui/button";
-import { Music, Clock, Users } from "lucide-react"; // <-- Imported Users
-import { Skeleton } from "./ui/ui/skeleton";
+} from "~/components/ui/ui/drawer";
+import { Button } from "~/components/ui/ui/button";
+import { Music, Clock, Users } from "lucide-react";
+import { Skeleton } from "~/components/ui/ui/skeleton";
 
 type Party = {
   hash: string;
   name: string;
   createdAt: string;
   songCount: number;
-  singerCount: number; // <-- Added this
+  singerCount: number;
 };
 
-export function JoinParty() {
+// --- START: New inner component ---
+// We must wrap the component logic in a child component
+// so that the main export is not a client component.
+// This allows us to use <Suspense> on the page.
+function JoinPartyDrawer() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+
+  // --- START: Logic to auto-open drawer ---
+  useEffect(() => {
+    const openParam = searchParams.get("openParties");
+    if (openParam === "true") {
+      setIsOpen(true);
+      // Clean up the URL
+      router.replace(pathname, { scroll: false });
+    }
+  }, [searchParams, pathname, router]);
+  // --- END: Logic to auto-open drawer ---
 
   const fetchParties = async () => {
     setLoading(true);
@@ -207,3 +225,14 @@ export function JoinParty() {
     </Drawer>
   );
 }
+// --- END: New inner component ---
+
+// --- START: Main export wrapped in Suspense ---
+export function JoinParty() {
+  return (
+    <Suspense fallback={<ButtonHoverGradient type="button" className="w-full" disabled>Join Party 🎤</ButtonHoverGradient>}>
+      <JoinPartyDrawer />
+    </Suspense>
+  );
+}
+// --- END: Main export wrapped in Suspense ---
