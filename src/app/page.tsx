@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { CreateParty } from "../components/create-party";
 import { JoinParty } from "../components/join-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import Link from "next/link";
@@ -20,12 +19,20 @@ export default async function Home() {
 
         {/* Remaining elements centered vertically */}
         <div className="flex flex-1 flex-col items-center justify-center gap-6">
-          <div className="flex flex-col gap-2">
-            <CreateParty />
+          <div className="flex w-full max-w-xs flex-col gap-4">
             <JoinParty />
+
+            {/* --- START: Added Link to new page --- */}
+            <Link
+              href="/start-party"
+              className="text-center text-lg text-primary-foreground/80 hover:text-primary-foreground hover:underline"
+            >
+              or Start a New Party
+            </Link>
+            {/* --- END: Added Link --- */}
           </div>
 
-          <div>
+          <div className="mt-8">
             <Link href="/terms-of-service" className="hover:underline">
               Terms of Service
             </Link>
