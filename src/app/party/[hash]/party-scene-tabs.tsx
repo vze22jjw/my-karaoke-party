@@ -1,27 +1,18 @@
+// my-karaoke-party/src/app/party/[hash]/party-scene-tabs.tsx
 /* eslint-disable */
 "use client";
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty } from "party";
 import { useEffect, useState } from "react";
-// FIX: Removed unnecessary alias
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
-import { SongSearch } from "~/components/song-search";
-import {
-  Monitor,
-  Music,
-  Users,
-  MicVocal,
-  ChevronDown,
-  DoorOpen, // <-- Added icon
-} from "lucide-react";
+import { Monitor, Music, Users, History } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { PreviewPlayer } from "~/components/preview-player";
-import { decode } from "html-entities";
-import { toast } from "sonner";
-import { Button } from "~/components/ui/ui/button";
-import { cn } from "~/lib/utils";
+import { TabPlayer } from "./components/tab-player";
+import { TabAddSong } from "./components/tab-add-song";
+import { TabHistory } from "./components/tab-history";
+import { TabSingers } from "./components/tab-singers";
 
 // Define the localStorage key
 const QUEUE_RULES_KEY = "karaoke-queue-rules";
@@ -45,10 +36,6 @@ export function PartyScene({
     initialPlaylist?.playlist ?? [],
   );
 
-  // FIX: Removed the useLocalStorage hook for reading rules, will read manually in poll
-
-  // Lista de participantes únicos (baseado em singerName)
-  // Inicializar com participantes do initialPlaylist
   const [singers, setSingers] = useState<string[]>(() => {
     if (initialPlaylist?.playlist) {
       const uniqueSingers = Array.from(
@@ -58,19 +45,6 @@ export function PartyScene({
     }
     return [];
   });
-
-  // Map to control per-participant "show played songs" toggle
-  const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>(
-    {},
-  );
-
-  // NEW STATE: Toggle visibility for full queue lists
-  const [showAllNextSongs, setShowAllNextSongs] = useState(false);
-  const [showAllPlayedSongs, setShowAllPlayedSongs] = useState(false);
-
-  const togglePlayed = (singer: string) => {
-    setShowPlayedMap((prev) => ({ ...prev, [singer]: !prev[singer] }));
-  };
 
   // Reusable function to send heartbeat
   const sendHeartbeat = async () => {
@@ -232,25 +206,11 @@ export function PartyScene({
     }
   };
 
-  // <-- START: Added leave party function
   const onLeaveParty = () => {
     if (confirm("Are you sure you want to leave this party?")) {
       router.push("/");
     }
   };
-  // <-- END: Added leave party function
-
-  const nextVideos = playlist.filter((video) => !video.playedAt);
-  const playedVideos = playlist.filter((video) => video.playedAt);
-  const nextVideo = nextVideos[0] ?? null;
-
-  // Determine which subset of songs to show
-  const songsToShowNext = showAllNextSongs
-    ? nextVideos.slice(1)
-    : nextVideos.slice(1, 6);
-  const songsToShowPlayed = showAllPlayedSongs
-    ? playedVideos.slice().reverse()
-    : playedVideos.slice(-5).reverse();
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
@@ -267,14 +227,18 @@ export function PartyScene({
         onValueChange={setActiveTab}
         className="flex-1 flex flex-col overflow-hidden"
       >
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
             <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Songs</span>
+            <span className="hidden sm:inline">Add Song</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">History</span>
           </TabsTrigger>
           <TabsTrigger value="singers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -284,310 +248,31 @@ export function PartyScene({
 
         {/* Tab 1: Player View */}
         <TabsContent value="player" className="flex-1 overflow-auto mt-0">
-          <div className="space-y-4">
-            {/* Preview do que está tocando */}
-            <div className="bg-card rounded-lg p-4 border">
-              <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Monitor className="h-5 w-5" />
-                Playing Now
-              </h2>
-              {nextVideo ? (
-                <>
-                  <PreviewPlayer
-                    videoId={nextVideo.id}
-                    title={nextVideo.title}
-                    thumbnail={nextVideo.coverUrl}
-                  />
-                  <div className="mt-3">
-                    <p className="font-medium">{decode(nextVideo.title)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Singing: {nextVideo.singerName}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">No songs queued</p>
-                </div>
-              )}
-            </div>
-
-            {/* Próximas músicas */}
-            {nextVideos.length > 1 && (
-              <div className="bg-card rounded-lg p-4 border">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold">
-                    Next in Line ({nextVideos.length - 1})
-                  </h3>
-                  {nextVideos.length > 6 && ( // Only show toggle if more than 5 songs exist
-                    <button
-                      type="button"
-                      onClick={() => setShowAllNextSongs((prev) => !prev)}
-                      className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors text-white"
-                    >
-                      {showAllNextSongs
-                        ? "Hide Queue"
-                        : `Show All (${nextVideos.length - 1})`}
-                    </button>
-                  )}
-                </div>
-                <ul className="space-y-2">
-                  {songsToShowNext.map((video, index) => (
-                    <li
-                      key={video.id}
-                      className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
-                    >
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                        {index + 2}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {decode(video.title)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {video.singerName}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                {!showAllNextSongs && nextVideos.length > 6 && (
-                  <p className="text-sm text-muted-foreground mt-3 text-center">
-                    And {nextVideos.length - 6} more song(s)...
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Músicas já tocadas */}
-            {playedVideos.length > 0 && (
-              <div className="bg-card rounded-lg p-4 border opacity-75">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold">
-                    Already Played ({playedVideos.length})
-                  </h3>
-                  {playedVideos.length > 5 && ( // Only show toggle if more than 5 played songs exist
-                    <button
-                      type="button"
-                      onClick={() => setShowAllPlayedSongs((prev) => !prev)}
-                      className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors text-white"
-                    >
-                      {showAllPlayedSongs
-                        ? "Hide History"
-                        : `Show All (${playedVideos.length})`}
-                    </button>
-                  )}
-                </div>
-                <ul className="space-y-1">
-                  {songsToShowPlayed.map((video) => (
-                    <li
-                      key={video.id}
-                      className="text-sm text-muted-foreground truncate"
-                    >
-                      • {decode(video.title)}
-                    </li>
-                  ))}
-                </ul>
-                {!showAllPlayedSongs && playedVideos.length > 5 && (
-                  <p className="text-sm text-muted-foreground mt-3 text-center">
-                    And {playedVideos.length - 5} more song(s) in history...
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <TabPlayer playlist={playlist} />
         </TabsContent>
 
         {/* Tab 2: Search & Add Songs */}
         <TabsContent value="search" className="flex-1 overflow-auto mt-0">
-          <div className="space-y-4">
-            <div className="bg-card rounded-lg p-4 border">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Music className="h-5 w-5" />
-                Add Songs
-              </h2>
-              <SongSearch onVideoAdded={addSong} playlist={playlist} />
-            </div>
-
-            {/* Minhas músicas na fila */}
-            {name && (
-              <div className="bg-card rounded-lg p-4 border">
-                <h3 className="text-md font-semibold mb-3">
-                  My Queued Songs
-                </h3>
-                {(() => {
-                  const mySongs = nextVideos.filter(
-                    (v) => v.singerName === name,
-                  );
-                  if (mySongs.length === 0) {
-                    return (
-                      <p className="text-sm text-muted-foreground">
-                        You haven't added any songs yet.
-                      </p>
-                    );
-                  }
-                  return (
-                    <ul className="space-y-2">
-                      {mySongs.map((video) => (
-                        <li
-                          key={video.id}
-                          className="p-2 rounded bg-muted text-sm"
-                        >
-                          {decode(video.title)}
-                        </li>
-                      ))}
-                    </ul>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
+          <TabAddSong
+            playlist={playlist}
+            name={name}
+            onVideoAdded={addSong}
+          />
         </TabsContent>
 
-        {/* Tab 3: Singers */}
+        {/* Tab 3: History */}
+        <TabsContent value="history" className="flex-1 overflow-auto mt-0">
+          <TabHistory playlist={playlist} />
+        </TabsContent>
+
+        {/* Tab 4: Singers */}
         <TabsContent value="singers" className="flex-1 overflow-auto mt-0">
-          <div className="bg-card rounded-lg p-4 border">
-            {/* START: Updated header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Singers ({singers.length})
-              </h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onLeaveParty}
-                className="text-foreground/80 hover:text-red-500 hover:bg-red-500/10"
-                aria-label="Leave party"
-              >
-                <DoorOpen className="h-6 w-6" />
-              </Button>
-            </div>
-            {/* END: Updated header */}
-
-            {singers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No singers yet
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {singers.map((singer) => {
-                  const singerSongs = playlist.filter(
-                    (v) => v.singerName === singer,
-                  );
-                  const nextSongs = singerSongs.filter((v) => !v.playedAt);
-                  const playedSongs = singerSongs.filter((v) => v.playedAt);
-                  const showPlayed = !!showPlayedMap[singer];
-
-                  return (
-                    <div
-                      key={singer}
-                      className="p-4 rounded-lg border bg-muted/50"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                            <MicVocal className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <p className="font-semibold">{singer}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {singerSongs.length} song(s)
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {singer === name && (
-                            <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                              You
-                            </span>
-                          )}
-
-                          {/* Toggle button for song history */}
-                          {(playedSongs.length > 0 ||
-                            nextSongs.length > 0) && (
-                            <Button
-                              type="button"
-                              onClick={() => togglePlayed(singer)}
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-white"
-                            >
-                              <span className="sr-only">
-                                {showPlayed
-                                  ? "Hide Songs"
-                                  : `Show All Songs (${singerSongs.length})`}
-                              </span>
-                              <ChevronDown
-                                className={cn(
-                                  "h-5 w-5 transition-transform",
-                                  showPlayed ? "rotate-180" : "",
-                                )}
-                              />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Show songs section */}
-                      {showPlayed ? (
-                        // Show all songs when expanded
-                        <div className="mt-2 space-y-3">
-                          {nextSongs.length > 0 && (
-                            <div className="pt-2 border-t">
-                              <p className="text-xs font-medium text-muted-foreground mb-1">
-                                In Line: {nextSongs.length}
-                              </p>
-                              <ul className="space-y-1">
-                                {nextSongs.map((song) => (
-                                  <li
-                                    key={song.id}
-                                    className="text-xs truncate pl-2"
-                                  >
-                                    • {decode(song.title)}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {playedSongs.length > 0 && (
-                            <div className="pt-2 border-t">
-                              <p className="text-xs font-medium text-muted-foreground mb-1">
-                                Already sang: {playedSongs.length}
-                              </p>
-                              <ul className="space-y-1">
-                                {playedSongs.reverse().map((song) => (
-                                  <li
-                                    key={song.id}
-                                    className="text-xs truncate pl-2 text-muted-foreground"
-                                  >
-                                    • {decode(song.title)}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        // Show summary when collapsed
-                        <div className="text-xs text-muted-foreground">
-                          {nextSongs.length > 0 &&
-                            `${nextSongs.length} in line`}
-                          {nextSongs.length > 0 &&
-                            playedSongs.length > 0 &&
-                            " • "}
-                          {playedSongs.length > 0 &&
-                            `${playedSongs.length} played`}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <TabSingers
+            playlist={playlist}
+            singers={singers}
+            name={name}
+            onLeaveParty={onLeaveParty}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -19,6 +19,7 @@ import {
   ListMusic, // Added icon
   Settings, // Added icon
   AlertTriangle, // Added icon
+  Search, // Added icon
 } from "lucide-react";
 import Image from "next/image";
 import type { KaraokeParty, VideoInPlaylist } from "party";
@@ -36,12 +37,16 @@ import { decode } from "html-entities";
 import { cn } from "~/lib/utils"; // Import cn for utility classes
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"; // Added tabs import
 
-// Removed reorder helper function
+// --- Import new child components ---
+import { TabPlaylist } from "./components/tab-playlist";
+import { TabSettings } from "./components/tab-settings";
 
 type Props = {
   party: Party;
   initialPlaylist: KaraokeParty;
 };
+
+const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 
 export default function PlayerScene({ party, initialPlaylist }: Props) {
   const router = useRouter();
@@ -49,7 +54,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     initialPlaylist.playlist ?? [],
   );
   const [singers, setSingers] = useState<string[]>([]);
-  // const [showSearch, setShowSearch] = useState(true); // <-- REMOVED
 
   // State for the new tabs
   const [activeTab, setActiveTab] = useLocalStorage({
@@ -62,8 +66,22 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     defaultValue: true, // Default to ON (Fairness)
   });
 
+  const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
+    key: MAX_SEARCH_RESULTS_KEY,
+    defaultValue: 10,
+  });
+
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
+
+  // --- START: Compile Error Fix ---
+  // This guard ensures that party.hash is treated as a string below.
+  if (!party.hash) {
+    // This should technically never be hit if the page loads,
+    // but it satisfies TypeScript's type-checking.
+    return <div>Error: Party hash is missing.</div>;
+  }
+  // --- END: Compile Error Fix ---
 
   // Reusable function to send heartbeat
   const sendHeartbeat = async () => {
@@ -310,17 +328,13 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
-      {/* Hide/Show Button REMOVED */}
-
       {/* Left panel with queue list - Mobile Only */}
       <div
         className="w-full overflow-hidden border-r border-border sm:hidden"
       >
-        {/* FIX: Changed the outer div to use flex-col h-full to manage vertical space */}
         <div className="flex flex-col h-full p-4 pt-14">
           {/* Fixed content area: flex-shrink-0 ensures it keeps its height */}
           <div className="flex-shrink-0">
-            {/* Add party name at top - APPLIED RESPONSIVE FONT SIZE */}
             <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
               {party.name}
             </h1>
@@ -343,157 +357,31 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
               </TabsTrigger>
             </TabsList>
 
-            {/* --- Tab 1: Playlist Content --- */}
+            {/* --- Tab 1: Playlist Content (Refactored) --- */}
             <TabsContent
               value="playlist"
               className="flex-1 overflow-y-auto mt-0 space-y-2"
             >
-              {nextVideos.length > 0 ? (
-                nextVideos.map((video, index) => {
-                  const isLocked = index === 0;
-
-                  // Placeholder for Drag and Drop Item
-                  return (
-                    <div
-                      key={video.id}
-                      // Removed cn and drag-related classes (cursor-grab, hover:bg-muted)
-                      className={
-                        "p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
-                      }
-                    >
-                      {/* Thumbnail - reduced size */}
-                      <div className="relative w-16 aspect-video flex-shrink-0">
-                        <Image
-                          src={video.coverUrl}
-                          fill={true}
-                          className="rounded-md object-cover"
-                          alt={video.title}
-                          sizes="64px"
-                        />
-                      </div>
-
-                      {/* Song info and controls - improved truncation */}
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        <div className="flex items-center gap-1 mb-1">
-                          <span
-                            className={cn(
-                              "font-mono text-xs text-muted-foreground",
-                              isLocked && "font-bold text-primary",
-                            )}
-                          >
-                            #{index + 1}
-                          </span>
-                          <p className="font-medium text-xs truncate">
-                            {decode(video.title)}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground truncate">
-                            {video.singerName}
-                          </p>
-                          <div className="flex gap-1 flex-shrink-0">
-                            {index === 0 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
-                                onClick={() => markAsPlayed()}
-                              >
-                                <SkipForward className="h-3 w-3" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-red-500 hover:bg-gray-400"
-                              onClick={() => removeSong(video.id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No songs in queue
-                </p>
-              )}
+              <TabPlaylist
+                playlist={playlist}
+                onRemoveSong={removeSong}
+                onMarkAsPlayed={markAsPlayed}
+              />
             </TabsContent>
 
-            {/* --- Tab 2: Settings Content --- */}
+            {/* --- Tab 2: Settings Content (Refactored) --- */}
             <TabsContent
               value="settings"
-              className="flex-1 overflow-y-auto mt-0 space-y-4"
+              className="flex-1 overflow-y-auto mt-0 space-y-6"
             >
-              {/* Queue Rules (Moved) */}
-              <div className="flex-shrink-0">
-                <h2 className="font-semibold text-lg mb-2">Controls</h2>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-primary-foreground/80">
-                    Queue Rules
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {useQueueRules ? "ON (Fairness)" : "OFF (Manual)"}
-                    </span>
-
-                    {/* Slide Toggle Switch */}
-                    <button
-                      onClick={handleToggleRules}
-                      aria-checked={useQueueRules}
-                      role="switch"
-                      className={cn(
-                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
-                        useQueueRules ? "bg-green-500" : "bg-red-500",
-                      )}
-                    >
-                      <span className="sr-only">Toggle Queue Rules</span>
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                          useQueueRules ? "translate-x-5" : "translate-x-0",
-                        )}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Add Songs Link (Moved) */}
-              <div className="flex-shrink-0">
-                <h2 className="font-semibold text-lg mb-2">Add Songs</h2>
-                <a
-                  href={`/party/${party.hash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block text-primary hover:text-primary/80 font-medium text-sm"
-                >
-                  👉 Open Page to Add Songs
-                </a>
-              </div>
-
-              {/* Close Party Button (New) */}
-              <div className="flex-shrink-0 pt-4 border-t border-destructive/20">
-                <h2 className="font-semibold text-lg mb-2 text-destructive">
-                  Danger Zone
-                </h2>
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={handleCloseParty}
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Close Party
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  This will permanently delete the party and its playlist for
-                  everyone.
-                </p>
-              </div>
+              <TabSettings
+                useQueueRules={useQueueRules}
+                onToggleRules={handleToggleRules}
+                partyHash={party.hash}
+                maxSearchResults={maxSearchResults}
+                onSetMaxResults={setMaxSearchResults}
+                onCloseParty={handleCloseParty}
+              />
             </TabsContent>
           </Tabs>
           {/* --- END: Tabs Component --- */}
