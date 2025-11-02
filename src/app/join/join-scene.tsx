@@ -17,6 +17,7 @@ import {
 import { Input } from "~/components/ui/ui/input";
 import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { useEffect } from "react";
+import Link from "next/link"; // <-- Import Link
 
 const formSchema = z.object({
   partyCode: z.string().min(4), // <-- FIX: Changed from min(8) to min(4)
@@ -92,7 +93,7 @@ export default function JoinScene({
           {partyName && (
             <div className="mb-4 w-full text-center">
               <p className="text-sm text-muted-foreground">Joining:</p>
-              <h1 className="text-outline scroll-m-20 truncate text-2xl font-extrabold tracking-tight uppercase">
+              <h1 className="text-outline scroll-m-20 text-xl font-extrabold tracking-tight uppercase break-words sm:text-2xl">
                 {partyName}
               </h1>
             </div>
@@ -155,6 +156,17 @@ export default function JoinScene({
               </ButtonHoverGradient>
             </form>
           </Form>
+
+          {/* --- START: Added back link --- */}
+          {partyHash && (
+            <Link
+              href="/"
+              className="mt-4 text-sm text-muted-foreground hover:text-foreground"
+            >
+              &larr; Back to parties list
+            </Link>
+          )}
+          {/* --- END: Added back link --- */}
         </div>
       </div>
     </main>
