@@ -19,6 +19,7 @@ import {
   ListMusic, // Added icon
   Settings, // Added icon
   AlertTriangle, // Added icon
+  Search, // Added icon
 } from "lucide-react";
 import Image from "next/image";
 import type { KaraokeParty, VideoInPlaylist } from "party";
@@ -43,6 +44,10 @@ type Props = {
   initialPlaylist: KaraokeParty;
 };
 
+// --- START: Added new local storage key ---
+const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
+// --- END: Added new local storage key ---
+
 export default function PlayerScene({ party, initialPlaylist }: Props) {
   const router = useRouter();
   const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
@@ -61,6 +66,13 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     key: "karaoke-queue-rules",
     defaultValue: true, // Default to ON (Fairness)
   });
+
+  // --- START: Added search results state ---
+  const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
+    key: MAX_SEARCH_RESULTS_KEY,
+    defaultValue: 10,
+  });
+  // --- END: Added search results state ---
 
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
@@ -426,7 +438,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
             {/* --- Tab 2: Settings Content --- */}
             <TabsContent
               value="settings"
-              className="flex-1 overflow-y-auto mt-0 space-y-4"
+              className="flex-1 overflow-y-auto mt-0 space-y-6"
             >
               {/* Queue Rules (Moved) */}
               <div className="flex-shrink-0">
@@ -475,6 +487,36 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
                   👉 Open Page to Add Songs
                 </a>
               </div>
+
+              {/* --- START: New Search Results Setting --- */}
+              <div className="flex-shrink-0">
+                <h2 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Search Settings
+                </h2>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="max-results"
+                    className="text-sm font-medium text-primary-foreground/80"
+                  >
+                    Results per search
+                  </label>
+                  <select
+                    id="max-results"
+                    value={maxSearchResults}
+                    onChange={(e) =>
+                      setMaxSearchResults(Number(e.target.value))
+                    }
+                    className="rounded-md border-input bg-background p-2 text-sm"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                  </select>
+                </div>
+              </div>
+              {/* --- END: New Search Results Setting --- */}
 
               {/* Close Party Button (New) */}
               <div className="flex-shrink-0 pt-4 border-t border-destructive/20">

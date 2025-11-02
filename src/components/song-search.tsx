@@ -13,20 +13,31 @@ import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
 import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
+import { useLocalStorage } from "@mantine/hooks"; // <-- Added import
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
   playlist: KaraokeParty["playlist"];
 };
 
+// --- Added key definition ---
+const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
+
 export function SongSearch({ onVideoAdded, playlist }: Props) {
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
+
+  // --- Added useLocalStorage hook ---
+  const [maxSearchResults] = useLocalStorage<number>({
+    key: MAX_SEARCH_RESULTS_KEY,
+    defaultValue: 10,
+  });
 
   const { data, isError, refetch, isLoading, isFetched } =
     api.youtube.search.useQuery(
       {
         keyword: `${videoInputValue} karaoke`,
+        maxResults: maxSearchResults, // <-- Pass value to query
       },
       { refetchOnWindowFocus: false, enabled: false, retry: false },
     );
@@ -129,7 +140,9 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
             return (
               <div
                 key={video.id.videoId}
-                className={"relative h-48 overflow-hidden rounded-lg animate-in fade-in"}
+                className={
+                  "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50"
+                } // <-- Added border
               >
                 <PreviewPlayer
                   key={video.id.videoId}
@@ -176,4 +189,3 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
     </form>
   );
 }
-  
