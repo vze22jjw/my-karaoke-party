@@ -74,6 +74,22 @@ export function JoinParty() {
     return `created ${Math.floor(diffInHours / 24)}d`;
   };
 
+  // --- START: Helper function for mobile time format ---
+  const formatTimeAgoMobile = (dateString: string) => {
+    const now = new Date();
+    const created = new Date(dateString);
+    const diffInMinutes = Math.floor(
+      (now.getTime() - created.getTime()) / (1000 * 60),
+    );
+
+    if (diffInMinutes < 1) return "now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h`;
+    return `${Math.floor(diffInHours / 24)}d`;
+  };
+  // --- END: Helper function for mobile time format ---
+
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
@@ -132,24 +148,33 @@ export function JoinParty() {
                   >
                     <div className="space-y-1">
                       <h3 className="font-semibold uppercase">{party.name}</h3>
+                      {/* --- START: Updated responsive info row --- */}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Music className="h-4 w-4" />
-                          {party.songCount}{" "}
-                          {party.songCount === 1 ? "song" : "songs"}
+                          {party.songCount}
+                          <span className="hidden sm:inline">
+                            {party.songCount === 1 ? "song" : "songs"}
+                          </span>
                         </span>
-                        {/* START: Added singer count */}
                         <span className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          {party.singerCount}{" "}
-                          {party.singerCount === 1 ? "singer" : "singers"}
+                          {party.singerCount}
+                          <span className="hidden sm:inline">
+                            {party.singerCount === 1 ? "singer" : "singers"}
+                          </span>
                         </span>
-                        {/* END: Added singer count */}
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {formatTimeAgo(party.createdAt)}
+                          <span className="hidden sm:inline">
+                            {formatTimeAgo(party.createdAt)}
+                          </span>
+                          <span className="sm:hidden">
+                            {formatTimeAgoMobile(party.createdAt)}
+                          </span>
                         </span>
                       </div>
+                      {/* --- END: Updated responsive info row --- */}
                     </div>
                     <Button
                       onClick={() => handleJoinParty(party.hash)}

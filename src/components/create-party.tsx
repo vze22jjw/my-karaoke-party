@@ -91,6 +91,7 @@ export function CreateParty() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           minLength={3}
+          maxLength={30} // <-- Added character limit
           required
           autoComplete="off"
           className="text-lg uppercase"
