@@ -14,7 +14,7 @@ export default async function Home() {
           alt="My Karaoke Party logo"
           priority={true}
           placeholder="blur"
-          className="h-auto w-full max-w-[666px] flex-shrink-0"
+          className="h-auto w-full max-w-sm flex-shrink-0 sm:max-w-[666px]"
         />
 
         {/* Remaining elements centered vertically */}

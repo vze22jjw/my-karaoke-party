@@ -16,7 +16,7 @@ export default async function StartPartyPage() {
           alt="My Karaoke Party logo"
           priority={true}
           placeholder="blur"
-          className="h-auto w-full max-w-[666px] flex-shrink-0"
+          className="h-auto w-full max-w-[266px] flex-shrink-0" // <-- Resized logo
         />
 
         {/* Remaining elements centered vertically */}
