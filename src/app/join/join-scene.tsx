@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
+  FormDescription, // <-- Import FormDescription
   FormField,
   FormItem,
   FormLabel,
@@ -132,8 +133,9 @@ export default function JoinScene({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name - Case Sensitive</FormLabel>
-                    {/* <-- Updated Label */}
+                    {/* --- START: Modified Label --- */}
+                    <FormLabel>Name</FormLabel>
+                    {/* --- END: Modified Label --- */}
                     <FormControl>
                       <Input
                         placeholder="Enter your name..."
@@ -145,6 +147,11 @@ export default function JoinScene({
                         {...field}
                       />
                     </FormControl>
+                    <FormDescription className="text-white/70">
+                      Tip: Your name is case-sensitive. Use the exact same name
+                      (e.g., &apos;Singer&apos; vs &apos;singer&apos;) to keep your
+                      song history!
+                    </FormDescription>
                   </FormItem>
                 )}
               />
