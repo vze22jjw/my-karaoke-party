@@ -30,6 +30,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     initialPlaylist.playlist ?? [],
   );
   const [singers, setSingers] = useState<string[]>([]);
+  const [isConfirmingClose, setIsConfirmingClose] = useState(false); // <-- Add state
 
   // State for the new tabs
   const [activeTab, setActiveTab] = useLocalStorage({
@@ -264,15 +265,15 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }
   };
 
+  // --- START: Modified handleCloseParty ---
   const handleCloseParty = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to close this party? All data will be lost.",
-      )
-    ) {
-      return;
-    }
+    // This now just opens the confirmation
+    setIsConfirmingClose(true);
+  };
+  // --- END: Modified handleCloseParty ---
 
+  // --- START: New Handlers ---
+  const confirmCloseParty = async () => {
     try {
       const response = await fetch("/api/party/delete", {
         method: "POST",
@@ -296,6 +297,11 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }
   };
 
+  const cancelCloseParty = () => {
+    setIsConfirmingClose(false);
+  };
+  // --- END: New Handlers ---
+
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
   return (
@@ -313,6 +319,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
         onCloseParty={handleCloseParty}
+        isConfirmingClose={isConfirmingClose} // <-- Pass state
+        onConfirmClose={confirmCloseParty} // <-- Pass handler
+        onCancelClose={cancelCloseParty} // <-- Pass handler
       />
 
       {/* Right panel with player - Desktop Only */}

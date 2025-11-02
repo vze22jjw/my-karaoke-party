@@ -19,6 +19,9 @@ type Props = {
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
+  isConfirmingClose: boolean; // <-- Added
+  onConfirmClose: () => void; // <-- Added
+  onCancelClose: () => void; // <-- Added
 };
 
 export function PlayerMobilePanel({
@@ -33,6 +36,9 @@ export function PlayerMobilePanel({
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
+  isConfirmingClose, // <-- Added
+  onConfirmClose, // <-- Added
+  onCancelClose, // <-- Added
 }: Props) {
   if (!party.hash) return null; // Guard for hash
 
@@ -87,6 +93,9 @@ export function PlayerMobilePanel({
               maxSearchResults={maxSearchResults}
               onSetMaxResults={onSetMaxResults}
               onCloseParty={onCloseParty}
+              isConfirmingClose={isConfirmingClose} // <-- Pass prop
+              onConfirmClose={onConfirmClose} // <-- Pass prop
+              onCancelClose={onCancelClose} // <-- Pass prop
             />
           </TabsContent>
         </Tabs>

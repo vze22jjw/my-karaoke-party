@@ -11,6 +11,9 @@ type Props = {
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
+  isConfirmingClose: boolean; // <-- Added
+  onConfirmClose: () => void; // <-- Added
+  onCancelClose: () => void; // <-- Added
 };
 
 export function TabSettings({
@@ -20,6 +23,9 @@ export function TabSettings({
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
+  isConfirmingClose, // <-- Added
+  onConfirmClose, // <-- Added
+  onCancelClose, // <-- Added
 }: Props) {
   return (
     <>
@@ -99,23 +105,50 @@ export function TabSettings({
       </div>
       {/* --- END: New Search Results Setting --- */}
 
-      {/* Close Party Button (New) */}
+      {/* --- START: Modified Close Party Button --- */}
       <div className="flex-shrink-0 pt-4 border-t border-destructive/20">
         <h2 className="font-semibold text-lg mb-2 text-destructive">
           Danger Zone
         </h2>
-        <Button
-          variant="destructive"
-          className="w-full"
-          onClick={onCloseParty}
-        >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Close Party
-        </Button>
-        <p className="text-xs text-muted-foreground mt-2">
-          This will permanently delete the party and its playlist for everyone.
-        </p>
+
+        {isConfirmingClose ? (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+            <p className="text-center font-medium text-destructive">
+              Are you sure?
+            </p>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              This will permanently delete the party and its playlist for
+              everyone.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onCancelClose}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onConfirmClose}
+              >
+                Yes, Close Party
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={onCloseParty}
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Close Party
+          </Button>
+        )}
       </div>
+      {/* --- END: Modified Close Party Button --- */}
     </>
   );
 }
