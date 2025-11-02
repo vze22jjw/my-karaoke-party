@@ -49,7 +49,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     initialPlaylist.playlist ?? [],
   );
   const [singers, setSingers] = useState<string[]>([]);
-  const [showSearch, setShowSearch] = useState(true);
+  // const [showSearch, setShowSearch] = useState(true); // <-- REMOVED
 
   // State for the new tabs
   const [activeTab, setActiveTab] = useLocalStorage({
@@ -310,33 +310,13 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
-      {/* Toggle button remains the same */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-3 left-3 z-50 bg-background/50 backdrop-blur-sm hidden sm:flex items-center justify-center"
-        onClick={() => setShowSearch((prev) => !prev)}
-        aria-label={showSearch ? "Hide queue panel" : "Show queue panel"}
-      >
-        {showSearch ? (
-          <EyeOff className="h-4 w-4" />
-        ) : (
-          <Eye className="h-4 w-4" />
-        )}
-      </Button>
+      {/* Hide/Show Button REMOVED */}
 
-      {/* Left panel with queue list - REFACTORED WITH TABS */}
+      {/* Left panel with queue list - Mobile Only */}
       <div
-        className={`
-          w-full 
-          sm:transition-all sm:duration-300 
-          overflow-hidden border-r border-border
-          ${showSearch
-            ? "sm:w-1/6 sm:opacity-100" // Desktop Visible: Set width and opacity
-            : "sm:w-0 sm:opacity-0" // Desktop Hidden: Collapse width and hide content
-          }
-        `}
+        className="w-full overflow-hidden border-r border-border sm:hidden"
       >
+        {/* FIX: Changed the outer div to use flex-col h-full to manage vertical space */}
         <div className="flex flex-col h-full p-4 pt-14">
           {/* Fixed content area: flex-shrink-0 ensures it keeps its height */}
           <div className="flex-shrink-0">
@@ -355,11 +335,11 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
             <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
               <TabsTrigger value="playlist" className="flex items-center gap-2">
                 <ListMusic className="h-4 w-4" />
-                <span className="hidden sm:inline">Playlist</span>
+                <span className="inline">Playlist</span>
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Settings</span>
+                <span className="inline">Settings</span>
               </TabsTrigger>
             </TabsList>
 
@@ -520,16 +500,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         </div>
       </div>
 
-      {/* Right panel with player - adjusted width */}
+      {/* Right panel with player - Desktop Only */}
       <div
-        className={`
-          hidden 
-          sm:block 
-          sm:w-5/6 
-          sm:transition-all sm:duration-300 
-          mt-14 
-          ${showSearch ? "" : "sm:w-full"}
-        `}
+        className="hidden sm:block sm:w-full"
       >
         <div className="flex h-full flex-col">
           <div className="relative h-full" ref={ref}>
