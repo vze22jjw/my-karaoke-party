@@ -274,7 +274,7 @@ export function PartyScene({
           </TabsTrigger>
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="hidden sm:inline">To add</span>
+            <span className="hidden sm:inline">Add Songs</span>
           </TabsTrigger>
           <TabsTrigger value="singers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />

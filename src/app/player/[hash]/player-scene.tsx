@@ -16,6 +16,9 @@ import {
   Eye,
   EyeOff,
   Scale,
+  ListMusic, // Added icon
+  Settings, // Added icon
+  AlertTriangle, // Added icon
 } from "lucide-react";
 import Image from "next/image";
 import type { KaraokeParty, VideoInPlaylist } from "party";
@@ -31,6 +34,7 @@ import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils"; // Import cn for utility classes
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"; // Added tabs import
 
 // Removed reorder helper function
 
@@ -46,6 +50,12 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   );
   const [singers, setSingers] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(true);
+
+  // State for the new tabs
+  const [activeTab, setActiveTab] = useLocalStorage({
+    key: "karaoke-player-active-tab",
+    defaultValue: "playlist",
+  });
 
   const [useQueueRules, setUseQueueRules] = useLocalStorage({
     key: "karaoke-queue-rules",
@@ -315,7 +325,7 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         )}
       </Button>
 
-      {/* Left panel with queue list - FIX APPLIED HERE */}
+      {/* Left panel with queue list - REFACTORED WITH TABS */}
       <div
         className={`
           w-full 
@@ -327,7 +337,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
           }
         `}
       >
-        {/* FIX: Changed the outer div to use flex-col h-full to manage vertical space */}
         <div className="flex flex-col h-full p-4 pt-14">
           {/* Fixed content area: flex-shrink-0 ensures it keeps its height */}
           <div className="flex-shrink-0">
@@ -335,129 +344,179 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
             <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
               {party.name}
             </h1>
-
-            {/* New Queue Rules Toggle */}
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-primary-foreground/80">
-                Queue Rules
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {useQueueRules ? "ON (Fairness)" : "OFF (Manual)"}
-                </span>
-
-                {/* Slide Toggle Switch */}
-                <button
-                  onClick={handleToggleRules}
-                  aria-checked={useQueueRules}
-                  role="switch"
-                  className={cn(
-                    "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
-                    useQueueRules ? "bg-green-500" : "bg-red-500",
-                  )}
-                >
-                  <span className="sr-only">Toggle Queue Rules</span>
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                      useQueueRules ? "translate-x-5" : "translate-x-0",
-                    )}
-                  />
-                </button>
-              </div>
-            </div>
-            {/* Removed Drag & Drop related messages and simulation button */}
-
-            {/* Party page link */}
-            <a
-              href={`/party/${party.hash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block mb-6 text-primary hover:text-primary/80 font-medium text-sm"
-            >
-              👉 Add Songs
-            </a>
-
-            <h2 className="font-semibold text-lg mb-2">Queue</h2>
           </div>
 
-          {/* Scrollable song list container: flex-1 ensures it takes all remaining space */}
-          <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
-            {nextVideos.length > 0 ? (
-              nextVideos.map((video, index) => {
-                const isLocked = index === 0;
+          {/* --- START: Tabs Component --- */}
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
+              <TabsTrigger value="playlist" className="flex items-center gap-2">
+                <ListMusic className="h-4 w-4" />
+                <span className="hidden sm:inline">Playlist</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </TabsTrigger>
+            </TabsList>
 
-                // Placeholder for Drag and Drop Item
-                return (
-                  <div
-                    key={video.id}
-                    // Removed cn and drag-related classes (cursor-grab, hover:bg-muted)
-                    className={
-                      "p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
-                    }
-                  >
-                    {/* Thumbnail - reduced size */}
-                    <div className="relative w-16 aspect-video flex-shrink-0">
-                      <Image
-                        src={video.coverUrl}
-                        fill={true}
-                        className="rounded-md object-cover"
-                        alt={video.title}
-                        sizes="64px"
-                      />
-                    </div>
+            {/* --- Tab 1: Playlist Content --- */}
+            <TabsContent
+              value="playlist"
+              className="flex-1 overflow-y-auto mt-0 space-y-2"
+            >
+              {nextVideos.length > 0 ? (
+                nextVideos.map((video, index) => {
+                  const isLocked = index === 0;
 
-                    {/* Song info and controls - improved truncation */}
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex items-center gap-1 mb-1">
-                        <span
-                          className={cn(
-                            "font-mono text-xs text-muted-foreground",
-                            isLocked && "font-bold text-primary",
-                          )}
-                        >
-                          #{index + 1}
-                        </span>
-                        <p className="font-medium text-xs truncate">
-                          {decode(video.title)}
-                        </p>
+                  // Placeholder for Drag and Drop Item
+                  return (
+                    <div
+                      key={video.id}
+                      // Removed cn and drag-related classes (cursor-grab, hover:bg-muted)
+                      className={
+                        "p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
+                      }
+                    >
+                      {/* Thumbnail - reduced size */}
+                      <div className="relative w-16 aspect-video flex-shrink-0">
+                        <Image
+                          src={video.coverUrl}
+                          fill={true}
+                          className="rounded-md object-cover"
+                          alt={video.title}
+                          sizes="64px"
+                        />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {video.singerName}
-                        </p>
-                        <div className="flex gap-1 flex-shrink-0">
-                          {index === 0 && (
+
+                      {/* Song info and controls - improved truncation */}
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <div className="flex items-center gap-1 mb-1">
+                          <span
+                            className={cn(
+                              "font-mono text-xs text-muted-foreground",
+                              isLocked && "font-bold text-primary",
+                            )}
+                          >
+                            #{index + 1}
+                          </span>
+                          <p className="font-medium text-xs truncate">
+                            {decode(video.title)}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground truncate">
+                            {video.singerName}
+                          </p>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {index === 0 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
+                                onClick={() => markAsPlayed()}
+                              >
+                                <SkipForward className="h-3 w-3" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
-                              onClick={() => markAsPlayed()}
+                              className="h-6 w-6 text-red-500 hover:bg-gray-400"
+                              onClick={() => removeSong(video.id)}
                             >
-                              <SkipForward className="h-3 w-3" />
+                              <X className="h-3 w-3" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-red-500 hover:bg-gray-400"
-                            onClick={() => removeSong(video.id)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  );
+                })
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No songs in queue
+                </p>
+              )}
+            </TabsContent>
+
+            {/* --- Tab 2: Settings Content --- */}
+            <TabsContent
+              value="settings"
+              className="flex-1 overflow-y-auto mt-0 space-y-4"
+            >
+              {/* Queue Rules (Moved) */}
+              <div className="flex-shrink-0">
+                <h2 className="font-semibold text-lg mb-2">Controls</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-primary-foreground/80">
+                    Queue Rules
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {useQueueRules ? "ON (Fairness)" : "OFF (Manual)"}
+                    </span>
+
+                    {/* Slide Toggle Switch */}
+                    <button
+                      onClick={handleToggleRules}
+                      aria-checked={useQueueRules}
+                      role="switch"
+                      className={cn(
+                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+                        useQueueRules ? "bg-green-500" : "bg-red-500",
+                      )}
+                    >
+                      <span className="sr-only">Toggle Queue Rules</span>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                          useQueueRules ? "translate-x-5" : "translate-x-0",
+                        )}
+                      />
+                    </button>
                   </div>
-                );
-              })
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                No songs in queue
-              </p>
-            )}
-          </div>
+                </div>
+              </div>
+
+              {/* Add Songs Link (Moved) */}
+              <div className="flex-shrink-0">
+                <h2 className="font-semibold text-lg mb-2">Add Songs</h2>
+                <a
+                  href={`/party/${party.hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-primary hover:text-primary/80 font-medium text-sm"
+                >
+                  👉 Open Page to Add Songs
+                </a>
+              </div>
+
+              {/* Close Party Button (New) */}
+              <div className="flex-shrink-0 pt-4 border-t border-destructive/20">
+                <h2 className="font-semibold text-lg mb-2 text-destructive">
+                  Danger Zone
+                </h2>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={handleCloseParty}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Close Party
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This will permanently delete the party and its playlist for
+                  everyone.
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+          {/* --- END: Tabs Component --- */}
         </div>
       </div>
 
