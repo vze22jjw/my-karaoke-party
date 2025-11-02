@@ -1,8 +1,8 @@
 import Sqids from "sqids";
 
 const sqids = new Sqids({
-  alphabet: "BZnD7O9x3FG1aIyzoU4LVhmHfMwkPtEN6dCQSRYc8urepbgsWq2KX5jJTAvli0",
-  minLength: 8,
+  alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+  minLength: 4,
 });
 
 export { sqids };
