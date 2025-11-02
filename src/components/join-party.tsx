@@ -91,7 +91,11 @@ export function JoinParty() {
   // --- END: Helper function for mobile time format ---
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      shouldScaleBackground={false} // <-- Added this prop to fix background bug
+    >
       <DrawerTrigger asChild>
         <div className="w-full">
           <ButtonHoverGradient type="button" className="w-full">
