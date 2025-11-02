@@ -56,9 +56,15 @@ export function JoinParty() {
     }
   }, [isOpen]);
 
+  // --- START: FIX ---
+  // Updated this function to close the drawer before navigating
   const handleJoinParty = (hash: string) => {
-    router.push(`/join/${hash}`);
+    setIsOpen(false); // 1. Close the drawer
+    setTimeout(() => {
+      router.push(`/join/${hash}`); // 2. Navigate after a short delay
+    }, 150); // 150ms delay to allow the drawer to close
   };
+  // --- END: FIX ---
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -94,7 +100,7 @@ export function JoinParty() {
     <Drawer
       open={isOpen}
       onOpenChange={setIsOpen}
-      shouldScaleBackground={false} // <-- Added this prop to fix background bug
+      shouldScaleBackground={false} // <-- This prop is correct
     >
       <DrawerTrigger asChild>
         <div className="w-full">

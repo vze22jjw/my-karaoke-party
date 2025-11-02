@@ -7,39 +7,15 @@ import {
   useLocalStorage,
 } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
-import {
-  ListPlus,
-  Maximize,
-  Minimize,
-  SkipForward,
-  X,
-  Eye,
-  EyeOff,
-  Scale,
-  ListMusic, // Added icon
-  Settings, // Added icon
-  AlertTriangle, // Added icon
-  Search, // Added icon
-} from "lucide-react";
-import Image from "next/image";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef, useEffect } from "react";
-import { toast } from "sonner";
 import useSound from "use-sound";
-import { EmptyPlayer } from "~/components/empty-player";
-import { Player } from "~/components/player";
-import { SongSearch } from "~/components/song-search";
-import { Button } from "~/components/ui/ui/button";
-import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
-import { decode } from "html-entities";
-import { cn } from "~/lib/utils"; // Import cn for utility classes
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"; // Added tabs import
 
 // --- Import new child components ---
-import { TabPlaylist } from "./components/tab-playlist";
-import { TabSettings } from "./components/tab-settings";
+import { PlayerMobilePanel } from "./components/player-mobile-panel";
+import { PlayerDesktopView } from "./components/player-desktop-view";
 
 type Props = {
   party: Party;
@@ -169,8 +145,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const { ref, toggle, fullscreen } = useFullscreen();
 
   const currentVideo = playlist.find((video) => !video.playedAt);
-  const nextVideos = playlist.filter((video) => !video.playedAt);
-  // Removed playedVideos = playlist.filter((video) => video.playedAt);
 
   // Handler for the toggle button that sends an immediate heartbeat and manages order
   const handleToggleRules = async () => {
@@ -324,103 +298,32 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
-  // Removed isDraggable variable
-
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
       {/* Left panel with queue list - Mobile Only */}
-      <div
-        className="w-full overflow-hidden border-r border-border sm:hidden"
-      >
-        <div className="flex flex-col h-full p-4 pt-14">
-          {/* Fixed content area: flex-shrink-0 ensures it keeps its height */}
-          <div className="flex-shrink-0">
-            <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
-              {party.name}
-            </h1>
-          </div>
-
-          {/* --- START: Tabs Component --- */}
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="flex-1 flex flex-col overflow-hidden"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
-              <TabsTrigger value="playlist" className="flex items-center gap-2">
-                <ListMusic className="h-4 w-4" />
-                <span className="inline">Playlist</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="inline">Settings</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* --- Tab 1: Playlist Content (Refactored) --- */}
-            <TabsContent
-              value="playlist"
-              className="flex-1 overflow-y-auto mt-0 space-y-2"
-            >
-              <TabPlaylist
-                playlist={playlist}
-                onRemoveSong={removeSong}
-                onMarkAsPlayed={markAsPlayed}
-              />
-            </TabsContent>
-
-            {/* --- Tab 2: Settings Content (Refactored) --- */}
-            <TabsContent
-              value="settings"
-              className="flex-1 overflow-y-auto mt-0 space-y-6"
-            >
-              <TabSettings
-                useQueueRules={useQueueRules}
-                onToggleRules={handleToggleRules}
-                partyHash={party.hash}
-                maxSearchResults={maxSearchResults}
-                onSetMaxResults={setMaxSearchResults}
-                onCloseParty={handleCloseParty}
-              />
-            </TabsContent>
-          </Tabs>
-          {/* --- END: Tabs Component --- */}
-        </div>
-      </div>
+      <PlayerMobilePanel
+        party={party}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        playlist={playlist}
+        onRemoveSong={removeSong}
+        onMarkAsPlayed={markAsPlayed}
+        useQueueRules={useQueueRules}
+        onToggleRules={handleToggleRules}
+        maxSearchResults={maxSearchResults}
+        onSetMaxResults={setMaxSearchResults}
+        onCloseParty={handleCloseParty}
+      />
 
       {/* Right panel with player - Desktop Only */}
-      <div
-        className="hidden sm:block sm:w-full"
-      >
-        <div className="flex h-full flex-col">
-          <div className="relative h-full" ref={ref}>
-            <Button
-              onClick={toggle}
-              variant="ghost"
-              size="icon"
-              className="absolute bottom-0 right-3 z-10"
-            >
-              {fullscreen ? <Minimize /> : <Maximize />}
-            </Button>
-            {currentVideo ? (
-              <Player
-                key={currentVideo.id}
-                video={currentVideo}
-                joinPartyUrl={joinPartyUrl}
-                isFullscreen={fullscreen}
-                onPlayerEnd={() => {
-                  markAsPlayed();
-                }}
-              />
-            ) : (
-              <EmptyPlayer
-                joinPartyUrl={joinPartyUrl}
-                className={fullscreen ? "bg-gradient" : ""}
-              />
-            )}
-          </div>
-        </div>
-      </div>
+      <PlayerDesktopView
+        playerRef={ref}
+        onToggleFullscreen={toggle}
+        isFullscreen={fullscreen}
+        currentVideo={currentVideo}
+        joinPartyUrl={joinPartyUrl}
+        onPlayerEnd={markAsPlayed}
+      />
     </div>
   );
 }

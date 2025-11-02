@@ -19,11 +19,17 @@ import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { useEffect } from "react";
 
 const formSchema = z.object({
-  partyCode: z.string().min(8),
+  partyCode: z.string().min(4), // <-- FIX: Changed from min(8) to min(4)
   name: z.string().min(2).max(20),
 });
 
-export default function JoinScene({ partyHash }: { partyHash?: string }) {
+export default function JoinScene({
+  partyHash,
+  partyName,
+}: {
+  partyHash?: string;
+  partyName?: string; // <-- Added prop
+}) {
   const router = useRouter();
 
   const [name, setName] = useLocalStorage({
@@ -76,13 +82,22 @@ export default function JoinScene({ partyHash }: { partyHash?: string }) {
           alt="My Karaoke Party logo"
           priority={true}
           placeholder="blur"
-          className="h-auto w-full max-w-[666px] flex-shrink-0"
+          className="h-auto w-full max-w-sm flex-shrink-0 sm:max-w-[666px]"
         />
         {/* Wrapper for remaining content, set to center */}
         <div className="flex w-full max-w-xs flex-1 flex-col items-center justify-center px-5">
           {" "}
           {/* <-- Reduced max-width and removed vertical padding */}
-          {/* --- Text Removed --- */}
+          {/* --- START: Conditionally render party name --- */}
+          {partyName && (
+            <div className="mb-4 w-full text-center">
+              <p className="text-sm text-muted-foreground">Joining:</p>
+              <h1 className="text-outline scroll-m-20 truncate text-2xl font-extrabold tracking-tight uppercase">
+                {partyName}
+              </h1>
+            </div>
+          )}
+          {/* --- END: Conditionally render party name --- */}
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
