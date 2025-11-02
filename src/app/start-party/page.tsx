@@ -20,7 +20,9 @@ export default async function StartPartyPage() {
         />
 
         {/* Remaining elements centered vertically */}
-        <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-6">
+        <div className="flex w-full max-w-[12rem] flex-1 flex-col items-center justify-center gap-6">
+          {" "}
+          {/* <-- Changed max-w-sm (24rem) to max-w-[12rem] (50% smaller) */}
           {/* --- H1 Title Removed --- */}
           <div className="w-full">
             <CreateParty />
