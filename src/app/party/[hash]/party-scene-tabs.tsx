@@ -1,3 +1,4 @@
+// my-karaoke-party/src/app/party/[hash]/party-scene-tabs.tsx
 /* eslint-disable */
 "use client";
 
@@ -13,7 +14,8 @@ import {
   Users,
   MicVocal,
   ChevronDown,
-  DoorOpen, // <-- Added icon
+  DoorOpen,
+  History, // <-- Imported History icon
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -252,6 +254,27 @@ export function PartyScene({
     ? playedVideos.slice().reverse()
     : playedVideos.slice(-5).reverse();
 
+  // --- START: New logic for History tab ---
+
+  // 1. Party History (reverse chronological)
+  const partyHistory = [...playedVideos].reverse();
+
+  // 2. Top Played Songs
+  const songCounts = playedVideos.reduce(
+    (acc, video) => {
+      const title = decode(video.title);
+      acc[title] = (acc[title] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+
+  const topPlayed = Object.entries(songCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 5); // Get top 5
+
+  // --- END: New logic for History tab ---
+
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
       {/* Header */}
@@ -267,15 +290,23 @@ export function PartyScene({
         onValueChange={setActiveTab}
         className="flex-1 flex flex-col overflow-hidden"
       >
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
+          {" "}
+          {/* <-- Updated to grid-cols-4 */}
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
             <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Songs</span>
+            <span className="hidden sm:inline">Add Song</span>
           </TabsTrigger>
+          {/* --- START: New History Tab --- */}
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">History</span>
+          </TabsTrigger>
+          {/* --- END: New History Tab --- */}
           <TabsTrigger value="singers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Singers</span>
@@ -444,7 +475,75 @@ export function PartyScene({
           </div>
         </TabsContent>
 
-        {/* Tab 3: Singers */}
+        {/* --- START: New History Tab Content --- */}
+        <TabsContent
+          value="history"
+          className="flex-1 overflow-auto mt-0 space-y-4"
+        >
+          {/* Top Played Section */}
+          <div className="bg-card rounded-lg p-4 border">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              Top Played
+            </h2>
+            {topPlayed.length > 0 ? (
+              <ul className="space-y-2">
+                {topPlayed.map(([title, count], index) => (
+                  <li
+                    key={title}
+                    className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Played {count} time(s)
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No songs have been played yet.
+              </p>
+            )}
+          </div>
+
+          {/* Party History Section */}
+          <div className="bg-card rounded-lg p-4 border">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              Party History
+            </h2>
+            {partyHistory.length > 0 ? (
+              <ul className="space-y-2">
+                {partyHistory.map((video) => (
+                  <li
+                    key={video.id + (video.playedAt?.toString() ?? "")} // Add playedAt for a more unique key
+                    className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate opacity-75">
+                        {decode(video.title)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Sung by: {video.singerName}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No songs in history.
+              </p>
+            )}
+          </div>
+        </TabsContent>
+        {/* --- END: New History Tab Content --- */}
+
+        {/* Tab 4: Singers */}
         <TabsContent value="singers" className="flex-1 overflow-auto mt-0">
           <div className="bg-card rounded-lg p-4 border">
             {/* START: Updated header */}
