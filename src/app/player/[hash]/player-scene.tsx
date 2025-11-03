@@ -38,12 +38,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     key: "karaoke-player-active-tab",
     defaultValue: "playlist",
   });
-
-  // --- REMOVE useLocalStorage ---
-  // const [useQueueRules, setUseQueueRules] = useLocalStorage({
-  //   key: "karaoke-queue-rules",
-  //   defaultValue: true, // Default to ON (Fairness)
-  // });
   
   // --- USE React.useState INSTEAD ---
   const [useQueueRules, setUseQueueRules] = useState(
@@ -104,19 +98,16 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     setUseQueueRules(data.settings.orderByFairness); // <-- Update state from API
   };
 
-// Poll for playlist updates every 3 seconds
+  // Poll for playlist updates every 3 seconds
   // --- UPDATE POLLING EFFECT ---
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        // --- START: FIX ---
-        // Add { cache: 'no-store' } to prevent stale data
         const response = await fetch(
-          `/api/playlist/${party.hash}`, // <-- Simpler URL
-          { cache: 'no-store' } 
+          `/api/playlist/${party.hash}`, 
+          // --- FIX: Ensure polling fetch is not cached ---
+          { cache: 'no-store' }
         );
-        // --- END: FIX ---
-
         if (response.ok) {
           const data = await response.json();
           processAndSetPlaylist(data); // <-- Will now update playlist AND rules
@@ -133,7 +124,10 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/party/participants/${party.hash}`);
+        const response = await fetch(`/api/party/participants/${party.hash}`, {
+          // --- FIX: Ensure polling fetch is not cached ---
+          cache: 'no-store'
+        });
         if (response.ok) {
           const data = await response.json();
           setSingers(data.singers);
@@ -178,8 +172,6 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       partyHash: party.hash, // This is now guaranteed to be a string
       orderByFairness: newRulesState,
     });
-
-    // --- REMOVE ALL THE MANUAL FETCHING ---
   };
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
@@ -214,7 +206,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       // Reload playlist
       // --- UPDATE PLAYLIST FETCH ---
       const playlistResponse = await fetch(
-        `/api/playlist/${party.hash}`, // <-- Remove ?rules=
+        `/api/playlist/${party.hash}`, 
+        // --- FIX: Add cache: 'no-store' ---
+        { cache: 'no-store' }
       );
       const data = await playlistResponse.json();
       processAndSetPlaylist(data); // <-- Use new function
@@ -244,7 +238,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       // Reload playlist
       // --- UPDATE PLAYLIST FETCH ---
       const playlistResponse = await fetch(
-        `/api/playlist/${party.hash}`, // <-- Remove ?rules=
+        `/api/playlist/${party.hash}`,
+        // --- FIX: Add cache: 'no-store' ---
+        { cache: 'no-store' }
       );
       const data = await playlistResponse.json();
       processAndSetPlaylist(data); // <-- Use new function
@@ -278,7 +274,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         // Reload playlist
         // --- UPDATE PLAYLIST FETCH ---
         const playlistResponse = await fetch(
-          `/api/playlist/${party.hash}`, // <-- Remove ?rules=
+          `/api/playlist/${party.hash}`,
+          // --- FIX: Add cache: 'no-store' ---
+          { cache: 'no-store' }
         );
         const data = await playlistResponse.json();
         processAndSetPlaylist(data); // <-- Use new function
