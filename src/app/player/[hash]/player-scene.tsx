@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 // --- Import new child components ---
 import { PlayerMobilePanel } from "./components/player-mobile-panel";
 import { PlayerDesktopView } from "./components/player-desktop-view";
+import { api } from "~/trpc/react"; // <-- Import tRPC client
 
 type Props = {
   party: Party;
@@ -38,10 +39,16 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     defaultValue: "playlist",
   });
 
-  const [useQueueRules, setUseQueueRules] = useLocalStorage({
-    key: "karaoke-queue-rules",
-    defaultValue: true, // Default to ON (Fairness)
-  });
+  // --- REMOVE useLocalStorage ---
+  // const [useQueueRules, setUseQueueRules] = useLocalStorage({
+  //   key: "karaoke-queue-rules",
+  //   defaultValue: true, // Default to ON (Fairness)
+  // });
+  
+  // --- USE React.useState INSTEAD ---
+  const [useQueueRules, setUseQueueRules] = useState(
+    initialPlaylist.settings.orderByFairness ?? true,
+  );
 
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
@@ -60,8 +67,20 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   }
   // --- END: Compile Error Fix ---
 
+  // --- ADD THE TRPC MUTATION ---
+  const updateSortOrder = api.party.updateSortOrder.useMutation({
+    onError: (err) => {
+      console.error("Failed to update sort order", err);
+      alert("Failed to update sort order. Please try again.");
+      // Revert optimistic update on error
+      setUseQueueRules((prev) => !prev);
+    },
+  });
+
   // Reusable function to send heartbeat
   const sendHeartbeat = async () => {
+    // --- Add guard ---
+    if (!party.hash) return;
     try {
       await fetch("/api/party/heartbeat", {
         method: "POST",
@@ -76,22 +95,31 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   };
 
   // Function to process and set the new playlist from the server
-  // Revert back to simple assignment as local reordering logic is removed
-  const processAndSetPlaylist = (data: { playlist: VideoInPlaylist[] }) => {
+  // --- UPDATE processAndSetPlaylist ---
+  const processAndSetPlaylist = (data: {
+    playlist: VideoInPlaylist[];
+    settings: { orderByFairness: boolean }; // <-- Expect settings from API
+  }) => {
     setPlaylist(data.playlist);
+    setUseQueueRules(data.settings.orderByFairness); // <-- Update state from API
   };
 
-  // Poll for playlist updates every 3 seconds
+// Poll for playlist updates every 3 seconds
+  // --- UPDATE POLLING EFFECT ---
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        // Pass useQueueRules as a query parameter
+        // --- START: FIX ---
+        // Add { cache: 'no-store' } to prevent stale data
         const response = await fetch(
-          `/api/playlist/${party.hash}?rules=${useQueueRules ? "true" : "false"}`,
+          `/api/playlist/${party.hash}`, // <-- Simpler URL
+          { cache: 'no-store' } 
         );
+        // --- END: FIX ---
+
         if (response.ok) {
           const data = await response.json();
-          processAndSetPlaylist(data);
+          processAndSetPlaylist(data); // <-- Will now update playlist AND rules
         }
       } catch (error) {
         console.error("Error fetching playlist:", error);
@@ -99,46 +127,30 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [party.hash, useQueueRules]); // useQueueRules is in dependency array for persistence
+  }, [party.hash]); // <-- REMOVED useQueueRules from dependency array
 
   // Poll for singers updates every 3 seconds
   useEffect(() => {
-    const fetchSingers = async () => {
+    const interval = setInterval(async () => {
       try {
         const response = await fetch(`/api/party/participants/${party.hash}`);
         if (response.ok) {
           const data = await response.json();
-          const newSingers = data.singers as string[];
-
-          // Detectar novos participantes
-          const previousSingers = singers;
-          const addedSingers = newSingers.filter(
-            (p) => !previousSingers.includes(p),
-          );
-
-          // Mostrar toast para cada novo participante
-          addedSingers.forEach((singer) => {
-            // REMOVED: toast.success(`🎤 ${singer} joined the party!`, { duration: 3000 });
-          });
-
-          setSingers(newSingers);
+          setSingers(data.singers);
         }
       } catch (error) {
         console.error("Error fetching singers:", error);
       }
-    };
+    }, 3000); // 3 seconds
 
-    // Buscar imediatamente
-    fetchSingers();
-
-    // E depois a cada 3 segundos
-    const interval = setInterval(fetchSingers, 3000);
     return () => clearInterval(interval);
   }, [party.hash, singers]);
 
   // Send heartbeat every 60 seconds to keep party alive
   useEffect(() => {
-    const heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 seconds
+    const heartbeatInterval = setInterval(async () => {
+      void sendHeartbeat();
+    }, 60000); // 60 seconds
 
     return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
@@ -148,24 +160,26 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   const currentVideo = playlist.find((video) => !video.playedAt);
 
   // Handler for the toggle button that sends an immediate heartbeat and manages order
+  // --- UPDATE handleToggleRules ---
   const handleToggleRules = async () => {
-    const newRulesState = !useQueueRules;
-    setUseQueueRules(newRulesState); // useLocalStorage automatically saves to browser
-
-    void sendHeartbeat();
-
-    // Fetch the server's list immediately to reset the client list to the new sorting mode
-    try {
-      const response = await fetch(
-        `/api/playlist/${party.hash}?rules=${newRulesState ? "true" : "false"}`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setPlaylist(data.playlist);
-      }
-    } catch (error) {
-      console.error("Error fetching playlist on toggle:", error);
+    // --- START: FIX ---
+    // Add explicit guard here to satisfy TypeScript inside the closure
+    if (!party.hash) {
+      console.error("Cannot toggle rules: party hash is missing.");
+      return;
     }
+    // --- END: FIX ---
+
+    const newRulesState = !useQueueRules;
+    setUseQueueRules(newRulesState); // Optimistic update
+
+    // --- CALL THE TRPC MUTATION ---
+    updateSortOrder.mutate({
+      partyHash: party.hash, // This is now guaranteed to be a string
+      orderByFairness: newRulesState,
+    });
+
+    // --- REMOVE ALL THE MANUAL FETCHING ---
   };
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
@@ -173,6 +187,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
       key: "name",
       defaultValue: "Host",
     });
+
+    // --- Add guard ---
+    if (!party.hash) return;
 
     try {
       // Use REST API
@@ -194,18 +211,22 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         throw new Error("Failed to add song");
       }
 
-      // Reload playlist, passing the rules state
+      // Reload playlist
+      // --- UPDATE PLAYLIST FETCH ---
       const playlistResponse = await fetch(
-        `/api/playlist/${party.hash}?rules=${useQueueRules ? "true" : "false"}`,
+        `/api/playlist/${party.hash}`, // <-- Remove ?rules=
       );
       const data = await playlistResponse.json();
-      setPlaylist(data.playlist);
+      processAndSetPlaylist(data); // <-- Use new function
     } catch (error) {
       console.error("Error adding song:", error);
     }
   };
 
   const removeSong = async (videoId: string) => {
+    // --- Add guard ---
+    if (!party.hash) return;
+
     try {
       // Use REST API
       const response = await fetch("/api/playlist/remove", {
@@ -213,28 +234,29 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          partyHash: party.hash,
-          videoId,
-        }),
+        body: JSON.stringify({ partyHash: party.hash, videoId }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to remove song");
       }
 
-      // Reload playlist, passing the rules state
+      // Reload playlist
+      // --- UPDATE PLAYLIST FETCH ---
       const playlistResponse = await fetch(
-        `/api/playlist/${party.hash}?rules=${useQueueRules ? "true" : "false"}`,
+        `/api/playlist/${party.hash}`, // <-- Remove ?rules=
       );
       const data = await playlistResponse.json();
-      setPlaylist(data.playlist);
+      processAndSetPlaylist(data); // <-- Use new function
     } catch (error) {
       console.error("Error removing song:", error);
     }
   };
 
   const markAsPlayed = async () => {
+    // --- Add guard ---
+    if (!party.hash) return;
+
     if (currentVideo) {
       try {
         // Use REST API
@@ -253,54 +275,47 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
           throw new Error("Failed to mark as played");
         }
 
-        // Reload playlist, passing the rules state
+        // Reload playlist
+        // --- UPDATE PLAYLIST FETCH ---
         const playlistResponse = await fetch(
-          `/api/playlist/${party.hash}?rules=${useQueueRules ? "true" : "false"}`,
+          `/api/playlist/${party.hash}`, // <-- Remove ?rules=
         );
         const data = await playlistResponse.json();
-        setPlaylist(data.playlist);
+        processAndSetPlaylist(data); // <-- Use new function
       } catch (error) {
         console.error("Error marking as played:", error);
       }
     }
   };
 
-  // --- START: Modified handleCloseParty ---
-  const handleCloseParty = async () => {
-    // This now just opens the confirmation
-    setIsConfirmingClose(true);
+  const handleCloseParty = () => {
+    setIsConfirmingClose(true); // Show confirmation
   };
-  // --- END: Modified handleCloseParty ---
 
-  // --- START: New Handlers ---
   const confirmCloseParty = async () => {
+    // --- Add guard ---
+    if (!party.hash) return;
+
     try {
       const response = await fetch("/api/party/delete", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hash: party.hash,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hash: party.hash }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete party");
+      if (response.ok) {
+        router.push("/");
+      } else {
+        alert("Failed to close party. Please try again.");
       }
-
-      // Redirect to home page
-      router.push("/");
     } catch (error) {
-      console.error("Error closing party:", error);
-      alert("Error closing the party. Please try again.");
+      alert("Error closing party. Please try again.");
     }
+    setIsConfirmingClose(false);
   };
 
   const cancelCloseParty = () => {
-    setIsConfirmingClose(false);
+    setIsConfirmingClose(false); // Hide confirmation
   };
-  // --- END: New Handlers ---
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
@@ -314,8 +329,8 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         playlist={playlist}
         onRemoveSong={removeSong}
         onMarkAsPlayed={markAsPlayed}
-        useQueueRules={useQueueRules}
-        onToggleRules={handleToggleRules}
+        useQueueRules={useQueueRules} // <-- Pass the state
+        onToggleRules={handleToggleRules} // <-- Pass the new handler
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
         onCloseParty={handleCloseParty}

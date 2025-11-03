@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {

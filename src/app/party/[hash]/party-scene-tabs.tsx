@@ -1,4 +1,3 @@
-// my-karaoke-party/src/app/party/[hash]/party-scene-tabs.tsx
 /* eslint-disable */
 "use client";
 
@@ -14,8 +13,6 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 
-// Define the localStorage key
-const QUEUE_RULES_KEY = "karaoke-queue-rules";
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 
 export function PartyScene({
@@ -36,15 +33,11 @@ export function PartyScene({
     initialPlaylist?.playlist ?? [],
   );
 
-  const [singers, setSingers] = useState<string[]>(() => {
-    if (initialPlaylist?.playlist) {
-      const uniqueSingers = Array.from(
-        new Set(initialPlaylist.playlist.map((item) => item.singerName)),
-      ).filter(Boolean) as string[];
-      return uniqueSingers;
-    }
-    return [];
-  });
+  const [orderByFairness, setOrderByFairness] = useState<boolean>(
+    initialPlaylist?.settings.orderByFairness ?? true,
+  );
+
+  const [singers, setSingers] = useState<string[]>([]);
 
   // Reusable function to send heartbeat
   const sendHeartbeat = async () => {
@@ -66,82 +59,62 @@ export function PartyScene({
 
     if (!value) {
       router.push(`/join/${party.hash}`);
-    } else {
-      // 1. Registrar participante na party
-      fetch("/api/party/join", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hash: party.hash,
-          name: value,
-        }),
-      }).catch((error) => {
-        console.error("Error joining party:", error);
-      });
-
-      // 2. Send an immediate heartbeat to keep party alive on mount/join
-      void sendHeartbeat();
     }
   }, [router, party.hash]);
 
   // Poll for singers updates every 3 seconds
   useEffect(() => {
-    const fetchSingers = async () => {
+    const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/party/participants/${party.hash}`);
+        // --- START: FIX ---
+        // Add { cache: 'no-store' } here as well
+        const response = await fetch(`/api/party/participants/${party.hash}`, {
+          cache: 'no-store',
+        });
+        // --- END: FIX ---
+
         if (response.ok) {
           const data = await response.json();
-          const newSingers = data.singers as string[];
+          setSingers(data.singers);
 
-          // Detectar novos participantes
-          const previousSingers = singers;
-          const addedSingers = newSingers.filter(
-            (p) => !previousSingers.includes(p),
-          );
-
-          // Mostrar toast para cada novo participante (exceto você mesmo)
-          addedSingers.forEach((singer) => {
-            if (singer !== name) {
-              // FIX: Add page refresh when a new person joins for all viewing clients
-              router.refresh();
-            }
-          });
-
-          setSingers(newSingers);
+          // Auto-join/register singer if not in list
+          if (name && data.singers && !data.singers.includes(name)) {
+            await fetch("/api/party/join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ hash: party.hash, name: name }),
+            });
+          }
+        } else if (response.status === 404) {
+          clearInterval(interval);
+          alert("The party has been closed by the host.");
+          router.push("/");
         }
       } catch (error) {
         console.error("Error fetching singers:", error);
       }
-    };
+    }, 3000); // 3 seconds
 
-    // Buscar imediatamente
-    fetchSingers();
-
-    // E depois a cada 3 segundos
-    const interval = setInterval(fetchSingers, 3000);
     return () => clearInterval(interval);
   }, [party.hash, singers, name, router]); // Added router and singers to dependency array
 
   // Poll for playlist updates every 3 seconds
+  // --- UPDATE POLLING EFFECT ---
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        // FIX: Read useQueueRules directly from localStorage in the polling loop
-        // This ensures synchronization with the host's toggle state
-        const rulesEnabled = readLocalStorageValue({
-          key: QUEUE_RULES_KEY,
-          defaultValue: true,
-        });
-
+        // --- START: FIX ---
+        // Add { cache: 'no-store' } to prevent stale data
         const response = await fetch(
-          `/api/playlist/${party.hash}?rules=${rulesEnabled ? "true" : "false"}`,
+          `/api/playlist/${party.hash}`,
+          { cache: 'no-store' } 
         );
+        // --- END: FIX ---
 
         if (response.ok) {
           const data = await response.json();
           setPlaylist(data.playlist);
+          setOrderByFairness(data.settings.orderByFairness);
         } else if (response.status === 404) {
           // Party was deleted
           clearInterval(interval);
@@ -153,18 +126,19 @@ export function PartyScene({
       }
     }, 3000);
 
-    // FIX: Removed useQueueRules from dependency array
     return () => clearInterval(interval);
   }, [party.hash, router]);
 
   // Send heartbeat every 60 seconds to keep party alive
   useEffect(() => {
-    // Use the reusable function
-    const heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 seconds
+    const heartbeatInterval = setInterval(async () => {
+      void sendHeartbeat();
+    }, 60000); // 60 seconds
 
     return () => clearInterval(heartbeatInterval);
   }, [party.hash]);
 
+  // --- UPDATE addSong ---
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
       // Send an immediate heartbeat before adding song
@@ -189,17 +163,19 @@ export function PartyScene({
         throw new Error("Failed to add song");
       }
 
-      // Reload playlist - FIX: Read rules fresh from local storage
-      const rulesEnabled = readLocalStorageValue({
-        key: QUEUE_RULES_KEY,
-        defaultValue: true,
-      });
+      // Reload playlist
+      // --- UPDATE PLAYLIST FETCH ---
       const playlistResponse = await fetch(
-        `/api/playlist/${party.hash}?rules=${rulesEnabled ? "true" : "false"}`,
+        `/api/playlist/${party.hash}`,
+        // --- START: FIX ---
+        // Also add no-store here to get immediate feedback after adding
+        { cache: 'no-store' }
+        // --- END: FIX ---
       );
 
       const data = await playlistResponse.json();
       setPlaylist(data.playlist);
+      setOrderByFairness(data.settings.orderByFairness);
     } catch (error) {
       console.error("Error adding song:", error);
       alert("Error adding song. Please try again.");
@@ -207,52 +183,49 @@ export function PartyScene({
   };
 
   const onLeaveParty = () => {
-    if (confirm("Are you sure you want to leave this party?")) {
-      router.push("/");
-    }
+    router.push("/");
   };
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
-      {/* Header */}
-      <div className="text-center mb-4">
-        <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl uppercase">
+      <div className="flex-shrink-0">
+        <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
           {party.name}
         </h1>
       </div>
 
-      {/* Tabs */}
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex-1 flex flex-col overflow-hidden"
+        className="flex-1 flex flex-col overflow-hidden mt-4"
       >
-        <TabsList className="grid w-full grid-cols-4 mb-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 flex-shrink-0">
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
-            <span className="hidden sm:inline">Playing</span>
+            <span className="sm:inline">Playing</span>
           </TabsTrigger>
-          <TabsTrigger value="search" className="flex items-center gap-2">
+          <TabsTrigger value="add" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Song</span>
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            <span className="hidden sm:inline">History</span>
+            <span className="sm:inline">Add</span>
           </TabsTrigger>
           <TabsTrigger value="singers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Singers</span>
+            <span className="sm:inline">Singers</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            <span className="sm:inline">History</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Player View */}
-        <TabsContent value="player" className="flex-1 overflow-auto mt-0">
+        <TabsContent
+          value="player"
+          className="flex-1 overflow-y-auto mt-0"
+        >
           <TabPlayer playlist={playlist} />
         </TabsContent>
 
-        {/* Tab 2: Search & Add Songs */}
-        <TabsContent value="search" className="flex-1 overflow-auto mt-0">
+        <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
             playlist={playlist}
             name={name}
@@ -260,19 +233,22 @@ export function PartyScene({
           />
         </TabsContent>
 
-        {/* Tab 3: History */}
-        <TabsContent value="history" className="flex-1 overflow-auto mt-0">
-          <TabHistory playlist={playlist} />
-        </TabsContent>
-
-        {/* Tab 4: Singers */}
-        <TabsContent value="singers" className="flex-1 overflow-auto mt-0">
+        <TabsContent
+          value="singers"
+          className="flex-1 overflow-y-auto mt-0"
+        >
           <TabSingers
             playlist={playlist}
             singers={singers}
             name={name}
             onLeaveParty={onLeaveParty}
           />
+        </TabsContent>
+        <TabsContent
+          value="history"
+          className="flex-1 overflow-y-auto mt-0"
+        >
+          <TabHistory playlist={playlist} />
         </TabsContent>
       </Tabs>
     </div>

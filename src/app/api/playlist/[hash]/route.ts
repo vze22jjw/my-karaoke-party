@@ -3,6 +3,11 @@ import { db } from "~/server/db";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import type { PlaylistItem } from "@prisma/client";
 
+// --- START: FIX ---
+// Force this route to be dynamic and never cached by the server
+export const dynamic = 'force-dynamic';
+// --- END: FIX ---
+
 export async function GET(
   request: Request,
   { params }: { params: { hash: string } }
@@ -10,9 +15,7 @@ export async function GET(
   try {
     const partyHash = params.hash;
     
-    // Read query parameter for queue rules
-    const url = new URL(request.url);
-    const useQueueRules = url.searchParams.get("rules") !== 'false';
+    // ... (rest of the file is correct) ...
 
     // Find party with playlist
     const party = await db.party.findUnique({
@@ -34,6 +37,9 @@ export async function GET(
         { status: 404 }
       );
     }
+    
+    // --- USE THE SETTING FROM THE DATABASE ---
+    const useQueueRules = party.orderByFairness;
     
     const allItems: PlaylistItem[] = party.playlistItems; 
     

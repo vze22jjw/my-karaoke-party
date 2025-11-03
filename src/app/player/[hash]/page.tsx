@@ -30,26 +30,35 @@ export default async function PartyPage({ params }: Props) {
     notFound();
   }
 
-  // Try to get playlist from PartyKit, but use empty playlist if not available
-  // Fetch playlist from database via REST API
+  // Initialize with a default, but fetch the REAL settings
   let playlist: KaraokeParty = { playlist: [], settings: { orderByFairness: true } };
 
   try {
-    const playlistRes = await fetch(`http://localhost:3000/api/playlist/${partyHash}`, {
+    // --- START: FIX ---
+    // Use the environment variable for the app URL
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    
+    const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
-        revalidate: 0,
+        revalidate: 0, // Force dynamic fetch
       },
     });
 
     if (playlistRes.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const data = await playlistRes.json();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      playlist = { playlist: data.playlist, settings: { orderByFairness: true } };
+      // --- FIX: Cast the JSON response to the 'KaraokeParty' type ---
+      const data = (await playlistRes.json()) as KaraokeParty;
+
+      // BUG FIX: Use the settings from the API, don't hardcode
+      playlist = { 
+        playlist: data.playlist, 
+        settings: data.settings // <-- This was the bug
+      };
     }
+    // --- END: FIX ---
   } catch (error) {
-    console.warn("Failed to fetch playlist", error);
+    console.warn("Failed to fetch initial playlist for player", error);
+    // Fallback to the default playlist (with orderByFairness: true)
   }
 
   return <PlayerScene party={party} initialPlaylist={playlist} />;

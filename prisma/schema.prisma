@@ -27,6 +27,7 @@ model Party {
     name           String
     createdAt      DateTime       @default(now())
     lastActivityAt DateTime       @default(now())
+    orderByFairness Boolean        @default(true) // Default to "ON (Fairness)"
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
