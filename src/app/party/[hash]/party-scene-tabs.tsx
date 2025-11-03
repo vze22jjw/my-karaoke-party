@@ -66,12 +66,9 @@ export function PartyScene({
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        // --- START: FIX ---
-        // Add { cache: 'no-store' } here as well
         const response = await fetch(`/api/party/participants/${party.hash}`, {
           cache: 'no-store',
         });
-        // --- END: FIX ---
 
         if (response.ok) {
           const data = await response.json();
@@ -103,13 +100,10 @@ export function PartyScene({
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        // --- START: FIX ---
-        // Add { cache: 'no-store' } to prevent stale data
         const response = await fetch(
           `/api/playlist/${party.hash}`,
           { cache: 'no-store' } 
         );
-        // --- END: FIX ---
 
         if (response.ok) {
           const data = await response.json();
@@ -167,10 +161,7 @@ export function PartyScene({
       // --- UPDATE PLAYLIST FETCH ---
       const playlistResponse = await fetch(
         `/api/playlist/${party.hash}`,
-        // --- START: FIX ---
-        // Also add no-store here to get immediate feedback after adding
         { cache: 'no-store' }
-        // --- END: FIX ---
       );
 
       const data = await playlistResponse.json();
@@ -199,24 +190,29 @@ export function PartyScene({
         onValueChange={setActiveTab}
         className="flex-1 flex flex-col overflow-hidden mt-4"
       >
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 flex-shrink-0">
+        {/* --- START: FIX --- */}
+        <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
-            <span className="sm:inline">Playing</span>
+            {/* Added 'hidden' class to hide text on mobile */}
+            <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
           <TabsTrigger value="add" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="sm:inline">Add</span>
+            <span className="hidden sm:inline">Add</span>
           </TabsTrigger>
-          <TabsTrigger value="singers" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span className="sm:inline">Singers</span>
-          </TabsTrigger>
+          {/* Moved History tab to be 3rd */}
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
-            <span className="sm:inline">History</span>
+            <span className="hidden sm:inline">History</span>
+          </TabsTrigger>
+          {/* Moved Singers tab to be 4th (far right) */}
+          <TabsTrigger value="singers" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Singers</span>
           </TabsTrigger>
         </TabsList>
+        {/* --- END: FIX --- */}
 
         <TabsContent
           value="player"
