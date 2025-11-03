@@ -21,4 +21,23 @@ export const partyRouter = createTRPCRouter({
 
       return party;
     }),
+
+  // --- ADD THIS NEW MUTATION ---
+  updateSortOrder: publicProcedure
+    .input(
+      z.object({
+        partyHash: z.string(),
+        orderByFairness: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      log.info("Updating sort order", {
+        hash: input.partyHash,
+        orderByFairness: input.orderByFairness,
+      });
+      return ctx.db.party.update({
+        where: { hash: input.partyHash },
+        data: { orderByFairness: input.orderByFairness },
+      });
+    }),
 });

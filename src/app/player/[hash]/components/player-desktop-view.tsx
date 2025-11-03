@@ -5,13 +5,14 @@ import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
-import type { RefObject } from "react"; // Keep this for React types
+// --- FIX: Removed unused 'RefObject' import ---
+import type { RefCallback } from "react"; 
 
 // --- START: FIX ---
 // Changed type from RefObject<HTMLDivElement> to React.RefCallback<HTMLDivElement>
 // to match the type returned by the useFullscreen hook.
 type Props = {
-  playerRef: React.RefCallback<HTMLDivElement>;
+  playerRef: RefCallback<HTMLDivElement>; // <-- Corrected type
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
   currentVideo: KaraokeParty["playlist"][number] | undefined;

@@ -27,14 +27,39 @@ export default async function PartyHashPage({ params }: Props) {
   const party = await api.party.getByHash({ hash: partyHash });
 
   if (!party) {
-    return <div>Party not found</div>;
+    notFound();
   }
 
-  // Initialize with empty playlist - will be loaded via REST API polling
-  const playlist: KaraokeParty = {
-    playlist: [],
-    settings: { orderByFairness: true }
-  };
+  // --- START: FIX ---
+  // Fetch the initial playlist and settings, just like the player page does
+  let playlist: KaraokeParty = { playlist: [], settings: { orderByFairness: true } };
+
+  try {
+    // Use the environment variable for the app URL
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
+      method: "GET",
+      next: {
+        revalidate: 0, // Force dynamic fetch
+      },
+    });
+
+    if (playlistRes.ok) {
+      // --- FIX: Cast the JSON response to the 'KaraokeParty' type ---
+      const data = (await playlistRes.json()) as KaraokeParty;
+      
+      // Correctly assign the fetched playlist and settings
+      playlist = { 
+        playlist: data.playlist, 
+        settings: data.settings 
+      };
+    }
+  } catch (error) {
+    console.warn("Failed to fetch initial playlist for party page", error);
+    // Fallback to the default playlist (with orderByFairness: true)
+  }
+  // --- END: FIX ---
 
   return (
     <PartyScene key={party.hash} party={party} initialPlaylist={playlist} />

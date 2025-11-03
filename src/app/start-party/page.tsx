@@ -1,8 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
+// --- FIX: Removed unused 'Link' and 'ChevronLeft' imports ---
 import { CreateParty } from "~/components/create-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
-import { ChevronLeft } from "lucide-react";
 
 export default async function StartPartyPage() {
   return (
