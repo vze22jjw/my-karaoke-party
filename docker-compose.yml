@@ -8,15 +8,15 @@ services:
     container_name: mykaraoke-postgres
     restart: always
     environment:
-      POSTGRES_USER: mykaraoke
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: mykaraoke
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - mykaraokenetwork
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mykaraoke"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,14 +33,24 @@ services:
         condition: service_healthy
     environment:
       # Database
-      DATABASE_URL: postgresql://mykaraoke:${DB_PASSWORD}@mk-postgres:5432/mykaraoke
-      DATABASE_URL_NON_POOLING: postgresql://mykaraoke:${DB_PASSWORD}@mk-postgres:5432/mykaraoke  
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_NON_POOLING: ${DATABASE_URL_NON_POOLING}  
       # YouTube API
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
-      # App URL (ajuste para seu domínio)
+      # App URL
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       # Node
-      NODE_ENV: production
+      DOMAIN: ${DOMAIN}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+      NEXT_PUBLIC_VERCEL_URL: ${NEXT_PUBLIC_VERCEL_URL}
+      NODE_ENV: ${NODE_ENV}
+      NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      CLEANUP_INTERVAL_DAYS: ${CLEANUP_INTERVAL_DAYS}
+
     networks:
       - mykaraokenetwork
     ports:
@@ -59,12 +69,14 @@ services:
     restart: always
     depends_on:
       - mk-app
+    environment:
+      CLEANUP_INTERVAL_DAYS: ${CLEANUP_INTERVAL_DAYS}  
     networks:
       - mykaraokenetwork
     entrypoint: /bin/sh
     command: >
       -c "while true; do
-        sleep 60d;
+        sleep "${CLEANUP_INTERVAL_DAYS:-60}d";
         curl -f http://mk-app:3000/api/cron/cleanup-parties || echo 'Cleanup failed';
       done"
 

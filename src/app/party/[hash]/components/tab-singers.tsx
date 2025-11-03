@@ -2,7 +2,9 @@
 
 import type { KaraokeParty } from "party";
 import { useState } from "react";
-import { Users, MicVocal, ChevronDown, DoorOpen } from "lucide-react";
+// --- START: FIX ---
+import { Users, MicVocal, ChevronDown, LogOut } from "lucide-react"; // Changed to LogOut
+// --- END: FIX ---
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
@@ -31,15 +33,18 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
           <Users className="h-5 w-5" />
           Singers ({singers.length})
         </h2>
+        {/* --- START: Modified Button --- */}
         <Button
           variant="ghost"
-          size="icon"
           onClick={onLeaveParty}
-          className="text-foreground/80 hover:text-red-500 hover:bg-red-500/10"
+          // Added sm: prefix to hover states to disable them on mobile
+          className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10"
           aria-label="Leave party"
         >
-          <DoorOpen className="h-6 w-6" />
+          <span className="text-lg font-semibold text-white mr-1.5">Leave</span>
+          <LogOut className="h-5 w-5" /> {/* Changed icon to LogOut */}
         </Button>
+        {/* --- END: Modified Button --- */}
       </div>
       {/* END: Updated header */}
 
