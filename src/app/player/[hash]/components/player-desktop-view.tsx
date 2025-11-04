@@ -8,18 +8,14 @@ import { EmptyPlayer } from "~/components/empty-player";
 // --- FIX: Removed unused 'RefObject' import ---
 import type { RefCallback } from "react"; 
 
-// --- START: FIX ---
-// Changed type from RefObject<HTMLDivElement> to React.RefCallback<HTMLDivElement>
-// to match the type returned by the useFullscreen hook.
 type Props = {
-  playerRef: RefCallback<HTMLDivElement>; // <-- Corrected type
+  playerRef: RefCallback<HTMLDivElement>;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
   currentVideo: KaraokeParty["playlist"][number] | undefined;
   joinPartyUrl: string;
   onPlayerEnd: () => void;
 };
-// --- END: FIX ---
 
 export function PlayerDesktopView({
   playerRef,
@@ -43,7 +39,8 @@ export function PlayerDesktopView({
           </Button>
           {currentVideo ? (
             <Player
-              key={currentVideo.id}
+              // --- THIS 'key' PROP WAS REMOVED ---
+              // key={currentVideo.id} 
               video={currentVideo}
               joinPartyUrl={joinPartyUrl}
               isFullscreen={isFullscreen}

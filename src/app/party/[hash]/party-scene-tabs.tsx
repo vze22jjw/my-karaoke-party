@@ -13,11 +13,13 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 
+import { usePartySocket } from "~/hooks/use-party-socket";
+
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 
 export function PartyScene({
   party,
-  initialPlaylist,
+  initialPlaylist, // No longer used for playlist state, but fine as a prop
 }: {
   party: Party;
   initialPlaylist?: KaraokeParty;
@@ -29,34 +31,13 @@ export function PartyScene({
     defaultValue: "player",
   });
 
-  const [playlist, setPlaylist] = useState<KaraokeParty["playlist"]>(
-    initialPlaylist?.playlist ?? [],
-  );
-
-  const [orderByFairness, setOrderByFairness] = useState<boolean>(
-    initialPlaylist?.settings.orderByFairness ?? true,
-  );
-
+  // --- UPDATED: Use new hook return values ---
+  const { unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash!);
+  
   const [singers, setSingers] = useState<string[]>([]);
-
-  // Reusable function to send heartbeat
-  const sendHeartbeat = async () => {
-    try {
-      await fetch("/api/party/heartbeat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ hash: party.hash }),
-      });
-    } catch (error) {
-      console.error("Error sending heartbeat:", error);
-    }
-  };
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
-
     if (!value) {
       router.push(`/join/${party.hash}`);
     }
@@ -74,7 +55,6 @@ export function PartyScene({
           const data = await response.json();
           setSingers(data.singers);
 
-          // Auto-join/register singer if not in list
           if (name && data.singers && !data.singers.includes(name)) {
             await fetch("/api/party/join", {
               method: "POST",
@@ -84,89 +64,19 @@ export function PartyScene({
           }
         } else if (response.status === 404) {
           clearInterval(interval);
-          alert("The party has been closed by the host.");
-          router.push("/");
         }
       } catch (error) {
         console.error("Error fetching singers:", error);
       }
-    }, 3000); // 3 seconds
+    }, 3000); 
 
     return () => clearInterval(interval);
-  }, [party.hash, singers, name, router]); // Added router and singers to dependency array
+  }, [party.hash, singers, name, router]); 
 
-  // Poll for playlist updates every 3 seconds
-  // --- UPDATE POLLING EFFECT ---
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(
-          `/api/playlist/${party.hash}`,
-          { cache: 'no-store' } 
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setPlaylist(data.playlist);
-          setOrderByFairness(data.settings.orderByFairness);
-        } else if (response.status === 404) {
-          // Party was deleted
-          clearInterval(interval);
-          alert("The party has been closed by the host.");
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("Error fetching playlist:", error);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [party.hash, router]);
-
-  // Send heartbeat every 60 seconds to keep party alive
-  useEffect(() => {
-    const heartbeatInterval = setInterval(async () => {
-      void sendHeartbeat();
-    }, 60000); // 60 seconds
-
-    return () => clearInterval(heartbeatInterval);
-  }, [party.hash]);
-
-  // --- UPDATE addSong ---
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
-      // Send an immediate heartbeat before adding song
-      void sendHeartbeat();
-
-      // Use REST API
-      const response = await fetch("/api/playlist/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          partyHash: party.hash,
-          videoId,
-          title,
-          coverUrl,
-          singerName: name,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add song");
-      }
-
-      // Reload playlist
-      // --- UPDATE PLAYLIST FETCH ---
-      const playlistResponse = await fetch(
-        `/api/playlist/${party.hash}`,
-        { cache: 'no-store' }
-      );
-
-      const data = await playlistResponse.json();
-      setPlaylist(data.playlist);
-      setOrderByFairness(data.settings.orderByFairness);
+      socketActions.sendHeartbeat();
+      socketActions.addSong(videoId, title, coverUrl, name);
     } catch (error) {
       console.error("Error adding song:", error);
       alert("Error adding song. Please try again.");
@@ -190,40 +100,38 @@ export function PartyScene({
         onValueChange={setActiveTab}
         className="flex-1 flex flex-col overflow-hidden mt-4"
       >
-        {/* --- START: FIX --- */}
         <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
+          {/* ... TabsTrigger components ... */}
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
-            {/* Added 'hidden' class to hide text on mobile */}
             <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
           <TabsTrigger value="add" className="flex items-center gap-2">
             <Music className="h-4 w-4" />
             <span className="hidden sm:inline">Add</span>
           </TabsTrigger>
-          {/* Moved History tab to be 3rd */}
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             <span className="hidden sm:inline">History</span>
           </TabsTrigger>
-          {/* Moved Singers tab to be 4th (far right) */}
           <TabsTrigger value="singers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Singers</span>
           </TabsTrigger>
         </TabsList>
-        {/* --- END: FIX --- */}
 
         <TabsContent
           value="player"
           className="flex-1 overflow-y-auto mt-0"
         >
-          <TabPlayer playlist={playlist} />
+          {/* --- UPDATED: Pass unplayed list --- */}
+          <TabPlayer playlist={unplayedPlaylist} />
         </TabsContent>
 
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
+          {/* --- UPDATED: Pass unplayed list --- */}
           <TabAddSong
-            playlist={playlist}
+            playlist={unplayedPlaylist}
             name={name}
             onVideoAdded={addSong}
           />
@@ -233,8 +141,9 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
+          {/* --- UPDATED: Pass combined list --- */}
           <TabSingers
-            playlist={playlist}
+            playlist={[...unplayedPlaylist, ...playedPlaylist]}
             singers={singers}
             name={name}
             onLeaveParty={onLeaveParty}
@@ -244,7 +153,8 @@ export function PartyScene({
           value="history"
           className="flex-1 overflow-y-auto mt-0"
         >
-          <TabHistory playlist={playlist} />
+          {/* --- UPDATED: Pass played list --- */}
+          <TabHistory playlist={playedPlaylist} />
         </TabsContent>
       </Tabs>
     </div>

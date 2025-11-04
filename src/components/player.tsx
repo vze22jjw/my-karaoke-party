@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { QrCode } from "./qr-code";
 import { type VideoInPlaylist } from "party";
@@ -11,7 +11,8 @@ import { cn } from "~/lib/utils";
 import { Button } from "./ui/ui/button";
 import { MicVocal, SkipForward, Youtube } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
-import { getCodePenEmbedUrl } from "~/utils/youtube-embed";
+// --- REMOVED: Unused import ---
+// import { getCodePenEmbedUrl } from "~/utils/youtube-embed";
 
 type Props = {
   joinPartyUrl: string;
@@ -31,7 +32,18 @@ export function Player({
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [useCodePenBypass, setUseCodePenBypass] = useState(false);
+  // --- REMOVED: Bypass state is no longer needed ---
+  // const [useCodePenBypass, setUseCodePenBypass] = useState(false);
+
+  // This hook runs every time the video.id changes.
+  // It resets the component's internal state to handle the new song.
+  useEffect(() => {
+    setIsReady(false);
+    setShowOpenInYouTubeButton(false);
+    setIsPlaying(false);
+    // --- REMOVED: Bypass state is no longer needed ---
+    // setUseCodePenBypass(false);
+  }, [video.id]);
 
   const opts: YouTubeProps["opts"] = {
     playerVars: {
@@ -65,15 +77,11 @@ export function Player({
     setIsPlaying(false);
   };
 
+  // --- MODIFIED: Simplified error handler ---
   const onPlayerError: YouTubeProps["onError"] = (event) => {
-    console.log("Player error, trying CodePen bypass", { event });
-    // Primeiro tenta o bypass do CodePen
-    if (!useCodePenBypass) {
-      setUseCodePenBypass(true);
-    } else {
-      // Se o bypass também falhou, mostra botão do YouTube
-      setShowOpenInYouTubeButton(true);
-    }
+    console.log("Player error, showing 'Open on YouTube' button", { event });
+    // Immediately show the button on any error.
+    setShowOpenInYouTubeButton(true);
   };
 
   const openYouTubeTab = () => {
@@ -83,76 +91,16 @@ export function Player({
       "fullscreen=yes"
     );
 
+    // This fulfills the request to mark as played when "Open on YouTube" is clicked.
     if (onPlayerEnd) {
       onPlayerEnd();
     }
   };
 
-  // Se usar CodePen bypass, renderiza iframe customizado
-  if (useCodePenBypass && !showOpenInYouTubeButton) {
-    const codePenUrl = getCodePenEmbedUrl(video.id, {
-      autoplay: 1,
-      mute: 0,
-      controls: 1,
-      rel: 0,
-    });
+  // --- REMOVED: CodePen bypass logic block ---
+  // if (useCodePenBypass && !showOpenInYouTubeButton) { ... }
 
-    // Timeout de 8 segundos - se não carregar, mostra botão YouTube
-    setTimeout(() => {
-      if (useCodePenBypass && !showOpenInYouTubeButton) {
-        console.log("CodePen bypass timeout - showing YouTube button");
-        setShowOpenInYouTubeButton(true);
-      }
-    }, 8000);
-
-    return (
-      <div className="relative z-0 h-full">
-        <iframe
-          src={codePenUrl}
-          className="h-full w-full animate-in fade-in"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          style={{ border: 0 }}
-          title={decode(video.title)}
-          onError={() => {
-            console.log("CodePen iframe error - showing YouTube button");
-            setShowOpenInYouTubeButton(true);
-          }}
-        />
-        
-        <div className="absolute top-0 left-0 right-0 z-20 bg-black/80 p-4 text-center">
-          <p className="text-yellow-400 text-sm animate-pulse">
-            Trying to play with bypass...
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            If it does not work in 8 seconds it will open in YouTube
-          </p>
-        </div>
-
-        <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">
-          <QrCode url={joinPartyUrl} />
-
-          <div
-            className={`self-end p-2 ${
-              isPlaying && isFullscreen ? "hidden" : "block"
-            }`}
-          >
-            <Button
-              variant={"secondary"}
-              type="button"
-              onClick={() => {
-                onPlayerEnd();
-              }}
-            >
-              <SkipForward className="mr-2 h-5 w-5" />
-              Skip
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // This block now catches all errors
   if (showOpenInYouTubeButton) {
     return (
       <div
@@ -176,17 +124,18 @@ export function Player({
         </div>
 
         <div className="space-y-4">
+          {/* --- MODIFIED: Updated error message --- */}
           <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-4">
             <h3 className="text-xl font-bold text-red-400 mb-2">
-              🚫 Playback Blocked by Owner
+              🚫 Video Playback Error
             </h3>
+            {/* --- THIS IS THE FIX --- */}
             <p className="text-sm text-gray-300 mb-2">
-              The owner of this video has disabled playback on other sites.
+              This video can&apos;t be played here (it may be private or deleted).
             </p>
-            <p className="text-xs text-gray-400">
-              We tried: YouTube embed directly ❌ | CodePen bypass ❌
-            </p>
+            {/* --- END THE FIX --- */}
           </div>
+          {/* --- END MODIFICATION --- */}
 
           <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
             Click the button to open on YouTube
@@ -208,17 +157,13 @@ export function Player({
               variant={"secondary"}
               type="button"
               onClick={() => {
-                onPlayerEnd();
+                onPlayerEnd(); // This is the "Skip" button
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />
               Skip Song
             </Button>
           </div>
-
-          <p className="text-xs text-gray-500 mt-4">
-            💡 Tip: Choose videos from official channels to avoid this issue
-          </p>
         </div>
 
         <div className="relative flex w-full basis-1/4 items-end text-center">
@@ -235,17 +180,15 @@ export function Player({
     );
   }
 
+  // Default player view
   return (
     <div className="relative z-0 h-full">
       <YouTube
-        key={video.id}
         loading="eager"
-        // className={`h-full w-full`}
         className={`h-full w-full animate-in fade-in ${
           isReady ? "visible" : "invisible"
         }`}
         iframeClassName="w-full h-full"
-        // iframeClassName="p2 fixed bottom-0 right-0 h-auto min-h-full w-auto min-w-full"
         videoId={video.id}
         opts={opts}
         onPlay={onPlayerPlay}
@@ -253,7 +196,7 @@ export function Player({
         onPause={onPlayerPause}
         onError={onPlayerError}
         onEnd={() => {
-          onPlayerEnd();
+          onPlayerEnd(); // This fulfills "mark as played on end of video"
         }}
       />
       <div
@@ -296,23 +239,15 @@ export function Player({
           }`}
         >
           <Button
-            // className="bg-yellow-300"
             variant={"secondary"}
             type="button"
             onClick={() => {
-              onPlayerEnd();
+              onPlayerEnd(); // This is the "Skip" button
             }}
           >
             <SkipForward className="mr-2 h-5 w-5" />
             Skip
           </Button>
-          {/* <a
-            href={joinPartyUrl}
-            target="_blank"
-            className="font-mono text-xl text-white"
-          >
-            {joinPartyUrl.split("//")[1]}
-          </a> */}
         </div>
       </div>
     </div>
