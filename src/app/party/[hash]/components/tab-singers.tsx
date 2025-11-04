@@ -1,22 +1,31 @@
 "use client";
 
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party"; // <-- Added VideoInPlaylist
 import { useState } from "react";
-// --- START: FIX ---
-import { Users, MicVocal, ChevronDown, LogOut } from "lucide-react"; // Changed to LogOut
-// --- END: FIX ---
+import { Users, MicVocal, ChevronDown, LogOut } from "lucide-react";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 
 type Props = {
-  playlist: KaraokeParty["playlist"];
+  // --- UPDATED: Use new props ---
+  currentSong: VideoInPlaylist | null;
+  unplayedPlaylist: VideoInPlaylist[];
+  playedPlaylist: VideoInPlaylist[];
+  // ---
   singers: string[];
   name: string;
   onLeaveParty: () => void;
 };
 
-export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
+export function TabSingers({
+  currentSong,
+  unplayedPlaylist,
+  playedPlaylist,
+  singers,
+  name,
+  onLeaveParty,
+}: Props) {
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>(
     {},
   );
@@ -27,26 +36,21 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
 
   return (
     <div className="bg-card rounded-lg p-4 border">
-      {/* START: Updated header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Users className="h-5 w-5" />
           Singers ({singers.length})
         </h2>
-        {/* --- START: Modified Button --- */}
         <Button
           variant="ghost"
           onClick={onLeaveParty}
-          // Added sm: prefix to hover states to disable them on mobile
           className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10"
           aria-label="Leave party"
         >
           <span className="text-lg font-semibold text-white mr-1.5">Leave</span>
-          <LogOut className="h-5 w-5" /> {/* Changed icon to LogOut */}
+          <LogOut className="h-5 w-5" />
         </Button>
-        {/* --- END: Modified Button --- */}
       </div>
-      {/* END: Updated header */}
 
       {singers.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">
@@ -55,11 +59,13 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
       ) : (
         <div className="space-y-3">
           {singers.map((singer) => {
-            const singerSongs = playlist.filter(
-              (v) => v.singerName === singer,
-            );
-            const nextSongs = singerSongs.filter((v) => !v.playedAt);
-            const playedSongs = singerSongs.filter((v) => v.playedAt);
+            // --- UPDATED: Filter from the new props ---
+            const playedSongs = playedPlaylist.filter((v) => v.singerName === singer);
+            const nextSongs = unplayedPlaylist.filter((v) => v.singerName === singer);
+            const currentSongForSinger = (currentSong?.singerName === singer) ? currentSong : null;
+            const totalSongs = playedSongs.length + nextSongs.length + (currentSongForSinger ? 1 : 0);
+            // ---
+
             const showPlayed = !!showPlayedMap[singer];
 
             return (
@@ -75,7 +81,7 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
                     <div>
                       <p className="font-semibold">{singer}</p>
                       <p className="text-xs text-muted-foreground">
-                        {singerSongs.length} song(s)
+                        {totalSongs} song(s)
                       </p>
                     </div>
                   </div>
@@ -87,8 +93,7 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
                       </span>
                     )}
 
-                    {/* Toggle button for song history */}
-                    {(playedSongs.length > 0 || nextSongs.length > 0) && (
+                    {(playedSongs.length > 0 || nextSongs.length > 0 || currentSongForSinger) && (
                       <Button
                         type="button"
                         onClick={() => togglePlayed(singer)}
@@ -99,7 +104,7 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
                         <span className="sr-only">
                           {showPlayed
                             ? "Hide Songs"
-                            : `Show All Songs (${singerSongs.length})`}
+                            : `Show All Songs (${totalSongs})`}
                         </span>
                         <ChevronDown
                           className={cn(
@@ -116,12 +121,21 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
                 {showPlayed ? (
                   // Show all songs when expanded
                   <div className="mt-2 space-y-3">
-                    {nextSongs.length > 0 && (
+                    {/* --- UPDATED: Show "Now Playing" first --- */}
+                    {(currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
                         <p className="text-xs font-medium text-muted-foreground mb-1">
-                          In Line: {nextSongs.length}
+                          In Line: {currentSongForSinger ? nextSongs.length + 1 : nextSongs.length}
                         </p>
                         <ul className="space-y-1">
+                          {currentSongForSinger && (
+                            <li
+                              key={currentSongForSinger.id}
+                              className="text-xs truncate pl-2 font-bold text-primary"
+                            >
+                              • {decode(currentSongForSinger.title)} (Playing Now)
+                            </li>
+                          )}
                           {nextSongs.map((song) => (
                             <li
                               key={song.id}
@@ -140,7 +154,8 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
                           Already sang: {playedSongs.length}
                         </p>
                         <ul className="space-y-1">
-                          {playedSongs.reverse().map((song) => (
+                          {/* --- UPDATED: Use playedSongs (already sorted) --- */}
+                          {playedSongs.map((song) => (
                             <li
                               key={song.id}
                               className="text-xs truncate pl-2 text-muted-foreground"
@@ -155,8 +170,10 @@ export function TabSingers({ playlist, singers, name, onLeaveParty }: Props) {
                 ) : (
                   // Show summary when collapsed
                   <div className="text-xs text-muted-foreground">
-                    {nextSongs.length > 0 && `${nextSongs.length} in line`}
-                    {nextSongs.length > 0 && playedSongs.length > 0 && " • "}
+                    {/* --- UPDATED: Include current song in summary --- */}
+                    {(currentSongForSinger || nextSongs.length > 0) &&
+                      `${nextSongs.length + (currentSongForSinger ? 1 : 0)} in line`}
+                    {(currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}
                     {playedSongs.length > 0 && `${playedSongs.length} played`}
                   </div>
                 )}

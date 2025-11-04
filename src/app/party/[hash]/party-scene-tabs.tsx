@@ -3,7 +3,7 @@
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react"; // (useMemo is no longer needed here)
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
 import { Monitor, Music, Users, History } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,11 +35,7 @@ export function PartyScene({
   
   const [singers, setSingers] = useState<string[]>([]);
 
-  // Combine all songs for the singers tab
-  const allSongs = useMemo(() => {
-    return [...(currentSong ? [currentSong] : []), ...unplayedPlaylist, ...playedPlaylist];
-  }, [currentSong, unplayedPlaylist, playedPlaylist]);
-
+  // --- REMOVED allSongs useMemo ---
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
@@ -147,13 +143,14 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
+          {/* --- UPDATED: Pass the new props --- */}
           <TabSingers
-            playlist={allSongs}
+            currentSong={currentSong}
+            unplayedPlaylist={unplayedPlaylist}
+            playedPlaylist={playedPlaylist}
             singers={singers}
             name={name}
             onLeaveParty={onLeaveParty}
-            // --- THIS IS THE FIX: Removed the line below ---
-            // partyHash={party.hash!}
           />
         </TabsContent>
         <TabsContent
