@@ -1,20 +1,18 @@
 /* eslint-disable */
 "use client";
 
-import {
-  useFullscreen,
-  useLocalStorage,
-} from "@mantine/hooks";
+import { useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useRef } from "react";
-import useSound from "use-sound";
+import { useState } from "react";
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
-
-import { HostControlPanel } from "./components/host-control-panel";
-import { PlayerDesktopView } from "./components/player-desktop-view";
+import { Player } from "~/components/player";
+import { EmptyPlayer } from "~/components/empty-player";
 import { usePartySocket } from "~/hooks/use-party-socket";
+import { Button } from "~/components/ui/ui/button";
+import { Maximize, Minimize } from "lucide-react";
+import type { RefCallback } from "react"; 
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -28,129 +26,85 @@ type Props = {
   initialData: InitialPartyData;
 };
 
-const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
-
 export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   
-  const [isConfirmingClose, setIsConfirmingClose] = useState(false); 
-
-  const [activeTab, setActiveTab] = useLocalStorage({
-    key: "karaoke-player-active-tab",
-    defaultValue: "playlist",
-  });
-  
-  const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
-    key: MAX_SEARCH_RESULTS_KEY,
-    defaultValue: 10,
-  });
-  
+  // This state is to force the player to autoplay *only* when we skip
   const [forceAutoplay, setForceAutoplay] = useState(false);
 
-  const [playHorn] = useSound("/sounds/buzzer.mp3");
-  const lastHornTimeRef = useRef<number>(0);
-
   if (!party.hash) {
-    // --- THIS IS THE FIX ---
     return <div>Error: Party hash is missing.</div>;
-    // --- END THE FIX ---
   }
 
   const { 
     currentSong, 
-    unplayedPlaylist, 
-    settings, 
     socketActions, 
-    isConnected,
     isPlaying
   } = usePartySocket(
     party.hash,
     initialData,
   );
   
-  const useQueueRules = settings.orderByFairness;
-  
   const { ref, toggle, fullscreen } = useFullscreen();
 
-  const handleToggleRules = async () => {
-    const newRulesState = !useQueueRules;
-    socketActions.toggleRules(newRulesState);
-  };
-
-  const removeSong = async (videoId: string) => {
-    socketActions.removeSong(videoId);
-  };
-
+  // Called when a song ENDS NATURALLY
   const handlePlayerEnd = async () => {
-    setForceAutoplay(false);
+    setForceAutoplay(false); // Do not autoplay the next song
     socketActions.markAsPlayed();
   };
 
+  // Called when SKIP button is clicked
   const handleSkip = async () => {
-    setForceAutoplay(true);
+    setForceAutoplay(true); // Autoplay the next song
     socketActions.markAsPlayed();
   };
   
+  // Called when PLAY button is clicked
   const handlePlay = () => {
     socketActions.playbackPlay();
   };
   
+  // Called when PAUSE button is clicked
   const handlePause = () => {
     socketActions.playbackPause();
-  };
-
-  const handleCloseParty = () => {
-    setIsConfirmingClose(true);
-  };
-
-  const confirmCloseParty = async () => {
-    socketActions.closeParty();
-    setIsConfirmingClose(false);
-  };
-
-  const cancelCloseParty = () => {
-    setIsConfirmingClose(false);
   };
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
 
   return (
-    <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
-      {/* --- This is the Mobile Controller View --- */}
-      <HostControlPanel
-        party={party}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        currentSong={currentSong}
-        playlist={unplayedPlaylist}
-        onRemoveSong={removeSong}
-        onMarkAsPlayed={handleSkip}
-        useQueueRules={useQueueRules} 
-        onToggleRules={handleToggleRules} 
-        maxSearchResults={maxSearchResults}
-        onSetMaxResults={setMaxSearchResults}
-        onCloseParty={handleCloseParty}
-        isConfirmingClose={isConfirmingClose} 
-        onConfirmClose={confirmCloseParty} 
-        onCancelClose={cancelCloseParty}
-        // --- REMOVED: isPlaying, onPlay, onPause props ---
-      />
-      
-      {/* --- This is the Desktop Player View --- */}
-      <PlayerDesktopView
-        playerRef={ref}
-        onToggleFullscreen={toggle}
-        isFullscreen={fullscreen}
-        currentVideo={currentSong ?? undefined}
-        joinPartyUrl={joinPartyUrl}
-        onPlayerEnd={handlePlayerEnd}
-        onSkip={handleSkip} 
-        forceAutoplay={forceAutoplay} 
-        onAutoplayed={() => setForceAutoplay(false)}
-        isPlaying={isPlaying}
-        onPlay={handlePlay}
-        onPause={handlePause}
-      />
+    // This is now the simple, full-screen player page
+    <div className="w-full h-screen"> 
+      <div className="flex h-full flex-col">
+        <div className="relative h-full" ref={ref as RefCallback<HTMLDivElement>}>
+          <Button
+            onClick={toggle}
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-0 right-3 z-10"
+          >
+            {fullscreen ? <Minimize /> : <Maximize />}
+          </Button>
+          {currentSong ? (
+            <Player
+              video={currentSong}
+              joinPartyUrl={joinPartyUrl}
+              isFullscreen={fullscreen}
+              onPlayerEnd={handlePlayerEnd}
+              onSkip={handleSkip} 
+              forceAutoplay={forceAutoplay} 
+              onAutoplayed={() => setForceAutoplay(false)}
+              isPlaying={isPlaying}
+              onPlay={handlePlay}
+              onPause={handlePause}
+            />
+          ) : (
+            <EmptyPlayer
+              joinPartyUrl={joinPartyUrl}
+              className={fullscreen ? "bg-gradient" : ""}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

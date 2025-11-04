@@ -2,8 +2,8 @@
 
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
-import { AlertTriangle, Search, ExternalLink } from "lucide-react"; // <-- Added ExternalLink
-import Link from "next/link"; // <-- Added Link
+import { AlertTriangle, Search, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 type Props = {
   useQueueRules: boolean;
@@ -30,7 +30,7 @@ export function TabSettings({
 }: Props) {
   return (
     <>
-      {/* Queue Rules (Moved) */}
+      {/* Queue Rules */}
       <div className="flex-shrink-0">
         <h2 className="font-semibold text-lg mb-2">Controls</h2>
         <div className="flex items-center justify-between mb-4">
@@ -41,8 +41,6 @@ export function TabSettings({
             <span className="text-xs text-muted-foreground">
               {useQueueRules ? "ON (Fairness)" : "OFF (Manual)"}
             </span>
-
-            {/* Slide Toggle Switch */}
             <button
               onClick={onToggleRules}
               aria-checked={useQueueRules}
@@ -65,20 +63,21 @@ export function TabSettings({
         </div>
       </div>
 
-      {/* Add Songs Link (Moved) */}
+      {/* --- UPDATED: Add Songs Link (points to /party) --- */}
       <div className="flex-shrink-0">
-        <h2 className="font-semibold text-lg mb-2">Add Songs</h2>
+        <h2 className="font-semibold text-lg mb-2">Add Songs (Guest Page)</h2>
         <a
           href={`/party/${partyHash}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block text-primary hover:text-primary/80 font-medium text-sm"
+          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
         >
-          👉 Open Page to Add Songs
+          <ExternalLink className="h-4 w-4" />
+          Open Guest Page
         </a>
       </div>
 
-      {/* --- START: Added Open Player Link --- */}
+      {/* --- UPDATED: Open Player Link (points to /player) --- */}
       <div className="flex-shrink-0">
         <h2 className="font-semibold text-lg mb-2">Player Display</h2>
         <Link
@@ -91,10 +90,8 @@ export function TabSettings({
           Open Player in New Window
         </Link>
       </div>
-      {/* --- END: Added Open Player Link --- */}
 
-
-      {/* --- START: New Search Results Setting --- */}
+      {/* Search Results Setting */}
       <div className="flex-shrink-0">
         <h2 className="font-semibold text-lg mb-2 flex items-center gap-2">
           <Search className="h-5 w-5" />
@@ -120,14 +117,12 @@ export function TabSettings({
           </select>
         </div>
       </div>
-      {/* --- END: New Search Results Setting --- */}
 
-      {/* --- START: Modified Close Party Button --- */}
+      {/* Close Party Button */}
       <div className="flex-shrink-0 pt-4 border-t border-destructive/20">
         <h2 className="font-semibold text-lg mb-2 text-destructive">
           Danger Zone
         </h2>
-
         {isConfirmingClose ? (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
             <p className="text-center font-medium text-destructive">
@@ -165,7 +160,6 @@ export function TabSettings({
           </Button>
         )}
       </div>
-      {/* --- END: Modified Close Party Button --- */}
     </>
   );
 }

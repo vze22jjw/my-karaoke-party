@@ -6,7 +6,7 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
-// --- REMOVED: PlaybackControls import ---
+import { PlaybackControls } from "./playback-controls"; 
 
 type Props = {
   party: Party;
@@ -24,7 +24,9 @@ type Props = {
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
-  // --- REMOVED: isPlaying, onPlay, onPause props ---
+  isPlaying: boolean;
+  onPlay: () => void;
+  onPause: () => void;
 };
 
 // This component is the HOST'S mobile view
@@ -44,6 +46,9 @@ export function HostControlPanel({
   isConfirmingClose,
   onConfirmClose,
   onCancelClose,
+  isPlaying,
+  onPlay,
+  onPause,
 }: Props) {
   if (!party.hash) return null;
 
@@ -104,7 +109,16 @@ export function HostControlPanel({
         </Tabs>
       </div>
       
-      {/* --- REMOVED: Playback Controls Bar --- */}
+      {/* --- ADDED: Playback Controls Bar --- */}
+      <div className="flex-shrink-0">
+        <PlaybackControls 
+          currentSong={currentSong}
+          isPlaying={isPlaying}
+          onPlay={onPlay}
+          onPause={onPause}
+          onSkip={onMarkAsPlayed} // This is handleSkip
+        />
+      </div>
     </div>
   );
 }
