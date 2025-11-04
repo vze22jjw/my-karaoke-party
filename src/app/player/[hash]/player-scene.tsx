@@ -2,29 +2,35 @@
 "use client";
 
 import {
-  readLocalStorageValue,
   useFullscreen,
   useLocalStorage,
 } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import useSound from "use-sound";
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 
-import { PlayerMobilePanel } from "./components/player-mobile-panel";
+import { HostControlPanel } from "./components/host-control-panel";
 import { PlayerDesktopView } from "./components/player-desktop-view";
 import { usePartySocket } from "~/hooks/use-party-socket";
 
+type InitialPartyData = {
+  currentSong: VideoInPlaylist | null;
+  unplayed: VideoInPlaylist[];
+  played: VideoInPlaylist[];
+  settings: KaraokeParty["settings"];
+};
+
 type Props = {
   party: Party;
-  initialPlaylist: KaraokeParty; // initialPlaylist is now just a fallback
+  initialData: InitialPartyData;
 };
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 
-export default function PlayerScene({ party, initialPlaylist }: Props) {
+export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   
   const [isConfirmingClose, setIsConfirmingClose] = useState(false); 
@@ -38,22 +44,33 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 10,
   });
+  
+  const [forceAutoplay, setForceAutoplay] = useState(false);
 
   const [playHorn] = useSound("/sounds/buzzer.mp3");
   const lastHornTimeRef = useRef<number>(0);
 
   if (!party.hash) {
+    // --- THIS IS THE FIX ---
     return <div>Error: Party hash is missing.</div>;
+    // --- END THE FIX ---
   }
 
-  // --- UPDATED: Use new hook return values ---
-  const { currentSong, unplayedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash);
+  const { 
+    currentSong, 
+    unplayedPlaylist, 
+    settings, 
+    socketActions, 
+    isConnected,
+    isPlaying
+  } = usePartySocket(
+    party.hash,
+    initialData,
+  );
+  
   const useQueueRules = settings.orderByFairness;
   
   const { ref, toggle, fullscreen } = useFullscreen();
-
-  // --- REMOVED: No longer need to derive currentVideo ---
-  // const currentVideo = unplayedPlaylist[0]; 
 
   const handleToggleRules = async () => {
     const newRulesState = !useQueueRules;
@@ -64,11 +81,22 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     socketActions.removeSong(videoId);
   };
 
-  // --- UPDATED: Use currentSong from hook ---
-  const markAsPlayed = async () => {
-    if (currentSong) {
-      socketActions.markAsPlayed(currentSong.id);
-    }
+  const handlePlayerEnd = async () => {
+    setForceAutoplay(false);
+    socketActions.markAsPlayed();
+  };
+
+  const handleSkip = async () => {
+    setForceAutoplay(true);
+    socketActions.markAsPlayed();
+  };
+  
+  const handlePlay = () => {
+    socketActions.playbackPlay();
+  };
+  
+  const handlePause = () => {
+    socketActions.playbackPause();
   };
 
   const handleCloseParty = () => {
@@ -88,15 +116,15 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
 
   return (
     <div className="flex h-screen w-full flex-col sm:flex-row sm:flex-nowrap">
-      <PlayerMobilePanel
+      {/* --- This is the Mobile Controller View --- */}
+      <HostControlPanel
         party={party}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        // --- UPDATED: Pass new props ---
         currentSong={currentSong}
-        playlist={unplayedPlaylist} // playlist prop now means "upcoming queue"
+        playlist={unplayedPlaylist}
         onRemoveSong={removeSong}
-        onMarkAsPlayed={markAsPlayed}
+        onMarkAsPlayed={handleSkip}
         useQueueRules={useQueueRules} 
         onToggleRules={handleToggleRules} 
         maxSearchResults={maxSearchResults}
@@ -104,18 +132,24 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         onCloseParty={handleCloseParty}
         isConfirmingClose={isConfirmingClose} 
         onConfirmClose={confirmCloseParty} 
-        onCancelClose={cancelCloseParty} 
+        onCancelClose={cancelCloseParty}
+        // --- REMOVED: isPlaying, onPlay, onPause props ---
       />
-
+      
+      {/* --- This is the Desktop Player View --- */}
       <PlayerDesktopView
         playerRef={ref}
         onToggleFullscreen={toggle}
         isFullscreen={fullscreen}
-        // --- THIS IS THE FIX ---
-        currentVideo={currentSong ?? undefined} // Convert null to undefined
-        // --- END THE FIX ---
+        currentVideo={currentSong ?? undefined}
         joinPartyUrl={joinPartyUrl}
-        onPlayerEnd={markAsPlayed}
+        onPlayerEnd={handlePlayerEnd}
+        onSkip={handleSkip} 
+        forceAutoplay={forceAutoplay} 
+        onAutoplayed={() => setForceAutoplay(false)}
+        isPlaying={isPlaying}
+        onPlay={handlePlay}
+        onPause={handlePause}
       />
     </div>
   );

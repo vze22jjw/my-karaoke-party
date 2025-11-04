@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty, VideoInPlaylist } from "party"; // <-- Added VideoInPlaylist
+import type { VideoInPlaylist } from "party"; // <-- FIX: Removed unused 'KaraokeParty'
 import { useState } from "react";
 import { Users, MicVocal, ChevronDown, LogOut } from "lucide-react";
 import { Button } from "~/components/ui/ui/button";
@@ -8,11 +8,9 @@ import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 
 type Props = {
-  // --- UPDATED: Use new props ---
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
-  // ---
   singers: string[];
   name: string;
   onLeaveParty: () => void;
@@ -59,13 +57,11 @@ export function TabSingers({
       ) : (
         <div className="space-y-3">
           {singers.map((singer) => {
-            // --- UPDATED: Filter from the new props ---
             const playedSongs = playedPlaylist.filter((v) => v.singerName === singer);
             const nextSongs = unplayedPlaylist.filter((v) => v.singerName === singer);
             const currentSongForSinger = (currentSong?.singerName === singer) ? currentSong : null;
             const totalSongs = playedSongs.length + nextSongs.length + (currentSongForSinger ? 1 : 0);
-            // ---
-
+            
             const showPlayed = !!showPlayedMap[singer];
 
             return (
@@ -93,7 +89,8 @@ export function TabSingers({
                       </span>
                     )}
 
-                    {(playedSongs.length > 0 || nextSongs.length > 0 || currentSongForSinger) && (
+                    {/* --- FIX: Made boolean check explicit --- */}
+                    {(playedSongs.length > 0 || nextSongs.length > 0 || !!currentSongForSinger) && (
                       <Button
                         type="button"
                         onClick={() => togglePlayed(singer)}
@@ -121,8 +118,8 @@ export function TabSingers({
                 {showPlayed ? (
                   // Show all songs when expanded
                   <div className="mt-2 space-y-3">
-                    {/* --- UPDATED: Show "Now Playing" first --- */}
-                    {(currentSongForSinger || nextSongs.length > 0) && (
+                    {/* --- FIX: Made boolean check explicit --- */}
+                    {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
                         <p className="text-xs font-medium text-muted-foreground mb-1">
                           In Line: {currentSongForSinger ? nextSongs.length + 1 : nextSongs.length}
@@ -154,7 +151,6 @@ export function TabSingers({
                           Already sang: {playedSongs.length}
                         </p>
                         <ul className="space-y-1">
-                          {/* --- UPDATED: Use playedSongs (already sorted) --- */}
                           {playedSongs.map((song) => (
                             <li
                               key={song.id}
@@ -170,10 +166,10 @@ export function TabSingers({
                 ) : (
                   // Show summary when collapsed
                   <div className="text-xs text-muted-foreground">
-                    {/* --- UPDATED: Include current song in summary --- */}
-                    {(currentSongForSinger || nextSongs.length > 0) &&
+                    {/* --- FIX: Made boolean check explicit --- */}
+                    {(!!currentSongForSinger || nextSongs.length > 0) &&
                       `${nextSongs.length + (currentSongForSinger ? 1 : 0)} in line`}
-                    {(currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}
+                    {(!!currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}
                     {playedSongs.length > 0 && `${playedSongs.length} played`}
                   </div>
                 )}

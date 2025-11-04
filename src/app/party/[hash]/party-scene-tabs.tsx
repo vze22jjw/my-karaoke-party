@@ -3,7 +3,7 @@
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useEffect, useState, useMemo } from "react"; // (useMemo is no longer needed here)
+import { useEffect, useState, useMemo } from "react";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
 import { Monitor, Music, Users, History } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,17 +12,24 @@ import { TabPlayer } from "./components/tab-player";
 import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
-
 import { usePartySocket } from "~/hooks/use-party-socket";
+// --- REMOVED: PlaybackControls import ---
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 
+type InitialPartyData = {
+  currentSong: VideoInPlaylist | null;
+  unplayed: VideoInPlaylist[];
+  played: VideoInPlaylist[];
+  settings: KaraokeParty["settings"];
+};
+
 export function PartyScene({
   party,
-  initialPlaylist,
+  initialData,
 }: {
   party: Party;
-  initialPlaylist?: KaraokeParty;
+  initialData: InitialPartyData;
 }) {
   const [name] = useLocalStorage<string>({ key: "name" });
   const router = useRouter();
@@ -31,11 +38,23 @@ export function PartyScene({
     defaultValue: "player",
   });
 
-  const { currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash!);
+  // --- Guest page only needs playlist data, not playback state ---
+  const { 
+    currentSong, 
+    unplayedPlaylist, 
+    playedPlaylist, 
+    socketActions,
+  } = usePartySocket(
+    party.hash!,
+    initialData,
+  );
   
   const [singers, setSingers] = useState<string[]>([]);
 
-  // --- REMOVED allSongs useMemo ---
+  const allSongs = useMemo(() => {
+    return [...(currentSong ? [currentSong] : []), ...unplayedPlaylist, ...playedPlaylist];
+  }, [currentSong, unplayedPlaylist, playedPlaylist]);
+
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
@@ -44,7 +63,7 @@ export function PartyScene({
     }
   }, [router, party.hash]);
 
-  // Poll for singers updates every 3 seconds
+  // Poll for singers updates
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -89,6 +108,7 @@ export function PartyScene({
   };
 
   return (
+    // --- REVERTED: Removed mobile/desktop split, removed pb-24 ---
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
@@ -143,7 +163,6 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- UPDATED: Pass the new props --- */}
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
@@ -160,6 +179,8 @@ export function PartyScene({
           <TabHistory playlist={playedPlaylist} />
         </TabsContent>
       </Tabs>
+      
+      {/* --- REMOVED: Playback Controls Bar --- */}
     </div>
   );
 }

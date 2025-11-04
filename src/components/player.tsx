@@ -11,76 +11,104 @@ import { cn } from "~/lib/utils";
 import { Button } from "./ui/ui/button";
 import { MicVocal, SkipForward, Youtube } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
-// --- REMOVED: Unused import ---
-// import { getCodePenEmbedUrl } from "~/utils/youtube-embed";
 
+// --- THIS IS THE FIX ---
+// This Props type includes all the new properties
 type Props = {
   joinPartyUrl: string;
   video: VideoInPlaylist;
   isFullscreen: boolean;
-  onPlayerEnd: () => void;
+  onPlayerEnd: () => void; // For song end
+  onSkip: () => void;      // For skip button
+  forceAutoplay: boolean;
+  onAutoplayed: () => void;
+  isPlaying: boolean;
+  onPlay: () => void;
+  onPause: () => void;
 };
+// --- END THE FIX ---
 
 export function Player({
   joinPartyUrl,
   video,
   isFullscreen = false,
   onPlayerEnd,
+  onSkip,
+  forceAutoplay,
+  onAutoplayed,
+  isPlaying,
+  onPlay,
+  onPause,
 }: Props) {
+  // This ref is also corrected to fix the ESLint error
   const playerRef = useRef<YouTubePlayer>(null);
-
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  // --- REMOVED: Bypass state is no longer needed ---
-  // const [useCodePenBypass, setUseCodePenBypass] = useState(false);
+  const [internalIsPlaying, setInternalIsPlaying] = useState(false);
 
-  // This hook runs every time the video.id changes.
-  // It resets the component's internal state to handle the new song.
   useEffect(() => {
     setIsReady(false);
     setShowOpenInYouTubeButton(false);
-    setIsPlaying(false);
-    // --- REMOVED: Bypass state is no longer needed ---
-    // setUseCodePenBypass(false);
   }, [video.id]);
+
+  // Effect to control player from socket state
+  useEffect(() => {
+    if (!playerRef.current || !isReady) return;
+    
+    try {
+      if (isPlaying) {
+        playerRef.current.playVideo();
+      } else {
+        playerRef.current.pauseVideo();
+      }
+    } catch (error) {
+      console.error("Failed to control player:", error);
+    }
+  }, [isPlaying, isReady]);
 
   const opts: YouTubeProps["opts"] = {
     playerVars: {
-      // https://developers.google.com/youtube/player_parameters
       start: 0,
-      autoplay: 0, // 1 to Enable autoplay, 0 to Disable autoplay
+      autoplay: 0, // Manual control
       rel: 0,
       controls: 1,
+      origin: typeof window !== "undefined" ? window.location.origin : "",
     },
   };
 
   const onPlayerReady: YouTubeProps["onReady"] = (event) => {
     console.log("Player ready", { event });
-    // access to player in all event handlers via event.target
     playerRef.current = event.target;
-
     const playerState = event.target.getPlayerState();
-
     if (playerState !== -1) {
       setIsReady(true);
+      // Only autoplay if the forceAutoplay flag is true (i.e., user clicked Skip)
+      if (forceAutoplay) {
+        event.target.playVideo();
+        onAutoplayed(); // Reset the flag in the parent
+      }
     }
   };
 
+  // Emit socket events when user interacts with YouTube controls
   const onPlayerPlay: YouTubeProps["onPlay"] = (_event) => {
-    console.log("handlePlay");
-    setIsPlaying(true);
+    console.log("handlePlay (from player)");
+    setInternalIsPlaying(true);
+    if (!isPlaying) { // Only emit if state is different
+      onPlay();
+    }
   };
 
   const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
-    console.log("handlePause");
-    setIsPlaying(false);
+    console.log("handlePause (from player)");
+    setInternalIsPlaying(false);
+    if (isPlaying) { // Only emit if state is different
+      onPause();
+    }
   };
 
-  // --- MODIFIED: Simplified error handler ---
   const onPlayerError: YouTubeProps["onError"] = (event) => {
     console.log("Player error, showing 'Open on YouTube' button", { event });
-    // Immediately show the button on any error.
     setShowOpenInYouTubeButton(true);
   };
 
@@ -90,17 +118,11 @@ export function Player({
       "_blank",
       "fullscreen=yes"
     );
-
-    // This fulfills the request to mark as played when "Open on YouTube" is clicked.
-    if (onPlayerEnd) {
-      onPlayerEnd();
+    if (onSkip) {
+      onSkip();
     }
   };
 
-  // --- REMOVED: CodePen bypass logic block ---
-  // if (useCodePenBypass && !showOpenInYouTubeButton) { ... }
-
-  // This block now catches all errors
   if (showOpenInYouTubeButton) {
     return (
       <div
@@ -122,21 +144,17 @@ export function Player({
             />
           </h2>
         </div>
-
+        
         <div className="space-y-4">
-          {/* --- MODIFIED: Updated error message --- */}
           <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-4">
             <h3 className="text-xl font-bold text-red-400 mb-2">
               🚫 Video Playback Error
             </h3>
-            {/* --- THIS IS THE FIX --- */}
             <p className="text-sm text-gray-300 mb-2">
               This video can&apos;t be played here (it may be private or deleted).
             </p>
-            {/* --- END THE FIX --- */}
           </div>
-          {/* --- END MODIFICATION --- */}
-
+          
           <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
             Click the button to open on YouTube
           </h3>
@@ -157,7 +175,7 @@ export function Player({
               variant={"secondary"}
               type="button"
               onClick={() => {
-                onPlayerEnd(); // This is the "Skip" button
+                onSkip();
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />
@@ -196,13 +214,13 @@ export function Player({
         onPause={onPlayerPause}
         onError={onPlayerError}
         onEnd={() => {
-          onPlayerEnd(); // This fulfills "mark as played on end of video"
+          onPlayerEnd();
         }}
       />
       <div
         className={cn(
           "absolute top-0 w-full text-center animate-in fade-in zoom-in",
-          isPlaying ? "hidden" : "block"
+          isReady ? "hidden" : "block"
         )}
       >
         <div
@@ -235,14 +253,14 @@ export function Player({
 
         <div
           className={`self-end p-2 ${
-            isPlaying && isFullscreen ? "hidden" : "block"
+            internalIsPlaying && isFullscreen ? "hidden" : "block"
           }`}
         >
           <Button
             variant={"secondary"}
             type="button"
             onClick={() => {
-              onPlayerEnd(); // This is the "Skip" button
+              onSkip();
             }}
           >
             <SkipForward className="mr-2 h-5 w-5" />

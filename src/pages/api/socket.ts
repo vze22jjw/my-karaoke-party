@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type Server as HttpServer } from "http";
-import { type NextApiRequest, type NextApiResponse } from "next"; // <-- THIS IS THE FIX
+import { type NextApiRequest, type NextApiResponse } from "next";
 import { type Socket as NetSocket } from "net";
 import { Server, type Socket } from "socket.io";
 import { db } from "~/server/db";
@@ -87,6 +87,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           const party = await db.party.findUnique({ where: { hash: data.partyHash } });
           if (!party) return;
 
+          // Check if video already exists (not played)
           const existing = await db.playlistItem.findFirst({
             where: { partyId: party.id, videoId: data.videoId, playedAt: null },
           });
@@ -130,25 +131,62 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     });
 
     // Mark as Played
-    socket.on("mark-as-played", async (data: { partyHash: string; videoId: string }) => {
+    socket.on("mark-as-played", async (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'mark-as-played' for room ${data.partyHash}`, data);
       try {
-        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
-        if (!party) return;
+        // Find the party and its *first* unplayed song
+        const party = await db.party.findUnique({
+          where: { hash: data.partyHash },
+          include: { 
+            playlistItems: { 
+              where: { playedAt: null }, 
+              orderBy: { addedAt: 'asc' },
+              take: 1 // Get only the first unplayed item
+            } 
+          }
+        });
 
-        await db.playlistItem.updateMany({
-          where: { partyId: party.id, videoId: data.videoId, playedAt: null },
+        if (!party || party.playlistItems.length === 0) {
+          debugLog(LOG_TAG, "Party not found or no items to play");
+          return; // Party not found or no songs to play
+        }
+
+        const currentSong = party.playlistItems[0];
+        if (!currentSong) return;
+
+        debugLog(LOG_TAG, `Marking song ${currentSong.id} as played`);
+
+        // Update the specific song
+        await db.playlistItem.update({
+          where: { id: currentSong.id },
           data: { playedAt: new Date() },
         });
+
+        // Update the party's activity
         await db.party.update({
           where: { id: party.id },
           data: { lastActivityAt: new Date() },
         });
+
         await updateAndEmitPlaylist(data.partyHash, "mark-as-played");
       } catch (error) {
         console.error("Error marking as played:", error);
       }
     });
+
+    // --- ADDED: Playback Handlers ---
+    socket.on("playback-play", (data: { partyHash: string }) => {
+      debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`);
+      // Broadcast to all clients (including the player)
+      io.to(data.partyHash).emit("playback-state-play");
+    });
+
+    socket.on("playback-pause", (data: { partyHash: string }) => {
+      debugLog(LOG_TAG, `Received 'playback-pause' for room ${data.partyHash}`);
+      // Broadcast to all clients (including the player)
+      io.to(data.partyHash).emit("playback-state-pause");
+    });
+    // --- END: Playback Handlers ---
 
     // Toggle Rules
     socket.on("toggle-rules", async (data: { partyHash: string; orderByFairness: boolean }) => {

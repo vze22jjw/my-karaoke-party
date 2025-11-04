@@ -4,17 +4,19 @@ import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 
-/* ... SocketActions interface ... */
+// --- UPDATED: Added new playback actions ---
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
   removeSong: (videoId: string) => void;
-  markAsPlayed: (videoId: string) => void;
+  markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
   closeParty: () => void;
   sendHeartbeat: () => void;
+  playbackPlay: () => void;
+  playbackPause: () => void;
 }
 
-// --- UPDATED: New return type ---
+// --- UPDATED: Added isPlaying ---
 interface UsePartySocketReturn {
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
@@ -22,9 +24,9 @@ interface UsePartySocketReturn {
   settings: KaraokeParty["settings"];
   socketActions: SocketActions;
   isConnected: boolean;
+  isPlaying: boolean;
 }
 
-// --- UPDATED: New data structure from server ---
 type PartySocketData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -34,34 +36,53 @@ type PartySocketData = {
 
 const LOG_TAG = "[SocketClient]";
 
-export function usePartySocket(partyHash: string): UsePartySocketReturn {
+export function usePartySocket(
+  partyHash: string,
+  initialData: PartySocketData,
+): UsePartySocketReturn {
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  // --- UPDATED: New state variables ---
-  const [currentSong, setCurrentSong] = useState<VideoInPlaylist | null>(null);
-  const [unplayedPlaylist, setUnplayedPlaylist] = useState<VideoInPlaylist[]>([]);
-  const [playedPlaylist, setPlayedPlaylist] = useState<VideoInPlaylist[]>([]);
-  const [settings, setSettings] = useState<KaraokeParty["settings"]>({
-    orderByFairness: true,
-  });
+
+  const [currentSong, setCurrentSong] = useState<VideoInPlaylist | null>(
+    initialData.currentSong,
+  );
+  const [unplayedPlaylist, setUnplayedPlaylist] = useState<VideoInPlaylist[]>(
+    initialData.unplayed,
+  );
+  const [playedPlaylist, setPlayedPlaylist] = useState<VideoInPlaylist[]>(
+    initialData.played,
+  );
+  const [settings, setSettings] = useState<KaraokeParty["settings"]>(
+    initialData.settings,
+  );
+  // --- ADDED: New state for playback ---
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const socketInitializer = async () => {
-      /* ... socket init ... */
+      debugLog(LOG_TAG, "Initializing socket connection...");
       await fetch("/api/socket");
-      const newSocket = io({ path: "/api/socket", addTrailingSlash: false });
+
+      const newSocket = io({
+        path: "/api/socket",
+        addTrailingSlash: false,
+      });
+
       socketRef.current = newSocket;
 
       newSocket.on("connect", () => {
-        /* ... connect logic ... */
-        newSocket.emit("join-party", partyHash);
-      });
-      newSocket.on("disconnect", () => {
-        /* ... disconnect logic ... */
+        debugLog(LOG_TAG, `Socket connected: ${newSocket.id}`);
+        setIsConnected(true);
+        debugLog(LOG_TAG, `Emitting 'join-party' for room ${partyHash}`);
+        newSocket.emit("join-party", partyHash); 
       });
 
-      // --- UPDATED: Handle new data structure ---
+      newSocket.on("disconnect", () => {
+        debugLog(LOG_TAG, "Socket disconnected");
+        setIsConnected(false);
+      });
+
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
         debugLog(LOG_TAG, "Received 'playlist-updated'", {
           Settings: partyData.settings,
@@ -73,21 +94,49 @@ export function usePartySocket(partyHash: string): UsePartySocketReturn {
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
+        
+        // --- ADDED: Reset playing state on song change ---
+        if (partyData.currentSong?.id !== currentSong?.id) {
+          setIsPlaying(false);
+        }
       });
+
+      // --- ADDED: Listen for playback commands from server ---
+      newSocket.on("playback-state-play", () => {
+        debugLog(LOG_TAG, "Received 'playback-state-play'");
+        setIsPlaying(true);
+      });
+
+      newSocket.on("playback-state-pause", () => {
+        debugLog(LOG_TAG, "Received 'playback-state-pause'");
+        setIsPlaying(false);
+      });
+      // ---
 
       newSocket.on("party-closed", () => {
-        /* ... party closed logic ... */
+        debugLog(LOG_TAG, "Received 'party-closed'");
+        alert("The party was ended by the host.");
+        router.push("/");
       });
     };
+
     void socketInitializer();
-    /* ... heartbeat interval ... */
+
+    const heartbeatInterval = setInterval(() => {
+      socketRef.current?.emit("heartbeat", { partyHash });
+    }, 60000);
+
     return () => {
-      /* ... cleanup logic ... */
+      if (socketRef.current) {
+        debugLog(LOG_TAG, "Disconnecting socket");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      clearInterval(heartbeatInterval);
     };
-  }, [partyHash, router]);
+  }, [partyHash, router, currentSong?.id]); // Added currentSong.id to effect dependency
 
   const socketActions: SocketActions = useMemo(() => ({
-    /* ... socket actions (no changes needed) ... */
     addSong: (videoId, title, coverUrl, singerName) => {
       const data = { partyHash, videoId, title, coverUrl, singerName };
       debugLog(LOG_TAG, "Emitting 'add-song'", data);
@@ -98,8 +147,8 @@ export function usePartySocket(partyHash: string): UsePartySocketReturn {
       debugLog(LOG_TAG, "Emitting 'remove-song'", data);
       socketRef.current?.emit("remove-song", data);
     },
-    markAsPlayed: (videoId) => {
-      const data = { partyHash, videoId };
+    markAsPlayed: () => {
+      const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'mark-as-played' (Skip Song)", data);
       socketRef.current?.emit("mark-as-played", data);
     },
@@ -118,8 +167,18 @@ export function usePartySocket(partyHash: string): UsePartySocketReturn {
       debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
       socketRef.current?.emit("heartbeat", data);
     },
+    // --- ADDED: New playback actions ---
+    playbackPlay: () => {
+      const data = { partyHash };
+      debugLog(LOG_TAG, "Emitting 'playback-play'", data);
+      socketRef.current?.emit("playback-play", data);
+    },
+    playbackPause: () => {
+      const data = { partyHash };
+      debugLog(LOG_TAG, "Emitting 'playback-pause'", data);
+      socketRef.current?.emit("playback-pause", data);
+    },
   }), [partyHash]);
 
-  // --- UPDATED: Return new state variables ---
-  return { currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected };
+  return { currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected, isPlaying };
 }
