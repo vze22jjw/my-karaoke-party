@@ -1,125 +1,153 @@
 "use client";
 
+import { useLocalStorage } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
-import { type CSSProperties, useCallback, useRef, useState } from "react";
-import ReactCanvasConfetti from "react-canvas-confetti";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { api } from "~/trpc/react";
+import { Button } from "./ui/ui/button";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "./ui/ui/drawer";
 import { Input } from "./ui/ui/input";
+import { Label } from "./ui/ui/label";
 import { ButtonHoverGradient } from "./ui/ui/button-hover-gradient";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/ui/form";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-const canvasStyles = {
-  position: "absolute",
-  pointerEvents: "none",
-  width: "100%",
-  height: "100%",
-  zIndex: 1,
-  overflow: "hidden",
-  top: 0,
-  left: 0,
-} satisfies CSSProperties;
-
-// Animation variants for the container
-// const containerVariants = {
-//   hidden: { opacity: 0, y: 50 },
-//   visible: { opacity: 1, y: 0 },
-// };
+const formSchema = z.object({
+  partyName: z.string().min(2, {
+    message: "Party name must be at least 2 characters.",
+  }),
+  yourName: z.string().min(2, {
+    message: "Your name must be at least 2 characters.",
+  }),
+});
 
 export function CreateParty() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
 
-  const createParty = api.party.create.useMutation({
-    onSuccess: (party) => {
-      fire(); // Trigger the confetti animation
-
-      // Redirect to the party page
-      setTimeout(() => {
-        router.push(`/player/${party.hash}`);
-      }, 1000);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      partyName: "",
+      yourName: name,
     },
   });
 
-  // Reference to hold the confetti animation instance
-  const refAnimationInstance = useRef(null);
-
-  // Callback to get the instance of the confetti animation
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getInstance = useCallback((instance: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    refAnimationInstance.current = instance;
-  }, []);
-
-  // Function to create a confetti shot with specified options
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const makeShot = useCallback((opts: any, originX: number, angle: number) => {
-    if (refAnimationInstance.current) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      (refAnimationInstance.current as any)({
-        ...opts,
-        origin: { x: originX, y: 0.5 },
-        angle: angle,
-        particleCount: 500,
+  const createParty = api.party.create.useMutation({
+    onSuccess: (data) => {
+      if (data.hash) {
+        setName(form.getValues("yourName"));
+        toast.success(`Party "${data.name}" created!`);
+        // --- THIS IS THE FIX ---
+        // Navigate to the new host controller page
+        router.push(`/host/${data.hash}`);
+        // --- END THE FIX ---
+      }
+    },
+    onError: (error) => {
+      toast.error("Failed to create party", {
+        description: error.message,
       });
-    }
-  }, []);
+    },
+  });
 
-  // Function to trigger confetti shots from different positions
-  const fire = useCallback(() => {
-    // Left side shot
-    makeShot({ spread: 100, startVelocity: 40 }, -0.2, 20);
-
-    // Right side shot
-    makeShot({ spread: 100, startVelocity: 40 }, 1.2, 160);
-
-    // More shots can be added here if desired
-  }, [makeShot]);
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    createParty.mutate({ name: values.partyName, singerName: values.yourName });
+  }
 
   return (
-    <>
-      <ReactCanvasConfetti refConfetti={getInstance} style={canvasStyles} />
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          createParty.mutate({ name: name.toUpperCase() });
-        }}
-        className="flex flex-col gap-2"
-      >
-        <Input
-          name="name"
-          type="text"
-          placeholder="My Awesome Party..."
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          minLength={3}
-          maxLength={30} // <-- Added character limit
-          required
-          autoComplete="off"
-          className="text-lg uppercase"
-          autoFocus
-        />
-
-        {/* <AnimatedGradientText>
-          🎉 <hr className="mx-2 h-4 w-[1px] shrink-0 bg-gray-300" />{" "}
-          <span
-            className={cn(
-              `animate-gradient inline bg-gradient-to-r from-[#ffaa40] via-[#9c40ff] to-[#ffaa40] bg-[length:var(--bg-size)_100%] bg-clip-text text-transparent`,
-            )}
-          >
-            Start Party!
-          </span>
-          <ChevronRight className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
-        </AnimatedGradientText> */}
-
-        <ButtonHoverGradient type="submit" disabled={createParty.isPending}>
-          {createParty.isPending ? "Creating..." : "Start Party 🎉"}
-        </ButtonHoverGradient>
-
-        {/* <ShimmerButton className="shadow-2xl">
-          <span className="whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white lg:text-lg dark:from-white dark:to-slate-900/10">
-            Start Party
-          </span>
-        </ShimmerButton> */}
-      </form>
-    </>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerTrigger asChild>
+        <div className="w-full">
+          <ButtonHoverGradient type="button" className="w-full">
+            Create Party 🎉
+          ButtonHoverGradient>
+        </div>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mx-auto w-full max-w-2xl">
+          <DrawerHeader>
+            <DrawerTitle>Create a New Party</DrawerTitle>
+            <DrawerDescription>
+              Give your party a name and add your name to the singers list.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4 pb-0">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="partyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Party Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="My Awesome Karaoke Party"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="yourName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={createParty.isLoading}
+                >
+                  {createParty.isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Let&apos;s Go!
+                </Button>
+              </form>
+            </Form>
+          </div>
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

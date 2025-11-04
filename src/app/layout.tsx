@@ -106,6 +106,8 @@ export default function RootLayout({
                       const msg = args.map(a => {
                         if (typeof a === 'string') return a;
                         if (a && typeof a === 'object') {
+                          // Try to get message from Error objects
+                          if (a.message) return a.message;
                           return JSON.stringify(a);
                         }
                         return String(a);
@@ -119,7 +121,8 @@ export default function RootLayout({
                         'postMessage',
                         'youtube.com',
                         'Image with src',
-                        'has either width or height'
+                        'has either width or height',
+                        'The target origin provided' // --- THIS IS THE FIX ---
                       ];
 
                       return patterns.some(pattern => msg.includes(pattern));
@@ -154,7 +157,8 @@ export default function RootLayout({
                     if (e.message && (
                       e.message.includes('WebSocket') ||
                       e.message.includes('partykit') ||
-                      e.message.includes('127.0.0.1:1999')
+                      e.message.includes('127.0.0.1:1999') ||
+                      e.message.includes('The target origin provided') // --- THIS IS THE FIX ---
                     )) {
                       e.preventDefault();
                       e.stopPropagation();

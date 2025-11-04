@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
@@ -8,17 +8,19 @@ import { SkipForward, X } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
+  currentSong: VideoInPlaylist | null;
   playlist: KaraokeParty["playlist"];
   onRemoveSong: (videoId: string) => void;
-  onMarkAsPlayed: () => void;
+  onSkip: () => void; // <-- Renamed from onMarkAsPlayed
 };
 
 export function TabPlaylist({
+  currentSong,
   playlist,
   onRemoveSong,
-  onMarkAsPlayed,
+  onSkip, // <-- Renamed
 }: Props) {
-  const nextVideos = playlist.filter((video) => !video.playedAt);
+  const nextVideos = [...(currentSong ? [currentSong] : []), ...playlist];
 
   if (nextVideos.length === 0) {
     return (
@@ -37,7 +39,7 @@ export function TabPlaylist({
               "p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
             }
           >
-            {/* Thumbnail - reduced size */}
+            {/* ... Thumbnail ... */}
             <div className="relative w-16 aspect-video flex-shrink-0">
               <Image
                 src={video.coverUrl}
@@ -48,8 +50,8 @@ export function TabPlaylist({
               />
             </div>
 
-            {/* Song info and controls - improved truncation */}
             <div className="flex-1 min-w-0 flex flex-col">
+              {/* ... Song info ... */}
               <div className="flex items-center gap-1 mb-1">
                 <span
                   className={cn(
@@ -63,6 +65,7 @@ export function TabPlaylist({
                   {decode(video.title)}
                 </p>
               </div>
+
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground truncate">
                   {video.singerName}
@@ -73,7 +76,7 @@ export function TabPlaylist({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 text-yellow-300 hover:bg-gray-400"
-                      onClick={() => onMarkAsPlayed()}
+                      onClick={() => onSkip()} // <-- Use onSkip
                     >
                       <SkipForward className="h-3 w-3" />
                     </Button>

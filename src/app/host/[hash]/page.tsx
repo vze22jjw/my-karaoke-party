@@ -1,14 +1,13 @@
 import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
-// --- IMPORT NEW TYPES ---
 import { type VideoInPlaylist, type KaraokeParty } from "party";
-import PlayerScene from "./player-scene";
+import { HostScene } from "./host-scene"; // <-- New client scene
 
 type Props = {
   params: { hash: string };
 };
 
-// --- DEFINE NEW DATA TYPE ---
+// This is the data structure for initial load
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -23,11 +22,11 @@ export async function generateMetadata({ params }: Props) {
     notFound();
   }
   return {
-    title: party.name,
+    title: `${party.name} - Host Controls`,
   };
 }
 
-export default async function PartyPage({ params }: Props) {
+export default async function HostPage({ params }: Props) {
   const partyHash = params.hash;
   const party = await api.party.getByHash({ hash: partyHash });
 
@@ -35,7 +34,6 @@ export default async function PartyPage({ params }: Props) {
     notFound();
   }
 
-  // --- UPDATED: Set default for new data structure ---
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
@@ -44,7 +42,6 @@ export default async function PartyPage({ params }: Props) {
   };
 
   try {
-    // --- UPDATED: Use NEXT_PUBLIC_APP_URL from env ---
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
       method: "GET",
@@ -54,14 +51,12 @@ export default async function PartyPage({ params }: Props) {
     });
 
     if (playlistRes.ok) {
-      // --- UPDATED: Cast to new data structure ---
       const data = (await playlistRes.json()) as InitialPartyData;
       initialData = data;
     }
   } catch (error) {
-    console.warn("Failed to fetch initial playlist for player", error);
+    console.warn("Failed to fetch initial playlist for host page", error);
   }
 
-  // --- UPDATED: Pass new prop ---
-  return <PlayerScene party={party} initialData={initialData} />;
+  return <HostScene party={party} initialData={initialData} />;
 }

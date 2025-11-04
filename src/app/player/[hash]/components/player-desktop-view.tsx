@@ -1,25 +1,29 @@
 "use client";
 
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
-// --- FIX: Removed unused 'RefObject' import ---
 import type { RefCallback } from "react"; 
 
-// --- START: FIX ---
-// Changed type from RefObject<HTMLDivElement> to React.RefCallback<HTMLDivElement>
-// to match the type returned by the useFullscreen hook.
+// --- THIS IS THE FIX ---
+// This Props type includes all the required properties.
 type Props = {
-  playerRef: RefCallback<HTMLDivElement>; // <-- Corrected type
+  playerRef: RefCallback<HTMLDivElement>;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
-  currentVideo: KaraokeParty["playlist"][number] | undefined;
+  currentVideo: VideoInPlaylist | undefined;
   joinPartyUrl: string;
   onPlayerEnd: () => void;
+  onSkip: () => void;
+  forceAutoplay: boolean;
+  onAutoplayed: () => void;
+  isPlaying: boolean;
+  onPlay: () => void;
+  onPause: () => void;
 };
-// --- END: FIX ---
+// --- END THE FIX ---
 
 export function PlayerDesktopView({
   playerRef,
@@ -28,9 +32,16 @@ export function PlayerDesktopView({
   currentVideo,
   joinPartyUrl,
   onPlayerEnd,
+  onSkip,
+  forceAutoplay,
+  onAutoplayed,
+  isPlaying,
+  onPlay,
+  onPause,
 }: Props) {
   return (
-    <div className="hidden sm:block sm:w-full">
+    // This is hidden on mobile
+    <div className="hidden sm:block sm:w-full h-screen"> 
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
           <Button
@@ -43,11 +54,17 @@ export function PlayerDesktopView({
           </Button>
           {currentVideo ? (
             <Player
-              key={currentVideo.id}
               video={currentVideo}
               joinPartyUrl={joinPartyUrl}
               isFullscreen={isFullscreen}
               onPlayerEnd={onPlayerEnd}
+              onSkip={onSkip}
+              // --- These props will now be accepted ---
+              forceAutoplay={forceAutoplay}
+              onAutoplayed={onAutoplayed}
+              isPlaying={isPlaying}
+              onPlay={onPlay}
+              onPause={onPause}
             />
           ) : (
             <EmptyPlayer

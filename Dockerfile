@@ -19,7 +19,7 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
 # Instalar dependências
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # ========================================
 # Stage 2: Build da aplicação

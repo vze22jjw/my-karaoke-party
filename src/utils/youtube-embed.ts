@@ -11,21 +11,22 @@
  * getCodePenEmbedUrl('NAo38Q9c4xA', { autoplay: 1, mute: 1 })
  * // Returns: 'https://cdpn.io/pen/debug/oNPzxKo?v=NAo38Q9c4xA&autoplay=1&mute=1'
  */
-export function getCodePenEmbedUrl(
-  videoId: string,
-  params?: Record<string, string | number>
-): string {
-  const baseUrl = 'https://cdpn.io/pen/debug/oNPzxKo';
-  const urlParams = new URLSearchParams({ v: videoId });
-
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      urlParams.append(key, String(value));
-    });
-  }
-
-  return `${baseUrl}?${urlParams.toString()}`;
-}
+// --- REMOVED: This function is no longer needed ---
+// export function getCodePenEmbedUrl(
+//   videoId: string,
+//   params?: Record<string, string | number>
+// ): string {
+//   const baseUrl = 'https://cdpn.io/pen/debug/oNPzxKo';
+//   const urlParams = new URLSearchParams({ v: videoId });
+// 
+//   if (params) {
+//     Object.entries(params).forEach(([key, value]) => {
+//       urlParams.append(key, String(value));
+//     });
+//   }
+// 
+//   return `${baseUrl}?${urlParams.toString()}`;
+// }
 
 /**
  * Gera URL direta do YouTube para fallback

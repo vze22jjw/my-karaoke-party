@@ -2,57 +2,66 @@
 
 import type { Party } from "@prisma/client";
 import { ListMusic, Settings } from "lucide-react";
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
+import { PlaybackControls } from "./playback-controls"; 
 
 type Props = {
   party: Party;
   activeTab: string;
   setActiveTab: (value: string) => void;
-  playlist: KaraokeParty["playlist"];
+  currentSong: VideoInPlaylist | null; 
+  playlist: KaraokeParty["playlist"]; 
   onRemoveSong: (videoId: string) => void;
-  onMarkAsPlayed: () => void;
+  onMarkAsPlayed: () => void; // This is handleSkip
   useQueueRules: boolean;
   onToggleRules: () => void;
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
-  isConfirmingClose: boolean; // <-- Added
-  onConfirmClose: () => void; // <-- Added
-  onCancelClose: () => void; // <-- Added
+  isConfirmingClose: boolean;
+  onConfirmClose: () => void;
+  onCancelClose: () => void;
+  isPlaying: boolean;
+  onPlay: () => void;
+  onPause: () => void;
 };
 
-export function PlayerMobilePanel({
+// This component is the HOST'S mobile view
+export function HostControlPanel({
   party,
   activeTab,
   setActiveTab,
+  currentSong,
   playlist,
   onRemoveSong,
-  onMarkAsPlayed,
+  onMarkAsPlayed, // This is handleSkip
   useQueueRules,
   onToggleRules,
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
-  isConfirmingClose, // <-- Added
-  onConfirmClose, // <-- Added
-  onCancelClose, // <-- Added
+  isConfirmingClose,
+  onConfirmClose,
+  onCancelClose,
+  isPlaying,
+  onPlay,
+  onPause,
 }: Props) {
-  if (!party.hash) return null; // Guard for hash
+  if (!party.hash) return null;
 
   return (
-    <div className="w-full overflow-hidden border-r border-border sm:hidden">
-      <div className="flex flex-col h-full p-4 pt-14">
-        {/* Fixed content area: flex-shrink-0 ensures it keeps its height */}
+    // This component is now just the mobile UI
+    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col">
+      <div className="flex flex-col h-full p-4 pt-14 flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
           </h1>
         </div>
 
-        {/* --- START: Tabs Component --- */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -69,19 +78,18 @@ export function PlayerMobilePanel({
             </TabsTrigger>
           </TabsList>
 
-          {/* --- Tab 1: Playlist Content (Refactored) --- */}
           <TabsContent
             value="playlist"
             className="flex-1 overflow-y-auto mt-0 space-y-2"
           >
             <TabPlaylist
+              currentSong={currentSong}
               playlist={playlist}
               onRemoveSong={onRemoveSong}
-              onMarkAsPlayed={onMarkAsPlayed}
+              onSkip={onMarkAsPlayed} // Pass handleSkip to onSkip
             />
           </TabsContent>
 
-          {/* --- Tab 2: Settings Content (Refactored) --- */}
           <TabsContent
             value="settings"
             className="flex-1 overflow-y-auto mt-0 space-y-6"
@@ -93,13 +101,23 @@ export function PlayerMobilePanel({
               maxSearchResults={maxSearchResults}
               onSetMaxResults={onSetMaxResults}
               onCloseParty={onCloseParty}
-              isConfirmingClose={isConfirmingClose} // <-- Pass prop
-              onConfirmClose={onConfirmClose} // <-- Pass prop
-              onCancelClose={onCancelClose} // <-- Pass prop
+              isConfirmingClose={isConfirmingClose}
+              onConfirmClose={onConfirmClose}
+              onCancelClose={onCancelClose}
             />
           </TabsContent>
         </Tabs>
-        {/* --- END: Tabs Component --- */}
+      </div>
+      
+      {/* --- ADDED: Playback Controls Bar --- */}
+      <div className="flex-shrink-0">
+        <PlaybackControls 
+          currentSong={currentSong}
+          isPlaying={isPlaying}
+          onPlay={onPlay}
+          onPause={onPause}
+          onSkip={onMarkAsPlayed} // This is handleSkip
+        />
       </div>
     </div>
   );

@@ -41,11 +41,15 @@ function JoinPartyDrawer() {
 
   // --- START: Logic to auto-open drawer ---
   useEffect(() => {
-    const openParam = searchParams.get("openParties");
+    const openParam = searchParams?.get("openParties");
     if (openParam === "true") {
       setIsOpen(true);
       // Clean up the URL
-      router.replace(pathname, { scroll: false });
+      // --- THIS IS THE FIX ---
+      if (pathname) {
+        router.replace(pathname, { scroll: false });
+      }
+      // --- END THE FIX ---
     }
   }, [searchParams, pathname, router]);
   // --- END: Logic to auto-open drawer ---
