@@ -47,13 +47,13 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
   }
 
   // --- UPDATED: Use new hook return values ---
-  const { unplayedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash);
+  const { currentSong, unplayedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash);
   const useQueueRules = settings.orderByFairness;
   
   const { ref, toggle, fullscreen } = useFullscreen();
 
-  // --- SIMPLIFIED: No .find() needed ---
-  const currentVideo = unplayedPlaylist[0]; // Get the first item from the unplayed list
+  // --- REMOVED: No longer need to derive currentVideo ---
+  // const currentVideo = unplayedPlaylist[0]; 
 
   const handleToggleRules = async () => {
     const newRulesState = !useQueueRules;
@@ -64,9 +64,10 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
     socketActions.removeSong(videoId);
   };
 
+  // --- UPDATED: Use currentSong from hook ---
   const markAsPlayed = async () => {
-    if (currentVideo) {
-      socketActions.markAsPlayed(currentVideo.id);
+    if (currentSong) {
+      socketActions.markAsPlayed(currentSong.id);
     }
   };
 
@@ -91,7 +92,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         party={party}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        playlist={unplayedPlaylist} // <-- Pass only the unplayed list
+        // --- UPDATED: Pass new props ---
+        currentSong={currentSong}
+        playlist={unplayedPlaylist} // playlist prop now means "upcoming queue"
         onRemoveSong={removeSong}
         onMarkAsPlayed={markAsPlayed}
         useQueueRules={useQueueRules} 
@@ -108,7 +111,9 @@ export default function PlayerScene({ party, initialPlaylist }: Props) {
         playerRef={ref}
         onToggleFullscreen={toggle}
         isFullscreen={fullscreen}
-        currentVideo={currentVideo}
+        // --- THIS IS THE FIX ---
+        currentVideo={currentSong ?? undefined} // Convert null to undefined
+        // --- END THE FIX ---
         joinPartyUrl={joinPartyUrl}
         onPlayerEnd={markAsPlayed}
       />

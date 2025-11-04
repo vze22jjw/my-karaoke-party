@@ -2,8 +2,8 @@
 "use client";
 
 import type { Party } from "@prisma/client";
-import type { KaraokeParty } from "party";
-import { useEffect, useState } from "react";
+import type { KaraokeParty, VideoInPlaylist } from "party";
+import { useEffect, useState, useMemo } from "react";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
 import { Monitor, Music, Users, History } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 
 export function PartyScene({
   party,
-  initialPlaylist, // No longer used for playlist state, but fine as a prop
+  initialPlaylist,
 }: {
   party: Party;
   initialPlaylist?: KaraokeParty;
@@ -31,10 +31,15 @@ export function PartyScene({
     defaultValue: "player",
   });
 
-  // --- UPDATED: Use new hook return values ---
-  const { unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash!);
+  const { currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected } = usePartySocket(party.hash!);
   
   const [singers, setSingers] = useState<string[]>([]);
+
+  // Combine all songs for the singers tab
+  const allSongs = useMemo(() => {
+    return [...(currentSong ? [currentSong] : []), ...unplayedPlaylist, ...playedPlaylist];
+  }, [currentSong, unplayedPlaylist, playedPlaylist]);
+
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
@@ -101,7 +106,6 @@ export function PartyScene({
         className="flex-1 flex flex-col overflow-hidden mt-4"
       >
         <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
-          {/* ... TabsTrigger components ... */}
           <TabsTrigger value="player" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
             <span className="hidden sm:inline">Playing</span>
@@ -124,12 +128,14 @@ export function PartyScene({
           value="player"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- UPDATED: Pass unplayed list --- */}
-          <TabPlayer playlist={unplayedPlaylist} />
+          <TabPlayer 
+            currentSong={currentSong} 
+            playlist={unplayedPlaylist} 
+            playedPlaylist={playedPlaylist}
+          />
         </TabsContent>
 
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
-          {/* --- UPDATED: Pass unplayed list --- */}
           <TabAddSong
             playlist={unplayedPlaylist}
             name={name}
@@ -141,19 +147,19 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- UPDATED: Pass combined list --- */}
           <TabSingers
-            playlist={[...unplayedPlaylist, ...playedPlaylist]}
+            playlist={allSongs}
             singers={singers}
             name={name}
             onLeaveParty={onLeaveParty}
+            // --- THIS IS THE FIX: Removed the line below ---
+            // partyHash={party.hash!}
           />
         </TabsContent>
         <TabsContent
           value="history"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- UPDATED: Pass played list --- */}
           <TabHistory playlist={playedPlaylist} />
         </TabsContent>
       </Tabs>

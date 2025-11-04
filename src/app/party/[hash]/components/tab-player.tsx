@@ -1,30 +1,34 @@
 "use client";
 
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party"; // <-- Added VideoInPlaylist
 import { useState } from "react";
 import { PreviewPlayer } from "~/components/preview-player";
 import { decode } from "html-entities";
 import { Monitor } from "lucide-react";
 
 type Props = {
-  playlist: KaraokeParty["playlist"];
+  currentSong: VideoInPlaylist | null; // <-- ADDED
+  playlist: KaraokeParty["playlist"]; // This is the upcoming queue
+  playedPlaylist: KaraokeParty["playlist"]; // <-- ADDED
 };
 
-export function TabPlayer({ playlist }: Props) {
+export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
   const [showAllNextSongs, setShowAllNextSongs] = useState(false);
   const [showAllPlayedSongs, setShowAllPlayedSongs] = useState(false);
 
-  const nextVideos = playlist.filter((video) => !video.playedAt);
-  const playedVideos = playlist.filter((video) => video.playedAt);
-  const nextVideo = nextVideos[0] ?? null;
+  // --- UPDATED: Use new props directly ---
+  const nextVideos = playlist; // This is now just the upcoming queue
+  const playedVideos = playedPlaylist; // This is the played list
+  const nextVideo = currentSong; // This is the "now playing" song
+  // --- END UPDATE ---
 
   // Determine which subset of songs to show
   const songsToShowNext = showAllNextSongs
-    ? nextVideos.slice(1)
-    : nextVideos.slice(1, 6);
+    ? nextVideos // Show all upcoming
+    : nextVideos.slice(0, 5); // Show first 5 upcoming
   const songsToShowPlayed = showAllPlayedSongs
-    ? playedVideos.slice().reverse()
-    : playedVideos.slice(-5).reverse();
+    ? playedVideos // Already sorted by most recent
+    : playedVideos.slice(0, 5); // Show first 5 played
 
   return (
     <div className="space-y-4">
@@ -56,13 +60,13 @@ export function TabPlayer({ playlist }: Props) {
       </div>
 
       {/* Próximas músicas */}
-      {nextVideos.length > 1 && (
+      {nextVideos.length > 0 && ( // <-- UPDATED
         <div className="bg-card rounded-lg p-4 border">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-md font-semibold">
-              Next in Line ({nextVideos.length - 1})
+              Next in Line ({nextVideos.length})
             </h3>
-            {nextVideos.length > 6 && ( // Only show toggle if more than 5 songs exist
+            {nextVideos.length > 5 && ( // <-- UPDATED
               <button
                 type="button"
                 onClick={() => setShowAllNextSongs((prev) => !prev)}
@@ -70,7 +74,7 @@ export function TabPlayer({ playlist }: Props) {
               >
                 {showAllNextSongs
                   ? "Hide Queue"
-                  : `Show All (${nextVideos.length - 1})`}
+                  : `Show All (${nextVideos.length})`}
               </button>
             )}
           </div>
@@ -81,7 +85,7 @@ export function TabPlayer({ playlist }: Props) {
                 className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                  {index + 2}
+                  {index + 2} {/* +2 because +1 is playing */}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">
@@ -94,9 +98,9 @@ export function TabPlayer({ playlist }: Props) {
               </li>
             ))}
           </ul>
-          {!showAllNextSongs && nextVideos.length > 6 && (
+          {!showAllNextSongs && nextVideos.length > 5 && (
             <p className="text-sm text-muted-foreground mt-3 text-center">
-              And {nextVideos.length - 6} more song(s)...
+              And {nextVideos.length - 5} more song(s)...
             </p>
           )}
         </div>
@@ -109,7 +113,7 @@ export function TabPlayer({ playlist }: Props) {
             <h3 className="text-md font-semibold">
               Already Played ({playedVideos.length})
             </h3>
-            {playedVideos.length > 5 && ( // Only show toggle if more than 5 played songs exist
+            {playedVideos.length > 5 && (
               <button
                 type="button"
                 onClick={() => setShowAllPlayedSongs((prev) => !prev)}

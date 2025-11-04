@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "party"; // <-- Added VideoInPlaylist
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
@@ -8,17 +8,20 @@ import { SkipForward, X } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
-  playlist: KaraokeParty["playlist"];
+  currentSong: VideoInPlaylist | null; // <-- ADDED
+  playlist: KaraokeParty["playlist"]; // This is the upcoming queue
   onRemoveSong: (videoId: string) => void;
   onMarkAsPlayed: () => void;
 };
 
 export function TabPlaylist({
+  currentSong, // <-- ADDED
   playlist,
   onRemoveSong,
   onMarkAsPlayed,
 }: Props) {
-  const nextVideos = playlist.filter((video) => !video.playedAt);
+  // Combine "now playing" with "upcoming"
+  const nextVideos = [...(currentSong ? [currentSong] : []), ...playlist];
 
   if (nextVideos.length === 0) {
     return (
@@ -37,7 +40,7 @@ export function TabPlaylist({
               "p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center"
             }
           >
-            {/* Thumbnail - reduced size */}
+            {/* ... Thumbnail ... */}
             <div className="relative w-16 aspect-video flex-shrink-0">
               <Image
                 src={video.coverUrl}
@@ -48,7 +51,7 @@ export function TabPlaylist({
               />
             </div>
 
-            {/* Song info and controls - improved truncation */}
+            {/* Song info and controls */}
             <div className="flex-1 min-w-0 flex flex-col">
               <div className="flex items-center gap-1 mb-1">
                 <span

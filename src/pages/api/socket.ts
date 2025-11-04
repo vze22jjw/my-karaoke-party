@@ -45,6 +45,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
         `Emitting 'playlist-updated' to room ${partyHash} (triggered by ${triggeredBy})`,
         {
           Settings: partyData.settings,
+          CurrentSong: partyData.currentSong?.title ?? "None",
           Unplayed: formatPlaylistForLog(partyData.unplayed),
           Played: formatPlaylistForLog(partyData.played),
         }
