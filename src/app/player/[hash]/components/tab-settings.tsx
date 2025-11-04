@@ -2,7 +2,8 @@
 
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
-import { AlertTriangle, Search } from "lucide-react";
+import { AlertTriangle, Search, ExternalLink } from "lucide-react"; // <-- Added ExternalLink
+import Link from "next/link"; // <-- Added Link
 
 type Props = {
   useQueueRules: boolean;
@@ -11,9 +12,9 @@ type Props = {
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
-  isConfirmingClose: boolean; // <-- Added
-  onConfirmClose: () => void; // <-- Added
-  onCancelClose: () => void; // <-- Added
+  isConfirmingClose: boolean;
+  onConfirmClose: () => void;
+  onCancelClose: () => void;
 };
 
 export function TabSettings({
@@ -23,9 +24,9 @@ export function TabSettings({
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
-  isConfirmingClose, // <-- Added
-  onConfirmClose, // <-- Added
-  onCancelClose, // <-- Added
+  isConfirmingClose,
+  onConfirmClose,
+  onCancelClose,
 }: Props) {
   return (
     <>
@@ -76,6 +77,22 @@ export function TabSettings({
           👉 Open Page to Add Songs
         </a>
       </div>
+
+      {/* --- START: Added Open Player Link --- */}
+      <div className="flex-shrink-0">
+        <h2 className="font-semibold text-lg mb-2">Player Display</h2>
+        <Link
+          href={`/player/${partyHash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Open Player in New Window
+        </Link>
+      </div>
+      {/* --- END: Added Open Player Link --- */}
+
 
       {/* --- START: New Search Results Setting --- */}
       <div className="flex-shrink-0">
