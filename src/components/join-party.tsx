@@ -37,6 +37,14 @@ function JoinPartyDrawer() {
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  // --- START: FIX ---
+  // Use a ref to track the open state for the socket callback
+  const isOpenRef = useRef(isOpen);
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+  // --- END: FIX ---
+
   // --- ADDED: Socket connection useEffect ---
   useEffect(() => {
     // Initialize the socket connection
@@ -50,10 +58,21 @@ function JoinPartyDrawer() {
 
       socketRef.current.on("connect", () => {
         console.log("[JoinPartySocket] Socket connected");
+        
+        // --- START: FIX ---
+        // Request list *after* connecting IF drawer is already open
+        if (isOpenRef.current) {
+          setLoading(true);
+          setError(null);
+          console.log("[JoinPartySocket] Socket connected, fetching parties...");
+          socketRef.current?.emit("request-open-parties");
+        }
+        // --- END: FIX ---
       });
 
       // Listen for the list of parties
       socketRef.current.on("open-parties-list", (data: { parties?: Party[], error?: string }) => {
+        console.log("[JoinPartySocket] Received 'open-parties-list'", data); // Added log
         if (data.error) {
           setError("Error loading parties. Please try again.");
           console.error(data.error);
@@ -91,8 +110,19 @@ function JoinPartyDrawer() {
   const fetchParties = () => {
     setLoading(true);
     setError(null);
-    // Request the list via socket
-    socketRef.current?.emit("request-open-parties");
+    
+    // --- START: FIX ---
+    // Only emit if socket is connected and ready
+    if (socketRef.current?.connected) { // <-- THIS IS THE FIX
+      console.log("[JoinPartySocket] Drawer opened, fetching parties...");
+      socketRef.current?.emit("request-open-parties");
+    } else {
+      // Socket not connected, the 'connect' event handler will fetch it.
+      console.log("[JoinPartySocket] Drawer opened, waiting for socket connect to fetch parties.");
+      // Set loading to true, the connect handler will set it to false
+      setLoading(true);
+    }
+    // --- END: FIX ---
   };
   // --- END: UPDATED fetchParties ---
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty, VideoInPlaylist } from "party";
+import type { VideoInPlaylist } from "party"; // <-- KaraokeParty removed
 import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import { Player } from "~/components/player";

@@ -17,7 +17,7 @@ import {
   DrawerTrigger,
 } from "./ui/ui/drawer";
 import { Input } from "./ui/ui/input";
-import { Label } from "./ui/ui/label";
+// import { Label } from "./ui/ui/label"; // <-- Removed this line
 import { ButtonHoverGradient } from "./ui/ui/button-hover-gradient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -121,7 +121,7 @@ export function CreateParty() {
                         <Input
                           placeholder="MY AWESOME KARAOKE PARTY"
                           {...field}
-                          // --- START: ADDED onCHange HANDLER ---
+                          // --- START: ADDED onChange HANDLER ---
                           onChange={(e) => {
                             // 1. Force uppercase
                             const uppercaseValue = e.target.value.toUpperCase();
@@ -130,7 +130,7 @@ export function CreateParty() {
                             // 3. Update the form field
                             field.onChange(filteredValue);
                           }}
-                          // --- END: ADDED onCHange HANDLER ---
+                          // --- END: ADDED onChange HANDLER ---
                         />
                       </FormControl>
                       <FormMessage />

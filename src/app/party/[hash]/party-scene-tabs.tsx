@@ -30,7 +30,11 @@ export function PartyScene({
   party: Party;
   initialData: InitialPartyData;
 }) {
-  const [name] = useLocalStorage<string>({ key: "name", defaultValue: "Guest" });
+  // --- THIS IS THE FIX ---
+  // Changed defaultValue from "Guest" to ""
+  const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
+  // --- END THE FIX ---
+  
   const router = useRouter();
   const [activeTab, setActiveTab] = useLocalStorage({
     key: ACTIVE_TAB_KEY,
@@ -46,14 +50,14 @@ export function PartyScene({
   } = usePartySocket(
     party.hash!,
     initialData,
-    name // <-- Pass name to hook
+    name // <-- Pass name to hook (will be "" if not set)
   );
   
   // --- REMOVED: allSongs useMemo, it's no longer needed ---
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
-    // Redirect if name is not set
+    // Redirect if name is not set (value will be null or "")
     if (!value) {
       router.push(`/join/${party.hash}`);
     }
@@ -130,7 +134,6 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- THIS IS THE FIX --- */}
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
@@ -139,7 +142,6 @@ export function PartyScene({
             name={name}
             onLeaveParty={onLeaveParty}
           />
-          {/* --- END THE FIX --- */}
         </TabsContent>
         <TabsContent
           value="history"

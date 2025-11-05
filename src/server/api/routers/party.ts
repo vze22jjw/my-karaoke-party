@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
-import { db } from "~/server/db";
+// import { db } from "~/server/db"; // <-- Removed this line
 import { sqids } from "~/server/utils/sqids";
 import { TRPCError } from "@trpc/server"; // Import TRPCError
 
