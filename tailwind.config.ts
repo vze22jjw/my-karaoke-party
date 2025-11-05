@@ -74,6 +74,9 @@ const config = {
         gradient: "gradient 8s linear infinite",
         "spin-around": "spin-around calc(var(--speed) * 2) infinite linear",
         slide: "slide var(--speed) ease-in-out infinite alternate",
+        // --- THIS IS THE FIX ---
+        "fade-out-slow": "fade-out-slow 0.5s ease-out forwards",
+        // --- END THE FIX ---
       },
       keyframes: {
         "accordion-down": {
@@ -113,6 +116,12 @@ const config = {
             transform: "translate(calc(100cqw - 100%), 0)",
           },
         },
+        // --- THIS IS THE FIX ---
+        "fade-out-slow": {
+          from: { opacity: "1" },
+          to: { opacity: "0" },
+        },
+        // --- END THE FIX ---
       },
     },
   },
