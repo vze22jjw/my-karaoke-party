@@ -3,8 +3,9 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
-import { toast } from "sonner";
+import { toast } from "sonner"; // <-- ADDED for notifications
 
+// --- UPDATED: SocketActions interface ---
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
   removeSong: (videoId: string) => void;
@@ -16,6 +17,7 @@ interface SocketActions {
   playbackPause: () => void;
 }
 
+// --- UPDATED: Return type ---
 interface UsePartySocketReturn {
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
@@ -24,7 +26,7 @@ interface UsePartySocketReturn {
   socketActions: SocketActions;
   isConnected: boolean;
   isPlaying: boolean;
-  singers: string[];
+  singers: string[]; // <-- ADDED
 }
 
 type PartySocketData = {
@@ -36,10 +38,11 @@ type PartySocketData = {
 
 const LOG_TAG = "[SocketClient]";
 
+// --- UPDATED: Hook signature ---
 export function usePartySocket(
   partyHash: string,
   initialData: PartySocketData,
-  singerName: string,
+  singerName: string, // <-- ADDED singerName
 ): UsePartySocketReturn {
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
@@ -58,7 +61,7 @@ export function usePartySocket(
     initialData.settings,
   );
   const [isPlaying, setIsPlaying] = useState(false);
-  const [singers, setSingers] = useState<string[]>([]);
+  const [singers, setSingers] = useState<string[]>([]); // <-- ADDED state for singers
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -76,6 +79,7 @@ export function usePartySocket(
         debugLog(LOG_TAG, `Socket connected: ${newSocket.id}`);
         setIsConnected(true);
         debugLog(LOG_TAG, `Emitting 'join-party' for room ${partyHash} as ${singerName}`);
+        // --- UPDATED: Send singerName on join ---
         newSocket.emit("join-party", { partyHash, singerName }); 
       });
 
@@ -118,17 +122,21 @@ export function usePartySocket(
         setIsPlaying(false);
       });
 
+      // --- ADDED: Listen for singers list ---
       newSocket.on("singers-updated", (singerList: string[]) => {
         debugLog(LOG_TAG, "Received 'singers-updated'", singerList);
         setSingers(singerList);
       });
 
+      // --- ADDED: Listen for new singer toast ---
       newSocket.on("new-singer-joined", (name: string) => {
         debugLog(LOG_TAG, `New singer joined: ${name}`);
-        if (name && name !== singerName) { // Don't toast for yourself
+        // Only show toast if it's not you
+        if (name && name !== singerName) {
           toast.info(`${name} has joined the party!`);
         }
       });
+      // ---
 
       newSocket.on("party-closed", () => {
         debugLog(LOG_TAG, "Received 'party-closed'");
@@ -140,6 +148,7 @@ export function usePartySocket(
     void socketInitializer();
 
     const heartbeatInterval = setInterval(() => {
+      // --- UPDATED: Send singerName on heartbeat ---
       socketRef.current?.emit("heartbeat", { partyHash, singerName });
     }, 60000);
 
@@ -157,6 +166,7 @@ export function usePartySocket(
   // --- END: FIX ---
 
   const socketActions: SocketActions = useMemo(() => ({
+    // ... addSong, removeSong, markAsPlayed, toggleRules, closeParty ...
     addSong: (videoId, title, coverUrl, singerName) => {
       const data = { partyHash, videoId, title, coverUrl, singerName };
       debugLog(LOG_TAG, "Emitting 'add-song'", data);
@@ -182,6 +192,8 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'close-party'", data);
       socketRef.current?.emit("close-party", data);
     },
+
+    // --- UPDATED: Send singerName on heartbeat action ---
     sendHeartbeat: () => {
       const data = { partyHash, singerName };
       debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
@@ -197,7 +209,8 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'playback-pause'", data);
       socketRef.current?.emit("playback-pause", data);
     },
-  }), [partyHash, singerName]);
+  }), [partyHash, singerName]); // Added singerName
 
+  // --- UPDATED: Return singers ---
   return { currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected, isPlaying, singers };
 }
