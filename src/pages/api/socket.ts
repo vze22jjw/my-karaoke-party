@@ -212,9 +212,17 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
           }
 
+          // --- THIS IS THE FIX ---
+          // Check if this specific singer already added this song
           const existing = await db.playlistItem.findFirst({
-            where: { partyId: party.id, videoId: data.videoId, playedAt: null },
+            where: {
+              partyId: party.id,
+              videoId: data.videoId,
+              singerName: data.singerName, // <-- Check singerName
+              playedAt: null,
+            },
           });
+          // --- END THE FIX ---
           
           if (!existing) {
             await db.playlistItem.create({

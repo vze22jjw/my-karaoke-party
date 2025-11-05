@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { useState } from "react";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
 import type { KaraokeParty } from "party";
 import { PreviewPlayer } from "./preview-player";
@@ -13,34 +14,43 @@ import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
 import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
-import { useLocalStorage } from "@mantine/hooks"; // <-- Added import
+import { useLocalStorage } from "@mantine/hooks"; 
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
   playlist: KaraokeParty["playlist"];
+  name: string; // <-- Know who the current user is
 };
 
-// --- Added key definition ---
+// Define the type of a single search result item
+type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
+
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 
-export function SongSearch({ onVideoAdded, playlist }: Props) {
+export function SongSearch({ onVideoAdded, playlist, name }: Props) { 
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
+  
+  // State to track videos just added, to hide them *immediately*
+  const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>([]);
 
-  // --- Added useLocalStorage hook ---
   const [maxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 10,
   });
 
-  const { data, isError, refetch, isLoading, isFetched } =
+  // Rename the destructured variable to rawData
+  const { data: rawData, isError, refetch, isLoading, isFetched } =
     api.youtube.search.useQuery(
       {
         keyword: `${videoInputValue} karaoke`,
-        maxResults: maxSearchResults, // <-- Pass value to query
+        maxResults: maxSearchResults, 
       },
       { refetchOnWindowFocus: false, enabled: false, retry: false },
     );
+  
+  // Cast the data from the hook to its specific type *once*.
+  const data = rawData as YoutubeSearchItem[] | undefined;
 
   // const [canPlayVideos, setCanPlayVideos] = useState<string[]>([]);
 
@@ -48,6 +58,8 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
+        // Clear the "just added" list on new search
+        setRecentlyAddedVideoIds([]);
         await refetch();
         setCanFetch(false);
       }}
@@ -117,24 +129,36 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
       {isLoading && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
         </div>
       )}
 
       {data && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
-          {data.map((video: typeof data[number]) => {
-            const alreadyAdded = !!playlist.find(
-              (v) => v.id === video.id.videoId && !v.playedAt,
+          {/* --- THIS IS THE FIX --- */}
+          {/* Disable the "unsafe-return" rule for this specific block */}
+          {/* eslint-disable-next-line @typescript-eslint/no-unsafe-return */}
+          {data
+            .filter((video) => {
+              // Check for songs *just* added (for immediate hiding)
+              const isRecentlyAdded = recentlyAddedVideoIds.includes(video.id.videoId);
+              // Return true (keep) only if it's NOT recently added
+              return !isRecentlyAdded;
+            })
+            .map((video) => {
+            {/* --- END THE FIX --- */}
+            
+            // Check for songs *already* in the playlist (for disabled button)
+            const alreadyInQueue = !!playlist.find(
+              (v) =>
+                v.id === video.id.videoId &&
+                !v.playedAt &&
+                v.singerName === name,
             );
-
+            
             const title = decode(removeBracketedContent(video.snippet.title));
 
             return (
@@ -142,7 +166,7 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
                 key={video.id.videoId}
                 className={
                   "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50"
-                } // <-- Added border
+                }
               >
                 <PreviewPlayer
                   key={video.id.videoId}
@@ -169,16 +193,21 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
                     variant={"default"}
                     size="icon"
                     className="shadow-xl animate-in spin-in"
-                    disabled={alreadyAdded}
-                    onClick={() =>
+                    // Disable button if already in queue
+                    disabled={alreadyInQueue}
+                    onClick={() => {
+                      // Call parent function
                       onVideoAdded(
                         video.id.videoId,
                         removeBracketedContent(video.snippet.title),
                         video.snippet.thumbnails.high.url,
-                      )
-                    }
+                      );
+                      // Add to recently added list to trigger filter
+                      setRecentlyAddedVideoIds((prev) => [...prev, video.id.videoId]);
+                    }}
                   >
-                    {alreadyAdded ? <Check stroke="pink" /> : <Plus />}
+                    {/* Show checkmark if already in queue, otherwise plus */}
+                    {alreadyInQueue ? <Check stroke="pink" /> : <Plus />}
                   </Button>
                 </div>
               </div>
