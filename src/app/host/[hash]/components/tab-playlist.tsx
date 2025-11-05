@@ -33,10 +33,11 @@ export function TabPlaylist({
       {nextVideos.map((video, index) => {
         const isNowPlaying = index === 0;
         return (
-          // Main flex container to separate song tile from buttons
+          // --- THIS IS THE FIX ---
+          // Main container: items-stretch to make children equal height
           <div
             key={video.id}
-            className="flex items-center justify-between gap-2"
+            className="flex items-stretch justify-between gap-2"
           >
             {/* Song Tile (takes up all available space) */}
             <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center">
@@ -72,15 +73,14 @@ export function TabPlaylist({
               </div>
             </div>
 
-            {/* Button Area (to the right) */}
-            <div className="flex-shrink-0">
+            {/* Button Area: Fixed width and flex */}
+            <div className="flex-shrink-0 flex w-10">
               {isNowPlaying ? (
-                // Stacked buttons for "Now Playing" song
-                <div className="flex flex-col gap-1">
-                  {/* --- THIS IS THE FIX: Added styles --- */}
+                // Stacked buttons: Centered vertically
+                <div className="flex flex-col gap-1 justify-center w-full">
                   <Button
                     size="icon"
-                    className="h-8 w-8 rounded-md bg-muted/50 border border-border text-yellow-300 hover:bg-gray-700"
+                    className="h-8 w-full rounded-md bg-muted/50 border border-border text-yellow-300 hover:bg-gray-700"
                     onClick={() => onSkip()}
                   >
                     <span className="sr-only">Skip song</span>
@@ -88,28 +88,26 @@ export function TabPlaylist({
                   </Button>
                   <Button
                     size="icon"
-                    className="h-8 w-8 rounded-md bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
+                    className="h-8 w-full rounded-md bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                     onClick={() => onRemoveSong(video.id)}
                   >
                     <span className="sr-only">Remove song</span>
                     <X className="h-4 w-4" />
                   </Button>
-                  {/* --- END THE FIX --- */}
                 </div>
               ) : (
-                // Single remove button for queued songs
-                // --- THIS IS THE FIX: Added styles (made slightly larger to align) ---
+                // Single button: Stretches to full height
                 <Button
                   size="icon"
-                  className="h-10 w-10 p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
+                  className="h-full w-full p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                   onClick={() => onRemoveSong(video.id)}
                 >
                   <span className="sr-only">Remove song</span>
                   <X className="h-4 w-4" />
                 </Button>
-                // --- END THE FIX ---
               )}
             </div>
+            {/* --- END THE FIX --- */}
           </div>
         );
       })}

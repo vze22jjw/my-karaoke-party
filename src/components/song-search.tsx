@@ -15,7 +15,7 @@ import { Button } from "./ui/ui/button";
 import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
 import { useLocalStorage } from "@mantine/hooks";
-import { cn } from "~/lib/utils"; // <-- Import cn
+import { cn } from "~/lib/utils"; 
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
@@ -32,18 +32,17 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
   
-  // State to track videos just hidden (for filtering)
+  // State to track videos just added, to hide them *immediately*
   const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>([]);
-  // --- THIS IS THE FIX (Part 1) ---
   // State to track videos *currently* fading out (for animation)
   const [fadingOutVideoIds, setFadingOutVideoIds] = useState<string[]>([]);
-  // --- END THE FIX ---
 
   const [maxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 10,
   });
 
+  // Rename the destructured variable to rawData
   const { data: rawData, isError, refetch, isLoading, isFetched } =
     api.youtube.search.useQuery(
       {
@@ -53,17 +52,16 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
       { refetchOnWindowFocus: false, enabled: false, retry: false },
     );
   
+  // Cast the data from the hook to its specific type *once*.
   const data = rawData as YoutubeSearchItem[] | undefined;
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        // --- THIS IS THE FIX (Part 2) ---
         // Clear both states on new search
         setRecentlyAddedVideoIds([]);
         setFadingOutVideoIds([]);
-        // --- END THE FIX ---
         await refetch();
         setCanFetch(false);
       }}
@@ -142,10 +140,12 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
 
       {data && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
-          {(data as YoutubeSearchItem[])
+          {data
             .filter((video) => {
-              // Filter out videos that are *fully hidden*
-              return !recentlyAddedVideoIds.includes(video.id.videoId);
+              // Check for songs *just* added (for immediate hiding)
+              const isRecentlyAdded = recentlyAddedVideoIds.includes(video.id.videoId);
+              // Return true (keep) only if it's NOT recently added
+              return !isRecentlyAdded;
             })
             .map((video) => {
             
@@ -157,23 +157,19 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
                 v.singerName === name,
             );
             
-            // --- THIS IS THE FIX (Part 3) ---
             // Check if this video is *currently* fading out
             const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
-            // --- END THE FIX ---
 
             const title = decode(removeBracketedContent(video.snippet.title));
 
             return (
               <div
                 key={video.id.videoId}
-                // --- THIS IS THE FIX (Part 4) ---
                 // Apply animation class if it's fading out
                 className={cn(
                   "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50",
                   isFadingOut && "animate-fade-out-slow"
                 )}
-                // --- END THE FIX ---
               >
                 <PreviewPlayer
                   key={video.id.videoId}
@@ -209,7 +205,6 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
                         removeBracketedContent(video.snippet.title),
                         video.snippet.thumbnails.high.url,
                       );
-                      // --- THIS IS THE FIX (Part 5) ---
                       // Add to "fading out" list to trigger animation
                       setFadingOutVideoIds((prev) => [...prev, video.id.videoId]);
                       
@@ -217,7 +212,6 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
                       setTimeout(() => {
                         setRecentlyAddedVideoIds((prev) => [...prev, video.id.videoId]);
                       }, 500); // Must match animation duration in tailwind.config.ts
-                      // --- END THE FIX ---
                     }}
                   >
                     {/* Show checkmark if already in queue OR fading, otherwise plus */}
