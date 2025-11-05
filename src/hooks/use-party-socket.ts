@@ -10,6 +10,7 @@ interface SocketActions {
   removeSong: (videoId: string) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
+  togglePlayback: (disablePlayback: boolean) => void; // <-- ADDED THIS
   closeParty: () => void;
   sendHeartbeat: () => void;
   playbackPlay: () => void;
@@ -177,6 +178,13 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'toggle-rules'", data);
       socketRef.current?.emit("toggle-rules", data);
     },
+    // --- ADDED THIS ---
+    togglePlayback: (disablePlayback) => {
+      const data = { partyHash, disablePlayback };
+      debugLog(LOG_TAG, "Emitting 'toggle-playback'", data);
+      socketRef.current?.emit("toggle-playback", data);
+    },
+    // --- END ---
     closeParty: () => {
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'close-party'", data);

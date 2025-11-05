@@ -212,8 +212,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
           }
 
-          // --- THIS IS THE FIX ---
-          // Check if this specific singer already added this song
           const existing = await db.playlistItem.findFirst({
             where: {
               partyId: party.id,
@@ -222,7 +220,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
               playedAt: null,
             },
           });
-          // --- END THE FIX ---
           
           if (!existing) {
             await db.playlistItem.create({
@@ -329,6 +326,21 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
         console.error("Error toggling rules:", error);
       }
     });
+    
+    // --- START: ADDED NEW EVENT HANDLER ---
+    socket.on("toggle-playback", async (data: { partyHash: string; disablePlayback: boolean }) => {
+      debugLog(LOG_TAG, `Received 'toggle-playback' for room ${data.partyHash}`, data);
+      try {
+        await db.party.update({
+          where: { hash: data.partyHash },
+          data: { disablePlayback: data.disablePlayback },
+        });
+        await updateAndEmitPlaylist(io, data.partyHash, "toggle-playback");
+      } catch (error) {
+        console.error("Error toggling playback:", error);
+      }
+    });
+    // --- END: ADDED NEW EVENT HANDLER ---
 
     // --- Event: Close Party ---
     socket.on("close-party", async (data: { partyHash: string }) => {

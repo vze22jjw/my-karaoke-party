@@ -13,6 +13,7 @@ import { usePartySocket } from "~/hooks/use-party-socket";
 import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
+import { PlayerDisabledView } from "~/components/player-disabled-view"; // <-- IMPORTED NEW COMPONENT
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -39,7 +40,8 @@ export default function PlayerScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     socketActions, 
-    isPlaying
+    isPlaying,
+    settings // <-- GET SETTINGS FROM HOOK
   } = usePartySocket(
     party.hash,
     initialData,
@@ -71,6 +73,11 @@ export default function PlayerScene({ party, initialData }: Props) {
   };
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
+  
+  // --- ADDED: Get disablePlayback state ---
+  // --- THIS IS THE FIX ---
+  const isPlaybackDisabled = settings.disablePlayback ?? false;
+  // --- END THE FIX ---
 
   return (
     // This is now the simple, full-screen player page
@@ -85,7 +92,18 @@ export default function PlayerScene({ party, initialData }: Props) {
           >
             {fullscreen ? <Minimize /> : <Maximize />}
           </Button>
-          {currentSong ? (
+          
+          {/* --- START: UPDATED RENDER LOGIC --- */}
+          {isPlaybackDisabled && currentSong ? ( 
+            // 1. Render Playback Disabled View
+            <PlayerDisabledView
+              video={currentSong}
+              joinPartyUrl={joinPartyUrl}
+              isFullscreen={fullscreen}
+              onSkip={handleSkip}
+            />
+          ) : currentSong ? ( 
+            // 2. Render normal Player
             <Player
               video={currentSong}
               joinPartyUrl={joinPartyUrl}
@@ -99,11 +117,14 @@ export default function PlayerScene({ party, initialData }: Props) {
               onPause={handlePause}
             />
           ) : (
+            // 3. Render Empty Player
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={fullscreen ? "bg-gradient" : ""}
             />
           )}
+          {/* --- END: UPDATED RENDER LOGIC --- */}
+          
         </div>
       </div>
     </div>

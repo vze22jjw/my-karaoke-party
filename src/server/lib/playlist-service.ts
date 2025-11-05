@@ -90,6 +90,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     played: playedPlaylist,
     settings: {
       orderByFairness: useQueueRules,
+      disablePlayback: party.disablePlayback, // <-- ADDED THIS
     },
   };
 }

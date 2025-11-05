@@ -28,6 +28,7 @@ model Party {
     createdAt      DateTime       @default(now())
     lastActivityAt DateTime       @default(now())
     orderByFairness Boolean        @default(true) // Default to "ON (Fairness)"
+    disablePlayback Boolean        @default(false)
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
@@ -60,7 +61,7 @@ model PlaylistItem {
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
     orderIndex Int       @default(0)
-    randomBreaker Float? // New field for fair queue tie-breaker
+    randomBreaker Float?   // New field for fair queue tie-breaker
 
     @@index([partyId])
     @@index([playedAt])

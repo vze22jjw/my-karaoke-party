@@ -18,6 +18,8 @@ type Props = {
   onMarkAsPlayed: () => void; // This is handleSkip
   useQueueRules: boolean;
   onToggleRules: () => void;
+  disablePlayback: boolean; // <-- ADDED/components/host-control-panel.tsx]
+  onTogglePlayback: () => void; // <-- ADDED/components/host-control-panel.tsx]
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
@@ -38,6 +40,8 @@ export function HostControlPanel({
   onMarkAsPlayed, // This is handleSkip
   useQueueRules,
   onToggleRules,
+  disablePlayback, // <-- ADDED/components/host-control-panel.tsx]
+  onTogglePlayback, // <-- ADDED/components/host-control-panel.tsx]
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
@@ -92,6 +96,8 @@ export function HostControlPanel({
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
+              disablePlayback={disablePlayback} // <-- ADDED/components/host-control-panel.tsx]
+              onTogglePlayback={onTogglePlayback} // <-- ADDED/components/host-control-panel.tsx]
               partyHash={party.hash}
               maxSearchResults={maxSearchResults}
               onSetMaxResults={onSetMaxResults}

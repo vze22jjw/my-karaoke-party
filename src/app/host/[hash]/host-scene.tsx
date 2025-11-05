@@ -46,7 +46,7 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
-    settings, 
+    settings, // <-- Get settings from hook
     socketActions, 
     isConnected,
     // --- REMOVED: isPlaying ---
@@ -56,12 +56,25 @@ export function HostScene({ party, initialData }: Props) {
     "Host" // <-- Pass "Host" as the singerName
   );
   
+  // --- UPDATED: Get settings from state ---
   const useQueueRules = settings.orderByFairness;
+  // --- THIS IS THE FIX ---
+  const disablePlayback = settings.disablePlayback ?? false;
+  // --- END THE FIX ---
+  
+  // --- END UPDATE ---
 
   const handleToggleRules = async () => {
     const newRulesState = !useQueueRules;
     socketActions.toggleRules(newRulesState);
   };
+
+  // --- ADDED THIS HANDLER ---
+  const handleTogglePlayback = async () => { 
+    const newPlaybackState = !disablePlayback;
+    socketActions.togglePlayback(newPlaybackState);
+  };
+  // --- END ---
 
   const removeSong = async (videoId: string) => {
     socketActions.removeSong(videoId);
@@ -100,6 +113,10 @@ export function HostScene({ party, initialData }: Props) {
       onMarkAsPlayed={handleSkip} // The skip button in the playlist
       useQueueRules={useQueueRules} 
       onToggleRules={handleToggleRules} 
+      // --- ADDED THESE PROPS ---
+      disablePlayback={disablePlayback} 
+      onTogglePlayback={handleTogglePlayback} 
+      // --- END ---
       maxSearchResults={maxSearchResults}
       onSetMaxResults={setMaxSearchResults}
       onCloseParty={handleCloseParty}
@@ -110,3 +127,4 @@ export function HostScene({ party, initialData }: Props) {
     />
   );
 }
+// 
