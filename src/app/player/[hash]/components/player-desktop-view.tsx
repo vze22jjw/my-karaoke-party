@@ -8,7 +8,7 @@ import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
 
 // --- THIS IS THE FIX ---
-// This Props type includes all the required properties.
+// The Props type definition must include all the new properties.
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
   onToggleFullscreen: () => void;

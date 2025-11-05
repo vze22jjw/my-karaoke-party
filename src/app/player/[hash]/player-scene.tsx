@@ -43,6 +43,7 @@ export default function PlayerScene({ party, initialData }: Props) {
   } = usePartySocket(
     party.hash,
     initialData,
+    "Player" // <-- THIS IS THE FIX: Added 3rd argument
   );
   
   const { ref, toggle, fullscreen } = useFullscreen();

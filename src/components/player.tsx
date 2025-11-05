@@ -40,7 +40,6 @@ export function Player({
   onPlay,
   onPause,
 }: Props) {
-  // This ref is also corrected to fix the ESLint error
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);

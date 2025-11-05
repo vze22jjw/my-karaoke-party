@@ -10,7 +10,6 @@ import { db } from "~/server/db";
 import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 
-// Define a custom response type to attach the server
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: NetSocket & {
     server: HttpServer & {
@@ -20,6 +19,74 @@ type NextApiResponseWithSocket = NextApiResponse & {
 };
 
 const LOG_TAG = "[SocketServer]";
+
+// --- START FIX ---
+
+// partyId is a number
+async function getSingers(partyId: number): Promise<string[]> {
+  const participants = await db.partyParticipant.findMany({
+    where: { partyId },
+    // Use `joinedAt` as per your schema
+    orderBy: { joinedAt: "desc" },
+  });
+  // Use `name` as per your schema
+  const uniqueNames = [...new Set(participants.map((p) => p.name))];
+  return uniqueNames;
+}
+
+// partyId is a number
+async function updateAndEmitSingers(io: Server, partyId: number, partyHash: string) {
+  try {
+    const singerList = await getSingers(partyId);
+    debugLog(LOG_TAG, `Emitting 'singers-updated' to room ${partyHash}`, singerList);
+    io.to(partyHash).emit("singers-updated", singerList);
+  } catch (error) {
+    console.error("Error emitting singers:", error);
+  }
+}
+
+// partyId is a number, and the field is `name`
+async function registerParticipant(partyId: number, name: string): Promise<{ isNew: boolean }> {
+  if (!name || name.trim() === "" || name === "Host") {
+    return { isNew: false };
+  }
+
+  try {
+    const existing = await db.partyParticipant.findUnique({
+      where: {
+        // Use `partyId_name` as per your schema's @@unique
+        partyId_name: {
+          partyId,
+          name,
+        },
+      },
+    });
+
+    await db.partyParticipant.upsert({
+      where: {
+        partyId_name: {
+          partyId,
+          name,
+        },
+      },
+      create: { // Use `name`
+        partyId,
+        name,
+      },
+      update: { // Use `name`
+        name: name,
+      },
+    });
+    
+    return { isNew: !existing };
+
+  } catch (error) {
+    console.error("Error registering participant:", error);
+    return { isNew: false };
+  }
+}
+// --- END FIX ---
+
 
 const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   if (res.socket.server.io) {
@@ -35,7 +102,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   });
   res.socket.server.io = io;
 
-  // Function to get party and emit updated playlist
   const updateAndEmitPlaylist = async (partyHash: string, triggeredBy: string) => {
     try {
       const partyData = await getFreshPlaylist(partyHash);
@@ -64,15 +130,27 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   io.on("connection", (socket: Socket) => {
     debugLog(LOG_TAG, `Socket connected: ${socket.id}`);
 
-    // Join Party Room
-    socket.on("join-party", (partyHash: string) => {
+    // UPDATED: join-party handler
+    socket.on("join-party", async (data: { partyHash: string, singerName: string }) => {
+      // The client calls it `singerName`, but we'll pass it to our helper as `name`
+      const { partyHash, singerName: name } = data;
       void socket.join(partyHash);
-      debugLog(LOG_TAG, `Socket ${socket.id} joined room ${partyHash}`);
-      // Send initial playlist on join
-      void updateAndEmitPlaylist(partyHash, "join-party");
+      debugLog(LOG_TAG, `Socket ${socket.id} joined room ${partyHash} as ${name}`);
+      
+      const party = await db.party.findUnique({ where: { hash: partyHash } });
+      if (party) {
+        // Register participant
+        const { isNew } = await registerParticipant(party.id, name);
+        if (isNew) {
+          socket.broadcast.to(partyHash).emit("new-singer-joined", name);
+        }
+        
+        void updateAndEmitPlaylist(partyHash, "join-party");
+        void updateAndEmitSingers(io, party.id, partyHash);
+      }
     });
 
-    // Add Song
+    // UPDATED: add-song handler
     socket.on(
       "add-song",
       async (data: {
@@ -87,7 +165,12 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           const party = await db.party.findUnique({ where: { hash: data.partyHash } });
           if (!party) return;
 
-          // Check if video already exists (not played)
+          // Pass `data.singerName` as the `name` parameter
+          const { isNew } = await registerParticipant(party.id, data.singerName);
+          if (isNew) {
+            socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
+          }
+
           const existing = await db.playlistItem.findFirst({
             where: { partyId: party.id, videoId: data.videoId, playedAt: null },
           });
@@ -108,6 +191,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
             });
           }
           await updateAndEmitPlaylist(data.partyHash, "add-song");
+          await updateAndEmitSingers(io, party.id, data.partyHash);
         } catch (error) {
           console.error("Error adding song:", error);
         }
@@ -134,21 +218,20 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     socket.on("mark-as-played", async (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'mark-as-played' for room ${data.partyHash}`, data);
       try {
-        // Find the party and its *first* unplayed song
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
           include: { 
             playlistItems: { 
               where: { playedAt: null }, 
               orderBy: { addedAt: 'asc' },
-              take: 1 // Get only the first unplayed item
+              take: 1
             } 
           }
         });
 
         if (!party || party.playlistItems.length === 0) {
           debugLog(LOG_TAG, "Party not found or no items to play");
-          return; // Party not found or no songs to play
+          return;
         }
 
         const currentSong = party.playlistItems[0];
@@ -156,13 +239,11 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
         debugLog(LOG_TAG, `Marking song ${currentSong.id} as played`);
 
-        // Update the specific song
         await db.playlistItem.update({
           where: { id: currentSong.id },
           data: { playedAt: new Date() },
         });
 
-        // Update the party's activity
         await db.party.update({
           where: { id: party.id },
           data: { lastActivityAt: new Date() },
@@ -174,19 +255,16 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
 
-    // --- ADDED: Playback Handlers ---
+    // Playback Handlers
     socket.on("playback-play", (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`);
-      // Broadcast to all clients (including the player)
       io.to(data.partyHash).emit("playback-state-play");
     });
 
     socket.on("playback-pause", (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'playback-pause' for room ${data.partyHash}`);
-      // Broadcast to all clients (including the player)
       io.to(data.partyHash).emit("playback-state-pause");
     });
-    // --- END: Playback Handlers ---
 
     // Toggle Rules
     socket.on("toggle-rules", async (data: { partyHash: string; orderByFairness: boolean }) => {
@@ -215,14 +293,20 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     });
 
     // Heartbeat
-    socket.on("heartbeat", async (data: { partyHash: string }) => {
-      // Avoid spamming logs, comment this out if not needed
-      // debugLog(LOG_TAG, `Received 'heartbeat' for room ${data.partyHash}`);
+    socket.on("heartbeat", async (data: { partyHash: string, singerName: string }) => {
       try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party) return;
+
+        // Pass `data.singerName` as the `name` parameter
+        await registerParticipant(party.id, data.singerName);
+        
         await db.party.update({
-          where: { hash: data.partyHash },
+          where: { id: party.id },
           data: { lastActivityAt: new Date() },
         });
+
+        await updateAndEmitSingers(io, party.id, data.partyHash);
       } catch (error) {
         console.error("Error handling heartbeat:", error);
       }

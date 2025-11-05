@@ -7,7 +7,7 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef } from "react";
 import useSound from "use-sound";
 import { useRouter } from "next/navigation";
-import { HostControlPanel } from "./components/host-control-panel"; // <-- New component location
+import { HostControlPanel } from "./components/host-control-panel";
 import { usePartySocket } from "~/hooks/use-party-socket";
 
 type InitialPartyData = {
@@ -49,55 +49,60 @@ export function HostScene({ party, initialData }: Props) {
     settings, 
     socketActions, 
     isConnected,
-    isPlaying
+    isPlaying,
+    // singers list is available, but host page doesn't show it
   } = usePartySocket(
     party.hash,
     initialData,
+    "Host" // <-- Pass "Host" as the singerName
   );
   
   const useQueueRules = settings.orderByFairness;
 
   const handleToggleRules = async () => {
+    // ... (function unchanged)
     const newRulesState = !useQueueRules;
     socketActions.toggleRules(newRulesState);
   };
 
   const removeSong = async (videoId: string) => {
+    // ... (function unchanged)
     socketActions.removeSong(videoId);
   };
 
-  // This is called when the SKIP BUTTON is clicked
   const handleSkip = async () => {
+    // ... (function unchanged)
     socketActions.markAsPlayed();
-    // After marking as played, tell clients to play the next song
     socketActions.playbackPlay();
   };
   
-  // Called when PLAY button is clicked
   const handlePlay = () => {
+    // ... (function unchanged)
     socketActions.playbackPlay();
   };
   
-  // Called when PAUSE button is clicked
   const handlePause = () => {
+    // ... (function unchanged)
     socketActions.playbackPause();
   };
 
   const handleCloseParty = () => {
+    // ... (function unchanged)
     setIsConfirmingClose(true);
   };
 
   const confirmCloseParty = async () => {
+    // ... (function unchanged)
     socketActions.closeParty();
     setIsConfirmingClose(false);
   };
 
   const cancelCloseParty = () => {
+    // ... (function unchanged)
     setIsConfirmingClose(false);
   };
 
   return (
-    // This is the Mobile Controller View
     <HostControlPanel
       party={party}
       activeTab={activeTab}
@@ -105,7 +110,7 @@ export function HostScene({ party, initialData }: Props) {
       currentSong={currentSong}
       playlist={unplayedPlaylist}
       onRemoveSong={removeSong}
-      onMarkAsPlayed={handleSkip} // The skip button
+      onMarkAsPlayed={handleSkip}
       useQueueRules={useQueueRules} 
       onToggleRules={handleToggleRules} 
       maxSearchResults={maxSearchResults}
