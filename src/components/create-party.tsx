@@ -59,10 +59,8 @@ export function CreateParty() {
       if (data.hash) {
         setName(form.getValues("yourName"));
         toast.success(`Party "${data.name}" created!`);
-        // --- THIS IS THE FIX ---
         // Navigate to the new host controller page
         router.push(`/host/${data.hash}`);
-        // --- END THE FIX ---
       }
     },
     onError: (error) => {
@@ -82,7 +80,7 @@ export function CreateParty() {
         <div className="w-full">
           <ButtonHoverGradient type="button" className="w-full">
             Create Party 🎉
-          ButtonHoverGradient>
+          </ButtonHoverGradient>
         </div>
       </DrawerTrigger>
       <DrawerContent>
@@ -131,9 +129,11 @@ export function CreateParty() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={createParty.isLoading}
+                  // --- THIS IS THE FIX ---
+                  disabled={createParty.isPending}
                 >
-                  {createParty.isLoading ? (
+                  {createParty.isPending ? (
+                  // --- THIS IS THE FIX ---
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
                   Let&apos;s Go!
