@@ -2,10 +2,8 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
 import { db } from "~/server/db";
-// --- THIS IS THE FIX ---
-// Import the sqids instance, not a function named generateHash
 import { sqids } from "~/server/utils/sqids";
-// --- END THE FIX ---
+import { TRPCError } from "@trpc/server"; // Import TRPCError
 
 export const partyRouter = createTRPCRouter({
   create: publicProcedure
@@ -15,6 +13,24 @@ export const partyRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       try {
+        // --- THIS IS THE FIX ---
+        // Check for ANY party with the same name that currently exists.
+        // The auto-cleanup cron will handle deleting old parties.
+        const existingParty = await ctx.db.party.findFirst({
+          where: {
+            name: input.name,
+            // (No time filter)
+          },
+        });
+
+        if (existingParty) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: `A party named "${input.name}" already exists. Please choose another name.`,
+          });
+        }
+        // --- END THE FIX ---
+
         const party = await ctx.db.party.create({
           data: {
             name: input.name,
@@ -22,10 +38,8 @@ export const partyRouter = createTRPCRouter({
           },
         });
 
-        // --- THIS IS THE FIX ---
         // Use the imported sqids instance to encode the ID
         const hash = sqids.encode([party.id]);
-        // --- END THE FIX ---
         
         const updatedParty = await ctx.db.party.update({
           where: { id: party.id },
@@ -42,6 +56,10 @@ export const partyRouter = createTRPCRouter({
 
         return updatedParty;
       } catch (error) {
+        // Re-throw tRPC errors, wrap others
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         console.error(getErrorMessage(error));
         throw new Error(getErrorMessage(error));
       }

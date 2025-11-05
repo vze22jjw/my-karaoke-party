@@ -6,7 +6,7 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
-import { PlaybackControls } from "./playback-controls"; 
+// --- REMOVED: PlaybackControls import ---
 
 type Props = {
   party: Party;
@@ -24,9 +24,7 @@ type Props = {
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
-  isPlaying: boolean;
-  onPlay: () => void;
-  onPause: () => void;
+  // --- REMOVED: isPlaying, onPlay, onPause props ---
 };
 
 // This component is the HOST'S mobile view
@@ -46,18 +44,12 @@ export function HostControlPanel({
   isConfirmingClose,
   onConfirmClose,
   onCancelClose,
-  isPlaying,
-  onPlay,
-  onPause,
+  // --- REMOVED: isPlaying, onPlay, onPause ---
 }: Props) {
   if (!party.hash) return null;
 
   return (
-    // --- THIS IS THE FIX ---
-    // This div now has `p-4` (like the party page) to add padding all around,
-    // which should respect the iOS status bar safe area.
     <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col p-4">
-      {/* The inner div no longer needs complex padding */}
       <div className="flex flex-col h-full flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
@@ -68,7 +60,6 @@ export function HostControlPanel({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          // Added `mt-4` to match the party page's tab spacing
           className="flex-1 flex flex-col overflow-hidden mt-4" 
         >
           <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
@@ -113,16 +104,7 @@ export function HostControlPanel({
         </Tabs>
       </div>
       
-      {/* Playback Controls Bar */}
-      <div className="flex-shrink-0">
-        <PlaybackControls 
-          currentSong={currentSong}
-          isPlaying={isPlaying}
-          onPlay={onPlay}
-          onPause={onPause}
-          onSkip={onMarkAsPlayed} // This is handleSkip
-        />
-      </div>
+      {/* --- REMOVED: Playback Controls Bar --- */}
     </div>
   );
 }

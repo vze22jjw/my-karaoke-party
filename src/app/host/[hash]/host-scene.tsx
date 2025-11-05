@@ -7,7 +7,7 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef } from "react";
 import useSound from "use-sound";
 import { useRouter } from "next/navigation";
-import { HostControlPanel } from "./components/host-control-panel";
+import { HostControlPanel } from "./components/host-control-panel"; // <-- New component location
 import { usePartySocket } from "~/hooks/use-party-socket";
 
 type InitialPartyData = {
@@ -53,7 +53,7 @@ export function HostScene({ party, initialData }: Props) {
   } = usePartySocket(
     party.hash,
     initialData,
-    "Host"
+    "Host" // <-- Pass "Host" as the singerName
   );
   
   const useQueueRules = settings.orderByFairness;
@@ -70,6 +70,7 @@ export function HostScene({ party, initialData }: Props) {
   // This is called when the SKIP BUTTON is clicked
   const handleSkip = async () => {
     socketActions.markAsPlayed();
+    // We still tell the player to play, even though this page has no controls
     socketActions.playbackPlay();
   };
   
