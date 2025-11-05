@@ -49,56 +49,42 @@ export function HostScene({ party, initialData }: Props) {
     settings, 
     socketActions, 
     isConnected,
-    isPlaying,
-    // singers list is available, but host page doesn't show it
+    // --- REMOVED: isPlaying ---
   } = usePartySocket(
     party.hash,
     initialData,
-    "Host" // <-- Pass "Host" as the singerName
+    "Host"
   );
   
   const useQueueRules = settings.orderByFairness;
 
   const handleToggleRules = async () => {
-    // ... (function unchanged)
     const newRulesState = !useQueueRules;
     socketActions.toggleRules(newRulesState);
   };
 
   const removeSong = async (videoId: string) => {
-    // ... (function unchanged)
     socketActions.removeSong(videoId);
   };
 
+  // This is called when the SKIP BUTTON is clicked
   const handleSkip = async () => {
-    // ... (function unchanged)
     socketActions.markAsPlayed();
     socketActions.playbackPlay();
   };
   
-  const handlePlay = () => {
-    // ... (function unchanged)
-    socketActions.playbackPlay();
-  };
-  
-  const handlePause = () => {
-    // ... (function unchanged)
-    socketActions.playbackPause();
-  };
+  // --- REMOVED: handlePlay and handlePause ---
 
   const handleCloseParty = () => {
-    // ... (function unchanged)
     setIsConfirmingClose(true);
   };
 
   const confirmCloseParty = async () => {
-    // ... (function unchanged)
     socketActions.closeParty();
     setIsConfirmingClose(false);
   };
 
   const cancelCloseParty = () => {
-    // ... (function unchanged)
     setIsConfirmingClose(false);
   };
 
@@ -110,7 +96,7 @@ export function HostScene({ party, initialData }: Props) {
       currentSong={currentSong}
       playlist={unplayedPlaylist}
       onRemoveSong={removeSong}
-      onMarkAsPlayed={handleSkip}
+      onMarkAsPlayed={handleSkip} // The skip button in the playlist
       useQueueRules={useQueueRules} 
       onToggleRules={handleToggleRules} 
       maxSearchResults={maxSearchResults}
@@ -119,9 +105,7 @@ export function HostScene({ party, initialData }: Props) {
       isConfirmingClose={isConfirmingClose} 
       onConfirmClose={confirmCloseParty} 
       onCancelClose={cancelCloseParty}
-      isPlaying={isPlaying}
-      onPlay={handlePlay}
-      onPause={handlePause}
+      // --- REMOVED: isPlaying, onPlay, onPause props ---
     />
   );
 }

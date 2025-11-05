@@ -53,9 +53,12 @@ export function HostControlPanel({
   if (!party.hash) return null;
 
   return (
-    // This component is now just the mobile UI
-    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col">
-      <div className="flex flex-col h-full p-4 pt-14 flex-1 overflow-hidden">
+    // --- THIS IS THE FIX ---
+    // This div now has `p-4` (like the party page) to add padding all around,
+    // which should respect the iOS status bar safe area.
+    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col p-4">
+      {/* The inner div no longer needs complex padding */}
+      <div className="flex flex-col h-full flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
@@ -65,7 +68,8 @@ export function HostControlPanel({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="flex-1 flex flex-col overflow-hidden"
+          // Added `mt-4` to match the party page's tab spacing
+          className="flex-1 flex flex-col overflow-hidden mt-4" 
         >
           <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
@@ -109,7 +113,7 @@ export function HostControlPanel({
         </Tabs>
       </div>
       
-      {/* --- ADDED: Playback Controls Bar --- */}
+      {/* Playback Controls Bar */}
       <div className="flex-shrink-0">
         <PlaybackControls 
           currentSong={currentSong}
