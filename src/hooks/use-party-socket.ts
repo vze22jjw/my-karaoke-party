@@ -34,7 +34,7 @@ interface UsePartySocketReturn {
   isPlaying: boolean;
   participants: Participant[]; 
   isSkipping: boolean; 
-  remainingTime: number; // <-- The global countdown time in seconds
+  remainingTime: number; 
 }
 
 type PartySocketData = {
@@ -71,7 +71,7 @@ export function usePartySocket(
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
 
-  const [remainingTime, setRemainingTime] = useState(0); // Time in seconds
+  const [remainingTime, setRemainingTime] = useState(0); 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
   
@@ -175,12 +175,16 @@ export function usePartySocket(
       newSocket.on("skip-timer-started", () => {
         debugLog(LOG_TAG, "Received 'skip-timer-started', disabling skip buttons.");
         setIsSkipping(true);
+        // --- THIS IS THE FIX (Part 1) ---
+        // When another client starts the skip timer, start our countdown too.
+        startCountdown();
+        // --- END THE FIX (Part 1) ---
       });
 
     };
 
     void socketInitializer();
-    resetCountdown(initialData.currentSong); // Set initial time
+    resetCountdown(initialData.currentSong); 
 
     const heartbeatInterval = setInterval(() => {
       socketRef.current?.emit("heartbeat", { partyHash, singerName });
@@ -248,6 +252,10 @@ export function usePartySocket(
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'start-skip-timer'", data);
       setIsSkipping(true); 
+      // --- THIS IS THE FIX (Part 2) ---
+      // When we start the skip timer, start our *own* countdown.
+      startCountdown(); 
+      // --- END THE FIX (Part 2) ---
       socketRef.current?.emit("start-skip-timer", data); 
     },
   }), [partyHash, singerName]);

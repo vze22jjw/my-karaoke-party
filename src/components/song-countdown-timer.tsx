@@ -16,9 +16,12 @@ export function SongCountdownTimer({ remainingTime, className }: Props) {
     return `${displayMinutes}:${displaySeconds < 10 ? '0' : ''}${displaySeconds}`;
   };
 
+  // --- THIS IS THE FIX ---
+  // Removed the parentheses from the return statement
   return (
     <span className={cn("font-mono text-xs", className)}>
-      ({formatTime(remainingTime)})
+      {formatTime(remainingTime)}
     </span>
   );
+  // --- END THE FIX ---
 }
