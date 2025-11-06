@@ -129,7 +129,9 @@ export function PartyScene({
         </div>
 
         <div className="mt-5">
-          <SongSearch onVideoAdded={addSong} playlist={playlist} />
+          {/* --- THIS IS THE FIX --- */}
+          <SongSearch onVideoAdded={addSong} playlist={playlist} name={name} />
+          {/* --- END THE FIX --- */}
         </div>
       </div>
 

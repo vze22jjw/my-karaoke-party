@@ -8,6 +8,8 @@ import Link from "next/link";
 type Props = {
   useQueueRules: boolean;
   onToggleRules: () => void;
+  disablePlayback: boolean; // <-- ADDED/components/tab-settings.tsx]
+  onTogglePlayback: () => void; // <-- ADDED/components/tab-settings.tsx]
   partyHash: string;
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
@@ -20,6 +22,8 @@ type Props = {
 export function TabSettings({
   useQueueRules,
   onToggleRules,
+  disablePlayback, // <-- ADDED/components/tab-settings.tsx]
+  onTogglePlayback, // <-- ADDED/components/tab-settings.tsx]
   partyHash,
   maxSearchResults,
   onSetMaxResults,
@@ -33,7 +37,7 @@ export function TabSettings({
       {/* Queue Rules */}
       <div className="flex-shrink-0">
         <h2 className="font-semibold text-lg mb-2">Controls</h2>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-primary-foreground/80">
             Queue Rules
           </span>
@@ -61,6 +65,38 @@ export function TabSettings({
             </button>
           </div>
         </div>
+        
+        {/* --- START: ADDED NEW TOGGLE --- */}
+        <div className="flex items-center justify-between">/components/tab-settings.tsx]
+          <span className="text-sm font-medium text-primary-foreground/80">
+            Disable Playback
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {disablePlayback ? "ON (Disabled)" : "OFF (Enabled)"}
+            </span>
+            <button
+              onClick={onTogglePlayback}
+              aria-checked={disablePlayback}
+              role="switch"
+              className={cn(
+                "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+                disablePlayback ? "bg-red-500" : "bg-green-500",
+              )}
+            >
+              <span className="sr-only">Toggle Playback</span>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                  disablePlayback ? "translate-x-5" : "translate-x-0",
+                )}
+              />
+            </button>
+          </div>
+        </div>
+        {/* --- END: ADDED NEW TOGGLE --- */}
+        
       </div>
 
       {/* --- UPDATED: Add Songs Link (points to /party) --- */}

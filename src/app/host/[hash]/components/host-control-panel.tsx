@@ -6,7 +6,6 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
-import { PlaybackControls } from "./playback-controls"; 
 
 type Props = {
   party: Party;
@@ -18,18 +17,19 @@ type Props = {
   onMarkAsPlayed: () => void; // This is handleSkip
   useQueueRules: boolean;
   onToggleRules: () => void;
+  disablePlayback: boolean; 
+  onTogglePlayback: () => void; 
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
-  isPlaying: boolean;
-  onPlay: () => void;
-  onPause: () => void;
+  isSkipping: boolean;
+  isPlaying: boolean; // <-- ADD THIS PROP
+  remainingTime: number; // <-- ADD THIS PROP
 };
 
-// This component is the HOST'S mobile view
 export function HostControlPanel({
   party,
   activeTab,
@@ -40,22 +40,23 @@ export function HostControlPanel({
   onMarkAsPlayed, // This is handleSkip
   useQueueRules,
   onToggleRules,
+  disablePlayback, 
+  onTogglePlayback, 
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
   isConfirmingClose,
   onConfirmClose,
   onCancelClose,
-  isPlaying,
-  onPlay,
-  onPause,
+  isSkipping,
+  isPlaying, // <-- GET THIS PROP
+  remainingTime, // <-- GET THIS PROP
 }: Props) {
   if (!party.hash) return null;
 
   return (
-    // This component is now just the mobile UI
-    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col">
-      <div className="flex flex-col h-full p-4 pt-14 flex-1 overflow-hidden">
+    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col p-4">
+      <div className="flex flex-col h-full flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
@@ -65,7 +66,7 @@ export function HostControlPanel({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="flex-1 flex flex-col overflow-hidden"
+          className="flex-1 flex flex-col overflow-hidden mt-4" 
         >
           <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
@@ -86,7 +87,10 @@ export function HostControlPanel({
               currentSong={currentSong}
               playlist={playlist}
               onRemoveSong={onRemoveSong}
-              onSkip={onMarkAsPlayed} // Pass handleSkip to onSkip
+              onSkip={onMarkAsPlayed} 
+              isSkipping={isSkipping}
+              isPlaying={isPlaying} // <-- PASS THIS PROP
+              remainingTime={remainingTime} // <-- PASS THIS PROP
             />
           </TabsContent>
 
@@ -97,6 +101,8 @@ export function HostControlPanel({
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
+              disablePlayback={disablePlayback} 
+              onTogglePlayback={onTogglePlayback} 
               partyHash={party.hash}
               maxSearchResults={maxSearchResults}
               onSetMaxResults={onSetMaxResults}
@@ -107,17 +113,6 @@ export function HostControlPanel({
             />
           </TabsContent>
         </Tabs>
-      </div>
-      
-      {/* --- ADDED: Playback Controls Bar --- */}
-      <div className="flex-shrink-0">
-        <PlaybackControls 
-          currentSong={currentSong}
-          isPlaying={isPlaying}
-          onPlay={onPlay}
-          onPause={onPause}
-          onSkip={onMarkAsPlayed} // This is handleSkip
-        />
       </div>
     </div>
   );

@@ -1,11 +1,8 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
-import { db } from "~/server/db";
-// --- THIS IS THE FIX ---
-// Import the sqids instance, not a function named generateHash
 import { sqids } from "~/server/utils/sqids";
-// --- END THE FIX ---
+import { TRPCError } from "@trpc/server"; 
 
 export const partyRouter = createTRPCRouter({
   create: publicProcedure
@@ -15,6 +12,19 @@ export const partyRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       try {
+        const existingParty = await ctx.db.party.findFirst({
+          where: {
+            name: input.name,
+          },
+        });
+
+        if (existingParty) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: `A party named "${input.name}" already exists. Please choose another name.`,
+          });
+        }
+
         const party = await ctx.db.party.create({
           data: {
             name: input.name,
@@ -22,26 +32,29 @@ export const partyRouter = createTRPCRouter({
           },
         });
 
-        // --- THIS IS THE FIX ---
-        // Use the imported sqids instance to encode the ID
         const hash = sqids.encode([party.id]);
-        // --- END THE FIX ---
         
         const updatedParty = await ctx.db.party.update({
           where: { id: party.id },
           data: { hash },
         });
 
-        // Register the creator as a participant using the `name` field
+        // --- THIS IS THE FIX ---
+        // Register the creator as a participant with the "Host" role
         await ctx.db.partyParticipant.create({
           data: {
             partyId: party.id,
-            name: input.singerName, // The input is `singerName`, but the DB field is `name`
+            name: input.singerName, 
+            role: "Host", // <-- Set the role to Host
           },
         });
+        // --- END THE FIX ---
 
         return updatedParty;
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         console.error(getErrorMessage(error));
         throw new Error(getErrorMessage(error));
       }

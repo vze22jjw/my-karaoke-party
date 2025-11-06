@@ -28,6 +28,7 @@ model Party {
     createdAt      DateTime       @default(now())
     lastActivityAt DateTime       @default(now())
     orderByFairness Boolean        @default(true) // Default to "ON (Fairness)"
+    disablePlayback Boolean        @default(false)
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
@@ -41,6 +42,9 @@ model PartyParticipant {
     party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
     name      String
     joinedAt  DateTime @default(now())
+    // --- THIS IS THE FIX ---
+    role      String   @default("Guest") // Add role, default to "Guest"
+    // --- END THE FIX ---
 
     @@unique([partyId, name])
     @@index([partyId])
@@ -60,7 +64,7 @@ model PlaylistItem {
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
     orderIndex Int       @default(0)
-    randomBreaker Float? // New field for fair queue tie-breaker
+    randomBreaker Float?   // New field for fair queue tie-breaker
 
     @@index([partyId])
     @@index([playedAt])

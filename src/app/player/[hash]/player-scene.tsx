@@ -4,7 +4,7 @@
 import { useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 import { Player } from "~/components/player";
@@ -13,6 +13,10 @@ import { usePartySocket } from "~/hooks/use-party-socket";
 import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
+import { PlayerDisabledView } from "~/components/player-disabled-view"; 
+import { parseISO8601Duration } from "~/utils/string"; 
+// --- THIS IS THE CORRECT IMPORT PATH ---
+import { PlayerDesktopView } from "./components/player-desktop-view";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -28,9 +32,9 @@ type Props = {
 
 export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
-  
-  // This state is to force the player to autoplay *only* when we skip
   const [forceAutoplay, setForceAutoplay] = useState(false);
+  
+  const autoSkipTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
@@ -38,45 +42,111 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const { 
     currentSong, 
+    unplayedPlaylist, 
     socketActions, 
-    isPlaying
+    isPlaying,
+    settings,
+    isSkipping, 
+    remainingTime 
   } = usePartySocket(
     party.hash,
     initialData,
-    "Player" // <-- THIS IS THE FIX: Added 3rd argument
+    "Player" 
   );
   
   const { ref, toggle, fullscreen } = useFullscreen();
+  const nextSong = unplayedPlaylist[0];
 
-  // Called when a song ENDS NATURALLY
-  const handlePlayerEnd = async () => {
-    setForceAutoplay(false); // Do not autoplay the next song
+  useEffect(() => {
+    return () => {
+      if (autoSkipTimerRef.current) {
+        clearTimeout(autoSkipTimerRef.current);
+      }
+    };
+  }, []);
+
+  const doTheSkip = () => {
+    if (autoSkipTimerRef.current) {
+      clearTimeout(autoSkipTimerRef.current);
+      autoSkipTimerRef.current = null;
+    }
+    setForceAutoplay(false); 
     socketActions.markAsPlayed();
+    socketActions.playbackPause(); 
   };
 
-  // Called when SKIP button is clicked
+  const handlePlayerEnd = async () => {
+    doTheSkip(); 
+  };
+
   const handleSkip = async () => {
-    setForceAutoplay(true); // Autoplay the next song
-    socketActions.markAsPlayed();
+    if (isSkipping) return; 
+    socketActions.startSkipTimer(); 
+    doTheSkip(); 
   };
   
-  // Called when PLAY button is clicked
+  const handleOpenYouTubeAndAutoSkip = () => {
+    if (isSkipping) return; 
+
+    socketActions.startSkipTimer(); 
+
+    if (currentSong) {
+      window.open(
+        `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
+        "_blank",
+        "fullscreen=yes",
+      );
+    }
+
+    const timerDuration = remainingTime > 0 ? (remainingTime * 1000) + 5000 : 10000;
+
+    console.log(`Starting auto-skip timer for ${timerDuration}ms`);
+
+    autoSkipTimerRef.current = setTimeout(() => {
+      doTheSkip();
+    }, timerDuration); 
+  };
+  
   const handlePlay = () => {
     socketActions.playbackPlay();
   };
   
-  // Called when PAUSE button is clicked
   const handlePause = () => {
     socketActions.playbackPause();
   };
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
+  
+  const isPlaybackDisabled = settings.disablePlayback ?? false;
+
+  const commonPlayerProps = {
+    joinPartyUrl: joinPartyUrl,
+    isFullscreen: fullscreen,
+    onPlayerEnd: handlePlayerEnd,
+    onSkip: handleSkip,
+    forceAutoplay: forceAutoplay,
+    onAutoplayed: () => setForceAutoplay(false),
+    isPlaying: isPlaying,
+    onPlay: handlePlay,
+    onPause: handlePause,
+    remainingTime: remainingTime,
+    nextSong: nextSong,
+  };
 
   return (
-    // This is now the simple, full-screen player page
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
-        <div className="relative h-full" ref={ref as RefCallback<HTMLDivElement>}>
+        
+        {/* Render Desktop View (hidden on mobile) */}
+        <PlayerDesktopView
+          playerRef={ref as RefCallback<HTMLDivElement>}
+          onToggleFullscreen={toggle}
+          currentVideo={currentSong ?? undefined} // <-- This fixes the null type error
+          {...commonPlayerProps}
+        />
+        
+        {/* Render Mobile View (hidden on desktop) */}
+        <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
           <Button
             onClick={toggle}
             variant="ghost"
@@ -85,18 +155,22 @@ export default function PlayerScene({ party, initialData }: Props) {
           >
             {fullscreen ? <Minimize /> : <Maximize />}
           </Button>
-          {currentSong ? (
-            <Player
+          
+          {isPlaybackDisabled && currentSong ? ( 
+            <PlayerDisabledView
               video={currentSong}
+              nextSong={nextSong} 
               joinPartyUrl={joinPartyUrl}
               isFullscreen={fullscreen}
-              onPlayerEnd={handlePlayerEnd}
+              onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
               onSkip={handleSkip} 
-              forceAutoplay={forceAutoplay} 
-              onAutoplayed={() => setForceAutoplay(false)}
-              isPlaying={isPlaying}
-              onPlay={handlePlay}
-              onPause={handlePause}
+              isSkipping={isSkipping} 
+              remainingTime={remainingTime} 
+            />
+          ) : currentSong ? ( 
+            <Player
+              video={currentSong}
+              {...commonPlayerProps}
             />
           ) : (
             <EmptyPlayer
@@ -105,6 +179,7 @@ export default function PlayerScene({ party, initialData }: Props) {
             />
           )}
         </div>
+        
       </div>
     </div>
   );

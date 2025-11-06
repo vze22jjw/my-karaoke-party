@@ -3,11 +3,28 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { log } from "next-axiom";
+import youtubeAPI from "~/utils/youtube-data-api";
+
+// --- THIS IS THE FIX (Part 1) ---
+// Define a type for the incoming request body
+type AddSongBody = {
+  partyHash: string;
+  videoId: string;
+  title: string;
+  artist?: string;
+  song?: string;
+  coverUrl: string;
+  singerName: string;
+};
+// --- END THE FIX (Part 1) ---
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { partyHash, videoId, title, artist, song, coverUrl, duration, singerName } = body;
+    // --- THIS IS THE FIX (Part 2) ---
+    // Cast the body to the new type
+    const body = (await request.json()) as AddSongBody;
+    const { partyHash, videoId, title, artist, song, coverUrl, singerName } = body;
+    // --- END THE FIX (Part 2) ---
 
     if (!partyHash || !videoId || !title || !singerName) {
       return NextResponse.json(
@@ -44,18 +61,24 @@ export async function POST(request: Request) {
       );
     }
 
+    const duration = await youtubeAPI.getVideoDuration(videoId);
+    log.info(`Fetched duration for ${videoId}: ${duration ?? 'N/A'}`);
+
     // Add to playlist
     const playlistItem = await db.playlistItem.create({
       data: {
         partyId: party.id,
         videoId,
         title,
-        artist: artist || "",
-        song: song || "",
+        // --- THIS IS THE FIX (Part 3) ---
+        // Use ?? (nullish coalescing) instead of ||
+        artist: artist ?? "",
+        song: song ?? "",
+        // --- END THE FIX (Part 3) ---
         coverUrl,
-        duration: duration || "",
+        duration: duration, 
         singerName,
-        randomBreaker: Math.random(), // Add random breaker
+        randomBreaker: Math.random(), 
       },
     });
 

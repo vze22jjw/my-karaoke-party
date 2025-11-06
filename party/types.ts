@@ -10,6 +10,7 @@ export type KaraokeParty = {
 	playlist: VideoInPlaylist[];
 	settings: {
 		orderByFairness: boolean;
+		disablePlayback?: boolean;
 	};
 };
 
@@ -19,3 +20,4 @@ export type Message =
 	| { type: "remove-video"; id: string }
 	| { type: "mark-as-played"; id: string }
 	| { type: "horn" };
+	

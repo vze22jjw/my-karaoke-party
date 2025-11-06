@@ -5,7 +5,7 @@ import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useEffect, useState, useMemo } from "react";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
-import { Monitor, Music, Users, History } from "lucide-react";
+import { Monitor, Music, Users, History, Plus } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlayer } from "./components/tab-player";
@@ -23,14 +23,14 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
 };
 
-export function PartyScene({
+export function PartySceneTabs({
   party,
   initialData,
 }: {
   party: Party;
   initialData: InitialPartyData;
 }) {
-  const [name] = useLocalStorage<string>({ key: "name", defaultValue: "Guest" });
+  const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   const router = useRouter();
   const [activeTab, setActiveTab] = useLocalStorage({
     key: ACTIVE_TAB_KEY,
@@ -42,28 +42,25 @@ export function PartyScene({
     unplayedPlaylist, 
     playedPlaylist, 
     socketActions,
-    singers // <-- Get singers list from hook
+    participants, 
+    isPlaying,
+    remainingTime // <-- GET new timer state
   } = usePartySocket(
     party.hash!,
     initialData,
-    name // <-- Pass name to hook
+    name 
   );
   
-  // --- REMOVED: allSongs useMemo, it's no longer needed ---
-
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
-    // Redirect if name is not set
     if (!value) {
       router.push(`/join/${party.hash}`);
     }
   }, [router, party.hash]);
 
-  // --- REMOVED: useEffect poller for singers ---
-
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
-      socketActions.sendHeartbeat(); // Send heartbeat (which includes name)
+      socketActions.sendHeartbeat(); 
       socketActions.addSong(videoId, title, coverUrl, name);
     } catch (error) {
       console.error("Error adding song:", error);
@@ -94,7 +91,10 @@ export function PartyScene({
             <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
           <TabsTrigger value="add" className="flex items-center gap-2">
-            <Music className="h-4 w-4" />
+            <span className="flex items-center gap-1">
+              <Music className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
+            </span>
             <span className="hidden sm:inline">Add</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function PartyScene({
 
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
-            playlist={unplayedPlaylist}
+            playlist={unplayedPlaylist} 
             name={name}
             onVideoAdded={addSong}
           />
@@ -130,16 +130,16 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- THIS IS THE FIX --- */}
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
             playedPlaylist={playedPlaylist}
-            singers={singers}
+            participants={participants}
             name={name}
             onLeaveParty={onLeaveParty}
+            isPlaying={isPlaying} 
+            remainingTime={remainingTime} // <-- PASS THE MISSING PROP
           />
-          {/* --- END THE FIX --- */}
         </TabsContent>
         <TabsContent
           value="history"
