@@ -6,7 +6,6 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
-// --- REMOVED: PlaybackControls import ---
 
 type Props = {
   party: Party;
@@ -26,10 +25,11 @@ type Props = {
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
-  isSkipping: boolean; // <-- This prop is correctly received here
+  isSkipping: boolean;
+  isPlaying: boolean; // <-- ADD THIS PROP
+  remainingTime: number; // <-- ADD THIS PROP
 };
 
-// This component is the HOST'S mobile view
 export function HostControlPanel({
   party,
   activeTab,
@@ -48,7 +48,9 @@ export function HostControlPanel({
   isConfirmingClose,
   onConfirmClose,
   onCancelClose,
-  isSkipping, // <-- The prop is available here
+  isSkipping,
+  isPlaying, // <-- GET THIS PROP
+  remainingTime, // <-- GET THIS PROP
 }: Props) {
   if (!party.hash) return null;
 
@@ -81,16 +83,15 @@ export function HostControlPanel({
             value="playlist"
             className="flex-1 overflow-y-auto mt-0 space-y-2"
           >
-            {/* --- THIS IS THE FIX --- */}
-            {/* Pass the isSkipping prop down to the TabPlaylist component */}
             <TabPlaylist
               currentSong={currentSong}
               playlist={playlist}
               onRemoveSong={onRemoveSong}
-              onSkip={onMarkAsPlayed}
-              isSkipping={isSkipping} 
+              onSkip={onMarkAsPlayed} 
+              isSkipping={isSkipping}
+              isPlaying={isPlaying} // <-- PASS THIS PROP
+              remainingTime={remainingTime} // <-- PASS THIS PROP
             />
-            {/* --- END THE FIX --- */}
           </TabsContent>
 
           <TabsContent
@@ -113,8 +114,6 @@ export function HostControlPanel({
           </TabsContent>
         </Tabs>
       </div>
-      
-      {/* --- REMOVED: Playback Controls Bar --- */}
     </div>
   );
 }

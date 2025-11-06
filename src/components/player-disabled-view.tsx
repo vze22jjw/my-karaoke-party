@@ -6,49 +6,29 @@ import { MicVocal, SkipForward, Youtube, Loader2 } from "lucide-react";
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { QrCode } from "./qr-code";
-
-/**
- * Formats an ISO 8601 duration string (e.g., "PT4M13S") into "4:13".
- */
-function formatISODuration(durationString: string | undefined | null): string {
-  if (!durationString) return "N/A";
-
-  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
-  const matches = durationString.match(regex);
-
-  if (!matches) return "N/A";
-
-  // --- THIS IS THE FIX ---
-  // Changed || to ?? to satisfy the linter
-  const hours = parseInt(matches[1] ?? '0');
-  const minutes = parseInt(matches[2] ?? '0');
-  const seconds = parseInt(matches[3] ?? '0');
-  // --- END THE FIX ---
-
-  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-  
-  const displayMinutes = Math.floor(totalSeconds / 60);
-  const displaySeconds = totalSeconds % 60;
-
-  return `${displayMinutes}:${displaySeconds < 10 ? '0' : ''}${displaySeconds}`;
-}
+import { formatISODuration } from "~/utils/string"; 
+import { SongCountdownTimer } from "./song-countdown-timer";
 
 type Props = {
   video: VideoInPlaylist;
+  nextSong?: VideoInPlaylist; 
   joinPartyUrl: string;
   isFullscreen: boolean;
   onOpenYouTubeAndAutoSkip: () => void; 
   onSkip: () => void; 
   isSkipping: boolean; 
+  remainingTime: number; 
 };
 
 export function PlayerDisabledView({
   video,
+  nextSong, 
   joinPartyUrl,
   isFullscreen,
   onOpenYouTubeAndAutoSkip, 
   onSkip,
   isSkipping,
+  remainingTime, 
 }: Props) {
 
   const formattedDuration = formatISODuration(video.duration);
@@ -68,6 +48,7 @@ export function PlayerDisabledView({
         <h2 className="text-outline scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl">
           <MicVocal className="mr-2 inline text-primary" size={32} />
           {video.singerName}
+          {/* --- FIX: Typo corrected --- */}
           <MicVocal
             className="ml-2 inline scale-x-[-1] transform text-primary"
             size={32}
@@ -86,24 +67,49 @@ export function PlayerDisabledView({
           </p>
         </div>
         
-        <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
-          Click the button to open on YouTube
-        </h3>
-        
-        <Button
-          type="button"
-          size="lg"
-          className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-          onClick={onOpenYouTubeAndAutoSkip} 
-          disabled={isSkipping} 
-        >
-          {isSkipping ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <Youtube className="mr-2" size={24} />
-          )}
-          {isSkipping ? `Auto-skip in ${formattedDuration}...` : "Open & Auto-Skip"}
-        </Button>
+        {/* --- THIS IS THE FIX (Req #2) --- */}
+        {/* Check if we are in the "waiting for skip" state */}
+        {isSkipping ? (
+          // If YES, show the "Next Singer" timer
+          <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
+            <h3 className="text-xl font-semibold text-white">
+              {nextSong ? (
+                <>
+                  Next Singer: {nextSong.singerName} up in{" "}
+                  <SongCountdownTimer
+                    remainingTime={remainingTime}
+                    className="text-white"
+                  />
+                </>
+              ) : (
+                "Queue is empty... go add a song!"
+              )}
+            </h3>
+          </div>
+        ) : (
+          // If NO, show the "Open on YouTube" button
+          <>
+            <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
+              Click the button to open on YouTube
+            </h3>
+            
+            <Button
+              type="button"
+              size="lg"
+              className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
+              onClick={onOpenYouTubeAndAutoSkip} 
+              disabled={isSkipping} 
+            >
+              {isSkipping ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Youtube className="mr-2" size={24} />
+              )}
+              {/* This text is correct, it shows the duration of the *current* song */}
+              {isSkipping ? `Auto-skip in ${formattedDuration}...` : "Open & Auto-Skip"}
+            </Button>
+          </>
+        )}
         
         <div className="mt-4">
           <Button
@@ -111,12 +117,14 @@ export function PlayerDisabledView({
             variant={"secondary"}
             type="button"
             onClick={onSkip} 
-            disabled={false} 
+            disabled={false} // Always enabled
           >
             <SkipForward className="mr-2 h-5 w-5" />
             Skip Song
           </Button>
         </div>
+        {/* --- END THE FIX --- */}
+
       </div>
 
       {/* QR Code Footer */}

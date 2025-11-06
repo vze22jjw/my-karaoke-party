@@ -6,6 +6,7 @@ import { Users, MicVocal, ChevronDown, LogOut, Crown } from "lucide-react";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
+import { SongCountdownTimer } from "~/components/song-countdown-timer"; 
 
 type Participant = {
   name: string;
@@ -17,8 +18,10 @@ type Props = {
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
   participants: Participant[];
-  name: string; // This is the current user's name
+  name: string; 
   onLeaveParty: () => void;
+  isPlaying: boolean; 
+  remainingTime: number; // <-- ADD THIS PROP
 };
 
 export function TabSingers({
@@ -28,6 +31,8 @@ export function TabSingers({
   participants,
   name,
   onLeaveParty,
+  isPlaying, 
+  remainingTime, // <-- GET THIS PROP
 }: Props) {
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>(
     {},
@@ -38,10 +43,13 @@ export function TabSingers({
   };
 
   const sortedParticipants = [...participants].sort((a, b) => {
-    if (a.name === name) return -1; // 'a' (current user) comes first
-    if (b.name === name) return 1;  // 'b' (current user) comes first
-    return a.name.localeCompare(b.name); // Alphabetical for all others
+    if (a.name === name) return -1;
+    if (b.name === name) return 1;
+    return a.name.localeCompare(b.name);
   });
+
+  const currentSingerName = currentSong?.singerName;
+  const nextSingerName = unplayedPlaylist[0]?.singerName;
 
   return (
     <div className="bg-card rounded-lg p-4 border">
@@ -77,6 +85,9 @@ export function TabSingers({
             const isYou = participant.name === name; 
             const isHost = participant.role === "Host";
 
+            const isCurrentSinger = participant.name === currentSingerName;
+            const isNextSinger = participant.name === nextSingerName;
+
             return (
               <div
                 key={participant.name} 
@@ -85,14 +96,28 @@ export function TabSingers({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                      {/* --- THIS IS THE FIX (Req #4) --- */}
+                      {/* Add flashing animation if this is the CURRENT singer and song is playing */}
                       {isHost ? (
-                        <Crown className="h-5 w-5" />
+                        <Crown className={cn("h-5 w-5", isCurrentSinger && isPlaying && "animate-pulse")} />
                       ) : (
-                        <MicVocal className="h-5 w-5" />
+                        <MicVocal className={cn("h-5 w-5", isCurrentSinger && isPlaying && "animate-pulse")} />
                       )}
+                      {/* --- END THE FIX (Req #4) --- */}
                     </div>
                     <div>
-                      <p className="font-semibold">{participant.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{participant.name}</p>
+                        {/* --- THIS IS THE FIX (Req #5) --- */}
+                        {/* Show timer if this is the NEXT singer and a song is playing/paused */}
+                        {isNextSinger && currentSong && (
+                          <SongCountdownTimer
+                            remainingTime={remainingTime}
+                            className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
+                          />
+                        )}
+                        {/* --- END THE FIX (Req #5) --- */}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {totalSongs} song(s)
                       </p>

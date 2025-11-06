@@ -4,6 +4,7 @@ import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 import { toast } from "sonner";
+import { parseISO8601Duration } from "~/utils/string";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
@@ -18,13 +19,10 @@ interface SocketActions {
   startSkipTimer: () => void; 
 }
 
-// --- THIS IS THE FIX (Part 1) ---
-// Define the Participant type on the client
 type Participant = {
   name: string;
   role: string;
 };
-// --- END THE FIX (Part 1) ---
 
 interface UsePartySocketReturn {
   currentSong: VideoInPlaylist | null;
@@ -34,8 +32,9 @@ interface UsePartySocketReturn {
   socketActions: SocketActions;
   isConnected: boolean;
   isPlaying: boolean;
-  participants: Participant[]; // <-- CHANGED
+  participants: Participant[]; 
   isSkipping: boolean; 
+  remainingTime: number; // <-- The global countdown time in seconds
 }
 
 type PartySocketData = {
@@ -69,20 +68,38 @@ export function usePartySocket(
     initialData.settings,
   );
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  // --- THIS IS THE FIX (Part 2) ---
-  // Change state to hold Participant objects
   const [participants, setParticipants] = useState<Participant[]>([]);
-  // --- END THE FIX (Part 2) ---
-  
   const [isSkipping, setIsSkipping] = useState(false);
 
-  useEffect(() => {
-    const oldSongId = currentSong?.id;
-    if (initialData.currentSong?.id !== oldSongId) {
-      setIsSkipping(false);
+  const [remainingTime, setRemainingTime] = useState(0); // Time in seconds
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
+  
+  const stopCountdown = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
-  }, [initialData.currentSong?.id, currentSong?.id]);
+  };
+
+  const startCountdown = () => {
+    stopCountdown(); 
+    timerIntervalRef.current = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          stopCountdown();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+  
+  const resetCountdown = (song: VideoInPlaylist | null) => {
+    stopCountdown();
+    const durationMs = parseISO8601Duration(song?.duration);
+    setRemainingTime(durationMs ? Math.floor(durationMs / 1000) : 0);
+  };
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -106,23 +123,19 @@ export function usePartySocket(
       newSocket.on("disconnect", () => {
         debugLog(LOG_TAG, "Socket disconnected");
         setIsConnected(false);
+        stopCountdown(); 
       });
 
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
-        debugLog(LOG_TAG, "Received 'playlist-updated'", {
-          Settings: partyData.settings,
-          CurrentSong: partyData.currentSong?.title ?? "None",
-          Unplayed: formatPlaylistForLog(partyData.unplayed),
-          Played: formatPlaylistForLog(partyData.played),
-        });
+        debugLog(LOG_TAG, "Received 'playlist-updated'", { /* ... */ });
         
-        setCurrentSong((prevSong) => {
-          if (prevSong?.id !== partyData.currentSong?.id) {
-            setIsSkipping(false);
-          }
-          return partyData.currentSong;
-        });
-        
+        if (prevSongIdRef.current !== partyData.currentSong?.id) {
+          setIsSkipping(false);
+          resetCountdown(partyData.currentSong); 
+        }
+        prevSongIdRef.current = partyData.currentSong?.id ?? null;
+
+        setCurrentSong(partyData.currentSong);
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
@@ -131,20 +144,19 @@ export function usePartySocket(
       newSocket.on("playback-state-play", () => {
         debugLog(LOG_TAG, "Received 'playback-state-play'");
         setIsPlaying(true);
+        startCountdown(); 
       });
 
       newSocket.on("playback-state-pause", () => {
         debugLog(LOG_TAG, "Received 'playback-state-pause'");
         setIsPlaying(false);
+        stopCountdown(); 
       });
 
-      // --- THIS IS THE FIX (Part 3) ---
-      // Updated handler to receive the new Participant[] array
       newSocket.on("singers-updated", (participantList: Participant[]) => {
         debugLog(LOG_TAG, "Received 'singers-updated'", participantList);
         setParticipants(participantList);
       });
-      // --- END THE FIX (Part 3) ---
 
       newSocket.on("new-singer-joined", (name: string) => {
         debugLog(LOG_TAG, `New singer joined: ${name}`);
@@ -155,6 +167,7 @@ export function usePartySocket(
 
       newSocket.on("party-closed", () => {
         debugLog(LOG_TAG, "Received 'party-closed'");
+        stopCountdown(); 
         alert("The party was ended by the host.");
         router.push("/");
       });
@@ -167,6 +180,7 @@ export function usePartySocket(
     };
 
     void socketInitializer();
+    resetCountdown(initialData.currentSong); // Set initial time
 
     const heartbeatInterval = setInterval(() => {
       socketRef.current?.emit("heartbeat", { partyHash, singerName });
@@ -179,7 +193,9 @@ export function usePartySocket(
         socketRef.current = null;
       }
       clearInterval(heartbeatInterval);
+      stopCountdown(); 
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partyHash, singerName, router]); 
 
   const socketActions: SocketActions = useMemo(() => ({
@@ -244,7 +260,8 @@ export function usePartySocket(
     socketActions, 
     isConnected, 
     isPlaying, 
-    participants, // <-- RETURN 'participants'
+    participants, 
     isSkipping,
+    remainingTime 
   };
 }

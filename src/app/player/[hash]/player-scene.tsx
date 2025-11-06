@@ -14,26 +14,9 @@ import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
-
-// --- ADDED: Helper function to parse ISO 8601 duration ---
-/**
- * Parses an ISO 8601 duration string (e.g., "PT4M13S") into milliseconds.
- */
-function parseISO8601Duration(durationString: string | undefined | null): number | null {
-  if (!durationString) return null;
-
-  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
-  const matches = durationString.match(regex);
-
-  if (!matches) return null;
-
-  const hours = parseInt(matches[1] || '0');
-  const minutes = parseInt(matches[2] || '0');
-  const seconds = parseInt(matches[3] || '0');
-
-  return (hours * 3600 + minutes * 60 + seconds) * 1000;
-}
-// --- END HELPER ---
+import { parseISO8601Duration } from "~/utils/string"; 
+// --- THIS IS THE CORRECT IMPORT PATH ---
+import { PlayerDesktopView } from "./components/player-desktop-view";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -59,10 +42,12 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const { 
     currentSong, 
+    unplayedPlaylist, 
     socketActions, 
     isPlaying,
     settings,
-    isSkipping 
+    isSkipping, 
+    remainingTime 
   } = usePartySocket(
     party.hash,
     initialData,
@@ -70,6 +55,7 @@ export default function PlayerScene({ party, initialData }: Props) {
   );
   
   const { ref, toggle, fullscreen } = useFullscreen();
+  const nextSong = unplayedPlaylist[0];
 
   useEffect(() => {
     return () => {
@@ -86,13 +72,11 @@ export default function PlayerScene({ party, initialData }: Props) {
     }
     setForceAutoplay(false); 
     socketActions.markAsPlayed();
-    socketActions.playbackPause(); // Pause for the next singer
+    socketActions.playbackPause(); 
   };
 
   const handlePlayerEnd = async () => {
-    setForceAutoplay(false); 
-    socketActions.markAsPlayed();
-    socketActions.playbackPause(); 
+    doTheSkip(); 
   };
 
   const handleSkip = async () => {
@@ -101,7 +85,6 @@ export default function PlayerScene({ party, initialData }: Props) {
     doTheSkip(); 
   };
   
-  // --- THIS IS THE FIX ---
   const handleOpenYouTubeAndAutoSkip = () => {
     if (isSkipping) return; 
 
@@ -115,19 +98,14 @@ export default function PlayerScene({ party, initialData }: Props) {
       );
     }
 
-    // Use the song's actual duration for the timer
-    const durationMs = parseISO8601Duration(currentSong?.duration) ?? 10000; // Default 10s
-    
-    // Add a 5-second buffer to the timer
-    const timerWithBuffer = durationMs + 5000; 
+    const timerDuration = remainingTime > 0 ? (remainingTime * 1000) + 5000 : 10000;
 
-    console.log(`Starting auto-skip timer for ${timerWithBuffer}ms`);
+    console.log(`Starting auto-skip timer for ${timerDuration}ms`);
 
     autoSkipTimerRef.current = setTimeout(() => {
       doTheSkip();
-    }, timerWithBuffer); // Use duration + 5s
+    }, timerDuration); 
   };
-  // --- END THE FIX ---
   
   const handlePlay = () => {
     socketActions.playbackPlay();
@@ -141,10 +119,34 @@ export default function PlayerScene({ party, initialData }: Props) {
   
   const isPlaybackDisabled = settings.disablePlayback ?? false;
 
+  const commonPlayerProps = {
+    joinPartyUrl: joinPartyUrl,
+    isFullscreen: fullscreen,
+    onPlayerEnd: handlePlayerEnd,
+    onSkip: handleSkip,
+    forceAutoplay: forceAutoplay,
+    onAutoplayed: () => setForceAutoplay(false),
+    isPlaying: isPlaying,
+    onPlay: handlePlay,
+    onPause: handlePause,
+    remainingTime: remainingTime,
+    nextSong: nextSong,
+  };
+
   return (
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
-        <div className="relative h-full" ref={ref as RefCallback<HTMLDivElement>}>
+        
+        {/* Render Desktop View (hidden on mobile) */}
+        <PlayerDesktopView
+          playerRef={ref as RefCallback<HTMLDivElement>}
+          onToggleFullscreen={toggle}
+          currentVideo={currentSong ?? undefined} // <-- This fixes the null type error
+          {...commonPlayerProps}
+        />
+        
+        {/* Render Mobile View (hidden on desktop) */}
+        <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
           <Button
             onClick={toggle}
             variant="ghost"
@@ -157,24 +159,18 @@ export default function PlayerScene({ party, initialData }: Props) {
           {isPlaybackDisabled && currentSong ? ( 
             <PlayerDisabledView
               video={currentSong}
+              nextSong={nextSong} 
               joinPartyUrl={joinPartyUrl}
               isFullscreen={fullscreen}
               onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
               onSkip={handleSkip} 
               isSkipping={isSkipping} 
+              remainingTime={remainingTime} 
             />
           ) : currentSong ? ( 
             <Player
               video={currentSong}
-              joinPartyUrl={joinPartyUrl}
-              isFullscreen={fullscreen}
-              onPlayerEnd={handlePlayerEnd}
-              onSkip={handleSkip} 
-              forceAutoplay={forceAutoplay} 
-              onAutoplayed={() => setForceAutoplay(false)}
-              isPlaying={isPlaying}
-              onPlay={handlePlay}
-              onPause={handlePause}
+              {...commonPlayerProps}
             />
           ) : (
             <EmptyPlayer
@@ -182,8 +178,8 @@ export default function PlayerScene({ party, initialData }: Props) {
               className={fullscreen ? "bg-gradient" : ""}
             />
           )}
-          
         </div>
+        
       </div>
     </div>
   );

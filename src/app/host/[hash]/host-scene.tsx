@@ -5,7 +5,6 @@ import { useLocalStorage } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef } from "react";
-import useSound from "use-sound";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
@@ -49,11 +48,13 @@ export function HostScene({ party, initialData }: Props) {
     settings, 
     socketActions, 
     isConnected,
-    isSkipping // <-- Get global skipping state from hook
+    isSkipping,
+    isPlaying, // <-- GET isPlaying
+    remainingTime // <-- GET remainingTime
   } = usePartySocket(
     party.hash,
     initialData,
-    "Host" // <-- Pass "Host" as the singerName
+    "Host"
   );
   
   const useQueueRules = settings.orderByFairness;
@@ -73,14 +74,11 @@ export function HostScene({ party, initialData }: Props) {
     socketActions.removeSong(videoId);
   };
 
-  // This is called when the host's SKIP BUTTON is clicked
   const handleSkip = async () => {
-    if (isSkipping) return; // Prevent double-clicks
-    // Notify all clients to disable buttons
+    if (isSkipping) return; 
     socketActions.startSkipTimer(); 
-    // Immediately skip
     socketActions.markAsPlayed();
-    socketActions.playbackPlay();
+    socketActions.playbackPause(); // Pause for next singer
   };
   
   const handleCloseParty = () => {
@@ -104,7 +102,7 @@ export function HostScene({ party, initialData }: Props) {
       currentSong={currentSong}
       playlist={unplayedPlaylist}
       onRemoveSong={removeSong}
-      onMarkAsPlayed={handleSkip} // The skip button in the playlist
+      onMarkAsPlayed={handleSkip} 
       useQueueRules={useQueueRules} 
       onToggleRules={handleToggleRules} 
       disablePlayback={disablePlayback} 
@@ -112,12 +110,13 @@ export function HostScene({ party, initialData }: Props) {
       maxSearchResults={maxSearchResults}
       onSetMaxResults={setMaxSearchResults}
       onCloseParty={handleCloseParty}
-      // Pass the global skipping state down
       isConfirmingClose={isConfirmingClose || isSkipping} 
       onConfirmClose={confirmCloseParty} 
       onCancelClose={cancelCloseParty}
-      // --- ADDED THIS ---
       isSkipping={isSkipping}
+      // --- ADD THESE PROPS ---
+      isPlaying={isPlaying}
+      remainingTime={remainingTime}
     />
   );
 }

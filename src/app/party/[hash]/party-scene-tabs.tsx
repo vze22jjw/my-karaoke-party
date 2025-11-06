@@ -23,7 +23,7 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
 };
 
-export function PartyScene({
+export function PartySceneTabs({
   party,
   initialData,
 }: {
@@ -37,20 +37,19 @@ export function PartyScene({
     defaultValue: "player",
   });
 
-  // --- THIS IS THE FIX ---
-  // Get 'participants' instead of 'singers' and 'hostName'
   const { 
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
     socketActions,
-    participants 
+    participants, 
+    isPlaying,
+    remainingTime // <-- GET new timer state
   } = usePartySocket(
     party.hash!,
     initialData,
     name 
   );
-  // --- END THE FIX ---
   
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
@@ -121,7 +120,7 @@ export function PartyScene({
 
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
-            playlist={unplayedPlaylist}
+            playlist={unplayedPlaylist} 
             name={name}
             onVideoAdded={addSong}
           />
@@ -131,8 +130,6 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
-          {/* --- THIS IS THE FIX --- */}
-          {/* Pass the 'participants' array */}
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
@@ -140,8 +137,9 @@ export function PartyScene({
             participants={participants}
             name={name}
             onLeaveParty={onLeaveParty}
+            isPlaying={isPlaying} 
+            remainingTime={remainingTime} // <-- PASS THE MISSING PROP
           />
-          {/* --- END THE FIX --- */}
         </TabsContent>
         <TabsContent
           value="history"

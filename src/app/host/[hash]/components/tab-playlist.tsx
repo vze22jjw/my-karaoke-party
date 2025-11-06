@@ -6,6 +6,7 @@ import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 import { SkipForward, X, Loader2 } from "lucide-react"; 
 import Image from "next/image";
+import { SongCountdownTimer } from "~/components/song-countdown-timer"; // <-- Import timer
 
 type Props = {
   currentSong: VideoInPlaylist | null;
@@ -13,6 +14,8 @@ type Props = {
   onRemoveSong: (videoId: string) => void;
   onSkip: () => void;
   isSkipping: boolean; 
+  isPlaying: boolean; 
+  remainingTime: number; 
 };
 
 export function TabPlaylist({
@@ -21,6 +24,8 @@ export function TabPlaylist({
   onRemoveSong,
   onSkip,
   isSkipping, 
+  isPlaying, 
+  remainingTime, 
 }: Props) {
   const nextVideos = [...(currentSong ? [currentSong] : []), ...playlist];
 
@@ -39,9 +44,7 @@ export function TabPlaylist({
             key={video.id}
             className="flex items-stretch justify-between gap-2"
           >
-            {/* Song Tile (takes up all available space) */}
             <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center">
-              {/* Thumbnail */}
               <div className="relative w-16 aspect-video flex-shrink-0">
                 <Image
                   src={video.coverUrl}
@@ -52,7 +55,6 @@ export function TabPlaylist({
                 />
               </div>
 
-              {/* Song Info */}
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex items-center gap-1 mb-1">
                   <span
@@ -67,16 +69,24 @@ export function TabPlaylist({
                     {decode(video.title)}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {video.singerName}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground truncate">
+                    {video.singerName}
+                  </p>
+                  {/* --- THIS IS THE FIX (Req #3) --- */}
+                  {isNowPlaying && (
+                    <SongCountdownTimer
+                      remainingTime={remainingTime}
+                      className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
+                    />
+                  )}
+                  {/* --- END THE FIX (Req #3) --- */}
+                </div>
               </div>
             </div>
 
-            {/* Button Area: Fixed width and flex */}
             <div className="flex-shrink-0 flex w-10">
               {isNowPlaying ? (
-                // Stacked buttons: Centered vertically
                 <div className="flex flex-col gap-1 justify-center w-full">
                   <Button
                     size="icon"
@@ -106,20 +116,15 @@ export function TabPlaylist({
                   </Button>
                 </div>
               ) : (
-                // --- THIS IS THE FIX ---
-                // Single button: Stretches to full height
                 <Button
                   size="icon"
                   className="h-full w-full p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                   onClick={() => onRemoveSong(video.id)}
-                  disabled={isSkipping} // The button is correctly disabled
+                  disabled={isSkipping} 
                 >
                   <span className="sr-only">Remove song</span>
-                  {/* Always show the X icon, even when disabled. */}
-                  {/* The loading spinner is only for the "now playing" buttons. */}
                   <X className="h-4 w-4" />
                 </Button>
-                // --- END THE FIX ---
               )}
             </div>
           </div>

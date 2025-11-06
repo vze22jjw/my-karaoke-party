@@ -1,19 +1,18 @@
 "use client";
 
-import type { VideoInPlaylist } from "party"; // <-- KaraokeParty removed
+import type { VideoInPlaylist } from "party"; 
 import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
 
-// --- THIS IS THE FIX ---
-// The Props type definition must include all the new properties.
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
   currentVideo: VideoInPlaylist | undefined;
+  nextSong: VideoInPlaylist | undefined; 
   joinPartyUrl: string;
   onPlayerEnd: () => void;
   onSkip: () => void;
@@ -22,14 +21,15 @@ type Props = {
   isPlaying: boolean;
   onPlay: () => void;
   onPause: () => void;
+  remainingTime: number; 
 };
-// --- END THE FIX ---
 
 export function PlayerDesktopView({
   playerRef,
   onToggleFullscreen,
   isFullscreen,
   currentVideo,
+  nextSong, 
   joinPartyUrl,
   onPlayerEnd,
   onSkip,
@@ -38,9 +38,9 @@ export function PlayerDesktopView({
   isPlaying,
   onPlay,
   onPause,
+  remainingTime, 
 }: Props) {
   return (
-    // This is hidden on mobile
     <div className="hidden sm:block sm:w-full h-screen"> 
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
@@ -55,16 +55,17 @@ export function PlayerDesktopView({
           {currentVideo ? (
             <Player
               video={currentVideo}
+              nextSong={nextSong}
               joinPartyUrl={joinPartyUrl}
               isFullscreen={isFullscreen}
               onPlayerEnd={onPlayerEnd}
               onSkip={onSkip}
-              // --- These props will now be accepted ---
               forceAutoplay={forceAutoplay}
               onAutoplayed={onAutoplayed}
               isPlaying={isPlaying}
               onPlay={onPlay}
               onPause={onPause}
+              remainingTime={remainingTime}
             />
           ) : (
             <EmptyPlayer

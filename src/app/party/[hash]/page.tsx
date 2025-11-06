@@ -1,14 +1,16 @@
 import { notFound } from "next/navigation";
-// --- IMPORT NEW TYPES ---
 import { type VideoInPlaylist, type KaraokeParty } from "party";
 import { api } from "~/trpc/server";
-import { PartyScene } from "./party-scene-tabs";
+
+// --- THIS IS THE FIX ---
+// Import the component with the correct name from the correct file
+import { PartySceneTabs } from "./party-scene-tabs";
+// --- END THE FIX ---
 
 type Props = {
   params: { hash: string };
 };
 
-// --- DEFINE NEW DATA TYPE ---
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -35,7 +37,6 @@ export default async function PartyHashPage({ params }: Props) {
     notFound();
   }
 
-  // --- UPDATED: Set default for new data structure ---
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
@@ -44,17 +45,15 @@ export default async function PartyHashPage({ params }: Props) {
   };
 
   try {
-    // --- UPDATED: Use NEXT_PUBLIC_APP_URL from env ---
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
-        revalidate: 0, // Force dynamic fetch
+        revalidate: 0, 
       },
     });
 
     if (playlistRes.ok) {
-      // --- UPDATED: Cast to new data structure ---
       const data = (await playlistRes.json()) as InitialPartyData;
       initialData = data;
     }
@@ -62,8 +61,10 @@ export default async function PartyHashPage({ params }: Props) {
     console.warn("Failed to fetch initial playlist for party page", error);
   }
   
-  // --- UPDATED: Pass new prop ---
+  // --- THIS IS THE FIX ---
+  // Render the renamed component
   return (
-    <PartyScene key={party.hash} party={party} initialData={initialData} />
+    <PartySceneTabs key={party.hash} party={party} initialData={initialData} />
   );
+  // --- END THE FIX ---
 }

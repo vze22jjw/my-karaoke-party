@@ -1,6 +1,5 @@
 import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
-// --- IMPORT NEW TYPES ---
 import { type VideoInPlaylist, type KaraokeParty } from "party";
 import PlayerScene from "./player-scene";
 
@@ -8,7 +7,6 @@ type Props = {
   params: { hash: string };
 };
 
-// --- DEFINE NEW DATA TYPE ---
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -35,31 +33,26 @@ export default async function PartyPage({ params }: Props) {
     notFound();
   }
 
-  // --- THIS IS THE FIX ---
-  // The default settings object now matches the full type
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
     played: [], 
     settings: { 
       orderByFairness: true,
-      disablePlayback: false // <-- This was missing
+      disablePlayback: false 
     } 
   };
-  // --- END THE FIX ---
 
   try {
-    // --- UPDATED: Use NEXT_PUBLIC_APP_URL from env ---
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
-        revalidate: 0, // Force dynamic fetch
+        revalidate: 0, 
       },
     });
 
     if (playlistRes.ok) {
-      // --- UPDATED: Cast to new data structure ---
       const data = (await playlistRes.json()) as InitialPartyData;
       initialData = data;
     }
@@ -67,6 +60,5 @@ export default async function PartyPage({ params }: Props) {
     console.warn("Failed to fetch initial playlist for player", error);
   }
 
-  // --- UPDATED: Pass new prop ---
   return <PlayerScene party={party} initialData={initialData} />;
 }
