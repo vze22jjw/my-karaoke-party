@@ -15,9 +15,16 @@ interface SocketActions {
   sendHeartbeat: () => void;
   playbackPlay: () => void;
   playbackPause: () => void;
-  // --- ADDED THIS ---
-  startSkipTimer: () => void; // Notifies others we are starting a 10s skip
+  startSkipTimer: () => void; 
 }
+
+// --- THIS IS THE FIX (Part 1) ---
+// Define the Participant type on the client
+type Participant = {
+  name: string;
+  role: string;
+};
+// --- END THE FIX (Part 1) ---
 
 interface UsePartySocketReturn {
   currentSong: VideoInPlaylist | null;
@@ -27,9 +34,8 @@ interface UsePartySocketReturn {
   socketActions: SocketActions;
   isConnected: boolean;
   isPlaying: boolean;
-  singers: string[];
-  // --- ADDED THIS ---
-  isSkipping: boolean; // This is now the global skipping state
+  participants: Participant[]; // <-- CHANGED
+  isSkipping: boolean; 
 }
 
 type PartySocketData = {
@@ -63,15 +69,20 @@ export function usePartySocket(
     initialData.settings,
   );
   const [isPlaying, setIsPlaying] = useState(false);
-  const [singers, setSingers] = useState<string[]>([]);
   
-  // --- THIS STATE IS NOW MANAGED BY THE HOOK ---
+  // --- THIS IS THE FIX (Part 2) ---
+  // Change state to hold Participant objects
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  // --- END THE FIX (Part 2) ---
+  
   const [isSkipping, setIsSkipping] = useState(false);
 
-  // --- ADDED: Reset isSkipping when a new song arrives ---
   useEffect(() => {
-    setIsSkipping(false);
-  }, [currentSong?.id]);
+    const oldSongId = currentSong?.id;
+    if (initialData.currentSong?.id !== oldSongId) {
+      setIsSkipping(false);
+    }
+  }, [initialData.currentSong?.id, currentSong?.id]);
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -105,8 +116,12 @@ export function usePartySocket(
           Played: formatPlaylistForLog(partyData.played),
         });
         
-        // Update the song. Do NOT change isPlaying state here.
-        setCurrentSong(partyData.currentSong);
+        setCurrentSong((prevSong) => {
+          if (prevSong?.id !== partyData.currentSong?.id) {
+            setIsSkipping(false);
+          }
+          return partyData.currentSong;
+        });
         
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
@@ -123,14 +138,17 @@ export function usePartySocket(
         setIsPlaying(false);
       });
 
-      newSocket.on("singers-updated", (singerList: string[]) => {
-        debugLog(LOG_TAG, "Received 'singers-updated'", singerList);
-        setSingers(singerList);
+      // --- THIS IS THE FIX (Part 3) ---
+      // Updated handler to receive the new Participant[] array
+      newSocket.on("singers-updated", (participantList: Participant[]) => {
+        debugLog(LOG_TAG, "Received 'singers-updated'", participantList);
+        setParticipants(participantList);
       });
+      // --- END THE FIX (Part 3) ---
 
       newSocket.on("new-singer-joined", (name: string) => {
         debugLog(LOG_TAG, `New singer joined: ${name}`);
-        if (name && name !== singerName) { // Don't toast for yourself
+        if (name && name !== singerName) { 
           toast.info(`${name} has joined the party!`);
         }
       });
@@ -141,7 +159,6 @@ export function usePartySocket(
         router.push("/");
       });
 
-      // --- ADDED: Listen for global skip state ---
       newSocket.on("skip-timer-started", () => {
         debugLog(LOG_TAG, "Received 'skip-timer-started', disabling skip buttons.");
         setIsSkipping(true);
@@ -163,7 +180,7 @@ export function usePartySocket(
       }
       clearInterval(heartbeatInterval);
     };
-  }, [partyHash, singerName]);
+  }, [partyHash, singerName, router]); 
 
   const socketActions: SocketActions = useMemo(() => ({
     addSong: (videoId, title, coverUrl, singerName) => {
@@ -211,11 +228,11 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'playback-pause'", data);
       socketRef.current?.emit("playback-pause", data);
     },
-    // --- ADDED THIS ACTION ---
     startSkipTimer: () => {
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'start-skip-timer'", data);
-      socketRef.current?.emit("start-skip-timer", data);
+      setIsSkipping(true); 
+      socketRef.current?.emit("start-skip-timer", data); 
     },
   }), [partyHash, singerName]);
 
@@ -227,8 +244,7 @@ export function usePartySocket(
     socketActions, 
     isConnected, 
     isPlaying, 
-    singers,
-    // --- RETURN THE NEW STATE ---
-    isSkipping 
+    participants, // <-- RETURN 'participants'
+    isSkipping,
   };
 }

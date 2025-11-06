@@ -4,7 +4,7 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { SkipForward, X, Loader2 } from "lucide-react"; // <-- Import Loader2
+import { SkipForward, X, Loader2 } from "lucide-react"; 
 import Image from "next/image";
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
   playlist: KaraokeParty["playlist"];
   onRemoveSong: (videoId: string) => void;
   onSkip: () => void;
-  isSkipping: boolean; // <-- ADDED THIS PROP
+  isSkipping: boolean; 
 };
 
 export function TabPlaylist({
@@ -20,7 +20,7 @@ export function TabPlaylist({
   playlist,
   onRemoveSong,
   onSkip,
-  isSkipping, // <-- Get the prop
+  isSkipping, 
 }: Props) {
   const nextVideos = [...(currentSong ? [currentSong] : []), ...playlist];
 
@@ -82,7 +82,7 @@ export function TabPlaylist({
                     size="icon"
                     className="h-8 w-full rounded-md bg-muted/50 border border-border text-yellow-300 hover:bg-gray-700"
                     onClick={() => onSkip()}
-                    disabled={isSkipping} // <-- DISABLE BUTTON
+                    disabled={isSkipping} 
                   >
                     <span className="sr-only">Skip song</span>
                     {isSkipping ? (
@@ -95,7 +95,7 @@ export function TabPlaylist({
                     size="icon"
                     className="h-8 w-full rounded-md bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                     onClick={() => onRemoveSong(video.id)}
-                    disabled={isSkipping} // <-- DISABLE BUTTON
+                    disabled={isSkipping} 
                   >
                     <span className="sr-only">Remove song</span>
                     {isSkipping ? (
@@ -106,20 +106,20 @@ export function TabPlaylist({
                   </Button>
                 </div>
               ) : (
+                // --- THIS IS THE FIX ---
                 // Single button: Stretches to full height
                 <Button
                   size="icon"
                   className="h-full w-full p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                   onClick={() => onRemoveSong(video.id)}
-                  disabled={isSkipping} // <-- DISABLE BUTTON
+                  disabled={isSkipping} // The button is correctly disabled
                 >
                   <span className="sr-only">Remove song</span>
-                  {isSkipping ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <X className="h-4 w-4" />
-                  )}
+                  {/* Always show the X icon, even when disabled. */}
+                  {/* The loading spinner is only for the "now playing" buttons. */}
+                  <X className="h-4 w-4" />
                 </Button>
+                // --- END THE FIX ---
               )}
             </div>
           </div>

@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
-// import { db } from "~/server/db"; // <-- Removed this line
 import { sqids } from "~/server/utils/sqids";
-import { TRPCError } from "@trpc/server"; // Import TRPCError
+import { TRPCError } from "@trpc/server"; 
 
 export const partyRouter = createTRPCRouter({
   create: publicProcedure
@@ -13,13 +12,9 @@ export const partyRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        // --- THIS IS THE FIX ---
-        // Check for ANY party with the same name that currently exists.
-        // The auto-cleanup cron will handle deleting old parties.
         const existingParty = await ctx.db.party.findFirst({
           where: {
             name: input.name,
-            // (No time filter)
           },
         });
 
@@ -29,7 +24,6 @@ export const partyRouter = createTRPCRouter({
             message: `A party named "${input.name}" already exists. Please choose another name.`,
           });
         }
-        // --- END THE FIX ---
 
         const party = await ctx.db.party.create({
           data: {
@@ -38,7 +32,6 @@ export const partyRouter = createTRPCRouter({
           },
         });
 
-        // Use the imported sqids instance to encode the ID
         const hash = sqids.encode([party.id]);
         
         const updatedParty = await ctx.db.party.update({
@@ -46,17 +39,19 @@ export const partyRouter = createTRPCRouter({
           data: { hash },
         });
 
-        // Register the creator as a participant using the `name` field
+        // --- THIS IS THE FIX ---
+        // Register the creator as a participant with the "Host" role
         await ctx.db.partyParticipant.create({
           data: {
             partyId: party.id,
-            name: input.singerName, // The input is `singerName`, but the DB field is `name`
+            name: input.singerName, 
+            role: "Host", // <-- Set the role to Host
           },
         });
+        // --- END THE FIX ---
 
         return updatedParty;
       } catch (error) {
-        // Re-throw tRPC errors, wrap others
         if (error instanceof TRPCError) {
           throw error;
         }

@@ -15,6 +15,26 @@ import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 
+// --- ADDED: Helper function to parse ISO 8601 duration ---
+/**
+ * Parses an ISO 8601 duration string (e.g., "PT4M13S") into milliseconds.
+ */
+function parseISO8601Duration(durationString: string | undefined | null): number | null {
+  if (!durationString) return null;
+
+  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+  const matches = durationString.match(regex);
+
+  if (!matches) return null;
+
+  const hours = parseInt(matches[1] || '0');
+  const minutes = parseInt(matches[2] || '0');
+  const seconds = parseInt(matches[3] || '0');
+
+  return (hours * 3600 + minutes * 60 + seconds) * 1000;
+}
+// --- END HELPER ---
+
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -31,7 +51,6 @@ export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   const [forceAutoplay, setForceAutoplay] = useState(false);
   
-  // Ref to hold the auto-skip timer
   const autoSkipTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!party.hash) {
@@ -43,7 +62,7 @@ export default function PlayerScene({ party, initialData }: Props) {
     socketActions, 
     isPlaying,
     settings,
-    isSkipping // <-- Get global skipping state from hook
+    isSkipping 
   } = usePartySocket(
     party.hash,
     initialData,
@@ -52,7 +71,6 @@ export default function PlayerScene({ party, initialData }: Props) {
   
   const { ref, toggle, fullscreen } = useFullscreen();
 
-  // This effect just cleans up the timer if the component unmounts
   useEffect(() => {
     return () => {
       if (autoSkipTimerRef.current) {
@@ -61,42 +79,34 @@ export default function PlayerScene({ party, initialData }: Props) {
     };
   }, []);
 
-  // This is the core skip logic
   const doTheSkip = () => {
-    // If an auto-skip timer is running, clear it (in case of manual skip).
     if (autoSkipTimerRef.current) {
       clearTimeout(autoSkipTimerRef.current);
       autoSkipTimerRef.current = null;
     }
-    setForceAutoplay(true); 
+    setForceAutoplay(false); 
     socketActions.markAsPlayed();
-    socketActions.playbackPlay();
+    socketActions.playbackPause(); // Pause for the next singer
   };
 
-  // Called when a song ENDS NATURALLY
   const handlePlayerEnd = async () => {
     setForceAutoplay(false); 
     socketActions.markAsPlayed();
-    socketActions.playbackPlay(); // Tell others to update
+    socketActions.playbackPause(); 
   };
 
-  // Called when MANUAL SKIP button is clicked
   const handleSkip = async () => {
-    if (isSkipping) return; // Prevent double-clicks
-    // Notify all clients to disable buttons
+    if (isSkipping) return; 
     socketActions.startSkipTimer(); 
-    // Immediately skip
     doTheSkip(); 
   };
   
-  // Called when "Open on YouTube" is clicked
+  // --- THIS IS THE FIX ---
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (isSkipping) return; // Prevent double-clicks
+    if (isSkipping) return; 
 
-    // 1. Notify all clients to disable buttons
     socketActions.startSkipTimer(); 
 
-    // 2. Open YouTube
     if (currentSong) {
       window.open(
         `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
@@ -105,18 +115,24 @@ export default function PlayerScene({ party, initialData }: Props) {
       );
     }
 
-    // 3. Start 10-second timer to call the core skip logic
+    // Use the song's actual duration for the timer
+    const durationMs = parseISO8601Duration(currentSong?.duration) ?? 10000; // Default 10s
+    
+    // Add a 5-second buffer to the timer
+    const timerWithBuffer = durationMs + 5000; 
+
+    console.log(`Starting auto-skip timer for ${timerWithBuffer}ms`);
+
     autoSkipTimerRef.current = setTimeout(() => {
       doTheSkip();
-    }, 10000); // 10 seconds
+    }, timerWithBuffer); // Use duration + 5s
   };
+  // --- END THE FIX ---
   
-  // Called when PLAY button is clicked
   const handlePlay = () => {
     socketActions.playbackPlay();
   };
   
-  // Called when PAUSE button is clicked
   const handlePause = () => {
     socketActions.playbackPause();
   };
@@ -139,18 +155,15 @@ export default function PlayerScene({ party, initialData }: Props) {
           </Button>
           
           {isPlaybackDisabled && currentSong ? ( 
-            // 1. Render Playback Disabled View
             <PlayerDisabledView
               video={currentSong}
               joinPartyUrl={joinPartyUrl}
               isFullscreen={fullscreen}
-              // Pass the correct handlers
               onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
-              onSkip={handleSkip}
-              isSkipping={isSkipping} // Pass global state
+              onSkip={handleSkip} 
+              isSkipping={isSkipping} 
             />
           ) : currentSong ? ( 
-            // 2. Render normal Player
             <Player
               video={currentSong}
               joinPartyUrl={joinPartyUrl}
@@ -164,7 +177,6 @@ export default function PlayerScene({ party, initialData }: Props) {
               onPause={handlePause}
             />
           ) : (
-            // 3. Render Empty Player
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={fullscreen ? "bg-gradient" : ""}

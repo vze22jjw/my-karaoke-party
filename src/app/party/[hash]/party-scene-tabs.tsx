@@ -5,7 +5,7 @@ import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useEffect, useState, useMemo } from "react";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
-import { Monitor, Music, Users, History, Plus } from "lucide-react"; // <-- IMPORT Plus
+import { Monitor, Music, Users, History, Plus } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlayer } from "./components/tab-player";
@@ -37,33 +37,31 @@ export function PartyScene({
     defaultValue: "player",
   });
 
+  // --- THIS IS THE FIX ---
+  // Get 'participants' instead of 'singers' and 'hostName'
   const { 
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
     socketActions,
-    singers // <-- Get singers list from hook
+    participants 
   } = usePartySocket(
     party.hash!,
     initialData,
-    name // <-- Pass name to hook
+    name 
   );
+  // --- END THE FIX ---
   
-  // --- REMOVED: allSongs useMemo, it's no longer needed ---
-
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
-    // Redirect if name is not set
     if (!value) {
       router.push(`/join/${party.hash}`);
     }
   }, [router, party.hash]);
 
-  // --- REMOVED: useEffect poller for singers ---
-
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
-      socketActions.sendHeartbeat(); // Send heartbeat (which includes name)
+      socketActions.sendHeartbeat(); 
       socketActions.addSong(videoId, title, coverUrl, name);
     } catch (error) {
       console.error("Error adding song:", error);
@@ -93,16 +91,13 @@ export function PartyScene({
             <Monitor className="h-4 w-4" />
             <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
-          {/* --- THIS IS THE FIX --- */}
           <TabsTrigger value="add" className="flex items-center gap-2">
-            {/* Group the icons so the gap is between the group and the text */}
             <span className="flex items-center gap-1">
               <Music className="h-4 w-4" />
               <Plus className="h-4 w-4" />
             </span>
             <span className="hidden sm:inline">Add</span>
           </TabsTrigger>
-          {/* --- END THE FIX --- */}
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             <span className="hidden sm:inline">History</span>
@@ -136,14 +131,17 @@ export function PartyScene({
           value="singers"
           className="flex-1 overflow-y-auto mt-0"
         >
+          {/* --- THIS IS THE FIX --- */}
+          {/* Pass the 'participants' array */}
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
             playedPlaylist={playedPlaylist}
-            singers={singers}
+            participants={participants}
             name={name}
             onLeaveParty={onLeaveParty}
           />
+          {/* --- END THE FIX --- */}
         </TabsContent>
         <TabsContent
           value="history"

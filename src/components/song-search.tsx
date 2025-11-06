@@ -23,7 +23,6 @@ type Props = {
   name: string; // <-- Know who the current user is
 };
 
-// Define the type of a single search result item
 type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
@@ -32,9 +31,7 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
   
-  // State to track videos just added, to hide them *immediately*
   const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>([]);
-  // State to track videos *currently* fading out (for animation)
   const [fadingOutVideoIds, setFadingOutVideoIds] = useState<string[]>([]);
 
   const [maxSearchResults] = useLocalStorage<number>({
@@ -42,7 +39,6 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
     defaultValue: 10,
   });
 
-  // Rename the destructured variable to rawData
   const { data: rawData, isError, refetch, isLoading, isFetched } =
     api.youtube.search.useQuery(
       {
@@ -52,14 +48,12 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
       { refetchOnWindowFocus: false, enabled: false, retry: false },
     );
   
-  // Cast the data from the hook to its specific type *once*.
   const data = rawData as YoutubeSearchItem[] | undefined;
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        // Clear both states on new search
         setRecentlyAddedVideoIds([]);
         setFadingOutVideoIds([]);
         await refetch();
@@ -142,14 +136,11 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
           {data
             .filter((video) => {
-              // Check for songs *just* added (for immediate hiding)
               const isRecentlyAdded = recentlyAddedVideoIds.includes(video.id.videoId);
-              // Return true (keep) only if it's NOT recently added
               return !isRecentlyAdded;
             })
             .map((video) => {
             
-            // Check for songs *already* in the playlist (for disabled button)
             const alreadyInQueue = !!playlist.find(
               (v) =>
                 v.id === video.id.videoId &&
@@ -157,7 +148,6 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
                 v.singerName === name,
             );
             
-            // Check if this video is *currently* fading out
             const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
             const title = decode(removeBracketedContent(video.snippet.title));
@@ -165,7 +155,6 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
             return (
               <div
                 key={video.id.videoId}
-                // Apply animation class if it's fading out
                 className={cn(
                   "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50",
                   isFadingOut && "animate-fade-out-slow"
@@ -196,25 +185,24 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
                     variant={"default"}
                     size="icon"
                     className="shadow-xl animate-in spin-in"
-                    // Disable button if already in queue OR if it's fading
                     disabled={alreadyInQueue || isFadingOut}
                     onClick={() => {
-                      // Call parent function
+                      // --- THIS IS THE FIX ---
+                      // We no longer pass duration, as the server will fetch it.
                       onVideoAdded(
                         video.id.videoId,
                         removeBracketedContent(video.snippet.title),
                         video.snippet.thumbnails.high.url,
                       );
-                      // Add to "fading out" list to trigger animation
+                      // --- END THE FIX ---
+
                       setFadingOutVideoIds((prev) => [...prev, video.id.videoId]);
                       
-                      // After animation, add to "hidden" list to filter it out
                       setTimeout(() => {
                         setRecentlyAddedVideoIds((prev) => [...prev, video.id.videoId]);
-                      }, 500); // Must match animation duration in tailwind.config.ts
+                      }, 500); 
                     }}
                   >
-                    {/* Show checkmark if already in queue OR fading, otherwise plus */}
                     {alreadyInQueue || isFadingOut ? <Check stroke="pink" /> : <Plus />}
                   </Button>
                 </div>

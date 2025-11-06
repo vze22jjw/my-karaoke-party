@@ -2,17 +2,43 @@
 
 import { type VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
-import { MicVocal, SkipForward, Youtube, Loader2 } from "lucide-react"; // <-- Typo fixed
+import { MicVocal, SkipForward, Youtube, Loader2 } from "lucide-react"; 
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { QrCode } from "./qr-code";
+
+/**
+ * Formats an ISO 8601 duration string (e.g., "PT4M13S") into "4:13".
+ */
+function formatISODuration(durationString: string | undefined | null): string {
+  if (!durationString) return "N/A";
+
+  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+  const matches = durationString.match(regex);
+
+  if (!matches) return "N/A";
+
+  // --- THIS IS THE FIX ---
+  // Changed || to ?? to satisfy the linter
+  const hours = parseInt(matches[1] ?? '0');
+  const minutes = parseInt(matches[2] ?? '0');
+  const seconds = parseInt(matches[3] ?? '0');
+  // --- END THE FIX ---
+
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  
+  const displayMinutes = Math.floor(totalSeconds / 60);
+  const displaySeconds = totalSeconds % 60;
+
+  return `${displayMinutes}:${displaySeconds < 10 ? '0' : ''}${displaySeconds}`;
+}
 
 type Props = {
   video: VideoInPlaylist;
   joinPartyUrl: string;
   isFullscreen: boolean;
-  onOpenYouTubeAndAutoSkip: () => void; // Prop for auto-skip
-  onSkip: () => void; // Prop for manual skip
+  onOpenYouTubeAndAutoSkip: () => void; 
+  onSkip: () => void; 
   isSkipping: boolean; 
 };
 
@@ -24,6 +50,8 @@ export function PlayerDisabledView({
   onSkip,
   isSkipping,
 }: Props) {
+
+  const formattedDuration = formatISODuration(video.duration);
 
   return (
     <div
@@ -62,21 +90,19 @@ export function PlayerDisabledView({
           Click the button to open on YouTube
         </h3>
         
-        {/* --- THIS IS THE FIX (Part 1) --- */}
         <Button
           type="button"
           size="lg"
           className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-          // This button now triggers the auto-skip flow
           onClick={onOpenYouTubeAndAutoSkip} 
-          disabled={isSkipping} // Disable when skipping
+          disabled={isSkipping} 
         >
           {isSkipping ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
             <Youtube className="mr-2" size={24} />
           )}
-          {isSkipping ? "Waiting to Skip..." : "Open & Auto-Skip"}
+          {isSkipping ? `Auto-skip in ${formattedDuration}...` : "Open & Auto-Skip"}
         </Button>
         
         <div className="mt-4">
@@ -84,20 +110,13 @@ export function PlayerDisabledView({
             className="animate-in fade-in zoom-in"
             variant={"secondary"}
             type="button"
-            // This button is for a manual skip
             onClick={onSkip} 
-            disabled={isSkipping} // Disable when skipping
+            disabled={false} 
           >
-            {isSkipping ? (
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            ) : (
-              <SkipForward className="mr-2 h-5 w-5" />
-            )}
-            {isSkipping ? "Skipping..." : "Skip Song"}
+            <SkipForward className="mr-2 h-5 w-5" />
+            Skip Song
           </Button>
         </div>
-        {/* The broken "gooey-right" button has been removed. */}
-        {/* --- END THE FIX --- */}
       </div>
 
       {/* QR Code Footer */}

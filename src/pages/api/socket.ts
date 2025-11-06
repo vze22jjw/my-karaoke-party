@@ -10,10 +10,7 @@ import { db } from "~/server/db";
 import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 import { type PlaylistItem } from "@prisma/client";
-
-// --- THIS IS THE FIX: Added missing imports ---
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
-// --- END THE FIX ---
 
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: NetSocket & {
@@ -25,22 +22,38 @@ type NextApiResponseWithSocket = NextApiResponse & {
 
 const LOG_TAG = "[SocketServer]";
 
-// --- (Helper functions: getSingers, registerParticipant, etc. remain the same) ---
-async function getSingers(partyId: number): Promise<string[]> {
+// --- ALL HELPER FUNCTIONS MOVED HERE, BEFORE SocketHandler ---
+
+type Participant = {
+  name: string;
+  role: string;
+};
+
+async function getSingers(partyId: number): Promise<Participant[]> {
   const participants = await db.partyParticipant.findMany({
     where: { partyId },
-    orderBy: { joinedAt: "desc" }, // Use `joinedAt`
+    orderBy: { joinedAt: "asc" }, 
+    select: {
+      name: true,
+      role: true, 
+    },
   });
-  // Use `name`
-  const uniqueNames = [...new Set(participants.map((p) => p.name))];
-  return uniqueNames;
+  
+  const uniqueParticipants = new Map<string, Participant>();
+  for (const p of participants) {
+    if (!uniqueParticipants.has(p.name) || p.role === "Host") {
+      uniqueParticipants.set(p.name, p);
+    }
+  }
+  
+  return Array.from(uniqueParticipants.values());
 }
 
 async function updateAndEmitSingers(io: Server, partyId: number, partyHash: string) {
   try {
-    const singerList = await getSingers(partyId);
-    debugLog(LOG_TAG, `Emitting 'singers-updated' to room ${partyHash}`, singerList);
-    io.to(partyHash).emit("singers-updated", singerList);
+    const participants = await getSingers(partyId); 
+    debugLog(LOG_TAG, `Emitting 'singers-updated' to room ${partyHash}`, participants);
+    io.to(partyHash).emit("singers-updated", participants); 
   } catch (error) {
     console.error("Error emitting singers:", error);
   }
@@ -48,38 +61,37 @@ async function updateAndEmitSingers(io: Server, partyId: number, partyHash: stri
 
 async function registerParticipant(partyId: number, name: string): Promise<{ isNew: boolean }> {
   if (!name || name.trim() === "" || name === "Host" || name === "Player") {
-    return { isNew: false }; // Don't register empty names or system names
+    return { isNew: false }; 
   }
 
   try {
     const existing = await db.partyParticipant.findUnique({
       where: {
-        partyId_name: { // Use `partyId_name`
+        partyId_name: { 
           partyId,
           name,
         },
       },
     });
 
-    await db.partyParticipant.upsert({
-      where: {
-        partyId_name: { // Use `partyId_name`
-          partyId,
-          name,
-        },
-      },
-      create: { // Use `name`
+    if (existing) {
+      return { isNew: false };
+    }
+
+    await db.partyParticipant.create({
+      data: {
         partyId,
         name,
-      },
-      update: { // Re-set name to trigger update timestamp
-        name: name,
+        role: "Guest", // Explicitly set to Guest
       },
     });
     
-    return { isNew: !existing };
+    return { isNew: true };
 
   } catch (error) {
+    if ((error as any).code === 'P2002') { 
+      return { isNew: false };
+    }
     console.error("Error registering participant:", error);
     return { isNew: false };
   }
@@ -110,6 +122,7 @@ const updateAndEmitPlaylist = async (io: Server, partyHash: string, triggeredBy:
   }
 };
 
+// --- MAIN SocketHandler ---
 
 const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   if (res.socket.server.io) {
@@ -128,7 +141,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   io.on("connection", (socket: Socket) => {
     debugLog(LOG_TAG, `Socket connected: ${socket.id}`);
 
-    // --- (request-open-parties handler remains the same) ---
     socket.on("request-open-parties", async () => {
       debugLog(LOG_TAG, `Received 'request-open-parties' from ${socket.id}`);
       try {
@@ -162,7 +174,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
 
-    // --- (join-party handler remains the same) ---
     socket.on("join-party", async (data: { partyHash: string, singerName: string }) => {
       const { partyHash, singerName } = data;
       void socket.join(partyHash);
@@ -175,12 +186,12 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           socket.broadcast.to(partyHash).emit("new-singer-joined", singerName);
         }
         
+        // This will now work because updateAndEmitPlaylist is defined above
         void updateAndEmitPlaylist(io, partyHash, "join-party");
         void updateAndEmitSingers(io, party.id, partyHash);
       }
     });
 
-    // --- (add-song handler remains the same) ---
     socket.on(
       "add-song",
       async (data: {
@@ -204,7 +215,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
             where: {
               partyId: party.id,
               videoId: data.videoId,
-              singerName: data.singerName, // <-- Check singerName
+              singerName: data.singerName, 
               playedAt: null,
             },
           });
@@ -232,7 +243,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       },
     );
 
-    // --- (remove-song handler remains the same) ---
     socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
       debugLog(LOG_TAG, `Received 'remove-song' for room ${data.partyHash}`, data);
       try {
@@ -248,11 +258,9 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
 
-    // --- Event: Mark as Played (This logic is correct) ---
     socket.on("mark-as-played", async (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'mark-as-played' for room ${data.partyHash}`, data);
       try {
-        // 1. Get the party and ALL playlist items
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
           include: { 
@@ -267,12 +275,10 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           return;
         }
 
-        // 2. Separate played and unplayed
         const allItems: PlaylistItem[] = party.playlistItems;
         const playedItems = allItems.filter((item) => item.playedAt);
         const unplayedItems = allItems.filter((item) => !item.playedAt);
 
-        // 3. Find the *actual* last singer
         const lastPlayedSong =
           playedItems.length > 0
             ? playedItems.reduce((latest, current) =>
@@ -283,7 +289,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
             : null;
         const singerToDeprioritize = lastPlayedSong?.singerName ?? null;
 
-        // 4. Run the *exact same* fairness logic as the playlist service
         let fairlySortedUnplayed: PlaylistItem[] = [];
         if (party.orderByFairness) {
           fairlySortedUnplayed = orderByRoundRobin(
@@ -295,35 +300,29 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           fairlySortedUnplayed = unplayedItems; // Already sorted by addedAt
         }
 
-        // 5. Get the *correct* current song
         const currentSong = fairlySortedUnplayed[0];
 
         if (!currentSong) {
           debugLog(LOG_TAG, "No song to mark as played.");
-          return; // No song to play
+          return; 
         }
 
-        // 6. Mark *that specific song* as played using its unique DB ID
         debugLog(LOG_TAG, `Marking song ${currentSong.id} as played`);
         await db.playlistItem.update({
           where: { id: currentSong.id },
           data: { playedAt: new Date() },
         });
 
-        // 7. Update party activity
         await db.party.update({
           where: { id: party.id },
           data: { lastActivityAt: new Date() },
         });
 
-        // 8. Broadcast the new state to everyone
         await updateAndEmitPlaylist(io, data.partyHash, "mark-as-played");
       } catch (error) {
         console.error("Error marking as played:", error);
       }
     });
-
-    // --- (playback-play/pause, toggle-rules, toggle-playback, close-party, heartbeat handlers remain the same) ---
     
     socket.on("playback-play", (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`);
@@ -390,10 +389,8 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
 
-    // --- (start-skip-timer handler remains the same) ---
     socket.on("start-skip-timer", (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Broadcasting 'skip-timer-started' to room ${data.partyHash}`);
-      // Broadcast to all clients *except* the sender
       socket.broadcast.to(data.partyHash).emit("skip-timer-started");
     });
   });

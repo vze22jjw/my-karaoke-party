@@ -1,18 +1,23 @@
 "use client";
 
-import type { VideoInPlaylist } from "party"; // <-- FIX: Removed unused 'KaraokeParty'
+import type { VideoInPlaylist } from "party";
 import { useState } from "react";
-import { Users, MicVocal, ChevronDown, LogOut } from "lucide-react";
+import { Users, MicVocal, ChevronDown, LogOut, Crown } from "lucide-react";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
+
+type Participant = {
+  name: string;
+  role: string;
+};
 
 type Props = {
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
-  singers: string[];
-  name: string;
+  participants: Participant[];
+  name: string; // This is the current user's name
   onLeaveParty: () => void;
 };
 
@@ -20,7 +25,7 @@ export function TabSingers({
   currentSong,
   unplayedPlaylist,
   playedPlaylist,
-  singers,
+  participants,
   name,
   onLeaveParty,
 }: Props) {
@@ -32,12 +37,18 @@ export function TabSingers({
     setShowPlayedMap((prev) => ({ ...prev, [singer]: !prev[singer] }));
   };
 
+  const sortedParticipants = [...participants].sort((a, b) => {
+    if (a.name === name) return -1; // 'a' (current user) comes first
+    if (b.name === name) return 1;  // 'b' (current user) comes first
+    return a.name.localeCompare(b.name); // Alphabetical for all others
+  });
+
   return (
     <div className="bg-card rounded-lg p-4 border">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Singers ({singers.length})
+          Singers ({participants.length})
         </h2>
         <Button
           variant="ghost"
@@ -50,32 +61,38 @@ export function TabSingers({
         </Button>
       </div>
 
-      {singers.length === 0 ? (
+      {participants.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">
           No singers yet
         </p>
       ) : (
         <div className="space-y-3">
-          {singers.map((singer) => {
-            const playedSongs = playedPlaylist.filter((v) => v.singerName === singer);
-            const nextSongs = unplayedPlaylist.filter((v) => v.singerName === singer);
-            const currentSongForSinger = (currentSong?.singerName === singer) ? currentSong : null;
+          {sortedParticipants.map((participant) => {
+            const playedSongs = playedPlaylist.filter((v) => v.singerName === participant.name);
+            const nextSongs = unplayedPlaylist.filter((v) => v.singerName === participant.name);
+            const currentSongForSinger = (currentSong?.singerName === participant.name) ? currentSong : null;
             const totalSongs = playedSongs.length + nextSongs.length + (currentSongForSinger ? 1 : 0);
             
-            const showPlayed = !!showPlayedMap[singer];
+            const showPlayed = !!showPlayedMap[participant.name];
+            const isYou = participant.name === name; 
+            const isHost = participant.role === "Host";
 
             return (
               <div
-                key={singer}
+                key={participant.name} 
                 className="p-4 rounded-lg border bg-muted/50"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                      <MicVocal className="h-5 w-5" />
+                      {isHost ? (
+                        <Crown className="h-5 w-5" />
+                      ) : (
+                        <MicVocal className="h-5 w-5" />
+                      )}
                     </div>
                     <div>
-                      <p className="font-semibold">{singer}</p>
+                      <p className="font-semibold">{participant.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {totalSongs} song(s)
                       </p>
@@ -83,17 +100,16 @@ export function TabSingers({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {singer === name && (
+                    {isYou && (
                       <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
                         You
                       </span>
                     )}
 
-                    {/* --- FIX: Made boolean check explicit --- */}
                     {(playedSongs.length > 0 || nextSongs.length > 0 || !!currentSongForSinger) && (
                       <Button
                         type="button"
-                        onClick={() => togglePlayed(singer)}
+                        onClick={() => togglePlayed(participant.name)}
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-white"
@@ -114,11 +130,8 @@ export function TabSingers({
                   </div>
                 </div>
 
-                {/* Show songs section */}
                 {showPlayed ? (
-                  // Show all songs when expanded
                   <div className="mt-2 space-y-3">
-                    {/* --- FIX: Made boolean check explicit --- */}
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
                         <p className="text-xs font-medium text-muted-foreground mb-1">
@@ -153,7 +166,7 @@ export function TabSingers({
                         <ul className="space-y-1">
                           {playedSongs.map((song) => (
                             <li
-                              key={song.id}
+                              key={song.id + (song.playedAt?.toString() ?? "")} 
                               className="text-xs truncate pl-2 text-muted-foreground"
                             >
                               • {decode(song.title)}
@@ -164,9 +177,7 @@ export function TabSingers({
                     )}
                   </div>
                 ) : (
-                  // Show summary when collapsed
                   <div className="text-xs text-muted-foreground">
-                    {/* --- FIX: Made boolean check explicit --- */}
                     {(!!currentSongForSinger || nextSongs.length > 0) &&
                       `${nextSongs.length + (currentSongForSinger ? 1 : 0)} in line`}
                     {(!!currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}
