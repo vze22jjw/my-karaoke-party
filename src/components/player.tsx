@@ -11,26 +11,27 @@ import { cn } from "~/lib/utils";
 import { Button } from "./ui/ui/button";
 import { MicVocal, SkipForward, Youtube } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
+import { SongCountdownTimer } from "./song-countdown-timer"; 
 
-// --- THIS IS THE FIX ---
-// This Props type includes all the new properties
 type Props = {
   joinPartyUrl: string;
   video: VideoInPlaylist;
+  nextSong?: VideoInPlaylist; 
   isFullscreen: boolean;
-  onPlayerEnd: () => void; // For song end
-  onSkip: () => void;      // For skip button
+  onPlayerEnd: () => void; 
+  onSkip: () => void;      
   forceAutoplay: boolean;
   onAutoplayed: () => void;
   isPlaying: boolean;
   onPlay: () => void;
   onPause: () => void;
+  remainingTime: number; 
 };
-// --- END THE FIX ---
 
 export function Player({
   joinPartyUrl,
   video,
+  nextSong, 
   isFullscreen = false,
   onPlayerEnd,
   onSkip,
@@ -39,6 +40,7 @@ export function Player({
   isPlaying,
   onPlay,
   onPause,
+  remainingTime, 
 }: Props) {
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
@@ -50,7 +52,6 @@ export function Player({
     setShowOpenInYouTubeButton(false);
   }, [video.id]);
 
-  // Effect to control player from socket state
   useEffect(() => {
     if (!playerRef.current || !isReady) return;
     
@@ -68,7 +69,7 @@ export function Player({
   const opts: YouTubeProps["opts"] = {
     playerVars: {
       start: 0,
-      autoplay: 0, // Manual control
+      autoplay: 0, 
       rel: 0,
       controls: 1,
       origin: typeof window !== "undefined" ? window.location.origin : "",
@@ -81,19 +82,19 @@ export function Player({
     const playerState = event.target.getPlayerState();
     if (playerState !== -1) {
       setIsReady(true);
-      // Only autoplay if the forceAutoplay flag is true (i.e., user clicked Skip)
       if (forceAutoplay) {
         event.target.playVideo();
-        onAutoplayed(); // Reset the flag in the parent
+        onAutoplayed(); 
+      } else {
+        event.target.pauseVideo();
       }
     }
   };
 
-  // Emit socket events when user interacts with YouTube controls
   const onPlayerPlay: YouTubeProps["onPlay"] = (_event) => {
     console.log("handlePlay (from player)");
     setInternalIsPlaying(true);
-    if (!isPlaying) { // Only emit if state is different
+    if (!isPlaying) { 
       onPlay();
     }
   };
@@ -101,7 +102,7 @@ export function Player({
   const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
     console.log("handlePause (from player)");
     setInternalIsPlaying(false);
-    if (isPlaying) { // Only emit if state is different
+    if (isPlaying) { 
       onPause();
     }
   };
@@ -123,6 +124,7 @@ export function Player({
   };
 
   if (showOpenInYouTubeButton) {
+    // ... (This error view remains the same)
     return (
       <div
         className={cn(
@@ -246,6 +248,24 @@ export function Player({
           </div>
         )}
       </div>
+
+      {/* --- THIS IS THE FIX (Req #1) --- */}
+      {/* Show "Next Singer" message when player is ready, paused, and a next song exists */}
+      {isReady && !isPlaying && nextSong && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+          <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
+            <h3 className="text-xl font-semibold text-white">
+              Next Singer: {nextSong.singerName} up in{" "}
+              <SongCountdownTimer
+                remainingTime={remainingTime}
+                className="text-white"
+              />
+            </h3>
+          </div>
+        </div>
+      )}
+      {/* --- END THE FIX (Req #1) --- */}
+
 
       <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">
         <QrCode url={joinPartyUrl} />

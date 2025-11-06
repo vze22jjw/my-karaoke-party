@@ -1,18 +1,17 @@
 import axios from "axios";
 import { env } from "~/env";
 
+// ... (interfaces Thumbnail, Thumbnails, SearchResultSnippet, SearchResultItem, YouTubeSearchResponse remain the same)
 interface Thumbnail {
   url: string;
   width: number;
   height: number;
 }
-
 interface Thumbnails {
   default: Thumbnail;
   medium: Thumbnail;
   high: Thumbnail;
 }
-
 interface SearchResultSnippet {
   publishedAt: string;
   channelId: string;
@@ -23,7 +22,6 @@ interface SearchResultSnippet {
   liveBroadcastContent: string;
   publishTime: string;
 }
-
 interface SearchResultItem {
   kind: string;
   etag: string;
@@ -33,7 +31,6 @@ interface SearchResultItem {
   };
   snippet: SearchResultSnippet;
 }
-
 interface YouTubeSearchResponse {
   kind: string;
   etag: string;
@@ -45,6 +42,16 @@ interface YouTubeSearchResponse {
   };
   items: SearchResultItem[];
 }
+// --- THIS IS THE NEW INTERFACE FOR THE VIDEOS.LIST ENDPOINT ---
+interface VideoDetailsResponse {
+  items: {
+    id: string;
+    contentDetails: {
+      duration: string;
+    };
+  }[];
+}
+
 
 class YouTubeDataAPI {
   private apiKeys: string[];
@@ -54,43 +61,38 @@ class YouTubeDataAPI {
     this.apiKeys = apiKeys;
   }
 
-  // async getVideoById(videoId: string): Promise<SearchResultItem> {
-  //   const response: AxiosResponse = await axios.get(`${this.baseUrl}/videos`, {
-  //     params: {
-  //       key: this.apiKey,
-  //       id: videoId,
-  //       part: "snippet",
-  //     },
-  //   });
-  //   return response.data.items[0];
-  // }
+  // --- THIS IS THE NEW FUNCTION ---
+  async getVideoDuration(videoId: string): Promise<string | null> {
+    let lastError: unknown;
 
-  // async getVideoByUrl(videoUrl: string): Promise<SearchResultItem> {
-  //   const match = videoUrl.match(
-  //     /(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
-  //   );
-  //   const videoId = match && match[1];
+    for (const [index, apiKey] of this.apiKeys.entries()) {
+      try {
+        const response = await axios.get<VideoDetailsResponse>(
+          `${this.baseUrl}/videos`,
+          {
+            params: {
+              key: apiKey,
+              part: "contentDetails",
+              id: videoId,
+            },
+          },
+        );
 
-  //   if (!videoId) {
-  //     throw new Error("Invalid YouTube video URL");
-  //   }
+        const duration = response.data.items[0]?.contentDetails?.duration;
+        return duration ?? null; // e.g., "PT4M13S"
 
-  //   return this.getVideoById(videoId);
-  // }
-
-  // async getVideoByTitle(
-  //   videoTitle: string,
-  // ): Promise<SearchResultItem | undefined> {
-  //   const response: AxiosResponse = await axios.get(`${this.baseUrl}/search`, {
-  //     params: {
-  //       key: this.apiKey,
-  //       q: videoTitle,
-  //       part: "snippet",
-  //       type: "video",
-  //     },
-  //   });
-  //   return response.data.items[0]; // Might return undefined if no match
-  // }
+      } catch (error) {
+        console.error(`Get video duration with API key #${index + 1} failed: `, error);
+        lastError = error;
+        // Continue to next API key
+      }
+    }
+    
+    // All keys failed
+    console.error(`All YouTube API keys failed. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+    return null;
+  }
+  // --- END NEW FUNCTION ---
 
   async searchVideo(query: string, maxResults = 10) {
     let lastError: unknown;

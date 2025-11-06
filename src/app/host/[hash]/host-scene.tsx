@@ -5,9 +5,8 @@ import { useLocalStorage } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef } from "react";
-import useSound from "use-sound";
 import { useRouter } from "next/navigation";
-import { HostControlPanel } from "./components/host-control-panel";
+import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 
 type InitialPartyData = {
@@ -49,56 +48,49 @@ export function HostScene({ party, initialData }: Props) {
     settings, 
     socketActions, 
     isConnected,
-    isPlaying,
-    // singers list is available, but host page doesn't show it
+    isSkipping,
+    isPlaying, // <-- GET isPlaying
+    remainingTime // <-- GET remainingTime
   } = usePartySocket(
     party.hash,
     initialData,
-    "Host" // <-- Pass "Host" as the singerName
+    "Host"
   );
   
   const useQueueRules = settings.orderByFairness;
-
+  const disablePlayback = settings.disablePlayback ?? false; 
+  
   const handleToggleRules = async () => {
-    // ... (function unchanged)
     const newRulesState = !useQueueRules;
     socketActions.toggleRules(newRulesState);
   };
 
+  const handleTogglePlayback = async () => { 
+    const newPlaybackState = !disablePlayback;
+    socketActions.togglePlayback(newPlaybackState);
+  };
+
   const removeSong = async (videoId: string) => {
-    // ... (function unchanged)
     socketActions.removeSong(videoId);
   };
 
   const handleSkip = async () => {
-    // ... (function unchanged)
+    if (isSkipping) return; 
+    socketActions.startSkipTimer(); 
     socketActions.markAsPlayed();
-    socketActions.playbackPlay();
+    socketActions.playbackPause(); // Pause for next singer
   };
   
-  const handlePlay = () => {
-    // ... (function unchanged)
-    socketActions.playbackPlay();
-  };
-  
-  const handlePause = () => {
-    // ... (function unchanged)
-    socketActions.playbackPause();
-  };
-
   const handleCloseParty = () => {
-    // ... (function unchanged)
     setIsConfirmingClose(true);
   };
 
   const confirmCloseParty = async () => {
-    // ... (function unchanged)
     socketActions.closeParty();
     setIsConfirmingClose(false);
   };
 
   const cancelCloseParty = () => {
-    // ... (function unchanged)
     setIsConfirmingClose(false);
   };
 
@@ -110,18 +102,21 @@ export function HostScene({ party, initialData }: Props) {
       currentSong={currentSong}
       playlist={unplayedPlaylist}
       onRemoveSong={removeSong}
-      onMarkAsPlayed={handleSkip}
+      onMarkAsPlayed={handleSkip} 
       useQueueRules={useQueueRules} 
       onToggleRules={handleToggleRules} 
+      disablePlayback={disablePlayback} 
+      onTogglePlayback={handleTogglePlayback} 
       maxSearchResults={maxSearchResults}
       onSetMaxResults={setMaxSearchResults}
       onCloseParty={handleCloseParty}
-      isConfirmingClose={isConfirmingClose} 
+      isConfirmingClose={isConfirmingClose || isSkipping} 
       onConfirmClose={confirmCloseParty} 
       onCancelClose={cancelCloseParty}
+      isSkipping={isSkipping}
+      // --- ADD THESE PROPS ---
       isPlaying={isPlaying}
-      onPlay={handlePlay}
-      onPause={handlePause}
+      remainingTime={remainingTime}
     />
   );
 }

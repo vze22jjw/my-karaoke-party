@@ -16,19 +16,16 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
   const [showAllNextSongs, setShowAllNextSongs] = useState(false);
   const [showAllPlayedSongs, setShowAllPlayedSongs] = useState(false);
 
-  // --- UPDATED: Use new props directly ---
-  const nextVideos = playlist; // This is now just the upcoming queue
-  const playedVideos = playedPlaylist; // This is the played list
-  const nextVideo = currentSong; // This is the "now playing" song
-  // --- END UPDATE ---
+  const nextVideos = playlist; 
+  const playedVideos = playedPlaylist; 
+  const nextVideo = currentSong; 
 
-  // Determine which subset of songs to show
   const songsToShowNext = showAllNextSongs
-    ? nextVideos // Show all upcoming
-    : nextVideos.slice(0, 5); // Show first 5 upcoming
+    ? nextVideos
+    : nextVideos.slice(0, 5); 
   const songsToShowPlayed = showAllPlayedSongs
-    ? playedVideos // Already sorted by most recent
-    : playedVideos.slice(0, 5); // Show first 5 played
+    ? playedVideos 
+    : playedVideos.slice(0, 5); 
 
   return (
     <div className="space-y-4">
@@ -60,13 +57,13 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
       </div>
 
       {/* Próximas músicas */}
-      {nextVideos.length > 0 && ( // <-- UPDATED
+      {nextVideos.length > 0 && ( 
         <div className="bg-card rounded-lg p-4 border">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-md font-semibold">
               Next in Line ({nextVideos.length})
             </h3>
-            {nextVideos.length > 5 && ( // <-- UPDATED
+            {nextVideos.length > 5 && ( 
               <button
                 type="button"
                 onClick={() => setShowAllNextSongs((prev) => !prev)}
@@ -126,14 +123,17 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
             )}
           </div>
           <ul className="space-y-1">
+            {/* --- THIS IS THE FIX --- */}
             {songsToShowPlayed.map((video) => (
               <li
-                key={video.id}
+                key={video.id + (video.playedAt?.toString() ?? "")}
                 className="text-sm text-muted-foreground truncate"
               >
-                • {decode(video.title)}
+                • {decode(video.title)}{" "}
+                <span className="text-xs opacity-70">({video.singerName})</span>
               </li>
             ))}
+            {/* --- END THE FIX --- */}
           </ul>
           {!showAllPlayedSongs && playedVideos.length > 5 && (
             <p className="text-sm text-muted-foreground mt-3 text-center">

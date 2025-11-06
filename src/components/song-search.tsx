@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { useState } from "react";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react"; 
 import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
 import type { KaraokeParty } from "party";
 import { PreviewPlayer } from "./preview-player";
@@ -13,41 +14,48 @@ import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
 import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
-import { useLocalStorage } from "@mantine/hooks"; // <-- Added import
+import { useLocalStorage } from "@mantine/hooks";
+import { cn } from "~/lib/utils"; 
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
   playlist: KaraokeParty["playlist"];
+  name: string; // <-- Know who the current user is
 };
 
-// --- Added key definition ---
+type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
+
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 
-export function SongSearch({ onVideoAdded, playlist }: Props) {
+export function SongSearch({ onVideoAdded, playlist, name }: Props) { 
   const [videoInputValue, setVideoInputValue] = useState("");
   const [canFetch, setCanFetch] = useState(false);
+  
+  const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>([]);
+  const [fadingOutVideoIds, setFadingOutVideoIds] = useState<string[]>([]);
 
-  // --- Added useLocalStorage hook ---
   const [maxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 10,
   });
 
-  const { data, isError, refetch, isLoading, isFetched } =
+  const { data: rawData, isError, refetch, isLoading, isFetched } =
     api.youtube.search.useQuery(
       {
         keyword: `${videoInputValue} karaoke`,
-        maxResults: maxSearchResults, // <-- Pass value to query
+        maxResults: maxSearchResults, 
       },
       { refetchOnWindowFocus: false, enabled: false, retry: false },
     );
-
-  // const [canPlayVideos, setCanPlayVideos] = useState<string[]>([]);
+  
+  const data = rawData as YoutubeSearchItem[] | undefined;
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
+        setRecentlyAddedVideoIds([]);
+        setFadingOutVideoIds([]);
         await refetch();
         setCanFetch(false);
       }}
@@ -117,32 +125,40 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
       {isLoading && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
-
           <Skeleton className="h-48 w-full rounded-xl" />
         </div>
       )}
 
       {data && (
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
-          {data.map((video: typeof data[number]) => {
-            const alreadyAdded = !!playlist.find(
-              (v) => v.id === video.id.videoId && !v.playedAt,
+          {data
+            .filter((video) => {
+              const isRecentlyAdded = recentlyAddedVideoIds.includes(video.id.videoId);
+              return !isRecentlyAdded;
+            })
+            .map((video) => {
+            
+            const alreadyInQueue = !!playlist.find(
+              (v) =>
+                v.id === video.id.videoId &&
+                !v.playedAt &&
+                v.singerName === name,
             );
+            
+            const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
             const title = decode(removeBracketedContent(video.snippet.title));
 
             return (
               <div
                 key={video.id.videoId}
-                className={
-                  "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50"
-                } // <-- Added border
+                className={cn(
+                  "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50",
+                  isFadingOut && "animate-fade-out-slow"
+                )}
               >
                 <PreviewPlayer
                   key={video.id.videoId}
@@ -169,16 +185,25 @@ export function SongSearch({ onVideoAdded, playlist }: Props) {
                     variant={"default"}
                     size="icon"
                     className="shadow-xl animate-in spin-in"
-                    disabled={alreadyAdded}
-                    onClick={() =>
+                    disabled={alreadyInQueue || isFadingOut}
+                    onClick={() => {
+                      // --- THIS IS THE FIX ---
+                      // We no longer pass duration, as the server will fetch it.
                       onVideoAdded(
                         video.id.videoId,
                         removeBracketedContent(video.snippet.title),
                         video.snippet.thumbnails.high.url,
-                      )
-                    }
+                      );
+                      // --- END THE FIX ---
+
+                      setFadingOutVideoIds((prev) => [...prev, video.id.videoId]);
+                      
+                      setTimeout(() => {
+                        setRecentlyAddedVideoIds((prev) => [...prev, video.id.videoId]);
+                      }, 500); 
+                    }}
                   >
-                    {alreadyAdded ? <Check stroke="pink" /> : <Plus />}
+                    {alreadyInQueue || isFadingOut ? <Check stroke="pink" /> : <Plus />}
                   </Button>
                 </div>
               </div>

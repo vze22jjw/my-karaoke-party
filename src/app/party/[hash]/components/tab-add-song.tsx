@@ -22,7 +22,9 @@ export function TabAddSong({ playlist, name, onVideoAdded }: Props) {
           <Music className="h-5 w-5" />
           Add Songs
         </h2>
-        <SongSearch onVideoAdded={onVideoAdded} playlist={playlist} />
+        {/* --- THIS IS THE FIX --- */}
+        <SongSearch onVideoAdded={onVideoAdded} playlist={playlist} name={name} />
+        {/* --- END THE FIX --- */}
       </div>
 
       {/* Minhas músicas na fila */}

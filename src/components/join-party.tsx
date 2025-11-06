@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react"; // <-- IMPORT useRef
 import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import {
   Drawer,
@@ -16,6 +16,7 @@ import {
 import { Button } from "~/components/ui/ui/button";
 import { Music, Clock, Users } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
+import { io, type Socket } from "socket.io-client"; // <-- IMPORT SOCKET.IO-CLIENT
 
 type Party = {
   hash: string;
@@ -25,52 +26,105 @@ type Party = {
   singerCount: number;
 };
 
-// --- START: New inner component ---
-// We must wrap the component logic in a child component
-// so that the main export is not a client component.
-// This allows us to use <Suspense> on the page.
 function JoinPartyDrawer() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const socketRef = useRef<Socket | null>(null); // <-- ADDED
 
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  // --- START: FIX ---
+  // Use a ref to track the open state for the socket callback
+  const isOpenRef = useRef(isOpen);
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+  // --- END: FIX ---
+
+  // --- ADDED: Socket connection useEffect ---
+  useEffect(() => {
+    // Initialize the socket connection
+    const socketInitializer = async () => {
+      await fetch("/api/socket"); // Wake up the socket endpoint
+
+      socketRef.current = io({
+        path: "/api/socket",
+        addTrailingSlash: false,
+      });
+
+      socketRef.current.on("connect", () => {
+        console.log("[JoinPartySocket] Socket connected");
+        
+        // --- START: FIX ---
+        // Request list *after* connecting IF drawer is already open
+        if (isOpenRef.current) {
+          setLoading(true);
+          setError(null);
+          console.log("[JoinPartySocket] Socket connected, fetching parties...");
+          socketRef.current?.emit("request-open-parties");
+        }
+        // --- END: FIX ---
+      });
+
+      // Listen for the list of parties
+      socketRef.current.on("open-parties-list", (data: { parties?: Party[], error?: string }) => {
+        console.log("[JoinPartySocket] Received 'open-parties-list'", data); // Added log
+        if (data.error) {
+          setError("Error loading parties. Please try again.");
+          console.error(data.error);
+        } else if (data.parties) {
+          setParties(data.parties);
+        }
+        setLoading(false);
+      });
+    };
+
+    void socketInitializer();
+
+    // Disconnect socket on component unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []); // Runs once on component mount
+  // --- END: Socket connection useEffect ---
+
   // --- START: Logic to auto-open drawer ---
   useEffect(() => {
     const openParam = searchParams?.get("openParties");
     if (openParam === "true") {
       setIsOpen(true);
-      // Clean up the URL
-      // --- THIS IS THE FIX ---
       if (pathname) {
         router.replace(pathname, { scroll: false });
       }
-      // --- END THE FIX ---
     }
   }, [searchParams, pathname, router]);
   // --- END: Logic to auto-open drawer ---
 
-  const fetchParties = async () => {
+  // --- UPDATED: fetchParties to use socket ---
+  const fetchParties = () => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await fetch("/api/parties/list");
-      if (!response.ok) {
-        throw new Error("Failed to fetch parties");
-      }
-      const data = (await response.json()) as Party[];
-      setParties(data);
-    } catch (err) {
-      setError("Error loading parties. Please try again.");
-      console.error("Error fetching parties:", err);
-    } finally {
-      setLoading(false);
+    
+    // --- START: FIX ---
+    // Only emit if socket is connected and ready
+    if (socketRef.current?.connected) { // <-- THIS IS THE FIX
+      console.log("[JoinPartySocket] Drawer opened, fetching parties...");
+      socketRef.current?.emit("request-open-parties");
+    } else {
+      // Socket not connected, the 'connect' event handler will fetch it.
+      console.log("[JoinPartySocket] Drawer opened, waiting for socket connect to fetch parties.");
+      // Set loading to true, the connect handler will set it to false
+      setLoading(true);
     }
+    // --- END: FIX ---
   };
+  // --- END: UPDATED fetchParties ---
 
   useEffect(() => {
     if (isOpen) {
@@ -78,15 +132,12 @@ function JoinPartyDrawer() {
     }
   }, [isOpen]);
 
-  // --- START: FIX ---
-  // Updated this function to close the drawer before navigating
   const handleJoinParty = (hash: string) => {
-    setIsOpen(false); // 1. Close the drawer
+    setIsOpen(false);
     setTimeout(() => {
-      router.push(`/join/${hash}`); // 2. Navigate after a short delay
-    }, 150); // 150ms delay to allow the drawer to close
+      router.push(`/join/${hash}`);
+    }, 150);
   };
-  // --- END: FIX ---
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -102,7 +153,6 @@ function JoinPartyDrawer() {
     return `created ${Math.floor(diffInHours / 24)}d`;
   };
 
-  // --- START: Helper function for mobile time format ---
   const formatTimeAgoMobile = (dateString: string) => {
     const now = new Date();
     const created = new Date(dateString);
@@ -116,13 +166,12 @@ function JoinPartyDrawer() {
     if (diffInHours < 24) return `${diffInHours}h`;
     return `${Math.floor(diffInHours / 24)}d`;
   };
-  // --- END: Helper function for mobile time format ---
 
   return (
     <Drawer
       open={isOpen}
       onOpenChange={setIsOpen}
-      shouldScaleBackground={false} // <-- This prop is correct
+      shouldScaleBackground={false}
     >
       <DrawerTrigger asChild>
         <div className="w-full">
@@ -180,7 +229,6 @@ function JoinPartyDrawer() {
                   >
                     <div className="space-y-1">
                       <h3 className="font-semibold uppercase">{party.name}</h3>
-                      {/* --- START: Updated responsive info row --- */}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Music className="h-4 w-4" />
@@ -206,7 +254,6 @@ function JoinPartyDrawer() {
                           </span>
                         </span>
                       </div>
-                      {/* --- END: Updated responsive info row --- */}
                     </div>
                     <Button
                       onClick={() => handleJoinParty(party.hash)}
@@ -229,9 +276,7 @@ function JoinPartyDrawer() {
     </Drawer>
   );
 }
-// --- END: New inner component ---
 
-// --- START: Main export wrapped in Suspense ---
 export function JoinParty() {
   return (
     <Suspense fallback={<ButtonHoverGradient type="button" className="w-full" disabled>Join Party 🎤</ButtonHoverGradient>}>
@@ -239,4 +284,3 @@ export function JoinParty() {
     </Suspense>
   );
 }
-// --- END: Main export wrapped in Suspense ---
