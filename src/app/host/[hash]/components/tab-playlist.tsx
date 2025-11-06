@@ -4,14 +4,15 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { SkipForward, X } from "lucide-react";
+import { SkipForward, X, Loader2 } from "lucide-react"; // <-- Import Loader2
 import Image from "next/image";
 
 type Props = {
   currentSong: VideoInPlaylist | null;
   playlist: KaraokeParty["playlist"];
   onRemoveSong: (videoId: string) => void;
-  onSkip: () => void; // <-- This is onMarkAsPlayed
+  onSkip: () => void;
+  isSkipping: boolean; // <-- ADDED THIS PROP
 };
 
 export function TabPlaylist({
@@ -19,6 +20,7 @@ export function TabPlaylist({
   playlist,
   onRemoveSong,
   onSkip,
+  isSkipping, // <-- Get the prop
 }: Props) {
   const nextVideos = [...(currentSong ? [currentSong] : []), ...playlist];
 
@@ -33,8 +35,6 @@ export function TabPlaylist({
       {nextVideos.map((video, index) => {
         const isNowPlaying = index === 0;
         return (
-          // --- THIS IS THE FIX ---
-          // Main container: items-stretch to make children equal height
           <div
             key={video.id}
             className="flex items-stretch justify-between gap-2"
@@ -82,17 +82,27 @@ export function TabPlaylist({
                     size="icon"
                     className="h-8 w-full rounded-md bg-muted/50 border border-border text-yellow-300 hover:bg-gray-700"
                     onClick={() => onSkip()}
+                    disabled={isSkipping} // <-- DISABLE BUTTON
                   >
                     <span className="sr-only">Skip song</span>
-                    <SkipForward className="h-4 w-4" />
+                    {isSkipping ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <SkipForward className="h-4 w-4" />
+                    )}
                   </Button>
                   <Button
                     size="icon"
                     className="h-8 w-full rounded-md bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                     onClick={() => onRemoveSong(video.id)}
+                    disabled={isSkipping} // <-- DISABLE BUTTON
                   >
                     <span className="sr-only">Remove song</span>
-                    <X className="h-4 w-4" />
+                    {isSkipping ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               ) : (
@@ -101,13 +111,17 @@ export function TabPlaylist({
                   size="icon"
                   className="h-full w-full p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                   onClick={() => onRemoveSong(video.id)}
+                  disabled={isSkipping} // <-- DISABLE BUTTON
                 >
                   <span className="sr-only">Remove song</span>
-                  <X className="h-4 w-4" />
+                  {isSkipping ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
                 </Button>
               )}
             </div>
-            {/* --- END THE FIX --- */}
           </div>
         );
       })}

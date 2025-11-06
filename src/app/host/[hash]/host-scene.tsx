@@ -46,49 +46,43 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
-    settings, // <-- Get settings from hook
+    settings, 
     socketActions, 
     isConnected,
-    // --- REMOVED: isPlaying ---
+    isSkipping // <-- Get global skipping state from hook
   } = usePartySocket(
     party.hash,
     initialData,
     "Host" // <-- Pass "Host" as the singerName
   );
   
-  // --- UPDATED: Get settings from state ---
   const useQueueRules = settings.orderByFairness;
-  // --- THIS IS THE FIX ---
-  const disablePlayback = settings.disablePlayback ?? false; // <-- Removed stray text
-  // --- END THE FIX ---
+  const disablePlayback = settings.disablePlayback ?? false; 
   
-  // --- END UPDATE ---
-
   const handleToggleRules = async () => {
     const newRulesState = !useQueueRules;
     socketActions.toggleRules(newRulesState);
   };
 
-  // --- ADDED THIS HANDLER ---
   const handleTogglePlayback = async () => { 
     const newPlaybackState = !disablePlayback;
     socketActions.togglePlayback(newPlaybackState);
   };
-  // --- END ---
 
   const removeSong = async (videoId: string) => {
     socketActions.removeSong(videoId);
   };
 
-  // This is called when the SKIP BUTTON is clicked
+  // This is called when the host's SKIP BUTTON is clicked
   const handleSkip = async () => {
+    if (isSkipping) return; // Prevent double-clicks
+    // Notify all clients to disable buttons
+    socketActions.startSkipTimer(); 
+    // Immediately skip
     socketActions.markAsPlayed();
-    // We still tell the player to play, even though this page has no controls
     socketActions.playbackPlay();
   };
   
-  // --- REMOVED: handlePlay and handlePause ---
-
   const handleCloseParty = () => {
     setIsConfirmingClose(true);
   };
@@ -113,17 +107,17 @@ export function HostScene({ party, initialData }: Props) {
       onMarkAsPlayed={handleSkip} // The skip button in the playlist
       useQueueRules={useQueueRules} 
       onToggleRules={handleToggleRules} 
-      // --- ADDED THESE PROPS ---
       disablePlayback={disablePlayback} 
       onTogglePlayback={handleTogglePlayback} 
-      // --- END ---
       maxSearchResults={maxSearchResults}
       onSetMaxResults={setMaxSearchResults}
       onCloseParty={handleCloseParty}
-      isConfirmingClose={isConfirmingClose} 
+      // Pass the global skipping state down
+      isConfirmingClose={isConfirmingClose || isSkipping} 
       onConfirmClose={confirmCloseParty} 
       onCancelClose={cancelCloseParty}
-      // --- REMOVED: isPlaying, onPlay, onPause props ---
+      // --- ADDED THIS ---
+      isSkipping={isSkipping}
     />
   );
 }

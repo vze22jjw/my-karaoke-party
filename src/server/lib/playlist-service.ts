@@ -34,6 +34,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     where: { hash: partyHash },
     include: {
       playlistItems: {
+        // Get ALL items, sort by played status (nulls last) then by when they were added
         orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }],
       },
     },
@@ -48,7 +49,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
 
   // --- 1. Separate Played and Unplayed Songs ---
   const playedItems = allItems.filter((item) => item.playedAt);
-  const unplayedItems = allItems.filter((item) => !item.playedAt);
+  const unplayedItems = allItems.filter((item) => !item.playedAt); // This is sorted by addedAt
 
   // --- 2. Format played songs (sorted by most recent) ---
   const playedPlaylist = playedItems
@@ -56,32 +57,48 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     .map(formatPlaylistItem);
 
   // --- 3. Determine and sort the unplayed queue ---
-  const currentSongItem = unplayedItems[0] ?? null;
-  const remainingUnplayed = unplayedItems.slice(1);
 
-  const lastPlayedSong = playedItems.length > 0 ? playedItems[0] : null;
-  const singerToDeprioritize =
-    currentSongItem?.singerName ?? lastPlayedSong?.singerName ?? null;
+  // --- THIS IS THE FIX ---
 
-  let sortedRemainingUnplayed: PlaylistItem[] = [];
+  // Get the *actual* last singer who finished.
+  // We find the most recent `playedAt` timestamp.
+  const lastPlayedSong =
+    playedItems.length > 0
+      ? playedItems.reduce((latest, current) =>
+          (latest.playedAt?.getTime() ?? 0) > (current.playedAt?.getTime() ?? 0)
+            ? latest
+            : current,
+        )
+      : null;
+
+  const singerToDeprioritize = lastPlayedSong?.singerName ?? null;
+
+  let fairlySortedUnplayed: PlaylistItem[] = [];
 
   if (useQueueRules) {
-    sortedRemainingUnplayed = orderByRoundRobin(
+    // Run the fairness algorithm on the *ENTIRE* unplayed list
+    fairlySortedUnplayed = orderByRoundRobin(
       allItems as FairnessPlaylistItem[],
-      remainingUnplayed as FairnessPlaylistItem[],
+      unplayedItems as FairnessPlaylistItem[], // <-- Pass the whole list
       singerToDeprioritize,
     ) as PlaylistItem[];
   } else {
-    sortedRemainingUnplayed = [...remainingUnplayed].sort(
-      (a, b) => a.addedAt.getTime() - b.addedAt.getTime(),
-    );
+    // If fairness is off, just use the default `addedAt` order
+    fairlySortedUnplayed = unplayedItems;
   }
+
+  // NOW we can determine the correct current song and remaining queue
+  const currentSongItem = fairlySortedUnplayed[0] ?? null;
+  const remainingUnplayed = fairlySortedUnplayed.slice(1);
+
+  // --- END THE FIX ---
 
   // --- 4. Format the final lists ---
   const formattedCurrentSong = currentSongItem
     ? formatPlaylistItem(currentSongItem)
     : null;
-  const unplayedPlaylist = sortedRemainingUnplayed.map(formatPlaylistItem);
+  // The `remainingUnplayed` list is already sorted, just format it.
+  const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem);
 
   // --- 5. Return the new object structure ---
   return {
@@ -90,7 +107,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     played: playedPlaylist,
     settings: {
       orderByFairness: useQueueRules,
-      disablePlayback: party.disablePlayback, // <-- ADDED THIS
+      disablePlayback: party.disablePlayback, // <-- This was already correct
     },
   };
 }

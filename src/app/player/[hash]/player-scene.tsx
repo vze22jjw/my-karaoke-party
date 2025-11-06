@@ -30,7 +30,6 @@ type Props = {
 export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   const [forceAutoplay, setForceAutoplay] = useState(false);
-  const [isSkipping, setIsSkipping] = useState(false);
   
   // Ref to hold the auto-skip timer
   const autoSkipTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -43,7 +42,8 @@ export default function PlayerScene({ party, initialData }: Props) {
     currentSong, 
     socketActions, 
     isPlaying,
-    settings 
+    settings,
+    isSkipping // <-- Get global skipping state from hook
   } = usePartySocket(
     party.hash,
     initialData,
@@ -52,26 +52,27 @@ export default function PlayerScene({ party, initialData }: Props) {
   
   const { ref, toggle, fullscreen } = useFullscreen();
 
-  // This effect cleans up the timer when the song changes
+  // This effect just cleans up the timer if the component unmounts
   useEffect(() => {
-    // Reset skipping state when the song changes
-    setIsSkipping(false);
-    
-    // Clean up any pending auto-skip timers
-    if (autoSkipTimerRef.current) {
-      clearTimeout(autoSkipTimerRef.current);
-      autoSkipTimerRef.current = null;
-    }
-    
-    // Clear timer on component unmount
     return () => {
       if (autoSkipTimerRef.current) {
         clearTimeout(autoSkipTimerRef.current);
       }
     };
-  }, [currentSong?.id]); // Dependency on currentSong.id
+  }, []);
 
-  // --- THIS IS THE FIX (Part 2) ---
+  // This is the core skip logic
+  const doTheSkip = () => {
+    // If an auto-skip timer is running, clear it (in case of manual skip).
+    if (autoSkipTimerRef.current) {
+      clearTimeout(autoSkipTimerRef.current);
+      autoSkipTimerRef.current = null;
+    }
+    setForceAutoplay(true); 
+    socketActions.markAsPlayed();
+    socketActions.playbackPlay();
+  };
+
   // Called when a song ENDS NATURALLY
   const handlePlayerEnd = async () => {
     setForceAutoplay(false); 
@@ -79,30 +80,23 @@ export default function PlayerScene({ party, initialData }: Props) {
     socketActions.playbackPlay(); // Tell others to update
   };
 
-  // Called when SKIP button is clicked
+  // Called when MANUAL SKIP button is clicked
   const handleSkip = async () => {
-    // Prevent double skips
-    if (isSkipping) return;
-    setIsSkipping(true);
-
-    // If an auto-skip timer is running, clear it
-    if (autoSkipTimerRef.current) {
-      clearTimeout(autoSkipTimerRef.current);
-      autoSkipTimerRef.current = null;
-    }
-
-    setForceAutoplay(true); 
-    socketActions.markAsPlayed();
-    socketActions.playbackPlay(); // Tell others to update
+    if (isSkipping) return; // Prevent double-clicks
+    // Notify all clients to disable buttons
+    socketActions.startSkipTimer(); 
+    // Immediately skip
+    doTheSkip(); 
   };
-  // --- END THE FIX ---
   
   // Called when "Open on YouTube" is clicked
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (isSkipping) return;
-    setIsSkipping(true); // Disable buttons immediately
+    if (isSkipping) return; // Prevent double-clicks
 
-    // 1. Open YouTube
+    // 1. Notify all clients to disable buttons
+    socketActions.startSkipTimer(); 
+
+    // 2. Open YouTube
     if (currentSong) {
       window.open(
         `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
@@ -111,9 +105,9 @@ export default function PlayerScene({ party, initialData }: Props) {
       );
     }
 
-    // 2. Start 10-second timer AND store its ID
+    // 3. Start 10-second timer to call the core skip logic
     autoSkipTimerRef.current = setTimeout(() => {
-      handleSkip();
+      doTheSkip();
     }, 10000); // 10 seconds
   };
   
@@ -150,10 +144,10 @@ export default function PlayerScene({ party, initialData }: Props) {
               video={currentSong}
               joinPartyUrl={joinPartyUrl}
               isFullscreen={fullscreen}
-              // Pass the correct handlers to the component
+              // Pass the correct handlers
               onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
               onSkip={handleSkip}
-              isSkipping={isSkipping}
+              isSkipping={isSkipping} // Pass global state
             />
           ) : currentSong ? ( 
             // 2. Render normal Player

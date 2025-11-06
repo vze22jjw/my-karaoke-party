@@ -18,15 +18,15 @@ type Props = {
   onMarkAsPlayed: () => void; // This is handleSkip
   useQueueRules: boolean;
   onToggleRules: () => void;
-  disablePlayback: boolean; // <-- ADDED/components/host-control-panel.tsx]
-  onTogglePlayback: () => void; // <-- ADDED/components/host-control-panel.tsx]
+  disablePlayback: boolean; 
+  onTogglePlayback: () => void; 
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
-  // --- REMOVED: isPlaying, onPlay, onPause props ---
+  isSkipping: boolean; // <-- This prop is correctly received here
 };
 
 // This component is the HOST'S mobile view
@@ -40,15 +40,15 @@ export function HostControlPanel({
   onMarkAsPlayed, // This is handleSkip
   useQueueRules,
   onToggleRules,
-  disablePlayback, // <-- ADDED/components/host-control-panel.tsx]
-  onTogglePlayback, // <-- ADDED/components/host-control-panel.tsx]
+  disablePlayback, 
+  onTogglePlayback, 
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
   isConfirmingClose,
   onConfirmClose,
   onCancelClose,
-  // --- REMOVED: isPlaying, onPlay, onPause ---
+  isSkipping, // <-- The prop is available here
 }: Props) {
   if (!party.hash) return null;
 
@@ -81,12 +81,16 @@ export function HostControlPanel({
             value="playlist"
             className="flex-1 overflow-y-auto mt-0 space-y-2"
           >
+            {/* --- THIS IS THE FIX --- */}
+            {/* Pass the isSkipping prop down to the TabPlaylist component */}
             <TabPlaylist
               currentSong={currentSong}
               playlist={playlist}
               onRemoveSong={onRemoveSong}
-              onSkip={onMarkAsPlayed} // Pass handleSkip to onSkip
+              onSkip={onMarkAsPlayed}
+              isSkipping={isSkipping} 
             />
+            {/* --- END THE FIX --- */}
           </TabsContent>
 
           <TabsContent
@@ -96,8 +100,8 @@ export function HostControlPanel({
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
-              disablePlayback={disablePlayback} // <-- ADDED/components/host-control-panel.tsx]
-              onTogglePlayback={onTogglePlayback} // <-- ADDED/components/host-control-panel.tsx]
+              disablePlayback={disablePlayback} 
+              onTogglePlayback={onTogglePlayback} 
               partyHash={party.hash}
               maxSearchResults={maxSearchResults}
               onSetMaxResults={onSetMaxResults}

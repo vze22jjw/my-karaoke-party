@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
-import { toast } from "sonner"; // <-- ADDED for notifications
+import { toast } from "sonner";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
@@ -15,6 +15,8 @@ interface SocketActions {
   sendHeartbeat: () => void;
   playbackPlay: () => void;
   playbackPause: () => void;
+  // --- ADDED THIS ---
+  startSkipTimer: () => void; // Notifies others we are starting a 10s skip
 }
 
 interface UsePartySocketReturn {
@@ -26,6 +28,8 @@ interface UsePartySocketReturn {
   isConnected: boolean;
   isPlaying: boolean;
   singers: string[];
+  // --- ADDED THIS ---
+  isSkipping: boolean; // This is now the global skipping state
 }
 
 type PartySocketData = {
@@ -60,6 +64,14 @@ export function usePartySocket(
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [singers, setSingers] = useState<string[]>([]);
+  
+  // --- THIS STATE IS NOW MANAGED BY THE HOOK ---
+  const [isSkipping, setIsSkipping] = useState(false);
+
+  // --- ADDED: Reset isSkipping when a new song arrives ---
+  useEffect(() => {
+    setIsSkipping(false);
+  }, [currentSong?.id]);
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -85,7 +97,6 @@ export function usePartySocket(
         setIsConnected(false);
       });
 
-      // --- THIS IS THE FIX ---
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
         debugLog(LOG_TAG, "Received 'playlist-updated'", {
           Settings: partyData.settings,
@@ -101,7 +112,6 @@ export function usePartySocket(
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
       });
-      // --- END THE FIX ---
 
       newSocket.on("playback-state-play", () => {
         debugLog(LOG_TAG, "Received 'playback-state-play'");
@@ -130,6 +140,13 @@ export function usePartySocket(
         alert("The party was ended by the host.");
         router.push("/");
       });
+
+      // --- ADDED: Listen for global skip state ---
+      newSocket.on("skip-timer-started", () => {
+        debugLog(LOG_TAG, "Received 'skip-timer-started', disabling skip buttons.");
+        setIsSkipping(true);
+      });
+
     };
 
     void socketInitializer();
@@ -146,7 +163,6 @@ export function usePartySocket(
       }
       clearInterval(heartbeatInterval);
     };
-  // Removed `router` from the dependency array to stop socket flapping
   }, [partyHash, singerName]);
 
   const socketActions: SocketActions = useMemo(() => ({
@@ -195,7 +211,24 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'playback-pause'", data);
       socketRef.current?.emit("playback-pause", data);
     },
+    // --- ADDED THIS ACTION ---
+    startSkipTimer: () => {
+      const data = { partyHash };
+      debugLog(LOG_TAG, "Emitting 'start-skip-timer'", data);
+      socketRef.current?.emit("start-skip-timer", data);
+    },
   }), [partyHash, singerName]);
 
-  return { currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions, isConnected, isPlaying, singers };
+  return { 
+    currentSong, 
+    unplayedPlaylist, 
+    playedPlaylist, 
+    settings, 
+    socketActions, 
+    isConnected, 
+    isPlaying, 
+    singers,
+    // --- RETURN THE NEW STATE ---
+    isSkipping 
+  };
 }
