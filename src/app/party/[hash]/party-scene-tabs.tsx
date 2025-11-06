@@ -5,7 +5,7 @@ import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useEffect, useState, useMemo } from "react";
 import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
-import { Monitor, Music, Users, History } from "lucide-react";
+import { Monitor, Music, Users, History, Plus } from "lucide-react"; // <-- IMPORT Plus
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlayer } from "./components/tab-player";
@@ -30,11 +30,7 @@ export function PartyScene({
   party: Party;
   initialData: InitialPartyData;
 }) {
-  // --- THIS IS THE FIX ---
-  // Changed defaultValue from "Guest" to ""
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
-  // --- END THE FIX ---
-  
   const router = useRouter();
   const [activeTab, setActiveTab] = useLocalStorage({
     key: ACTIVE_TAB_KEY,
@@ -50,14 +46,14 @@ export function PartyScene({
   } = usePartySocket(
     party.hash!,
     initialData,
-    name // <-- Pass name to hook (will be "" if not set)
+    name // <-- Pass name to hook
   );
   
   // --- REMOVED: allSongs useMemo, it's no longer needed ---
 
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
-    // Redirect if name is not set (value will be null or "")
+    // Redirect if name is not set
     if (!value) {
       router.push(`/join/${party.hash}`);
     }
@@ -97,10 +93,16 @@ export function PartyScene({
             <Monitor className="h-4 w-4" />
             <span className="hidden sm:inline">Playing</span>
           </TabsTrigger>
+          {/* --- THIS IS THE FIX --- */}
           <TabsTrigger value="add" className="flex items-center gap-2">
-            <Music className="h-4 w-4" />
+            {/* Group the icons so the gap is between the group and the text */}
+            <span className="flex items-center gap-1">
+              <Music className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
+            </span>
             <span className="hidden sm:inline">Add</span>
           </TabsTrigger>
+          {/* --- END THE FIX --- */}
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             <span className="hidden sm:inline">History</span>

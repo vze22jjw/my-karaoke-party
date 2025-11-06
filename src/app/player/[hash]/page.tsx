@@ -35,13 +35,18 @@ export default async function PartyPage({ params }: Props) {
     notFound();
   }
 
-  // --- UPDATED: Set default for new data structure ---
+  // --- THIS IS THE FIX ---
+  // The default settings object now matches the full type
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
     played: [], 
-    settings: { orderByFairness: true } 
+    settings: { 
+      orderByFairness: true,
+      disablePlayback: false // <-- This was missing
+    } 
   };
+  // --- END THE FIX ---
 
   try {
     // --- UPDATED: Use NEXT_PUBLIC_APP_URL from env ---

@@ -2,7 +2,7 @@
 
 import { type VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
-import { MicVocal, SkipForward, Youtube } from "lucide-react";
+import { MicVocal, SkipForward, Youtube, Loader2 } from "lucide-react"; // <-- Typo fixed
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { QrCode } from "./qr-code";
@@ -11,24 +11,19 @@ type Props = {
   video: VideoInPlaylist;
   joinPartyUrl: string;
   isFullscreen: boolean;
-  onSkip: () => void;
+  onOpenYouTubeAndAutoSkip: () => void; // Prop for auto-skip
+  onSkip: () => void; // Prop for manual skip
+  isSkipping: boolean; 
 };
 
 export function PlayerDisabledView({
   video,
   joinPartyUrl,
   isFullscreen,
+  onOpenYouTubeAndAutoSkip, 
   onSkip,
+  isSkipping,
 }: Props) {
-  const openYouTubeTab = () => {
-    window.open(
-      `https://www.youtube.com/watch?v=${video.id}#mykaraokeparty`,
-      "_blank",
-      "fullscreen=yes",
-    );
-    // Also skip the song in the party
-    onSkip();
-  };
 
   return (
     <div
@@ -67,14 +62,21 @@ export function PlayerDisabledView({
           Click the button to open on YouTube
         </h3>
         
+        {/* --- THIS IS THE FIX (Part 1) --- */}
         <Button
           type="button"
           size="lg"
           className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-          onClick={openYouTubeTab}
+          // This button now triggers the auto-skip flow
+          onClick={onOpenYouTubeAndAutoSkip} 
+          disabled={isSkipping} // Disable when skipping
         >
-          <Youtube className="mr-2" size={24} />
-          Open on YouTube
+          {isSkipping ? (
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          ) : (
+            <Youtube className="mr-2" size={24} />
+          )}
+          {isSkipping ? "Waiting to Skip..." : "Open & Auto-Skip"}
         </Button>
         
         <div className="mt-4">
@@ -82,12 +84,20 @@ export function PlayerDisabledView({
             className="animate-in fade-in zoom-in"
             variant={"secondary"}
             type="button"
-            onClick={onSkip}
+            // This button is for a manual skip
+            onClick={onSkip} 
+            disabled={isSkipping} // Disable when skipping
           >
-            <SkipForward className="mr-2 h-5 w-5" />
-            Skip Song
+            {isSkipping ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <SkipForward className="mr-2 h-5 w-5" />
+            )}
+            {isSkipping ? "Skipping..." : "Skip Song"}
           </Button>
         </div>
+        {/* The broken "gooey-right" button has been removed. */}
+        {/* --- END THE FIX --- */}
       </div>
 
       {/* QR Code Footer */}

@@ -7,7 +7,7 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef } from "react";
 import useSound from "use-sound";
 import { useRouter } from "next/navigation";
-import { HostControlPanel } from "./components/host-control-panel"; // <-- New component location
+import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 
 type InitialPartyData = {
@@ -59,7 +59,7 @@ export function HostScene({ party, initialData }: Props) {
   // --- UPDATED: Get settings from state ---
   const useQueueRules = settings.orderByFairness;
   // --- THIS IS THE FIX ---
-  const disablePlayback = settings.disablePlayback ?? false;
+  const disablePlayback = settings.disablePlayback ?? false; // <-- Removed stray text
   // --- END THE FIX ---
   
   // --- END UPDATE ---
@@ -127,4 +127,3 @@ export function HostScene({ party, initialData }: Props) {
     />
   );
 }
-// 

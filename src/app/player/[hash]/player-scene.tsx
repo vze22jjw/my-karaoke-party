@@ -4,7 +4,7 @@
 import { useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 import { Player } from "~/components/player";
@@ -13,7 +13,7 @@ import { usePartySocket } from "~/hooks/use-party-socket";
 import { Button } from "~/components/ui/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
-import { PlayerDisabledView } from "~/components/player-disabled-view"; // <-- IMPORTED NEW COMPONENT
+import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -29,9 +29,11 @@ type Props = {
 
 export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
-  
-  // This state is to force the player to autoplay *only* when we skip
   const [forceAutoplay, setForceAutoplay] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
+  
+  // Ref to hold the auto-skip timer
+  const autoSkipTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
@@ -41,25 +43,78 @@ export default function PlayerScene({ party, initialData }: Props) {
     currentSong, 
     socketActions, 
     isPlaying,
-    settings // <-- GET SETTINGS FROM HOOK
+    settings 
   } = usePartySocket(
     party.hash,
     initialData,
-    "Player" // <-- THIS IS THE FIX: Added 3rd argument
+    "Player" 
   );
   
   const { ref, toggle, fullscreen } = useFullscreen();
 
+  // This effect cleans up the timer when the song changes
+  useEffect(() => {
+    // Reset skipping state when the song changes
+    setIsSkipping(false);
+    
+    // Clean up any pending auto-skip timers
+    if (autoSkipTimerRef.current) {
+      clearTimeout(autoSkipTimerRef.current);
+      autoSkipTimerRef.current = null;
+    }
+    
+    // Clear timer on component unmount
+    return () => {
+      if (autoSkipTimerRef.current) {
+        clearTimeout(autoSkipTimerRef.current);
+      }
+    };
+  }, [currentSong?.id]); // Dependency on currentSong.id
+
+  // --- THIS IS THE FIX (Part 2) ---
   // Called when a song ENDS NATURALLY
   const handlePlayerEnd = async () => {
-    setForceAutoplay(false); // Do not autoplay the next song
+    setForceAutoplay(false); 
     socketActions.markAsPlayed();
+    socketActions.playbackPlay(); // Tell others to update
   };
 
   // Called when SKIP button is clicked
   const handleSkip = async () => {
-    setForceAutoplay(true); // Autoplay the next song
+    // Prevent double skips
+    if (isSkipping) return;
+    setIsSkipping(true);
+
+    // If an auto-skip timer is running, clear it
+    if (autoSkipTimerRef.current) {
+      clearTimeout(autoSkipTimerRef.current);
+      autoSkipTimerRef.current = null;
+    }
+
+    setForceAutoplay(true); 
     socketActions.markAsPlayed();
+    socketActions.playbackPlay(); // Tell others to update
+  };
+  // --- END THE FIX ---
+  
+  // Called when "Open on YouTube" is clicked
+  const handleOpenYouTubeAndAutoSkip = () => {
+    if (isSkipping) return;
+    setIsSkipping(true); // Disable buttons immediately
+
+    // 1. Open YouTube
+    if (currentSong) {
+      window.open(
+        `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
+        "_blank",
+        "fullscreen=yes",
+      );
+    }
+
+    // 2. Start 10-second timer AND store its ID
+    autoSkipTimerRef.current = setTimeout(() => {
+      handleSkip();
+    }, 10000); // 10 seconds
   };
   
   // Called when PLAY button is clicked
@@ -74,13 +129,9 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
   
-  // --- ADDED: Get disablePlayback state ---
-  // --- THIS IS THE FIX ---
   const isPlaybackDisabled = settings.disablePlayback ?? false;
-  // --- END THE FIX ---
 
   return (
-    // This is now the simple, full-screen player page
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={ref as RefCallback<HTMLDivElement>}>
@@ -93,14 +144,16 @@ export default function PlayerScene({ party, initialData }: Props) {
             {fullscreen ? <Minimize /> : <Maximize />}
           </Button>
           
-          {/* --- START: UPDATED RENDER LOGIC --- */}
           {isPlaybackDisabled && currentSong ? ( 
             // 1. Render Playback Disabled View
             <PlayerDisabledView
               video={currentSong}
               joinPartyUrl={joinPartyUrl}
               isFullscreen={fullscreen}
+              // Pass the correct handlers to the component
+              onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
               onSkip={handleSkip}
+              isSkipping={isSkipping}
             />
           ) : currentSong ? ( 
             // 2. Render normal Player
@@ -123,7 +176,6 @@ export default function PlayerScene({ party, initialData }: Props) {
               className={fullscreen ? "bg-gradient" : ""}
             />
           )}
-          {/* --- END: UPDATED RENDER LOGIC --- */}
           
         </div>
       </div>

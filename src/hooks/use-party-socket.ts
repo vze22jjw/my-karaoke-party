@@ -10,7 +10,7 @@ interface SocketActions {
   removeSong: (videoId: string) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
-  togglePlayback: (disablePlayback: boolean) => void; // <-- ADDED THIS
+  togglePlayback: (disablePlayback: boolean) => void; 
   closeParty: () => void;
   sendHeartbeat: () => void;
   playbackPlay: () => void;
@@ -85,7 +85,7 @@ export function usePartySocket(
         setIsConnected(false);
       });
 
-      // --- START: FIX for event listener ---
+      // --- THIS IS THE FIX ---
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
         debugLog(LOG_TAG, "Received 'playlist-updated'", {
           Settings: partyData.settings,
@@ -94,20 +94,14 @@ export function usePartySocket(
           Played: formatPlaylistForLog(partyData.played),
         });
         
-        // Use functional update to safely compare with previous state
-        setCurrentSong((prevCurrentSong) => {
-          if (prevCurrentSong?.id !== partyData.currentSong?.id) {
-            // Song has changed, so set playing to false
-            setIsPlaying(false);
-          }
-          return partyData.currentSong;
-        });
+        // Update the song. Do NOT change isPlaying state here.
+        setCurrentSong(partyData.currentSong);
         
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
       });
-      // --- END: FIX ---
+      // --- END THE FIX ---
 
       newSocket.on("playback-state-play", () => {
         debugLog(LOG_TAG, "Received 'playback-state-play'");
@@ -152,10 +146,8 @@ export function usePartySocket(
       }
       clearInterval(heartbeatInterval);
     };
-  // --- START: FIX for dependency array ---
-  // Removed `currentSong?.id` which was causing the disconnect/reconnect
-  }, [partyHash, router, singerName]);
-  // --- END: FIX ---
+  // Removed `router` from the dependency array to stop socket flapping
+  }, [partyHash, singerName]);
 
   const socketActions: SocketActions = useMemo(() => ({
     addSong: (videoId, title, coverUrl, singerName) => {
@@ -178,13 +170,11 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'toggle-rules'", data);
       socketRef.current?.emit("toggle-rules", data);
     },
-    // --- ADDED THIS ---
     togglePlayback: (disablePlayback) => {
       const data = { partyHash, disablePlayback };
       debugLog(LOG_TAG, "Emitting 'toggle-playback'", data);
       socketRef.current?.emit("toggle-playback", data);
     },
-    // --- END ---
     closeParty: () => {
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'close-party'", data);
