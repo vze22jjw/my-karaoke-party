@@ -21,7 +21,9 @@ export async function generateMetadata({ params }: Props) {
     notFound();
   }
   return {
-    title: party.name,
+    // --- THIS IS THE FIX (Req #2) ---
+    title: `${party.name} - Party Player`,
+    // --- END THE FIX ---
   };
 }
 

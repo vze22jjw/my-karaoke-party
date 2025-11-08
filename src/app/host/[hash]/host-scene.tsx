@@ -49,8 +49,8 @@ export function HostScene({ party, initialData }: Props) {
     socketActions, 
     isConnected,
     isSkipping,
-    isPlaying, // <-- GET isPlaying
-    remainingTime // <-- GET remainingTime
+    isPlaying, 
+    remainingTime 
   } = usePartySocket(
     party.hash,
     initialData,
@@ -95,28 +95,33 @@ export function HostScene({ party, initialData }: Props) {
   };
 
   return (
-    <HostControlPanel
-      party={party}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      currentSong={currentSong}
-      playlist={unplayedPlaylist}
-      onRemoveSong={removeSong}
-      onMarkAsPlayed={handleSkip} 
-      useQueueRules={useQueueRules} 
-      onToggleRules={handleToggleRules} 
-      disablePlayback={disablePlayback} 
-      onTogglePlayback={handleTogglePlayback} 
-      maxSearchResults={maxSearchResults}
-      onSetMaxResults={setMaxSearchResults}
-      onCloseParty={handleCloseParty}
-      isConfirmingClose={isConfirmingClose || isSkipping} 
-      onConfirmClose={confirmCloseParty} 
-      onCancelClose={cancelCloseParty}
-      isSkipping={isSkipping}
-      // --- ADD THESE PROPS ---
-      isPlaying={isPlaying}
-      remainingTime={remainingTime}
-    />
+    // This wrapper centers the content and constrains its width on
+    // screens `sm` (640px) and larger to `max-w-md` (448px).
+    <div className="flex min-h-screen w-full justify-center">
+      <div className="w-full sm:max-w-md"> 
+        <HostControlPanel
+          party={party}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          currentSong={currentSong}
+          playlist={unplayedPlaylist}
+          onRemoveSong={removeSong}
+          onMarkAsPlayed={handleSkip} 
+          useQueueRules={useQueueRules} 
+          onToggleRules={handleToggleRules} 
+          disablePlayback={disablePlayback} 
+          onTogglePlayback={handleTogglePlayback} 
+          maxSearchResults={maxSearchResults}
+          onSetMaxResults={setMaxSearchResults}
+          onCloseParty={handleCloseParty}
+          isConfirmingClose={isConfirmingClose || isSkipping} 
+          onConfirmClose={confirmCloseParty} 
+          onCancelClose={cancelCloseParty}
+          isSkipping={isSkipping}
+          isPlaying={isPlaying}
+          remainingTime={remainingTime}
+        />
+      </div>
+    </div>
   );
 }

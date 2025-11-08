@@ -26,8 +26,8 @@ type Props = {
   onConfirmClose: () => void;
   onCancelClose: () => void;
   isSkipping: boolean;
-  isPlaying: boolean; // <-- ADD THIS PROP
-  remainingTime: number; // <-- ADD THIS PROP
+  isPlaying: boolean; 
+  remainingTime: number; 
 };
 
 export function HostControlPanel({
@@ -49,13 +49,16 @@ export function HostControlPanel({
   onConfirmClose,
   onCancelClose,
   isSkipping,
-  isPlaying, // <-- GET THIS PROP
-  remainingTime, // <-- GET THIS PROP
+  isPlaying, 
+  remainingTime, 
 }: Props) {
   if (!party.hash) return null;
 
   return (
-    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col p-4">
+    // --- THIS IS THE FIX ---
+    // Removed `border-r`, `sm:block`, `sm:max-w-sm`, and `sm:flex-shrink-0`
+    <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
+    {/* --- END THE FIX --- */}
       <div className="flex flex-col h-full flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
@@ -89,8 +92,8 @@ export function HostControlPanel({
               onRemoveSong={onRemoveSong}
               onSkip={onMarkAsPlayed} 
               isSkipping={isSkipping}
-              isPlaying={isPlaying} // <-- PASS THIS PROP
-              remainingTime={remainingTime} // <-- PASS THIS PROP
+              isPlaying={isPlaying} 
+              remainingTime={remainingTime} 
             />
           </TabsContent>
 

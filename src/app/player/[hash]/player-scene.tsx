@@ -15,6 +15,7 @@ import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
+// --- THIS IS THE CORRECT IMPORT PATH ---
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
 type InitialPartyData = {
@@ -149,6 +150,7 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
+        {/* Render Desktop View (hidden on mobile) */}
         <PlayerDesktopView
           playerRef={ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={toggle}
@@ -156,6 +158,7 @@ export default function PlayerScene({ party, initialData }: Props) {
           {...commonPlayerProps}
         />
         
+        {/* Render Mobile View (hidden on desktop) */}
         <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
           <Button
             onClick={toggle}
