@@ -21,7 +21,7 @@ type Props = {
   name: string; 
   onLeaveParty: () => void;
   isPlaying: boolean; 
-  remainingTime: number; // <-- ADD THIS PROP
+  remainingTime: number; 
 };
 
 export function TabSingers({
@@ -32,7 +32,7 @@ export function TabSingers({
   name,
   onLeaveParty,
   isPlaying, 
-  remainingTime, // <-- GET THIS PROP
+  remainingTime, 
 }: Props) {
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>(
     {},
@@ -97,18 +97,18 @@ export function TabSingers({
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
                       {/* --- THIS IS THE FIX (Req #4) --- */}
-                      {/* Add flashing animation if this is the CURRENT singer and song is playing */}
+                      {/* Icon now animates if it's the current singer, regardless of play state */}
                       {isHost ? (
-                        <Crown className={cn("h-5 w-5", isCurrentSinger && isPlaying && "animate-pulse")} />
+                        <Crown className={cn("h-5 w-5", isCurrentSinger && "animate-pulse")} />
                       ) : (
-                        <MicVocal className={cn("h-5 w-5", isCurrentSinger && isPlaying && "animate-pulse")} />
+                        <MicVocal className={cn("h-5 w-5", isCurrentSinger && "animate-pulse")} />
                       )}
                       {/* --- END THE FIX (Req #4) --- */}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{participant.name}</p>
-                        {/* --- THIS IS THE FIX (Req #5) --- */}
+                        {/* --- THIS IS REQ #5 (Already correct) --- */}
                         {/* Show timer if this is the NEXT singer and a song is playing/paused */}
                         {isNextSinger && currentSong && (
                           <SongCountdownTimer
@@ -116,7 +116,7 @@ export function TabSingers({
                             className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
                           />
                         )}
-                        {/* --- END THE FIX (Req #5) --- */}
+                        {/* --- END REQ #5 --- */}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {totalSongs} song(s)

@@ -2,7 +2,10 @@ import { type KaraokeParty, type VideoInPlaylist } from "party";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
-import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
+// --- THIS IS THE FIX (Compile Warning) ---
+// Removed 'formatPlaylistForLog' as it's not used in this file
+import { debugLog } from "~/utils/debug-logger";
+// --- END THE FIX ---
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 
@@ -98,7 +101,11 @@ export function usePartySocket(
   const resetCountdown = (song: VideoInPlaylist | null) => {
     stopCountdown();
     const durationMs = parseISO8601Duration(song?.duration);
-    setRemainingTime(durationMs ? Math.floor(durationMs / 1000) : 0);
+    const durationInSeconds = durationMs ? Math.floor(durationMs / 1000) : 0;
+    
+    debugLog(LOG_TAG, `Resetting countdown for ${song?.title ?? 'No Song'}. Duration: ${song?.duration ?? 'N/A'} (${durationInSeconds}s)`);
+    
+    setRemainingTime(durationInSeconds);
   };
 
   useEffect(() => {
@@ -175,10 +182,6 @@ export function usePartySocket(
       newSocket.on("skip-timer-started", () => {
         debugLog(LOG_TAG, "Received 'skip-timer-started', disabling skip buttons.");
         setIsSkipping(true);
-        // --- THIS IS THE FIX (Part 1) ---
-        // When another client starts the skip timer, start our countdown too.
-        startCountdown();
-        // --- END THE FIX (Part 1) ---
       });
 
     };
@@ -252,10 +255,6 @@ export function usePartySocket(
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'start-skip-timer'", data);
       setIsSkipping(true); 
-      // --- THIS IS THE FIX (Part 2) ---
-      // When we start the skip timer, start our *own* countdown.
-      startCountdown(); 
-      // --- END THE FIX (Part 2) ---
       socketRef.current?.emit("start-skip-timer", data); 
     },
   }), [partyHash, singerName]);

@@ -4,7 +4,7 @@
 import { useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useEffect, useRef } from "react"; 
+import { useState, useEffect, useRef, useCallback } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 import { Player } from "~/components/player";
@@ -15,7 +15,6 @@ import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
-// --- THIS IS THE CORRECT IMPORT PATH ---
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
 type InitialPartyData = {
@@ -57,6 +56,31 @@ export default function PlayerScene({ party, initialData }: Props) {
   const { ref, toggle, fullscreen } = useFullscreen();
   const nextSong = unplayedPlaylist[0];
 
+  const doTheSkip = useCallback(() => {
+    if (autoSkipTimerRef.current) {
+      clearTimeout(autoSkipTimerRef.current);
+      autoSkipTimerRef.current = null;
+    }
+    setForceAutoplay(false); 
+    socketActions.markAsPlayed(); // Advances playlist
+    socketActions.playbackPause(); // Pauses for next singer
+  }, [socketActions]);
+
+  useEffect(() => {
+    if (isSkipping && isPlaying && remainingTime <= 0) {
+      const durationMs = parseISO8601Duration(currentSong?.duration);
+      
+      if (durationMs && durationMs > 0) {
+        console.log("Auto-skip timer finished, skipping song.");
+        doTheSkip();
+      } else if (isPlaying) {
+        console.log("Song has no duration, auto-skip disabled. Pausing timer.");
+        socketActions.playbackPause();
+      }
+    }
+  }, [isSkipping, isPlaying, remainingTime, currentSong, socketActions, doTheSkip]);
+
+
   useEffect(() => {
     return () => {
       if (autoSkipTimerRef.current) {
@@ -65,47 +89,35 @@ export default function PlayerScene({ party, initialData }: Props) {
     };
   }, []);
 
-  const doTheSkip = () => {
-    if (autoSkipTimerRef.current) {
-      clearTimeout(autoSkipTimerRef.current);
-      autoSkipTimerRef.current = null;
-    }
-    setForceAutoplay(false); 
-    socketActions.markAsPlayed();
-    socketActions.playbackPause(); 
-  };
-
   const handlePlayerEnd = async () => {
     doTheSkip(); 
   };
 
   const handleSkip = async () => {
-    if (isSkipping) return; 
     socketActions.startSkipTimer(); 
     doTheSkip(); 
   };
   
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (isSkipping) return; 
+    if (isSkipping || !currentSong) return; 
 
     socketActions.startSkipTimer(); 
-
-    if (currentSong) {
-      window.open(
-        `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
-        "_blank",
-        "fullscreen=yes",
-      );
+  
+    const durationMs = parseISO8601Duration(currentSong.duration);
+  
+    if (durationMs && durationMs > 0) {
+      socketActions.playbackPlay(); 
+    } else {
+      console.log("Song has no duration, auto-skip timer will not start.");
     }
-
-    const timerDuration = remainingTime > 0 ? (remainingTime * 1000) + 5000 : 10000;
-
-    console.log(`Starting auto-skip timer for ${timerDuration}ms`);
-
-    autoSkipTimerRef.current = setTimeout(() => {
-      doTheSkip();
-    }, timerDuration); 
+  
+    window.open(
+      `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
+      "_blank",
+      "fullscreen=yes",
+    );
   };
+
   
   const handlePlay = () => {
     socketActions.playbackPlay();
@@ -137,15 +149,13 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
-        {/* Render Desktop View (hidden on mobile) */}
         <PlayerDesktopView
           playerRef={ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={toggle}
-          currentVideo={currentSong ?? undefined} // <-- This fixes the null type error
+          currentVideo={currentSong ?? undefined} 
           {...commonPlayerProps}
         />
         
-        {/* Render Mobile View (hidden on desktop) */}
         <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
           <Button
             onClick={toggle}

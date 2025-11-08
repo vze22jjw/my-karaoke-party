@@ -11,6 +11,7 @@ import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 import { type PlaylistItem } from "@prisma/client";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
+import youtubeAPI from "~/utils/youtube-data-api";
 
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: NetSocket & {
@@ -22,7 +23,24 @@ type NextApiResponseWithSocket = NextApiResponse & {
 
 const LOG_TAG = "[SocketServer]";
 
-// --- ALL HELPER FUNCTIONS MOVED HERE, BEFORE SocketHandler ---
+// Helper function to generate a random duration
+// Min: 3:27 (207s), Max: 4:20 (260s)
+function getRandomDurationISO(): string {
+  const minSeconds = 207;
+  const maxSeconds = 260;
+  const randomSeconds =
+    Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
+  
+  const minutes = Math.floor(randomSeconds / 60);
+  const seconds = randomSeconds % 60;
+  
+  const isoDuration = `PT${minutes}M${seconds}S`;
+
+  // This is the debug log you requested
+  debugLog(LOG_TAG, `Generated random fallback duration: ${isoDuration}`);
+
+  return isoDuration;
+}
 
 type Participant = {
   name: string;
@@ -221,6 +239,9 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           });
           
           if (!existing) {
+            const duration = await youtubeAPI.getVideoDuration(data.videoId);
+            debugLog(LOG_TAG, `Fetched duration for ${data.videoId}: ${duration ?? 'N/A'}`);
+
             await db.playlistItem.create({
               data: {
                 partyId: party.id,
@@ -229,7 +250,11 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
                 artist: "",
                 song: "",
                 coverUrl: data.coverUrl,
-                duration: "",
+                // --- THIS IS THE FIX (Compile Error) ---
+                // We use a ternary (duration ? duration : fallback) which
+                // correctly handles an empty string "" and satisfies the linter.
+                duration: duration ? duration : getRandomDurationISO(),
+                // --- END THE FIX ---
                 singerName: data.singerName,
                 randomBreaker: Math.random(),
               },

@@ -105,7 +105,7 @@ export function PlayerDisabledView({
               ) : (
                 <Youtube className="mr-2" size={24} />
               )}
-              {/* This text is correct, it shows the duration of the *current* song */}
+              {/* This text shows the duration of the *current* song */}
               {isSkipping ? `Auto-skip in ${formattedDuration}...` : "Open & Auto-Skip"}
             </Button>
           </>
