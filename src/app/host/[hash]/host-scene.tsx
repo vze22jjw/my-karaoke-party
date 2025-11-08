@@ -9,12 +9,17 @@ import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 
+// --- THIS IS THE FIX (Part 1) ---
+// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
+// --- END THE FIX ---
 
 type Props = {
   party: Party;
@@ -49,11 +54,11 @@ export function HostScene({ party, initialData }: Props) {
     socketActions, 
     isConnected,
     isSkipping,
-    isPlaying, 
-    remainingTime 
+    isPlaying, // <-- GET isPlaying
+    remainingTime // <-- GET remainingTime
   } = usePartySocket(
     party.hash,
-    initialData,
+    initialData, // <-- This now has the correct type
     "Host"
   );
   
@@ -95,8 +100,7 @@ export function HostScene({ party, initialData }: Props) {
   };
 
   return (
-    // This wrapper centers the content and constrains its width on
-    // screens `sm` (640px) and larger to `max-w-md` (448px).
+    // This is the tablet-view wrapper
     <div className="flex min-h-screen w-full justify-center">
       <div className="w-full sm:max-w-md"> 
         <HostControlPanel

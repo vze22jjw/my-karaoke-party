@@ -7,12 +7,16 @@ type Props = {
   params: { hash: string };
 };
 
+// --- THIS IS THE FIX (Part 1) ---
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
+// --- END THE FIX ---
 
 export async function generateMetadata({ params }: Props) {
   const partyHash = params.hash;
@@ -21,9 +25,7 @@ export async function generateMetadata({ params }: Props) {
     notFound();
   }
   return {
-    // --- THIS IS THE FIX (Req #2) ---
     title: `${party.name} - Party Player`,
-    // --- END THE FIX ---
   };
 }
 
@@ -35,6 +37,7 @@ export default async function PartyPage({ params }: Props) {
     notFound();
   }
 
+  // --- THIS IS THE FIX (Part 2) ---
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
@@ -42,8 +45,11 @@ export default async function PartyPage({ params }: Props) {
     settings: { 
       orderByFairness: true,
       disablePlayback: false 
-    } 
+    },
+    currentSongStartedAt: null,
+    currentSongRemainingDuration: null,
   };
+  // --- END THE FIX ---
 
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

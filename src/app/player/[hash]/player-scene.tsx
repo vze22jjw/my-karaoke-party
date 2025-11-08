@@ -15,14 +15,16 @@ import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
-// --- THIS IS THE CORRECT IMPORT PATH ---
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
+// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
 
 type Props = {
@@ -50,7 +52,7 @@ export default function PlayerScene({ party, initialData }: Props) {
     remainingTime 
   } = usePartySocket(
     party.hash,
-    initialData,
+    initialData, // <-- This now has the correct type
     "Player" 
   );
   
@@ -63,23 +65,30 @@ export default function PlayerScene({ party, initialData }: Props) {
       autoSkipTimerRef.current = null;
     }
     setForceAutoplay(false); 
-    socketActions.markAsPlayed(); // Advances playlist
-    socketActions.playbackPause(); // Pauses for next singer
+    socketActions.markAsPlayed(); 
+    socketActions.playbackPause(); 
   }, [socketActions]);
 
+  // --- THIS IS THE FIX (Immediate Skip) ---
+  // The auto-skip logic no longer depends on `isPlaying`, which caused a race condition.
+  // It now only checks if we are in "skip mode" and the timer has run out.
   useEffect(() => {
-    if (isSkipping && isPlaying && remainingTime <= 0) {
+    // If we are in "skip mode" (e.g., "Open on YouTube" was pressed)
+    // AND the timer has run out...
+    if (isSkipping && remainingTime <= 0) {
+      
+      // We must check if the song *started* with a duration > 0.
       const durationMs = parseISO8601Duration(currentSong?.duration);
       
+      // This check prevents an immediate skip if the duration was 0 to begin with
+      // (which shouldn't happen with our fallback, but it's a good safeguard).
       if (durationMs && durationMs > 0) {
         console.log("Auto-skip timer finished, skipping song.");
         doTheSkip();
-      } else if (isPlaying) {
-        console.log("Song has no duration, auto-skip disabled. Pausing timer.");
-        socketActions.playbackPause();
       }
     }
-  }, [isSkipping, isPlaying, remainingTime, currentSong, socketActions, doTheSkip]);
+  }, [isSkipping, remainingTime, currentSong, doTheSkip]); // Removed `isPlaying`
+  // --- END THE FIX ---
 
 
   useEffect(() => {
