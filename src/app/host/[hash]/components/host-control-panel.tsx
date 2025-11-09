@@ -28,6 +28,11 @@ type Props = {
   isSkipping: boolean;
   isPlaying: boolean; 
   remainingTime: number; 
+  // --- THIS IS THE FIX (Part 1) ---
+  // Add the new props to fix compile errors
+  onPlay: (currentTime?: number) => void;
+  onPause: () => void;
+  // --- END THE FIX ---
 };
 
 export function HostControlPanel({
@@ -51,14 +56,15 @@ export function HostControlPanel({
   isSkipping,
   isPlaying, 
   remainingTime, 
+  // --- THIS IS THE FIX (Part 2) ---
+  onPlay,
+  onPause,
+  // --- END THE FIX ---
 }: Props) {
   if (!party.hash) return null;
 
   return (
-    // --- THIS IS THE FIX ---
-    // Removed `border-r`, `sm:block`, `sm:max-w-sm`, and `sm:flex-shrink-0`
     <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
-    {/* --- END THE FIX --- */}
       <div className="flex flex-col h-full flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
@@ -94,6 +100,11 @@ export function HostControlPanel({
               isSkipping={isSkipping}
               isPlaying={isPlaying} 
               remainingTime={remainingTime} 
+              // --- THIS IS THE FIX (Part 3) ---
+              // Pass the new props down
+              onPlay={onPlay}
+              onPause={onPause}
+              // --- END THE FIX ---
             />
           </TabsContent>
 

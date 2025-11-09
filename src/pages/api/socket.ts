@@ -349,8 +349,8 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
     
-    socket.on("playback-play", async (data: { partyHash: string }) => {
-      debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`);
+    socket.on("playback-play", async (data: { partyHash: string, currentTime?: number }) => {
+      debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`, data);
       try {
         const party = await db.party.findUnique({ 
           where: { hash: data.partyHash },
@@ -395,11 +395,16 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
         const now = new Date();
         let remainingDuration: number;
+        const totalDurationMs = parseISO8601Duration(currentSong.duration) ?? 0;
+        const totalDurationSec = Math.floor(totalDurationMs / 1000);
 
-        if (party.currentSongId === currentSong.videoId && party.currentSongRemainingDuration) {
-          remainingDuration = party.currentSongRemainingDuration;
+        if (data.currentTime !== undefined && data.currentTime !== null) {
+          debugLog(LOG_TAG, `Scrub detected. New time: ${data.currentTime}s`);
+          remainingDuration = Math.max(0, totalDurationSec - Math.floor(data.currentTime));
         } else {
-          remainingDuration = Math.floor((parseISO8601Duration(currentSong.duration) ?? 0) / 1000);
+          remainingDuration = party.currentSongId === currentSong.videoId && party.currentSongRemainingDuration !== null
+            ? party.currentSongRemainingDuration
+            : totalDurationSec;
         }
 
         await db.party.update({
@@ -407,7 +412,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           data: {
             currentSongId: currentSong.videoId,
             currentSongStartedAt: now,
-            currentSongRemainingDuration: remainingDuration,
+            currentSongRemainingDuration: remainingDuration, 
           },
         });
 
@@ -422,10 +427,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     });
 
     socket.on("playback-pause", async (data: { partyHash: string }) => {
-      // --- THIS IS THE FIX (Syntax Error) ---
-      // Removed the extra backslash `\` before the backticks
       debugLog(LOG_TAG, `Received 'playback-pause' for room ${data.partyHash}`);
-      // --- END THE FIX ---
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         
@@ -434,14 +436,13 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           return;
         }
 
-        if (!party.currentSongStartedAt || !party.currentSongRemainingDuration) {
+        if (!party.currentSongStartedAt || party.currentSongRemainingDuration === null) {
           debugLog(LOG_TAG, "Playback-pause failed: Not playing or no duration.");
           return;
         }
 
-        // --- THIS IS THE FIX (Linter Error) ---
-        // Added the non-null assertion `!` to assure TypeScript that
-        // currentSongStartedAt is not null (which we proved in the guard clause above).
+        // --- THIS IS THE FIX ---
+        // Removed the unnecessary `!` which caused the linter error
         const elapsedMs = new Date().getTime() - party.currentSongStartedAt.getTime();
         // --- END THE FIX ---
         const elapsedSeconds = Math.floor(elapsedMs / 1000);

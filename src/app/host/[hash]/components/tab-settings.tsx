@@ -10,9 +10,9 @@ import { Input } from "~/components/ui/ui/input"; // <-- Using Input, which you 
 import { AlertCircle, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 // --- THIS IS THE FIX (Part 1) ---
-// We need these imports for the ToggleButton
-import { usePartySocket } from "~/hooks/use-party-socket";
-import { type KaraokeParty } from "party";
+// Removed unused imports
+// import { usePartySocket } from "~/hooks/use-party-socket";
+// import { type KaraokeParty } from "party";
 import { cn } from "~/lib/utils";
 // --- END THE FIX ---
 
@@ -30,9 +30,6 @@ type Props = {
   onCancelClose: () => void;
 };
 
-// --- THIS IS THE FIX (Part 2) ---
-// This is the component you are using as a "Switch", extracted for reuse
-// This fulfills your request to have both toggles oriented the same way
 const ToggleButton = ({
   id,
   checked,
@@ -74,7 +71,6 @@ const ToggleButton = ({
     </Button>
   </div>
 );
-// --- END THE FIX ---
 
 export function TabSettings({
   partyHash,
@@ -127,8 +123,6 @@ export function TabSettings({
 
       <div className="space-y-3">
         <h3 className="text-lg font-medium">Party Rules</h3>
-        {/* --- THIS IS THE FIX (Part 3) --- */}
-        {/* This first toggle is correct */}
         <ToggleButton
           id="queue-rules"
           checked={useQueueRules}
@@ -141,7 +135,6 @@ export function TabSettings({
           }
         />
         
-        {/* This second toggle is now fixed */}
         <ToggleButton
           id="disable-playback"
           checked={disablePlayback}
@@ -153,7 +146,6 @@ export function TabSettings({
               : "OFF (Player is active)"
           }
         />
-        {/* --- END THE FIX --- */}
       </div>
 
       <div className="space-y-3">
@@ -168,8 +160,6 @@ export function TabSettings({
           <p className="text-sm text-muted-foreground">
             Limit the number of results from YouTube.
           </p>
-          {/* --- THIS IS THE FIX (Part 4) --- */}
-          {/* Use a standard range input, which is a slider */}
           <Input
             id="max-results"
             type="range"
@@ -180,7 +170,6 @@ export function TabSettings({
             onChange={(e) => onSetMaxResults(Number(e.target.value) ?? 10)}
             className="w-full"
           />
-          {/* --- END THE FIX --- */}
         </div>
       </div>
 
@@ -198,12 +187,9 @@ export function TabSettings({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Are you sure?</AlertTitle>
-              {/* --- THIS IS THE FIX (Part 5) --- */}
-              {/* Fixed the typo from EAlertDescription */}
               <AlertDescription>
                 This action is permanent.
               </AlertDescription>
-              {/* --- END THE FIX --- */}
               <div className="mt-4 flex justify-end gap-2">
                 <Button
                   variant="ghost"

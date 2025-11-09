@@ -14,7 +14,9 @@ interface SocketActions {
   togglePlayback: (disablePlayback: boolean) => void; 
   closeParty: () => void;
   sendHeartbeat: () => void;
-  playbackPlay: () => void;
+  // --- THIS IS THE FIX (Part 1) ---
+  playbackPlay: (currentTime?: number) => void;
+  // --- END THE FIX ---
   playbackPause: () => void;
   startSkipTimer: () => void; 
 }
@@ -37,8 +39,6 @@ interface UsePartySocketReturn {
   remainingTime: number; 
 }
 
-// --- THIS IS THE FIX (Part 1) ---
-// Update the data type to include the new server fields
 type PartySocketData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -47,7 +47,6 @@ type PartySocketData = {
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
 };
-// --- END THE FIX ---
 
 const LOG_TAG = "[SocketClient]";
 
@@ -76,21 +75,15 @@ export function usePartySocket(
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
 
-  // --- THIS IS THE FIX (Part 2) ---
-  // remainingTime is now set from initialData and server events
   const [remainingTime, setRemainingTime] = useState(() => {
-    // On load, set the correct initial time
     if (initialData.currentSongStartedAt) {
-      // If it's playing, calculate time elapsed since start
       const elapsedMs = new Date().getTime() - new Date(initialData.currentSongStartedAt).getTime();
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
       return Math.max(0, (initialData.currentSongRemainingDuration ?? 0) - elapsedSeconds);
     }
-    // If paused or stopped, use the stored remaining duration or full duration
     return initialData.currentSongRemainingDuration ?? 
            Math.floor((parseISO8601Duration(initialData.currentSong?.duration) ?? 0) / 1000);
   });
-  // --- END THE FIX ---
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
@@ -102,8 +95,6 @@ export function usePartySocket(
     }
   }, []);
 
-  // --- THIS IS THE FIX (Part 3) ---
-  // This function now calculates the *true* remaining time based on the server's timestamp
   const startSyncedCountdown = useCallback((startedAt: string, remainingDuration: number) => {
     stopCountdown();
 
@@ -121,11 +112,10 @@ export function usePartySocket(
       }
     };
     
-    updateTimer(); // Run immediately to sync
-    timerIntervalRef.current = setInterval(updateTimer, 1000); // Check every second
+    updateTimer(); 
+    timerIntervalRef.current = setInterval(updateTimer, 1000); 
   }, [stopCountdown]);
 
-  // This function resets the timer to a song's full duration (when paused or skipped)
   const resetCountdown = useCallback((song: VideoInPlaylist | null) => {
     stopCountdown();
     const durationMs = parseISO8601Duration(song?.duration);
@@ -135,7 +125,6 @@ export function usePartySocket(
     
     setRemainingTime(durationInSeconds);
   }, [stopCountdown]);
-  // --- END THE FIX ---
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -162,15 +151,11 @@ export function usePartySocket(
         stopCountdown(); 
       });
 
-      // --- THIS IS THE FIX (Part 4) ---
-      // Update how the client handles playlist updates
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
         debugLog(LOG_TAG, "Received 'playlist-updated'", { /* ... */ });
         
-        // This logic handles a song skip/end
         if (prevSongIdRef.current !== partyData.currentSong?.id) {
           setIsSkipping(false);
-          // Reset the timer to the *full* duration of the *new* song
           resetCountdown(partyData.currentSong); 
         }
         prevSongIdRef.current = partyData.currentSong?.id ?? null;
@@ -180,21 +165,17 @@ export function usePartySocket(
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
 
-        // This logic handles a page load *while* a song is playing
         if (partyData.currentSongStartedAt) {
           setIsPlaying(true);
           startSyncedCountdown(partyData.currentSongStartedAt.toString(), partyData.currentSongRemainingDuration ?? 0);
         } else {
-          // Song is paused or stopped
           setIsPlaying(false);
           stopCountdown();
-          // Set timer to the stored remaining duration
           setRemainingTime(partyData.currentSongRemainingDuration ?? 
                           Math.floor((parseISO8601Duration(partyData.currentSong?.duration) ?? 0) / 1000));
         }
       });
 
-      // Update to use the new server-driven events
       newSocket.on("playback-started", (data: { startedAt: string; remainingDuration: number }) => {
         debugLog(LOG_TAG, "Received 'playback-started'", data);
         setIsPlaying(true);
@@ -207,7 +188,6 @@ export function usePartySocket(
         stopCountdown();
         setRemainingTime(data.remainingDuration);
       });
-      // --- END THE FIX ---
 
       newSocket.on("singers-updated", (participantList: Participant[]) => {
         debugLog(LOG_TAG, "Received 'singers-updated'", participantList);
@@ -237,8 +217,6 @@ export function usePartySocket(
 
     void socketInitializer();
     
-    // --- THIS IS THE FIX (Part 5) ---
-    // On initial page load, check if the song is already playing
     if (initialData.currentSongStartedAt) {
       setIsPlaying(true);
       startSyncedCountdown(
@@ -246,7 +224,6 @@ export function usePartySocket(
         initialData.currentSongRemainingDuration ?? 0
       );
     }
-    // --- END THE FIX ---
 
     const heartbeatInterval = setInterval(() => {
       socketRef.current?.emit("heartbeat", { partyHash, singerName });
@@ -263,10 +240,7 @@ export function usePartySocket(
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown]); 
-  // --- END THE FIX ---
 
-  // The socket actions (play, pause, skip) are now just simple broadcasts.
-  // The server handles all the logic.
   const socketActions: SocketActions = useMemo(() => ({
     addSong: (videoId, title, coverUrl, singerName) => {
       const data = { partyHash, videoId, title, coverUrl, singerName };
@@ -303,11 +277,13 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
       socketRef.current?.emit("heartbeat", data);
     },
-    playbackPlay: () => {
-      const data = { partyHash };
+    // --- THIS IS THE FIX (Part 2) ---
+    playbackPlay: (currentTime?: number) => {
+      const data = { partyHash, currentTime };
       debugLog(LOG_TAG, "Emitting 'playback-play'", data);
       socketRef.current?.emit("playback-play", data);
     },
+    // --- END THE FIX ---
     playbackPause: () => {
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'playback-pause'", data);

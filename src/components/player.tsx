@@ -23,12 +23,10 @@ type Props = {
   forceAutoplay: boolean;
   onAutoplayed: () => void;
   isPlaying: boolean;
-  onPlay: () => void;
+  onPlay: (currentTime?: number) => void;
   onPause: () => void;
   remainingTime: number; 
-  // --- THIS IS THE FIX (Part 1) ---
   onOpenYouTubeAndAutoSkip: () => void;
-  // --- END THE FIX ---
 };
 
 export function Player({
@@ -44,9 +42,7 @@ export function Player({
   onPlay,
   onPause,
   remainingTime, 
-  // --- THIS IS THE FIX (Part 2) ---
   onOpenYouTubeAndAutoSkip,
-  // --- END THE FIX ---
 }: Props) {
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
@@ -97,11 +93,12 @@ export function Player({
     }
   };
 
-  const onPlayerPlay: YouTubeProps["onPlay"] = (_event) => {
+  const onPlayerPlay: YouTubeProps["onPlay"] = (event) => {
     console.log("handlePlay (from player)");
     setInternalIsPlaying(true);
     if (!isPlaying) { 
-      onPlay();
+      const currentTime = event.target.getCurrentTime() as number;
+      onPlay(Math.floor(currentTime)); // Pass the new current time
     }
   };
 
@@ -118,14 +115,11 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
-  // --- THIS IS THE FIX (Part 3) ---
+  // --- THIS IS THE FIX (Part 1) ---
+  // This function NO LONGER opens a window.
+  // It only calls the prop, which points to the main
+  // handleOpenYouTubeAndAutoSkip function in player-scene.tsx.
   const openYouTubeTab = () => {
-    window.open(
-      `https://www.youtube.com/watch?v=${video.id}#mykaraokeparty`,
-      "_blank",
-      "fullscreen=yes"
-    );
-    // This now calls the correct function to START the timer, not skip.
     if (onOpenYouTubeAndAutoSkip) {
       onOpenYouTubeAndAutoSkip();
     }
@@ -133,7 +127,7 @@ export function Player({
   // --- END THE FIX ---
 
   if (showOpenInYouTubeButton) {
-    // ... (This error view remains the same)
+    // This is the error view shown for videos that fail to load
     return (
       <div
         className={cn(
@@ -173,7 +167,7 @@ export function Player({
             type="button"
             size="lg"
             className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-            onClick={() => openYouTubeTab()} // <-- This now calls the fixed function
+            onClick={() => openYouTubeTab()}
           >
             <Youtube className="mr-2" size={24} />
             Open on YouTube
@@ -258,8 +252,6 @@ export function Player({
         )}
       </div>
 
-      {/* --- THIS IS THE FIX (Req #1) --- */}
-      {/* Show "Next Singer" message when player is ready, paused, and a next song exists */}
       {isReady && !isPlaying && nextSong && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
           <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
@@ -273,7 +265,6 @@ export function Player({
           </div>
         </div>
       )}
-      {/* --- END THE FIX (Req #1) --- */}
 
 
       <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">

@@ -122,8 +122,13 @@ export function HostScene({ party, initialData }: Props) {
           onConfirmClose={confirmCloseParty} 
           onCancelClose={cancelCloseParty}
           isSkipping={isSkipping}
-          isPlaying={isPlaying}
+          isPlaying={isPlaying} 
           remainingTime={remainingTime}
+          // --- THIS IS THE FIX ---
+          // Pass the playback controls from the socket
+          onPlay={socketActions.playbackPlay}
+          onPause={socketActions.playbackPause}
+          // --- END THE FIX ---
         />
       </div>
     </div>

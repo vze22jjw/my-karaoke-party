@@ -63,8 +63,6 @@ export default function PlayerScene({ party, initialData }: Props) {
     socketActions.playbackPause(); // This ensures the new song is paused
   }, [socketActions]);
 
-  // This useEffect handles your requirement:
-  // "Marked Song As played after timer is over"
   useEffect(() => {
     if (isSkipping && remainingTime <= 0) {
       const durationMs = parseISO8601Duration(currentSong?.duration);
@@ -79,17 +77,16 @@ export default function PlayerScene({ party, initialData }: Props) {
     doTheSkip(); 
   };
 
-  // This handles your requirement:
-  // "Skip button should cancel the timer... and show next song..."
   const handleSkip = async () => {
-    socketActions.startSkipTimer(); // Let other clients know (even if brief)
-    doTheSkip(); // Immediately skip and pause
+    socketActions.startSkipTimer(); 
+    doTheSkip(); 
   };
   
-  // This handles your requirement:
-  // "open on youtube button should: open video... start countdown timer"
+  // --- THIS IS THE FIX ---
+  // Removed `isSkipping` from the initial check.
+  // This allows the button to be clicked again to restart the timer.
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (isSkipping || !currentSong) return; 
+    if (!currentSong) return; // Only guard against no song
 
     // 1. Tell all clients we are in "skip mode"
     socketActions.startSkipTimer(); 
@@ -97,7 +94,7 @@ export default function PlayerScene({ party, initialData }: Props) {
     const durationMs = parseISO8601Duration(currentSong.duration);
   
     if (durationMs && durationMs > 0) {
-      // 2. Tell server to start playback, which starts the timer for everyone
+      // 2. Tell server to start playback, which starts/restarts the timer
       socketActions.playbackPlay(); 
     } else {
       console.log("Song has no duration, auto-skip timer will not start.");
@@ -110,10 +107,11 @@ export default function PlayerScene({ party, initialData }: Props) {
       "fullscreen=yes",
     );
   };
+  // --- END THE FIX ---
 
   
-  const handlePlay = () => {
-    socketActions.playbackPlay();
+  const handlePlay = (currentTime?: number) => {
+    socketActions.playbackPlay(currentTime); 
   };
   
   const handlePause = () => {
@@ -132,13 +130,11 @@ export default function PlayerScene({ party, initialData }: Props) {
     forceAutoplay: forceAutoplay,
     onAutoplayed: () => setForceAutoplay(false),
     isPlaying: isPlaying,
-    onPlay: handlePlay,
+    onPlay: handlePlay, 
     onPause: handlePause,
     remainingTime: remainingTime,
     nextSong: nextSong,
-    // --- THIS IS THE FIX (Part 1) ---
     onOpenYouTubeAndAutoSkip: handleOpenYouTubeAndAutoSkip,
-    // --- END THE FIX ---
   };
 
   return (

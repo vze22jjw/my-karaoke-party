@@ -19,12 +19,12 @@ type Props = {
   forceAutoplay: boolean;
   onAutoplayed: () => void;
   isPlaying: boolean;
-  onPlay: () => void;
+  // --- THIS IS THE FIX (Part 1) ---
+  onPlay: (currentTime?: number) => void;
+  // --- END THE FIX ---
   onPause: () => void;
   remainingTime: number; 
-  // --- THIS IS THE FIX (Part 1) ---
   onOpenYouTubeAndAutoSkip: () => void;
-  // --- END THE FIX ---
 };
 
 export function PlayerDesktopView({
@@ -42,9 +42,7 @@ export function PlayerDesktopView({
   onPlay,
   onPause,
   remainingTime, 
-  // --- THIS IS THE FIX (Part 2) ---
   onOpenYouTubeAndAutoSkip,
-  // --- END THE FIX ---
 }: Props) {
   return (
     <div className="hidden sm:block sm:w-full h-screen"> 
@@ -69,12 +67,10 @@ export function PlayerDesktopView({
               forceAutoplay={forceAutoplay}
               onAutoplayed={onAutoplayed}
               isPlaying={isPlaying}
-              onPlay={onPlay}
+              onPlay={onPlay} // <-- This now passes the new function
               onPause={onPause}
               remainingTime={remainingTime}
-              // --- THIS IS THE FIX (Part 3) ---
               onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
-              // --- END THE FIX ---
             />
           ) : (
             <EmptyPlayer
