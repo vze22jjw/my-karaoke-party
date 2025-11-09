@@ -2,21 +2,22 @@ import { notFound } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "party";
 import { api } from "~/trpc/server";
 
-// --- THIS IS THE FIX ---
-// Import the component with the correct name from the correct file
 import { PartySceneTabs } from "./party-scene-tabs";
-// --- END THE FIX ---
 
 type Props = {
   params: { hash: string };
 };
 
+// --- THIS IS THE FIX (Part 1) ---
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
+// --- END THE FIX ---
 
 export async function generateMetadata({ params }: Props) {
   const partyHash = params.hash;
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Props) {
     notFound();
   }
   return {
-    title: party.name,
+    title: `${party.name} - Party Singers`,
   };
 }
 
@@ -37,12 +38,16 @@ export default async function PartyHashPage({ params }: Props) {
     notFound();
   }
 
+  // --- THIS IS THE FIX (Part 2) ---
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
     played: [], 
-    settings: { orderByFairness: true } 
+    settings: { orderByFairness: true },
+    currentSongStartedAt: null,
+    currentSongRemainingDuration: null,
   };
+  // --- END THE FIX ---
 
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -61,10 +66,8 @@ export default async function PartyHashPage({ params }: Props) {
     console.warn("Failed to fetch initial playlist for party page", error);
   }
   
-  // --- THIS IS THE FIX ---
-  // Render the renamed component
   return (
     <PartySceneTabs key={party.hash} party={party} initialData={initialData} />
   );
-  // --- END THE FIX ---
 }
+  

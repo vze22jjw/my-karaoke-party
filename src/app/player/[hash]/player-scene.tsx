@@ -4,7 +4,7 @@
 import { useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useEffect, useRef } from "react"; 
+import { useState, useEffect, useRef, useCallback } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
 import { Player } from "~/components/player";
@@ -15,14 +15,16 @@ import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
-// --- THIS IS THE CORRECT IMPORT PATH ---
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
+// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
 
 type Props = {
@@ -34,8 +36,6 @@ export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   const [forceAutoplay, setForceAutoplay] = useState(false);
   
-  const autoSkipTimerRef = useRef<NodeJS.Timeout | null>(null);
-
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
   }
@@ -50,65 +50,68 @@ export default function PlayerScene({ party, initialData }: Props) {
     remainingTime 
   } = usePartySocket(
     party.hash,
-    initialData,
+    initialData, // <-- This now has the correct type
     "Player" 
   );
   
   const { ref, toggle, fullscreen } = useFullscreen();
   const nextSong = unplayedPlaylist[0];
 
-  useEffect(() => {
-    return () => {
-      if (autoSkipTimerRef.current) {
-        clearTimeout(autoSkipTimerRef.current);
-      }
-    };
-  }, []);
-
-  const doTheSkip = () => {
-    if (autoSkipTimerRef.current) {
-      clearTimeout(autoSkipTimerRef.current);
-      autoSkipTimerRef.current = null;
-    }
+  const doTheSkip = useCallback(() => {
     setForceAutoplay(false); 
-    socketActions.markAsPlayed();
-    socketActions.playbackPause(); 
-  };
+    socketActions.markAsPlayed(); // This advances to the next song
+    socketActions.playbackPause(); // This ensures the new song is paused
+  }, [socketActions]);
+
+  useEffect(() => {
+    if (isSkipping && remainingTime <= 0) {
+      const durationMs = parseISO8601Duration(currentSong?.duration);
+      if (durationMs && durationMs > 0) {
+        console.log("Auto-skip timer finished, skipping song.");
+        doTheSkip(); 
+      }
+    }
+  }, [isSkipping, remainingTime, currentSong, doTheSkip]);
 
   const handlePlayerEnd = async () => {
     doTheSkip(); 
   };
 
   const handleSkip = async () => {
-    if (isSkipping) return; 
     socketActions.startSkipTimer(); 
     doTheSkip(); 
   };
   
+  // --- THIS IS THE FIX ---
+  // Removed `isSkipping` from the initial check.
+  // This allows the button to be clicked again to restart the timer.
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (isSkipping) return; 
+    if (!currentSong) return; // Only guard against no song
 
+    // 1. Tell all clients we are in "skip mode"
     socketActions.startSkipTimer(); 
-
-    if (currentSong) {
-      window.open(
-        `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
-        "_blank",
-        "fullscreen=yes",
-      );
-    }
-
-    const timerDuration = remainingTime > 0 ? (remainingTime * 1000) + 5000 : 10000;
-
-    console.log(`Starting auto-skip timer for ${timerDuration}ms`);
-
-    autoSkipTimerRef.current = setTimeout(() => {
-      doTheSkip();
-    }, timerDuration); 
-  };
   
-  const handlePlay = () => {
-    socketActions.playbackPlay();
+    const durationMs = parseISO8601Duration(currentSong.duration);
+  
+    if (durationMs && durationMs > 0) {
+      // 2. Tell server to start playback, which starts/restarts the timer
+      socketActions.playbackPlay(); 
+    } else {
+      console.log("Song has no duration, auto-skip timer will not start.");
+    }
+  
+    // 3. Open the YouTube tab
+    window.open(
+      `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
+      "_blank",
+      "fullscreen=yes",
+    );
+  };
+  // --- END THE FIX ---
+
+  
+  const handlePlay = (currentTime?: number) => {
+    socketActions.playbackPlay(currentTime); 
   };
   
   const handlePause = () => {
@@ -127,10 +130,11 @@ export default function PlayerScene({ party, initialData }: Props) {
     forceAutoplay: forceAutoplay,
     onAutoplayed: () => setForceAutoplay(false),
     isPlaying: isPlaying,
-    onPlay: handlePlay,
+    onPlay: handlePlay, 
     onPause: handlePause,
     remainingTime: remainingTime,
     nextSong: nextSong,
+    onOpenYouTubeAndAutoSkip: handleOpenYouTubeAndAutoSkip,
   };
 
   return (
@@ -141,8 +145,8 @@ export default function PlayerScene({ party, initialData }: Props) {
         <PlayerDesktopView
           playerRef={ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={toggle}
-          currentVideo={currentSong ?? undefined} // <-- This fixes the null type error
-          {...commonPlayerProps}
+          currentVideo={currentSong ?? undefined} 
+          {...commonPlayerProps} // <-- All props are passed
         />
         
         {/* Render Mobile View (hidden on desktop) */}
@@ -170,7 +174,7 @@ export default function PlayerScene({ party, initialData }: Props) {
           ) : currentSong ? ( 
             <Player
               video={currentSong}
-              {...commonPlayerProps}
+              {...commonPlayerProps} // <-- All props are passed
             />
           ) : (
             <EmptyPlayer

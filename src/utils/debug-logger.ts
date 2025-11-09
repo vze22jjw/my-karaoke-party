@@ -22,8 +22,12 @@ export const formatPlaylistForLog = (
   if (playlist.length === 0) {
     return ["(Playlist is empty)"];
   }
+  // --- This includes your requested duration logging ---
   return playlist.map(
-    (item, index) => `${index + 1}: ${item?.title ?? "N/A"}`,
+    (item, index) =>
+      `${index + 1}: ${item?.title ?? "N/A"} (${
+        item?.duration ?? "No Duration"
+      })`,
   );
 };
 
@@ -38,15 +42,11 @@ export const debugLog = (tag: string, message: string, data?: unknown) => {
     return;
   }
 
-  // Gets HH:MM:SS.ms
-  // --- THIS IS THE FIX ---
-  const timestamp = new Date().toISOString().split("T")[1]!.slice(0, 12); // Added '!'
-  // --- END THE FIX ---
+  const timestamp = new Date().toISOString().split("T")[1]!.slice(0, 12); 
 
   console.log(`[${timestamp}] ${tag} ${message}`);
 
   if (data) {
-    // Use console.dir for better object inspection
     console.dir(data, { depth: 3 });
   }
 };

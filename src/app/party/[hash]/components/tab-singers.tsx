@@ -1,7 +1,9 @@
 "use client";
 
 import type { VideoInPlaylist } from "party";
-import { useState } from "react";
+// --- THIS IS THE FIX (Req #1) ---
+import { useState, useMemo } from "react";
+// --- END THE FIX ---
 import { Users, MicVocal, ChevronDown, LogOut, Crown } from "lucide-react";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
@@ -23,6 +25,10 @@ type Props = {
   isPlaying: boolean; 
   remainingTime: number; // <-- ADD THIS PROP
 };
+
+// --- THIS IS THE FIX (Req #1) ---
+const nextSingerMessages = ["Serving In", "Your Turn In", "Singing In", "Coming Up In", "Get Ready In", "Up Next In"];
+// --- END THE FIX ---
 
 export function TabSingers({
   currentSong,
@@ -50,6 +56,14 @@ export function TabSingers({
 
   const currentSingerName = currentSong?.singerName;
   const nextSingerName = unplayedPlaylist[0]?.singerName;
+
+  // --- THIS IS THE FIX (Req #1) ---
+  // This hook selects a random message and only changes it when the next singer changes.
+  const nextSingerMessage = useMemo(() => {
+    if (!nextSingerName) return "";
+    return nextSingerMessages[Math.floor(Math.random() * nextSingerMessages.length)];
+  }, [nextSingerName]);
+  // --- END THE FIX ---
 
   return (
     <div className="bg-card rounded-lg p-4 border">
@@ -95,28 +109,31 @@ export function TabSingers({
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                      {/* --- THIS IS THE FIX (Req #4) --- */}
-                      {/* Add flashing animation if this is the CURRENT singer and song is playing */}
-                      {isHost ? (
-                        <Crown className={cn("h-5 w-5", isCurrentSinger && isPlaying && "animate-pulse")} />
-                      ) : (
-                        <MicVocal className={cn("h-5 w-5", isCurrentSinger && isPlaying && "animate-pulse")} />
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center",
+                        isCurrentSinger && "animate-pulse",
                       )}
-                      {/* --- END THE FIX (Req #4) --- */}
+                    >
+                      {isHost ? (
+                        <Crown className="h-5 w-5" />
+                      ) : (
+                        <MicVocal className="h-5 w-5" />
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{participant.name}</p>
-                        {/* --- THIS IS THE FIX (Req #5) --- */}
-                        {/* Show timer if this is the NEXT singer and a song is playing/paused */}
+                        {/* --- THIS IS THE FIX (Req #1) --- */}
+                        {/* Pass the random message to the timer component */}
                         {isNextSinger && currentSong && (
                           <SongCountdownTimer
                             remainingTime={remainingTime}
                             className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
+                            message={nextSingerMessage}
                           />
                         )}
-                        {/* --- END THE FIX (Req #5) --- */}
+                        {/* --- END THE FIX --- */}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {totalSongs} song(s)

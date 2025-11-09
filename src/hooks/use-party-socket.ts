@@ -1,8 +1,8 @@
 import { type KaraokeParty, type VideoInPlaylist } from "party";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react"; // <-- Import useCallback
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
-import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
+import { debugLog } from "~/utils/debug-logger";
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 
@@ -14,7 +14,9 @@ interface SocketActions {
   togglePlayback: (disablePlayback: boolean) => void; 
   closeParty: () => void;
   sendHeartbeat: () => void;
-  playbackPlay: () => void;
+  // --- THIS IS THE FIX (Part 1) ---
+  playbackPlay: (currentTime?: number) => void;
+  // --- END THE FIX ---
   playbackPause: () => void;
   startSkipTimer: () => void; 
 }
@@ -34,7 +36,7 @@ interface UsePartySocketReturn {
   isPlaying: boolean;
   participants: Participant[]; 
   isSkipping: boolean; 
-  remainingTime: number; // <-- The global countdown time in seconds
+  remainingTime: number; 
 }
 
 type PartySocketData = {
@@ -42,6 +44,8 @@ type PartySocketData = {
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
 
 const LOG_TAG = "[SocketClient]";
@@ -71,35 +75,56 @@ export function usePartySocket(
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
 
-  const [remainingTime, setRemainingTime] = useState(0); // Time in seconds
+  const [remainingTime, setRemainingTime] = useState(() => {
+    if (initialData.currentSongStartedAt) {
+      const elapsedMs = new Date().getTime() - new Date(initialData.currentSongStartedAt).getTime();
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      return Math.max(0, (initialData.currentSongRemainingDuration ?? 0) - elapsedSeconds);
+    }
+    return initialData.currentSongRemainingDuration ?? 
+           Math.floor((parseISO8601Duration(initialData.currentSong?.duration) ?? 0) / 1000);
+  });
+
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
   
-  const stopCountdown = () => {
+  const stopCountdown = useCallback(() => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-  };
+  }, []);
 
-  const startCountdown = () => {
-    stopCountdown(); 
-    timerIntervalRef.current = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev <= 1) {
-          stopCountdown();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-  
-  const resetCountdown = (song: VideoInPlaylist | null) => {
+  const startSyncedCountdown = useCallback((startedAt: string, remainingDuration: number) => {
+    stopCountdown();
+
+    const startTime = new Date(startedAt).getTime();
+
+    const updateTimer = () => {
+      const elapsedMs = new Date().getTime() - startTime;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      const newRemainingTime = Math.max(0, remainingDuration - elapsedSeconds);
+
+      setRemainingTime(newRemainingTime);
+
+      if (newRemainingTime <= 0) {
+        stopCountdown();
+      }
+    };
+    
+    updateTimer(); 
+    timerIntervalRef.current = setInterval(updateTimer, 1000); 
+  }, [stopCountdown]);
+
+  const resetCountdown = useCallback((song: VideoInPlaylist | null) => {
     stopCountdown();
     const durationMs = parseISO8601Duration(song?.duration);
-    setRemainingTime(durationMs ? Math.floor(durationMs / 1000) : 0);
-  };
+    const durationInSeconds = durationMs ? Math.floor(durationMs / 1000) : 0;
+    
+    debugLog(LOG_TAG, `Resetting countdown for ${song?.title ?? 'No Song'}. Duration: ${song?.duration ?? 'N/A'} (${durationInSeconds}s)`);
+    
+    setRemainingTime(durationInSeconds);
+  }, [stopCountdown]);
 
   useEffect(() => {
     const socketInitializer = async () => {
@@ -139,18 +164,29 @@ export function usePartySocket(
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
+
+        if (partyData.currentSongStartedAt) {
+          setIsPlaying(true);
+          startSyncedCountdown(partyData.currentSongStartedAt.toString(), partyData.currentSongRemainingDuration ?? 0);
+        } else {
+          setIsPlaying(false);
+          stopCountdown();
+          setRemainingTime(partyData.currentSongRemainingDuration ?? 
+                          Math.floor((parseISO8601Duration(partyData.currentSong?.duration) ?? 0) / 1000));
+        }
       });
 
-      newSocket.on("playback-state-play", () => {
-        debugLog(LOG_TAG, "Received 'playback-state-play'");
+      newSocket.on("playback-started", (data: { startedAt: string; remainingDuration: number }) => {
+        debugLog(LOG_TAG, "Received 'playback-started'", data);
         setIsPlaying(true);
-        startCountdown(); 
+        startSyncedCountdown(data.startedAt, data.remainingDuration);
       });
 
-      newSocket.on("playback-state-pause", () => {
-        debugLog(LOG_TAG, "Received 'playback-state-pause'");
+      newSocket.on("playback-paused", (data: { remainingDuration: number }) => {
+        debugLog(LOG_TAG, "Received 'playback-paused'", data);
         setIsPlaying(false);
-        stopCountdown(); 
+        stopCountdown();
+        setRemainingTime(data.remainingDuration);
       });
 
       newSocket.on("singers-updated", (participantList: Participant[]) => {
@@ -180,7 +216,14 @@ export function usePartySocket(
     };
 
     void socketInitializer();
-    resetCountdown(initialData.currentSong); // Set initial time
+    
+    if (initialData.currentSongStartedAt) {
+      setIsPlaying(true);
+      startSyncedCountdown(
+        initialData.currentSongStartedAt.toString(),
+        initialData.currentSongRemainingDuration ?? 0
+      );
+    }
 
     const heartbeatInterval = setInterval(() => {
       socketRef.current?.emit("heartbeat", { partyHash, singerName });
@@ -196,7 +239,7 @@ export function usePartySocket(
       stopCountdown(); 
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partyHash, singerName, router]); 
+  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown]); 
 
   const socketActions: SocketActions = useMemo(() => ({
     addSong: (videoId, title, coverUrl, singerName) => {
@@ -234,11 +277,13 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
       socketRef.current?.emit("heartbeat", data);
     },
-    playbackPlay: () => {
-      const data = { partyHash };
+    // --- THIS IS THE FIX (Part 2) ---
+    playbackPlay: (currentTime?: number) => {
+      const data = { partyHash, currentTime };
       debugLog(LOG_TAG, "Emitting 'playback-play'", data);
       socketRef.current?.emit("playback-play", data);
     },
+    // --- END THE FIX ---
     playbackPause: () => {
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'playback-pause'", data);

@@ -2,6 +2,7 @@ import { db } from "~/server/db";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import type { PlaylistItem } from "@prisma/client";
 import { type KaraokeParty, type VideoInPlaylist } from "party";
+import { parseISO8601Duration } from "~/utils/string"; // Import the parser
 
 /**
  * Helper to format Prisma items into the VideoInPlaylist type.
@@ -29,12 +30,13 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null; // <-- Add this
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
     include: {
       playlistItems: {
-        // Get ALL items, sort by played status (nulls last) then by when they were added
         orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }],
       },
     },
@@ -47,21 +49,13 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   const useQueueRules = party.orderByFairness;
   const allItems: PlaylistItem[] = party.playlistItems;
 
-  // --- 1. Separate Played and Unplayed Songs ---
   const playedItems = allItems.filter((item) => item.playedAt);
-  const unplayedItems = allItems.filter((item) => !item.playedAt); // This is sorted by addedAt
+  const unplayedItems = allItems.filter((item) => !item.playedAt);
 
-  // --- 2. Format played songs (sorted by most recent) ---
   const playedPlaylist = playedItems
     .sort((a, b) => (b.playedAt?.getTime() ?? 0) - (a.playedAt?.getTime() ?? 0))
     .map(formatPlaylistItem);
 
-  // --- 3. Determine and sort the unplayed queue ---
-
-  // --- THIS IS THE FIX ---
-
-  // Get the *actual* last singer who finished.
-  // We find the most recent `playedAt` timestamp.
   const lastPlayedSong =
     playedItems.length > 0
       ? playedItems.reduce((latest, current) =>
@@ -76,38 +70,49 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   let fairlySortedUnplayed: PlaylistItem[] = [];
 
   if (useQueueRules) {
-    // Run the fairness algorithm on the *ENTIRE* unplayed list
     fairlySortedUnplayed = orderByRoundRobin(
       allItems as FairnessPlaylistItem[],
-      unplayedItems as FairnessPlaylistItem[], // <-- Pass the whole list
+      unplayedItems as FairnessPlaylistItem[], 
       singerToDeprioritize,
     ) as PlaylistItem[];
   } else {
-    // If fairness is off, just use the default `addedAt` order
     fairlySortedUnplayed = unplayedItems;
   }
 
-  // NOW we can determine the correct current song and remaining queue
   const currentSongItem = fairlySortedUnplayed[0] ?? null;
   const remainingUnplayed = fairlySortedUnplayed.slice(1);
 
-  // --- END THE FIX ---
-
-  // --- 4. Format the final lists ---
   const formattedCurrentSong = currentSongItem
     ? formatPlaylistItem(currentSongItem)
     : null;
-  // The `remainingUnplayed` list is already sorted, just format it.
   const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem);
 
-  // --- 5. Return the new object structure ---
+  // --- THIS IS THE FIX (Part 2) ---
+  // If the song is playing, we pass the start time.
+  // If it's paused or stopped, we pass the stored remaining duration.
+  let remainingDuration: number | null = null;
+  
+  if (party.currentSongStartedAt) {
+    // Song is actively playing, pass the remaining duration from when it was started
+    remainingDuration = party.currentSongRemainingDuration;
+  } else if (party.currentSongRemainingDuration) {
+    // Song is paused, pass the stored remaining duration
+    remainingDuration = party.currentSongRemainingDuration;
+  } else if (formattedCurrentSong?.duration) {
+    // Song is stopped, get its full duration
+    remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
+  }
+  // --- END THE FIX ---
+
   return {
     currentSong: formattedCurrentSong,
     unplayed: unplayedPlaylist,
     played: playedPlaylist,
     settings: {
       orderByFairness: useQueueRules,
-      disablePlayback: party.disablePlayback, // <-- This was already correct
+      disablePlayback: party.disablePlayback,
     },
+    currentSongStartedAt: party.currentSongStartedAt,
+    currentSongRemainingDuration: remainingDuration,
   };
 }

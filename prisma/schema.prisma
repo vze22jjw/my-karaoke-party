@@ -32,6 +32,13 @@ model Party {
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
+    // --- THIS IS THE FIX ---
+    // Add fields to track the *exact* state of the current song
+    currentSongId                 String?   // Stores the videoId of the song being played
+    currentSongStartedAt          DateTime? // Stores the *server timestamp* of when 'play' was pressed
+    currentSongRemainingDuration  Int?      // Stores the *remaining seconds* when paused
+    // --- END THE FIX ---
+
     @@index([hash])
     @@index([lastActivityAt])
 }
@@ -42,9 +49,7 @@ model PartyParticipant {
     party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
     name      String
     joinedAt  DateTime @default(now())
-    // --- THIS IS THE FIX ---
     role      String   @default("Guest") // Add role, default to "Guest"
-    // --- END THE FIX ---
 
     @@unique([partyId, name])
     @@index([partyId])

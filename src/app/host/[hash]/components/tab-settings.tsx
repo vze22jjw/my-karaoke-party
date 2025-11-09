@@ -1,16 +1,27 @@
 "use client";
 
 import { Button } from "~/components/ui/ui/button";
+import { Label } from "~/components/ui/ui/label";
+// import { Switch } from "~/components/ui/ui/switch"; // <-- Removed this incorrect import
+import { getUrl } from "~/utils/url";
+import { QrCode } from "~/components/qr-code";
+// import { Slider } from "~/components/ui/slider"; // <-- Removed this incorrect import
+import { Input } from "~/components/ui/ui/input"; // <-- Using Input, which you have
+import { AlertCircle, Trash2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
+// --- THIS IS THE FIX (Part 1) ---
+// Removed unused imports
+// import { usePartySocket } from "~/hooks/use-party-socket";
+// import { type KaraokeParty } from "party";
 import { cn } from "~/lib/utils";
-import { AlertTriangle, Search, ExternalLink } from "lucide-react";
-import Link from "next/link";
+// --- END THE FIX ---
 
 type Props = {
+  partyHash: string;
   useQueueRules: boolean;
   onToggleRules: () => void;
-  disablePlayback: boolean; // <-- ADDED/components/tab-settings.tsx]
-  onTogglePlayback: () => void; // <-- ADDED/components/tab-settings.tsx]
-  partyHash: string;
+  disablePlayback: boolean;
+  onTogglePlayback: () => void;
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
@@ -19,12 +30,54 @@ type Props = {
   onCancelClose: () => void;
 };
 
+const ToggleButton = ({
+  id,
+  checked,
+  onCheckedChange,
+  label,
+  description,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  label: string;
+  description: string;
+}) => (
+  <div className="flex items-center justify-between rounded-lg border p-4">
+    <div className="space-y-0.5">
+      <Label htmlFor={id} className="text-base">
+        {label}
+      </Label>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+    <Button
+      id={id}
+      variant="outline"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onCheckedChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        checked ? "bg-primary" : "bg-input",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out",
+          checked ? "translate-x-5" : "translate-x-0",
+        )}
+      />
+    </Button>
+  </div>
+);
+
 export function TabSettings({
+  partyHash,
   useQueueRules,
   onToggleRules,
-  disablePlayback, // <-- ADDED/components/tab-settings.tsx]
-  onTogglePlayback, // <-- ADDED/components/tab-settings.tsx]
-  partyHash,
+  disablePlayback,
+  onTogglePlayback,
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
@@ -32,170 +85,138 @@ export function TabSettings({
   onConfirmClose,
   onCancelClose,
 }: Props) {
+  const joinUrl = getUrl(`/join/${partyHash}`);
+  const playerUrl = getUrl(`/player/${partyHash}`);
+  
+  const playerUrlWithLabel = `${playerUrl}`;
+
   return (
-    <>
-      {/* Queue Rules */}
-      <div className="flex-shrink-0">
-        <h2 className="font-semibold text-lg mb-2">Controls</h2>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-primary-foreground/80">
-            Queue Rules
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {useQueueRules ? "ON (Fairness)" : "OFF (Manual)"}
-            </span>
-            <button
-              onClick={onToggleRules}
-              aria-checked={useQueueRules}
-              role="switch"
-              className={cn(
-                "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
-                useQueueRules ? "bg-green-500" : "bg-red-500",
-              )}
-            >
-              <span className="sr-only">Toggle Queue Rules</span>
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                  useQueueRules ? "translate-x-5" : "translate-x-0",
-                )}
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium">Party Links</h3>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Label>Join Link (for singers)</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                readOnly
+                value={joinUrl}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
-            </button>
-          </div>
-        </div>
-        
-        {/* --- START: ADDED NEW TOGGLE --- */}
-        <div className="flex items-center justify-between">/components/tab-settings.tsx]
-          <span className="text-sm font-medium text-primary-foreground/80">
-            Disable Playback
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {disablePlayback ? "ON (Disabled)" : "OFF (Enabled)"}
-            </span>
-            <button
-              onClick={onTogglePlayback}
-              aria-checked={disablePlayback}
-              role="switch"
-              className={cn(
-                "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
-                disablePlayback ? "bg-red-500" : "bg-green-500",
-              )}
-            >
-              <span className="sr-only">Toggle Playback</span>
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                  disablePlayback ? "translate-x-5" : "translate-x-0",
-                )}
-              />
-            </button>
-          </div>
-        </div>
-        {/* --- END: ADDED NEW TOGGLE --- */}
-        
-      </div>
-
-      {/* --- UPDATED: Add Songs Link (points to /party) --- */}
-      <div className="flex-shrink-0">
-        <h2 className="font-semibold text-lg mb-2">Add Songs (Guest Page)</h2>
-        <a
-          href={`/party/${partyHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Open Guest Page
-        </a>
-      </div>
-
-      {/* --- UPDATED: Open Player Link (points to /player) --- */}
-      <div className="flex-shrink-0">
-        <h2 className="font-semibold text-lg mb-2">Player Display</h2>
-        <Link
-          href={`/player/${partyHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Open Player in New Window
-        </Link>
-      </div>
-
-      {/* Search Results Setting */}
-      <div className="flex-shrink-0">
-        <h2 className="font-semibold text-lg mb-2 flex items-center gap-2">
-          <Search className="h-5 w-5" />
-          Search Settings
-        </h2>
-        <div className="flex items-center justify-between">
-          <label
-            htmlFor="max-results"
-            className="text-sm font-medium text-primary-foreground/80"
-          >
-            Results per search
-          </label>
-          <select
-            id="max-results"
-            value={maxSearchResults}
-            onChange={(e) => onSetMaxResults(Number(e.target.value))}
-            className="rounded-md border-input bg-background p-2 text-sm"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-            <option value={20}>20</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Close Party Button */}
-      <div className="flex-shrink-0 pt-4 border-t border-destructive/20">
-        <h2 className="font-semibold text-lg mb-2 text-destructive">
-          Danger Zone
-        </h2>
-        {isConfirmingClose ? (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-            <p className="text-center font-medium text-destructive">
-              Are you sure?
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              This will permanently delete the party and its playlist for
-              everyone.
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onCancelClose}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onConfirmClose}
-              >
-                Yes, Close Party
-              </Button>
             </div>
           </div>
-        ) : (
-          <Button
-            variant="destructive"
-            className="w-full"
-            onClick={onCloseParty}
-          >
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Close Party
-          </Button>
-        )}
+          <div className="space-y-1">
+            <Label>Player Link (for TV/projector)</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                readOnly
+                value={playerUrlWithLabel} // This variable is now fixed
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              />
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <QrCode url={joinUrl} />
+          </div>
+        </div>
       </div>
-    </>
+
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium">Party Rules</h3>
+        <ToggleButton
+          id="queue-rules"
+          checked={useQueueRules}
+          onCheckedChange={onToggleRules}
+          label="Queue Ordering"
+          description={
+            useQueueRules
+              ? "ON (Fairness)"
+              : "OFF (First Come, First Served)"
+          }
+        />
+        
+        <ToggleButton
+          id="disable-playback"
+          checked={disablePlayback}
+          onCheckedChange={onTogglePlayback}
+          label="Disable Player"
+          description={
+            disablePlayback
+              ? "ON (Use YouTube button)"
+              : "OFF (Player is active)"
+          }
+        />
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium">Search Settings</h3>
+        <div className="space-y-2 rounded-lg border p-4">
+          <div className="flex justify-between">
+            <Label htmlFor="max-results" className="text-base">
+              Max Search Results
+            </Label>
+            <span className="text-base font-bold">{maxSearchResults}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Limit the number of results from YouTube.
+          </p>
+          <Input
+            id="max-results"
+            type="range"
+            min={5}
+            max={25}
+            step={1}
+            value={maxSearchResults}
+            onChange={(e) => onSetMaxResults(Number(e.target.value) ?? 10)}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
+        <div className="space-y-4 rounded-lg border border-destructive/50 p-4">
+          <div>
+            <Label className="text-base">End Party</Label>
+            <p className="text-sm text-muted-foreground">
+              This will close the party, delete all songs, and disconnect
+              everyone. This cannot be undone.
+            </p>
+          </div>
+          {isConfirmingClose ? (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Are you sure?</AlertTitle>
+              <AlertDescription>
+                This action is permanent.
+              </AlertDescription>
+              <div className="mt-4 flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={onCancelClose}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={onConfirmClose}
+                >
+                  Yes, End Party
+                </Button>
+              </div>
+            </Alert>
+          ) : (
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={onCloseParty}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Close Party
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

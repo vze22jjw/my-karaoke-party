@@ -1,19 +1,23 @@
 import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "party";
-import { HostScene } from "./host-scene"; // <-- New client scene
+import { HostScene } from "./host-scene"; 
 
 type Props = {
   params: { hash: string };
 };
 
-// This is the data structure for initial load
+// --- THIS IS THE FIX (Part 1) ---
+// This type definition must match what getFreshPlaylist returns
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
+// --- END THE FIX ---
 
 export async function generateMetadata({ params }: Props) {
   const partyHash = params.hash;
@@ -34,12 +38,17 @@ export default async function HostPage({ params }: Props) {
     notFound();
   }
 
+  // --- THIS IS THE FIX (Part 2) ---
+  // The default object must include the new null properties
   let initialData: InitialPartyData = { 
     currentSong: null, 
     unplayed: [], 
     played: [], 
-    settings: { orderByFairness: true } 
+    settings: { orderByFairness: true },
+    currentSongStartedAt: null,
+    currentSongRemainingDuration: null,
   };
+  // --- END THE FIX ---
 
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

@@ -26,8 +26,13 @@ type Props = {
   onConfirmClose: () => void;
   onCancelClose: () => void;
   isSkipping: boolean;
-  isPlaying: boolean; // <-- ADD THIS PROP
-  remainingTime: number; // <-- ADD THIS PROP
+  isPlaying: boolean; 
+  remainingTime: number; 
+  // --- THIS IS THE FIX (Part 1) ---
+  // Add the new props to fix compile errors
+  onPlay: (currentTime?: number) => void;
+  onPause: () => void;
+  // --- END THE FIX ---
 };
 
 export function HostControlPanel({
@@ -49,13 +54,17 @@ export function HostControlPanel({
   onConfirmClose,
   onCancelClose,
   isSkipping,
-  isPlaying, // <-- GET THIS PROP
-  remainingTime, // <-- GET THIS PROP
+  isPlaying, 
+  remainingTime, 
+  // --- THIS IS THE FIX (Part 2) ---
+  onPlay,
+  onPause,
+  // --- END THE FIX ---
 }: Props) {
   if (!party.hash) return null;
 
   return (
-    <div className="w-full overflow-hidden border-r border-border sm:hidden h-screen flex flex-col p-4">
+    <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
       <div className="flex flex-col h-full flex-1 overflow-hidden">
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
@@ -89,8 +98,13 @@ export function HostControlPanel({
               onRemoveSong={onRemoveSong}
               onSkip={onMarkAsPlayed} 
               isSkipping={isSkipping}
-              isPlaying={isPlaying} // <-- PASS THIS PROP
-              remainingTime={remainingTime} // <-- PASS THIS PROP
+              isPlaying={isPlaying} 
+              remainingTime={remainingTime} 
+              // --- THIS IS THE FIX (Part 3) ---
+              // Pass the new props down
+              onPlay={onPlay}
+              onPause={onPause}
+              // --- END THE FIX ---
             />
           </TabsContent>
 

@@ -4,9 +4,14 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { SkipForward, X, Loader2 } from "lucide-react"; 
+// --- THIS IS THE FIX (Part 1) ---
+// Removed unused imports
+import { X } from "lucide-react"; 
 import Image from "next/image";
-import { SongCountdownTimer } from "~/components/song-countdown-timer"; // <-- Import timer
+// Removed unused import
+// import { SongCountdownTimer } from "~/components/song-countdown-timer";
+// --- END THE FIX ---
+import { PlaybackControls } from "./playback-controls"; 
 
 type Props = {
   currentSong: VideoInPlaylist | null;
@@ -16,6 +21,8 @@ type Props = {
   isSkipping: boolean; 
   isPlaying: boolean; 
   remainingTime: number; 
+  onPlay: (currentTime?: number) => void;
+  onPause: () => void;
 };
 
 export function TabPlaylist({
@@ -26,6 +33,8 @@ export function TabPlaylist({
   isSkipping, 
   isPlaying, 
   remainingTime, 
+  onPlay,
+  onPause,
 }: Props) {
   const nextVideos = [...(currentSong ? [currentSong] : []), ...playlist];
 
@@ -37,12 +46,29 @@ export function TabPlaylist({
 
   return (
     <>
+      {currentSong && (
+        <PlaybackControls
+          currentSong={currentSong}
+          isPlaying={isPlaying}
+          onPlay={onPlay}
+          onPause={onPause}
+          onSkip={onSkip}
+          // --- THIS IS THE FIX (Part 2) ---
+          // Pass the remainingTime prop to PlaybackControls
+          remainingTime={remainingTime}
+          // --- END THE FIX ---
+        />
+      )}
+
       {nextVideos.map((video, index) => {
         const isNowPlaying = index === 0;
         return (
           <div
             key={video.id}
-            className="flex items-stretch justify-between gap-2"
+            className={cn(
+              "flex items-stretch justify-between gap-2",
+              isNowPlaying && "hidden" // Hide the first item
+            )}
           >
             <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center">
               <div className="relative w-16 aspect-video flex-shrink-0">
@@ -60,7 +86,6 @@ export function TabPlaylist({
                   <span
                     className={cn(
                       "font-mono text-xs text-muted-foreground",
-                      isNowPlaying && "font-bold text-primary",
                     )}
                   >
                     #{index + 1}
@@ -73,59 +98,20 @@ export function TabPlaylist({
                   <p className="text-xs text-muted-foreground truncate">
                     {video.singerName}
                   </p>
-                  {/* --- THIS IS THE FIX (Req #3) --- */}
-                  {isNowPlaying && (
-                    <SongCountdownTimer
-                      remainingTime={remainingTime}
-                      className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
-                    />
-                  )}
-                  {/* --- END THE FIX (Req #3) --- */}
                 </div>
               </div>
             </div>
 
             <div className="flex-shrink-0 flex w-10">
-              {isNowPlaying ? (
-                <div className="flex flex-col gap-1 justify-center w-full">
-                  <Button
-                    size="icon"
-                    className="h-8 w-full rounded-md bg-muted/50 border border-border text-yellow-300 hover:bg-gray-700"
-                    onClick={() => onSkip()}
-                    disabled={isSkipping} 
-                  >
-                    <span className="sr-only">Skip song</span>
-                    {isSkipping ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <SkipForward className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    size="icon"
-                    className="h-8 w-full rounded-md bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
-                    onClick={() => onRemoveSong(video.id)}
-                    disabled={isSkipping} 
-                  >
-                    <span className="sr-only">Remove song</span>
-                    {isSkipping ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <X className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  size="icon"
-                  className="h-full w-full p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
-                  onClick={() => onRemoveSong(video.id)}
-                  disabled={isSkipping} 
-                >
-                  <span className="sr-only">Remove song</span>
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                size="icon"
+                className="h-full w-full p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
+                onClick={() => onRemoveSong(video.id)}
+                disabled={isSkipping} 
+              >
+                <span className="sr-only">Remove song</span>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         );

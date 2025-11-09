@@ -9,12 +9,17 @@ import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 
+// --- THIS IS THE FIX (Part 1) ---
+// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongStartedAt: Date | null;
+  currentSongRemainingDuration: number | null;
 };
+// --- END THE FIX ---
 
 type Props = {
   party: Party;
@@ -53,7 +58,7 @@ export function HostScene({ party, initialData }: Props) {
     remainingTime // <-- GET remainingTime
   } = usePartySocket(
     party.hash,
-    initialData,
+    initialData, // <-- This now has the correct type
     "Host"
   );
   
@@ -95,28 +100,37 @@ export function HostScene({ party, initialData }: Props) {
   };
 
   return (
-    <HostControlPanel
-      party={party}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      currentSong={currentSong}
-      playlist={unplayedPlaylist}
-      onRemoveSong={removeSong}
-      onMarkAsPlayed={handleSkip} 
-      useQueueRules={useQueueRules} 
-      onToggleRules={handleToggleRules} 
-      disablePlayback={disablePlayback} 
-      onTogglePlayback={handleTogglePlayback} 
-      maxSearchResults={maxSearchResults}
-      onSetMaxResults={setMaxSearchResults}
-      onCloseParty={handleCloseParty}
-      isConfirmingClose={isConfirmingClose || isSkipping} 
-      onConfirmClose={confirmCloseParty} 
-      onCancelClose={cancelCloseParty}
-      isSkipping={isSkipping}
-      // --- ADD THESE PROPS ---
-      isPlaying={isPlaying}
-      remainingTime={remainingTime}
-    />
+    // This is the tablet-view wrapper
+    <div className="flex min-h-screen w-full justify-center">
+      <div className="w-full sm:max-w-md"> 
+        <HostControlPanel
+          party={party}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          currentSong={currentSong}
+          playlist={unplayedPlaylist}
+          onRemoveSong={removeSong}
+          onMarkAsPlayed={handleSkip} 
+          useQueueRules={useQueueRules} 
+          onToggleRules={handleToggleRules} 
+          disablePlayback={disablePlayback} 
+          onTogglePlayback={handleTogglePlayback} 
+          maxSearchResults={maxSearchResults}
+          onSetMaxResults={setMaxSearchResults}
+          onCloseParty={handleCloseParty}
+          isConfirmingClose={isConfirmingClose || isSkipping} 
+          onConfirmClose={confirmCloseParty} 
+          onCancelClose={cancelCloseParty}
+          isSkipping={isSkipping}
+          isPlaying={isPlaying} 
+          remainingTime={remainingTime}
+          // --- THIS IS THE FIX ---
+          // Pass the playback controls from the socket
+          onPlay={socketActions.playbackPlay}
+          onPause={socketActions.playbackPause}
+          // --- END THE FIX ---
+        />
+      </div>
+    </div>
   );
 }

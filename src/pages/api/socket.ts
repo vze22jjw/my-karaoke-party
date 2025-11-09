@@ -11,6 +11,8 @@ import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 import { type PlaylistItem } from "@prisma/client";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
+import youtubeAPI from "~/utils/youtube-data-api";
+import { parseISO8601Duration } from "~/utils/string";
 
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: NetSocket & {
@@ -22,7 +24,23 @@ type NextApiResponseWithSocket = NextApiResponse & {
 
 const LOG_TAG = "[SocketServer]";
 
-// --- ALL HELPER FUNCTIONS MOVED HERE, BEFORE SocketHandler ---
+// Helper function to generate a random duration
+// Min: 3:27 (207s), Max: 4:20 (260s)
+function getRandomDurationISO(): string {
+  const minSeconds = 207;
+  const maxSeconds = 260;
+  const randomSeconds =
+    Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
+  
+  const minutes = Math.floor(randomSeconds / 60);
+  const seconds = randomSeconds % 60;
+  
+  const isoDuration = `PT${minutes}M${seconds}S`;
+
+  debugLog(LOG_TAG, `Generated random fallback duration: ${isoDuration}`);
+
+  return isoDuration;
+}
 
 type Participant = {
   name: string;
@@ -186,7 +204,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           socket.broadcast.to(partyHash).emit("new-singer-joined", singerName);
         }
         
-        // This will now work because updateAndEmitPlaylist is defined above
         void updateAndEmitPlaylist(io, partyHash, "join-party");
         void updateAndEmitSingers(io, party.id, partyHash);
       }
@@ -221,6 +238,9 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           });
           
           if (!existing) {
+            const duration = await youtubeAPI.getVideoDuration(data.videoId);
+            debugLog(LOG_TAG, `Fetched duration for ${data.videoId}: ${duration ?? 'N/A'}`);
+
             await db.playlistItem.create({
               data: {
                 partyId: party.id,
@@ -229,7 +249,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
                 artist: "",
                 song: "",
                 coverUrl: data.coverUrl,
-                duration: "",
+                duration: duration ? duration : getRandomDurationISO(),
                 singerName: data.singerName,
                 randomBreaker: Math.random(),
               },
@@ -315,7 +335,12 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
         await db.party.update({
           where: { id: party.id },
-          data: { lastActivityAt: new Date() },
+          data: { 
+            lastActivityAt: new Date(),
+            currentSongId: null,
+            currentSongStartedAt: null,
+            currentSongRemainingDuration: null,
+          },
         });
 
         await updateAndEmitPlaylist(io, data.partyHash, "mark-as-played");
@@ -324,14 +349,121 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
     
-    socket.on("playback-play", (data: { partyHash: string }) => {
-      debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`);
-      io.to(data.partyHash).emit("playback-state-play");
+    socket.on("playback-play", async (data: { partyHash: string, currentTime?: number }) => {
+      debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`, data);
+      try {
+        const party = await db.party.findUnique({ 
+          where: { hash: data.partyHash },
+          include: { 
+            playlistItems: {
+              where: { playedAt: null },
+              orderBy: { addedAt: "asc" }
+            }
+          }
+        });
+        if (!party) return;
+
+        const allItems = await db.playlistItem.findMany({
+          where: { partyId: party.id },
+          orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }]
+        });
+        
+        const playedItems = allItems.filter(item => item.playedAt);
+        const unplayedItems = allItems.filter(item => !item.playedAt);
+        
+        const lastPlayedSong = playedItems.length > 0
+            ? playedItems.reduce((latest, current) =>
+                (latest.playedAt?.getTime() ?? 0) > (current.playedAt?.getTime() ?? 0) ? latest : current)
+            : null;
+        
+        let fairlySortedUnplayed: PlaylistItem[] = [];
+        if (party.orderByFairness) {
+          fairlySortedUnplayed = orderByRoundRobin(
+            allItems as FairnessPlaylistItem[],
+            unplayedItems as FairnessPlaylistItem[],
+            lastPlayedSong?.singerName ?? null,
+          ) as PlaylistItem[];
+        } else {
+          fairlySortedUnplayed = unplayedItems;
+        }
+
+        const currentSong = fairlySortedUnplayed[0];
+        if (!currentSong) {
+          debugLog(LOG_TAG, "Playback-play failed: No current song found.");
+          return;
+        }
+
+        const now = new Date();
+        let remainingDuration: number;
+        const totalDurationMs = parseISO8601Duration(currentSong.duration) ?? 0;
+        const totalDurationSec = Math.floor(totalDurationMs / 1000);
+
+        if (data.currentTime !== undefined && data.currentTime !== null) {
+          debugLog(LOG_TAG, `Scrub detected. New time: ${data.currentTime}s`);
+          remainingDuration = Math.max(0, totalDurationSec - Math.floor(data.currentTime));
+        } else {
+          remainingDuration = party.currentSongId === currentSong.videoId && party.currentSongRemainingDuration !== null
+            ? party.currentSongRemainingDuration
+            : totalDurationSec;
+        }
+
+        await db.party.update({
+          where: { id: party.id },
+          data: {
+            currentSongId: currentSong.videoId,
+            currentSongStartedAt: now,
+            currentSongRemainingDuration: remainingDuration, 
+          },
+        });
+
+        io.to(data.partyHash).emit("playback-started", {
+          startedAt: now.toISOString(),
+          remainingDuration: remainingDuration, // in seconds
+        });
+
+      } catch (error) {
+        console.error("Error starting playback:", error);
+      }
     });
 
-    socket.on("playback-pause", (data: { partyHash: string }) => {
+    socket.on("playback-pause", async (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'playback-pause' for room ${data.partyHash}`);
-      io.to(data.partyHash).emit("playback-state-pause");
+      try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        
+        if (!party) {
+          debugLog(LOG_TAG, "Playback-pause failed: Party not found.");
+          return;
+        }
+
+        if (!party.currentSongStartedAt || party.currentSongRemainingDuration === null) {
+          debugLog(LOG_TAG, "Playback-pause failed: Not playing or no duration.");
+          return;
+        }
+
+        // --- THIS IS THE FIX ---
+        // Removed the unnecessary `!` which caused the linter error
+        const elapsedMs = new Date().getTime() - party.currentSongStartedAt.getTime();
+        // --- END THE FIX ---
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+        const newRemainingDuration = Math.max(0, party.currentSongRemainingDuration - elapsedSeconds);
+
+        await db.party.update({
+          where: { id: party.id },
+          data: {
+            currentSongStartedAt: null, 
+            currentSongRemainingDuration: newRemainingDuration, 
+          },
+        });
+
+        io.to(data.partyHash).emit("playback-paused", {
+          remainingDuration: newRemainingDuration,
+        });
+
+      } catch (error) {
+        console.error("Error pausing playback:", error);
+      }
     });
 
     socket.on("toggle-rules", async (data: { partyHash: string; orderByFairness: boolean }) => {

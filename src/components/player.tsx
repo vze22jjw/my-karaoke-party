@@ -23,9 +23,10 @@ type Props = {
   forceAutoplay: boolean;
   onAutoplayed: () => void;
   isPlaying: boolean;
-  onPlay: () => void;
+  onPlay: (currentTime?: number) => void;
   onPause: () => void;
   remainingTime: number; 
+  onOpenYouTubeAndAutoSkip: () => void;
 };
 
 export function Player({
@@ -41,6 +42,7 @@ export function Player({
   onPlay,
   onPause,
   remainingTime, 
+  onOpenYouTubeAndAutoSkip,
 }: Props) {
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
@@ -91,11 +93,12 @@ export function Player({
     }
   };
 
-  const onPlayerPlay: YouTubeProps["onPlay"] = (_event) => {
+  const onPlayerPlay: YouTubeProps["onPlay"] = (event) => {
     console.log("handlePlay (from player)");
     setInternalIsPlaying(true);
     if (!isPlaying) { 
-      onPlay();
+      const currentTime = event.target.getCurrentTime() as number;
+      onPlay(Math.floor(currentTime)); // Pass the new current time
     }
   };
 
@@ -112,19 +115,19 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
+  // --- THIS IS THE FIX (Part 1) ---
+  // This function NO LONGER opens a window.
+  // It only calls the prop, which points to the main
+  // handleOpenYouTubeAndAutoSkip function in player-scene.tsx.
   const openYouTubeTab = () => {
-    window.open(
-      `https://www.youtube.com/watch?v=${video.id}#mykaraokeparty`,
-      "_blank",
-      "fullscreen=yes"
-    );
-    if (onSkip) {
-      onSkip();
+    if (onOpenYouTubeAndAutoSkip) {
+      onOpenYouTubeAndAutoSkip();
     }
   };
+  // --- END THE FIX ---
 
   if (showOpenInYouTubeButton) {
-    // ... (This error view remains the same)
+    // This is the error view shown for videos that fail to load
     return (
       <div
         className={cn(
@@ -176,7 +179,7 @@ export function Player({
               variant={"secondary"}
               type="button"
               onClick={() => {
-                onSkip();
+                onSkip(); // This is the "Skip Song" button
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />
@@ -249,8 +252,6 @@ export function Player({
         )}
       </div>
 
-      {/* --- THIS IS THE FIX (Req #1) --- */}
-      {/* Show "Next Singer" message when player is ready, paused, and a next song exists */}
       {isReady && !isPlaying && nextSong && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
           <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
@@ -264,7 +265,6 @@ export function Player({
           </div>
         </div>
       )}
-      {/* --- END THE FIX (Req #1) --- */}
 
 
       <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">
