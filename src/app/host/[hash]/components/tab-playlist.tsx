@@ -92,7 +92,11 @@ export function TabPlaylist({
                     size="icon"
                     className="h-8 w-full rounded-md bg-muted/50 border border-border text-yellow-300 hover:bg-gray-700"
                     onClick={() => onSkip()}
-                    disabled={isSkipping} 
+                    // --- THIS IS THE FIX ---
+                    // The 'disabled' prop is removed so the button is
+                    // always active, allowing it to cancel the timer.
+                    // disabled={isSkipping} 
+                    // --- END THE FIX ---
                   >
                     <span className="sr-only">Skip song</span>
                     {isSkipping ? (
@@ -105,7 +109,7 @@ export function TabPlaylist({
                     size="icon"
                     className="h-8 w-full rounded-md bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
                     onClick={() => onRemoveSong(video.id)}
-                    disabled={isSkipping} 
+                    disabled={isSkipping} // Leave this disabled
                   >
                     <span className="sr-only">Remove song</span>
                     {isSkipping ? (

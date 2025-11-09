@@ -26,6 +26,9 @@ type Props = {
   onPlay: () => void;
   onPause: () => void;
   remainingTime: number; 
+  // --- THIS IS THE FIX (Part 1) ---
+  onOpenYouTubeAndAutoSkip: () => void;
+  // --- END THE FIX ---
 };
 
 export function Player({
@@ -41,6 +44,9 @@ export function Player({
   onPlay,
   onPause,
   remainingTime, 
+  // --- THIS IS THE FIX (Part 2) ---
+  onOpenYouTubeAndAutoSkip,
+  // --- END THE FIX ---
 }: Props) {
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
@@ -112,16 +118,19 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
+  // --- THIS IS THE FIX (Part 3) ---
   const openYouTubeTab = () => {
     window.open(
       `https://www.youtube.com/watch?v=${video.id}#mykaraokeparty`,
       "_blank",
       "fullscreen=yes"
     );
-    if (onSkip) {
-      onSkip();
+    // This now calls the correct function to START the timer, not skip.
+    if (onOpenYouTubeAndAutoSkip) {
+      onOpenYouTubeAndAutoSkip();
     }
   };
+  // --- END THE FIX ---
 
   if (showOpenInYouTubeButton) {
     // ... (This error view remains the same)
@@ -164,7 +173,7 @@ export function Player({
             type="button"
             size="lg"
             className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-            onClick={() => openYouTubeTab()}
+            onClick={() => openYouTubeTab()} // <-- This now calls the fixed function
           >
             <Youtube className="mr-2" size={24} />
             Open on YouTube
@@ -176,7 +185,7 @@ export function Player({
               variant={"secondary"}
               type="button"
               onClick={() => {
-                onSkip();
+                onSkip(); // This is the "Skip Song" button
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />

@@ -67,7 +67,6 @@ export function PlayerDisabledView({
           </p>
         </div>
         
-        {/* --- THIS IS THE FIX (Req #2) --- */}
         {/* Check if we are in the "waiting for skip" state */}
         {isSkipping ? (
           // If YES, show the "Next Singer" timer
@@ -117,14 +116,15 @@ export function PlayerDisabledView({
             variant={"secondary"}
             type="button"
             onClick={onSkip} 
-            disabled={false} // Always enabled
+            // --- THIS IS THE FIX ---
+            // The disabled prop is removed so the button is always active,
+            // allowing it to override the timer.
+            // disabled={false} // <-- REMOVED
           >
             <SkipForward className="mr-2 h-5 w-5" />
             Skip Song
           </Button>
         </div>
-        {/* --- END THE FIX --- */}
-
       </div>
 
       {/* QR Code Footer */}

@@ -128,7 +128,7 @@ export function TabSettings({
       <div className="space-y-3">
         <h3 className="text-lg font-medium">Party Rules</h3>
         {/* --- THIS IS THE FIX (Part 3) --- */}
-        {/* Use the ToggleButton component for both toggles */}
+        {/* This first toggle is correct */}
         <ToggleButton
           id="queue-rules"
           checked={useQueueRules}
@@ -141,6 +141,7 @@ export function TabSettings({
           }
         />
         
+        {/* This second toggle is now fixed */}
         <ToggleButton
           id="disable-playback"
           checked={disablePlayback}

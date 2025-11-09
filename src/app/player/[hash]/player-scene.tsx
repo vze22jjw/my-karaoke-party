@@ -36,8 +36,6 @@ export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   const [forceAutoplay, setForceAutoplay] = useState(false);
   
-  const autoSkipTimerRef = useRef<NodeJS.Timeout | null>(null);
-
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
   }
@@ -60,67 +58,52 @@ export default function PlayerScene({ party, initialData }: Props) {
   const nextSong = unplayedPlaylist[0];
 
   const doTheSkip = useCallback(() => {
-    if (autoSkipTimerRef.current) {
-      clearTimeout(autoSkipTimerRef.current);
-      autoSkipTimerRef.current = null;
-    }
     setForceAutoplay(false); 
-    socketActions.markAsPlayed(); 
-    socketActions.playbackPause(); 
+    socketActions.markAsPlayed(); // This advances to the next song
+    socketActions.playbackPause(); // This ensures the new song is paused
   }, [socketActions]);
 
-  // --- THIS IS THE FIX (Immediate Skip) ---
-  // The auto-skip logic no longer depends on `isPlaying`, which caused a race condition.
-  // It now only checks if we are in "skip mode" and the timer has run out.
+  // This useEffect handles your requirement:
+  // "Marked Song As played after timer is over"
   useEffect(() => {
-    // If we are in "skip mode" (e.g., "Open on YouTube" was pressed)
-    // AND the timer has run out...
     if (isSkipping && remainingTime <= 0) {
-      
-      // We must check if the song *started* with a duration > 0.
       const durationMs = parseISO8601Duration(currentSong?.duration);
-      
-      // This check prevents an immediate skip if the duration was 0 to begin with
-      // (which shouldn't happen with our fallback, but it's a good safeguard).
       if (durationMs && durationMs > 0) {
         console.log("Auto-skip timer finished, skipping song.");
-        doTheSkip();
+        doTheSkip(); 
       }
     }
-  }, [isSkipping, remainingTime, currentSong, doTheSkip]); // Removed `isPlaying`
-  // --- END THE FIX ---
-
-
-  useEffect(() => {
-    return () => {
-      if (autoSkipTimerRef.current) {
-        clearTimeout(autoSkipTimerRef.current);
-      }
-    };
-  }, []);
+  }, [isSkipping, remainingTime, currentSong, doTheSkip]);
 
   const handlePlayerEnd = async () => {
     doTheSkip(); 
   };
 
+  // This handles your requirement:
+  // "Skip button should cancel the timer... and show next song..."
   const handleSkip = async () => {
-    socketActions.startSkipTimer(); 
-    doTheSkip(); 
+    socketActions.startSkipTimer(); // Let other clients know (even if brief)
+    doTheSkip(); // Immediately skip and pause
   };
   
+  // This handles your requirement:
+  // "open on youtube button should: open video... start countdown timer"
   const handleOpenYouTubeAndAutoSkip = () => {
     if (isSkipping || !currentSong) return; 
 
+    // 1. Tell all clients we are in "skip mode"
     socketActions.startSkipTimer(); 
   
     const durationMs = parseISO8601Duration(currentSong.duration);
   
     if (durationMs && durationMs > 0) {
+      // 2. Tell server to start playback, which starts the timer for everyone
       socketActions.playbackPlay(); 
     } else {
       console.log("Song has no duration, auto-skip timer will not start.");
     }
   
+    // 3. Open the YouTube tab
     window.open(
       `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
       "_blank",
@@ -153,6 +136,9 @@ export default function PlayerScene({ party, initialData }: Props) {
     onPause: handlePause,
     remainingTime: remainingTime,
     nextSong: nextSong,
+    // --- THIS IS THE FIX (Part 1) ---
+    onOpenYouTubeAndAutoSkip: handleOpenYouTubeAndAutoSkip,
+    // --- END THE FIX ---
   };
 
   return (
@@ -164,7 +150,7 @@ export default function PlayerScene({ party, initialData }: Props) {
           playerRef={ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={toggle}
           currentVideo={currentSong ?? undefined} 
-          {...commonPlayerProps}
+          {...commonPlayerProps} // <-- All props are passed
         />
         
         {/* Render Mobile View (hidden on desktop) */}
@@ -192,7 +178,7 @@ export default function PlayerScene({ party, initialData }: Props) {
           ) : currentSong ? ( 
             <Player
               video={currentSong}
-              {...commonPlayerProps}
+              {...commonPlayerProps} // <-- All props are passed
             />
           ) : (
             <EmptyPlayer
