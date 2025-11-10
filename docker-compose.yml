@@ -26,6 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     container_name: mykaraoke-app
     restart: always
     depends_on:
@@ -52,7 +53,8 @@ services:
       CLEANUP_INTERVAL_DAYS: ${CLEANUP_INTERVAL_DAYS}
       EVENT_DEBUG: ${EVENT_DEBUG}
       NEXT_PUBLIC_EVENT_DEBUG: ${NEXT_PUBLIC_EVENT_DEBUG}
-
+      NEXT_PUBLIC_MKP_APP_VERR: ${NEXT_PUBLIC_MKP_APP_VER}
+    
     networks:
       - mykaraokenetwork
     ports:

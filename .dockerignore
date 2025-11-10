@@ -1,0 +1,53 @@
+# Dependencies and Logs
+node_modules
+*.log
+*debug.log*
+*error.log*
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Environment and Config
+
+# Include all .env files (e.g., .env) except those matched by the following rules
+!*.env
+
+# Exclude all .env.* files (e.g., .env.production, .env.local)
+.env.*
+
+# But include example env file
+*.tsbuildinfo
+next-env.d.ts
+
+# Version Control and CI
+.git/
+.gitignore
+Dockerfile*
+docker-compose*
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation and Tests
+doc/
+*.md
+LICENSE
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Scripts
+start-*.sh
+build/docker-build.sh
+
+# OS
+.DS_Store
+Thumbs.db
