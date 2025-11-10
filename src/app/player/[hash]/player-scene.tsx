@@ -17,6 +17,7 @@ import { PlayerDisabledView } from "~/components/player-disabled-view";
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
+// --- THIS IS THE FIX ---
 // This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -25,7 +26,9 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string; // <-- THIS LINE WAS MISSING
 };
+// --- END THE FIX ---
 
 type Props = {
   party: Party;
@@ -82,32 +85,25 @@ export default function PlayerScene({ party, initialData }: Props) {
     doTheSkip(); 
   };
   
-  // --- THIS IS THE FIX ---
-  // Removed `isSkipping` from the initial check.
-  // This allows the button to be clicked again to restart the timer.
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (!currentSong) return; // Only guard against no song
+    if (!currentSong) return; 
 
-    // 1. Tell all clients we are in "skip mode"
     socketActions.startSkipTimer(); 
   
     const durationMs = parseISO8601Duration(currentSong.duration);
   
     if (durationMs && durationMs > 0) {
-      // 2. Tell server to start playback, which starts/restarts the timer
       socketActions.playbackPlay(); 
     } else {
       console.log("Song has no duration, auto-skip timer will not start.");
     }
   
-    // 3. Open the YouTube tab
     window.open(
       `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
       "_blank",
       "fullscreen=yes",
     );
   };
-  // --- END THE FIX ---
 
   
   const handlePlay = (currentTime?: number) => {
@@ -141,12 +137,13 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
-        {/* Render Desktop View (hidden on mobile) */}
         <PlayerDesktopView
           playerRef={ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={toggle}
-          currentVideo={currentSong ?? undefined} 
-          {...commonPlayerProps} // <-- All props are passed
+          currentVideo={currentSong ?? undefined}
+          isPlaybackDisabled={isPlaybackDisabled}
+          isSkipping={isSkipping}
+          {...commonPlayerProps}
         />
         
         {/* Render Mobile View (hidden on desktop) */}
@@ -160,22 +157,24 @@ export default function PlayerScene({ party, initialData }: Props) {
             {fullscreen ? <Minimize /> : <Maximize />}
           </Button>
           
-          {isPlaybackDisabled && currentSong ? ( 
-            <PlayerDisabledView
-              video={currentSong}
-              nextSong={nextSong} 
-              joinPartyUrl={joinPartyUrl}
-              isFullscreen={fullscreen}
-              onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
-              onSkip={handleSkip} 
-              isSkipping={isSkipping} 
-              remainingTime={remainingTime} 
-            />
-          ) : currentSong ? ( 
-            <Player
-              video={currentSong}
-              {...commonPlayerProps} // <-- All props are passed
-            />
+          {currentSong ? (
+            isPlaybackDisabled ? (
+              <PlayerDisabledView
+                video={currentSong}
+                nextSong={nextSong} 
+                joinPartyUrl={joinPartyUrl}
+                isFullscreen={fullscreen}
+                onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
+                onSkip={handleSkip} 
+                isSkipping={isSkipping} 
+                remainingTime={remainingTime} 
+              />
+            ) : ( 
+              <Player
+                video={currentSong}
+                {...commonPlayerProps}
+              />
+            )
           ) : (
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}

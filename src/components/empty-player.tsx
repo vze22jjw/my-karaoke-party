@@ -13,8 +13,11 @@ export function EmptyPlayer({ joinPartyUrl, className }: Props) {
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col items-center p-6 pb-1",
-        className
+        // --- THIS IS THE FIX ---
+        // Removed `pb-1` so the `p-6` padding applies to all sides
+        "flex h-full w-full flex-col items-center p-6",
+        // --- END THE FIX ---
+        className,
       )}
     >
       <div className="flex w-full basis-3/4 items-center justify-center">

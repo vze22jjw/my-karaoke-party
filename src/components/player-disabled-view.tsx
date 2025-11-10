@@ -2,15 +2,10 @@
 
 import { type VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
-// --- THIS IS THE FIX (Part 1) ---
-// Removed unused `Loader2` import
 import { MicVocal, SkipForward, Youtube } from "lucide-react"; 
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { QrCode } from "./qr-code";
-// Removed unused `formatISODuration` import
-// import { formatISODuration } from "~/utils/string"; 
-// --- END THE FIX ---
 import { SongCountdownTimer } from "./song-countdown-timer";
 
 type Props = {
@@ -35,15 +30,13 @@ export function PlayerDisabledView({
   remainingTime, 
 }: Props) {
 
-  // --- THIS IS THE FIX (Part 2) ---
-  // Removed unused `formattedDuration` variable
-  // const formattedDuration = formatISODuration(video.duration);
-  // --- END THE FIX ---
-
   return (
     <div
       className={cn(
-        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 pb-1 text-center",
+        // --- THIS IS THE FIX ---
+        // Removed `pb-1` so the `p-4` padding applies to all sides
+        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 text-center",
+        // --- END THE FIX ---
         isFullscreen && "bg-gradient",
       )}
     >

@@ -17,6 +17,7 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string; // <-- ADD THIS
 };
 
 type Props = {
@@ -48,27 +49,25 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
-    playedPlaylist, // <-- GET THIS
+    playedPlaylist, 
     settings, 
     socketActions, 
     isConnected,
     isSkipping,
     isPlaying, 
     remainingTime,
-    participants, // <-- GET THIS
-    hostName      // <-- GET THIS
+    participants, 
+    hostName,
+    partyStatus // <-- GET THIS
   } = usePartySocket(
     party.hash,
     initialData, 
     "Host"
   );
   
-  // --- THIS IS THE FIX (Part 1) ---
-  // Calculate counts
   const singerCount = participants.length;
   const playedSongCount = playedPlaylist.length;
   const unplayedSongCount = unplayedPlaylist.length + (currentSong ? 1 : 0);
-  // --- END THE FIX ---
   
   const useQueueRules = settings.orderByFairness;
   const disablePlayback = settings.disablePlayback ?? false; 
@@ -117,6 +116,7 @@ export function HostScene({ party, initialData }: Props) {
           setActiveTab={setActiveTab}
           currentSong={currentSong}
           playlist={unplayedPlaylist}
+          playedPlaylist={playedPlaylist}
           onRemoveSong={removeSong}
           onMarkAsPlayed={handleSkip} 
           useQueueRules={useQueueRules} 
@@ -134,13 +134,12 @@ export function HostScene({ party, initialData }: Props) {
           remainingTime={remainingTime}
           onPlay={socketActions.playbackPlay}
           onPause={socketActions.playbackPause}
-          // --- THIS IS THE FIX (Part 2) ---
-          // Pass all the new props
           hostName={hostName}
           singerCount={singerCount}
           playedSongCount={playedSongCount}
           unplayedSongCount={unplayedSongCount}
-          // --- END THE FIX ---
+          partyStatus={partyStatus} // <-- PASS PROP
+          onStartParty={socketActions.startParty} // <-- PASS PROP
         />
       </div>
     </div>

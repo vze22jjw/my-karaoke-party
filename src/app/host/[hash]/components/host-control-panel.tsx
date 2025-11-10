@@ -14,6 +14,7 @@ type Props = {
   setActiveTab: (value: string) => void;
   currentSong: VideoInPlaylist | null; 
   playlist: KaraokeParty["playlist"]; 
+  playedPlaylist: VideoInPlaylist[];
   onRemoveSong: (videoId: string) => void;
   onMarkAsPlayed: () => void; // This is handleSkip
   useQueueRules: boolean;
@@ -35,6 +36,10 @@ type Props = {
   singerCount: number;
   playedSongCount: number;
   unplayedSongCount: number;
+  // --- THIS IS THE FIX ---
+  partyStatus: string; // <-- THIS WAS MISSING
+  onStartParty: () => void; // <-- THIS WAS MISSING
+  // --- END THE FIX ---
 };
 
 // A simple hook to calculate and update the time ago string
@@ -74,6 +79,7 @@ export function HostControlPanel({
   setActiveTab,
   currentSong,
   playlist,
+  playedPlaylist,
   onRemoveSong,
   onMarkAsPlayed, // This is handleSkip
   useQueueRules,
@@ -95,6 +101,8 @@ export function HostControlPanel({
   singerCount,
   playedSongCount,
   unplayedSongCount,
+  partyStatus, // <-- Prop is now correctly destructured
+  onStartParty, // <-- Prop is now correctly destructured
 }: Props) {
 
   // Hooks MUST be called at the top level, before any conditional returns.
@@ -191,13 +199,10 @@ export function HostControlPanel({
             />
           </TabsContent>
 
-          {/* --- THIS IS THE FIX --- */}
-          {/* Removed the redundant `space-y-6` class from this container */}
           <TabsContent
             value="settings"
             className="flex-1 overflow-y-auto mt-0"
           >
-          {/* --- END THE FIX --- */}
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
@@ -210,6 +215,9 @@ export function HostControlPanel({
               isConfirmingClose={isConfirmingClose}
               onConfirmClose={onConfirmClose}
               onCancelClose={onCancelClose}
+              playedPlaylist={playedPlaylist}
+              partyStatus={partyStatus} // <-- This prop is now valid
+              onStartParty={onStartParty} // <-- This prop is now valid
             />
           </TabsContent>
         </Tabs>

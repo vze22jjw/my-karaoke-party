@@ -47,13 +47,14 @@ if [ "$BUILD_TYPE" == "release" ]; then
     VERSION="0.0.1-BETA"
 else
     VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
+    echo "Development build version: $VERSION"
 fi
 
 # Import environment variables
-if [ -f ../.env ]; then
+if [ -f .env ]; then
     echo "Loading environment variables from .env file..."
     # Export all variables from .env file, ignoring comments and empty lines
-    export $(cat ../.env | grep -v '^#' | xargs)
+    export $(cat .env | grep -v '^#' | xargs)
 else
     echo "Error: .env file not found in parent directory"
     exit 1

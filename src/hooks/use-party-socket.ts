@@ -17,6 +17,7 @@ interface SocketActions {
   playbackPlay: (currentTime?: number) => void;
   playbackPause: () => void;
   startSkipTimer: () => void; 
+  startParty: () => void; // <-- ADD THIS
 }
 
 type Participant = {
@@ -33,9 +34,10 @@ interface UsePartySocketReturn {
   isConnected: boolean;
   isPlaying: boolean;
   participants: Participant[]; 
-  hostName: string | null; // <-- ADDED THIS
+  hostName: string | null;
   isSkipping: boolean; 
   remainingTime: number; 
+  partyStatus: string; // <-- ADD THIS
 }
 
 type PartySocketData = {
@@ -45,6 +47,7 @@ type PartySocketData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string; // <-- ADD THIS
 };
 
 const LOG_TAG = "[SocketClient]";
@@ -73,6 +76,7 @@ export function usePartySocket(
   const [isPlaying, setIsPlaying] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
+  const [partyStatus, setPartyStatus] = useState(initialData.status); // <-- ADD THIS
 
   const [remainingTime, setRemainingTime] = useState(() => {
     if (initialData.currentSongStartedAt) {
@@ -87,13 +91,10 @@ export function usePartySocket(
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
 
-  // --- THIS IS THE FIX (Part 1) ---
-  // Find the host name from the participant list
   const hostName = useMemo(() => {
     const host = participants.find(p => p.role === "Host");
     return host?.name ?? null;
   }, [participants]);
-  // --- END THE FIX ---
   
   const stopCountdown = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -171,6 +172,7 @@ export function usePartySocket(
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
+        setPartyStatus(partyData.status); // <-- ADD THIS
 
         if (partyData.currentSongStartedAt) {
           setIsPlaying(true);
@@ -300,6 +302,11 @@ export function usePartySocket(
       setIsSkipping(true); 
       socketRef.current?.emit("start-skip-timer", data); 
     },
+    startParty: () => {
+      const data = { partyHash };
+      debugLog(LOG_TAG, "Emitting 'start-party'", data);
+      socketRef.current?.emit("start-party", data);
+    },
   }), [partyHash, singerName]);
 
   return { 
@@ -311,10 +318,9 @@ export function usePartySocket(
     isConnected, 
     isPlaying, 
     participants, 
-    // --- THIS IS THE FIX (Part 2) ---
-    hostName, // <-- Return hostName
-    // --- END THE FIX ---
+    hostName, 
     isSkipping,
-    remainingTime 
+    remainingTime,
+    partyStatus, // <-- ADD THIS
   };
 }

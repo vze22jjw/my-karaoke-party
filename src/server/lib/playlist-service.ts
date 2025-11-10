@@ -31,7 +31,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
-  currentSongRemainingDuration: number | null; // <-- Add this
+  currentSongRemainingDuration: number | null;
+  status: string; // <-- ADDED
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
@@ -87,32 +88,51 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     : null;
   const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem);
 
-  // --- THIS IS THE FIX (Part 2) ---
-  // If the song is playing, we pass the start time.
-  // If it's paused or stopped, we pass the stored remaining duration.
   let remainingDuration: number | null = null;
   
   if (party.currentSongStartedAt) {
-    // Song is actively playing, pass the remaining duration from when it was started
     remainingDuration = party.currentSongRemainingDuration;
   } else if (party.currentSongRemainingDuration) {
-    // Song is paused, pass the stored remaining duration
     remainingDuration = party.currentSongRemainingDuration;
   } else if (formattedCurrentSong?.duration) {
-    // Song is stopped, get its full duration
     remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
   }
-  // --- END THE FIX ---
 
-  return {
-    currentSong: formattedCurrentSong,
-    unplayed: unplayedPlaylist,
-    played: playedPlaylist,
-    settings: {
-      orderByFairness: useQueueRules,
-      disablePlayback: party.disablePlayback,
-    },
-    currentSongStartedAt: party.currentSongStartedAt,
-    currentSongRemainingDuration: remainingDuration,
-  };
+  // --- START: NEW PARTY STATE LOGIC ---
+  if (party.status === "OPEN") {
+    // Party is open, but not started. Don't show a current song.
+    // Put the "current" song back at the start of the unplayed list.
+    const allUnplayed = currentSongItem
+      ? [formatPlaylistItem(currentSongItem), ...unplayedPlaylist]
+      : unplayedPlaylist;
+  
+    return {
+      currentSong: null,
+      unplayed: allUnplayed, // Full unplayed list
+      played: playedPlaylist,
+      settings: {
+        orderByFairness: useQueueRules,
+        disablePlayback: party.disablePlayback,
+      },
+      currentSongStartedAt: null,
+      currentSongRemainingDuration: null,
+      status: party.status, // Pass the status
+    };
+  
+  } else {
+    // Party is STARTED, return the normal state.
+    return {
+      currentSong: formattedCurrentSong,
+      unplayed: unplayedPlaylist,
+      played: playedPlaylist,
+      settings: {
+        orderByFairness: useQueueRules,
+        disablePlayback: party.disablePlayback,
+      },
+      currentSongStartedAt: party.currentSongStartedAt,
+      currentSongRemainingDuration: remainingDuration,
+      status: party.status, // Pass the status
+    };
+  }
+  // --- END: NEW PARTY STATE LOGIC ---
 }

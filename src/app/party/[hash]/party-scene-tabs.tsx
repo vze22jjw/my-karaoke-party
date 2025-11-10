@@ -16,8 +16,6 @@ import { usePartySocket } from "~/hooks/use-party-socket";
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 
-// --- THIS IS THE FIX (Part 1) ---
-// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -25,8 +23,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string; // <-- ADD THIS
 };
-// --- END THE FIX ---
 
 export function PartySceneTabs({
   party,
@@ -49,10 +47,11 @@ export function PartySceneTabs({
     socketActions,
     participants, 
     isPlaying,
-    remainingTime // <-- GET new timer state
+    remainingTime,
+    partyStatus // <-- GET THIS
   } = usePartySocket(
     party.hash!,
-    initialData, // <-- This now has the correct type
+    initialData, 
     name 
   );
   
@@ -83,6 +82,12 @@ export function PartySceneTabs({
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
           {party.name}
         </h1>
+        {/* --- ADDED PARTY STATUS INDICATOR --- */}
+        {partyStatus === "OPEN" && (
+          <p className="text-center text-green-400 font-medium animate-pulse">
+            Party is OPEN (Waiting for host to start)
+          </p>
+        )}
       </div>
 
       <Tabs

@@ -32,15 +32,18 @@ model Party {
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
-    // --- THIS IS THE FIX ---
     // Add fields to track the *exact* state of the current song
     currentSongId                 String?   // Stores the videoId of the song being played
     currentSongStartedAt          DateTime? // Stores the *server timestamp* of when 'play' was pressed
     currentSongRemainingDuration  Int?      // Stores the *remaining seconds* when paused
-    // --- END THE FIX ---
+    
+    // --- START: NEW PARTY STATE ---
+    status         String         @default("OPEN") // OPEN, STARTED, CLOSED
+    // --- END: NEW PARTY STATE ---
 
     @@index([hash])
     @@index([lastActivityAt])
+    @@index([status]) // <-- Add index for new field
 }
 
 model PartyParticipant {
@@ -69,7 +72,7 @@ model PlaylistItem {
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
     orderIndex Int       @default(0)
-    randomBreaker Float?   // New field for fair queue tie-breaker
+    randomBreaker Float? // New field for fair queue tie-breaker
 
     @@index([partyId])
     @@index([playedAt])
