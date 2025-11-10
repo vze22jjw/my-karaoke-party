@@ -111,19 +111,30 @@ export function TabSettings({
     "text",
   );
 
+  // --- START: UPDATED EXPORT LOGIC ---
+  /**
+   * Cleans the title by decoding HTML and removing pipe characters.
+   */
   const parseSongInfo = (title: string, singer: string) => {
     if (!title) {
       return { title: "Untitled", singer };
     }
+    
+    // 1. Decode HTML entities
     let cleanTitle = decode(title);
+    
+    // 2. Remove anything after a pipe "|"
     const pipeParts = cleanTitle.split("|");
-    cleanTitle = (pipeParts[0] ?? "").trim();
+    cleanTitle = (pipeParts[0] ?? "").trim(); // Safely get part 0
+
+    // 3. Return the cleaned title and singer
     return {
-      title: cleanTitle || "Untitled",
+      title: cleanTitle || "Untitled", // Fallback if title was just "|"
       singer: singer,
     };
   };
 
+  // 2. Memoize the processed list
   const processedList = useMemo(() => {
     return playedPlaylist.map((song) =>
       parseSongInfo(song.title, song.singerName),
@@ -131,24 +142,31 @@ export function TabSettings({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playedPlaylist]);
 
+  // 3. Generate export strings based on format (NO SINGER NAME)
   const getDataToCopy = () => {
     switch (exportFormat) {
       case "json":
+        // Format: [{"Title": "Title1"}, {"Title": "Title2"}]
         const jsonList = processedList.map((s) => ({
           Title: s.title,
         }));
         return JSON.stringify(jsonList, null, 2);
+
       case "csv":
+        // Format: "Title" (quoted for safety)
         const header = "Title\n";
         const rows = processedList
           .map((s) => `"${s.title.replace(/"/g, '""')}"`)
           .join("\n");
         return header + rows;
+
       case "text":
       default:
+        // Format: "Title1\nTitle2"
         return processedList.map((s) => s.title).join("\n");
     }
   };
+  // --- END: UPDATED EXPORT LOGIC ---
 
   const handleCopy = async () => {
     if (processedList.length === 0) {
@@ -169,6 +187,7 @@ export function TabSettings({
   return (
     <div className="space-y-6">
       <div className="space-y-3 rounded-lg border bg-card p-4">
+        {/* ... Party Links section ... */}
         <h3 className="text-lg font-medium">Party Links</h3>
         <div className="space-y-4">
           <div className="space-y-1">
@@ -357,7 +376,7 @@ export function TabSettings({
         <div className="space-y-4 rounded-lg border border-destructive/50 p-4">
           <div>
             <Label className="text-base">End Party</Label>
-            {/* --- THIS IS THE FIX --- */}
+            {/* --- THIS IS THE FIX for react/no-unescaped-entities --- */}
             <p className="text-sm text-muted-foreground">
               This will close the party, delete all songs, and disconnect
               everyone. This can&apos;t be undone.

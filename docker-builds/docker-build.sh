@@ -44,9 +44,9 @@ fi
 
 # Version configuration
 if [ "$BUILD_TYPE" == "release" ]; then
-    VERSION="0.0.1-BETA"
+    export VERSION="0.0.1-BETA"
 else
-    VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
+    export VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
     echo "Development build version: $VERSION"
 fi
 
