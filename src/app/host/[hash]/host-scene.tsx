@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 
-// --- THIS IS THE FIX (Part 1) ---
 // This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -19,7 +18,6 @@ type InitialPartyData = {
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
 };
-// --- END THE FIX ---
 
 type Props = {
   party: Party;
@@ -50,17 +48,27 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
+    playedPlaylist, // <-- GET THIS
     settings, 
     socketActions, 
     isConnected,
     isSkipping,
-    isPlaying, // <-- GET isPlaying
-    remainingTime // <-- GET remainingTime
+    isPlaying, 
+    remainingTime,
+    participants, // <-- GET THIS
+    hostName      // <-- GET THIS
   } = usePartySocket(
     party.hash,
-    initialData, // <-- This now has the correct type
+    initialData, 
     "Host"
   );
+  
+  // --- THIS IS THE FIX (Part 1) ---
+  // Calculate counts
+  const singerCount = participants.length;
+  const playedSongCount = playedPlaylist.length;
+  const unplayedSongCount = unplayedPlaylist.length + (currentSong ? 1 : 0);
+  // --- END THE FIX ---
   
   const useQueueRules = settings.orderByFairness;
   const disablePlayback = settings.disablePlayback ?? false; 
@@ -124,10 +132,14 @@ export function HostScene({ party, initialData }: Props) {
           isSkipping={isSkipping}
           isPlaying={isPlaying} 
           remainingTime={remainingTime}
-          // --- THIS IS THE FIX ---
-          // Pass the playback controls from the socket
           onPlay={socketActions.playbackPlay}
           onPause={socketActions.playbackPause}
+          // --- THIS IS THE FIX (Part 2) ---
+          // Pass all the new props
+          hostName={hostName}
+          singerCount={singerCount}
+          playedSongCount={playedSongCount}
+          unplayedSongCount={unplayedSongCount}
           // --- END THE FIX ---
         />
       </div>
