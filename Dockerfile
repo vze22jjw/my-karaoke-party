@@ -9,12 +9,24 @@ RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
+# --- ADD THIS ARG ---
+# Make VERSION arg available to all subsequent stages
+ARG VERSION
+# --- END ADD ---
+
 # ========================================
 # Stage 1: Build the application
 # ========================================
 FROM base AS builder
 
 WORKDIR /app
+
+# --- ADD THESE TWO LINES ---
+# Make the ARG available inside this stage
+ARG VERSION
+# Set the build-time env variable
+ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
+# --- END ADD ---
 
 # Copy files needed for dependency installation first
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"

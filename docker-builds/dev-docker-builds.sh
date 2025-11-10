@@ -42,7 +42,7 @@ fi
 
 # Show logs from the app container
 echo "Showing logs for mk-app container..."
-timeout 10s docker logs mykaraoke-app
+docker logs mykaraoke-app
 
 # Clean up environment variables
 unset $(cat .env | grep -v '^#' | sed -E 's/(.*)=.*/\1/' | xargs)
