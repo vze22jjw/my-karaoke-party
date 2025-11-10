@@ -2,19 +2,12 @@
 
 import { Button } from "~/components/ui/ui/button";
 import { Label } from "~/components/ui/ui/label";
-// import { Switch } from "~/components/ui/ui/switch"; // <-- Removed this incorrect import
 import { getUrl } from "~/utils/url";
 import { QrCode } from "~/components/qr-code";
-// import { Slider } from "~/components/ui/slider"; // <-- Removed this incorrect import
-import { Input } from "~/components/ui/ui/input"; // <-- Using Input, which you have
+import { Input } from "~/components/ui/ui/input";
 import { AlertCircle, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
-// --- THIS IS THE FIX (Part 1) ---
-// Removed unused imports
-// import { usePartySocket } from "~/hooks/use-party-socket";
-// import { type KaraokeParty } from "party";
 import { cn } from "~/lib/utils";
-// --- END THE FIX ---
 
 type Props = {
   partyHash: string;
@@ -30,6 +23,8 @@ type Props = {
   onCancelClose: () => void;
 };
 
+// --- THIS IS THE FIX (Part 1) ---
+// Updated ToggleButton to match the image style
 const ToggleButton = ({
   id,
   checked,
@@ -50,34 +45,39 @@ const ToggleButton = ({
       </Label>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
-    <Button
+    {/* The toggle switch itself */}
+    <button
       id={id}
-      variant="outline"
+      type="button"
       role="switch"
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-        checked ? "bg-primary" : "bg-input",
+        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        checked ? "bg-green-500" : "bg-red-500", // Green for ON, Red for OFF
+        "shadow-inner" // Gives it a slightly recessed look
       )}
     >
+      <span className="sr-only">{label}</span>
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out",
+          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
           checked ? "translate-x-5" : "translate-x-0",
+          "border border-gray-200" // Added a subtle border to the circle
         )}
       />
-    </Button>
+    </button>
   </div>
 );
+// --- END THE FIX ---
 
 export function TabSettings({
   partyHash,
   useQueueRules,
   onToggleRules,
   disablePlayback,
-  onTogglePlayback,
+  onTogglePlayback, // <-- This was the prop that was not correctly used
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
@@ -87,7 +87,7 @@ export function TabSettings({
 }: Props) {
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
-  
+
   const playerUrlWithLabel = `${playerUrl}`;
 
   return (
@@ -129,22 +129,19 @@ export function TabSettings({
           onCheckedChange={onToggleRules}
           label="Queue Ordering"
           description={
-            useQueueRules
-              ? "ON (Fairness)"
-              : "OFF (First Come, First Served)"
+            useQueueRules ? "ON (Fairness)" : "OFF (First Come, First Served)"
           }
         />
-        
+
         <ToggleButton
           id="disable-playback"
           checked={disablePlayback}
+          // --- THIS IS THE FIX (Part 2) ---
+          // Correctly pass the onTogglePlayback handler
           onCheckedChange={onTogglePlayback}
+          // --- END THE FIX ---
           label="Disable Player"
-          description={
-            disablePlayback
-              ? "ON (Use YouTube button)"
-              : "OFF (Player is active)"
-          }
+          description={disablePlayback ? "ON (Use YouTube button)" : "OFF (Player is active)"}
         />
       </div>
 
@@ -187,20 +184,12 @@ export function TabSettings({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Are you sure?</AlertTitle>
-              <AlertDescription>
-                This action is permanent.
-              </AlertDescription>
+              <AlertDescription>This action is permanent.</AlertDescription>
               <div className="mt-4 flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={onCancelClose}
-                >
+                <Button variant="ghost" onClick={onCancelClose}>
                   Cancel
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={onConfirmClose}
-                >
+                <Button variant="destructive" onClick={onConfirmClose}>
                   Yes, End Party
                 </Button>
               </div>

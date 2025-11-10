@@ -1,5 +1,5 @@
 import { type KaraokeParty, type VideoInPlaylist } from "party";
-import { useEffect, useState, useRef, useMemo, useCallback } from "react"; // <-- Import useCallback
+import { useEffect, useState, useRef, useMemo, useCallback } from "react"; 
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { debugLog } from "~/utils/debug-logger";
@@ -14,9 +14,7 @@ interface SocketActions {
   togglePlayback: (disablePlayback: boolean) => void; 
   closeParty: () => void;
   sendHeartbeat: () => void;
-  // --- THIS IS THE FIX (Part 1) ---
   playbackPlay: (currentTime?: number) => void;
-  // --- END THE FIX ---
   playbackPause: () => void;
   startSkipTimer: () => void; 
 }
@@ -35,6 +33,7 @@ interface UsePartySocketReturn {
   isConnected: boolean;
   isPlaying: boolean;
   participants: Participant[]; 
+  hostName: string | null; // <-- ADDED THIS
   isSkipping: boolean; 
   remainingTime: number; 
 }
@@ -87,6 +86,14 @@ export function usePartySocket(
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
+
+  // --- THIS IS THE FIX (Part 1) ---
+  // Find the host name from the participant list
+  const hostName = useMemo(() => {
+    const host = participants.find(p => p.role === "Host");
+    return host?.name ?? null;
+  }, [participants]);
+  // --- END THE FIX ---
   
   const stopCountdown = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -277,13 +284,11 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
       socketRef.current?.emit("heartbeat", data);
     },
-    // --- THIS IS THE FIX (Part 2) ---
     playbackPlay: (currentTime?: number) => {
       const data = { partyHash, currentTime };
       debugLog(LOG_TAG, "Emitting 'playback-play'", data);
       socketRef.current?.emit("playback-play", data);
     },
-    // --- END THE FIX ---
     playbackPause: () => {
       const data = { partyHash };
       debugLog(LOG_TAG, "Emitting 'playback-pause'", data);
@@ -306,6 +311,9 @@ export function usePartySocket(
     isConnected, 
     isPlaying, 
     participants, 
+    // --- THIS IS THE FIX (Part 2) ---
+    hostName, // <-- Return hostName
+    // --- END THE FIX ---
     isSkipping,
     remainingTime 
   };

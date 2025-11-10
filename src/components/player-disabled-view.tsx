@@ -2,11 +2,15 @@
 
 import { type VideoInPlaylist } from "party";
 import { Button } from "~/components/ui/ui/button";
-import { MicVocal, SkipForward, Youtube, Loader2 } from "lucide-react"; 
+// --- THIS IS THE FIX (Part 1) ---
+// Removed unused `Loader2` import
+import { MicVocal, SkipForward, Youtube } from "lucide-react"; 
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { QrCode } from "./qr-code";
-import { formatISODuration } from "~/utils/string"; 
+// Removed unused `formatISODuration` import
+// import { formatISODuration } from "~/utils/string"; 
+// --- END THE FIX ---
 import { SongCountdownTimer } from "./song-countdown-timer";
 
 type Props = {
@@ -31,7 +35,10 @@ export function PlayerDisabledView({
   remainingTime, 
 }: Props) {
 
-  const formattedDuration = formatISODuration(video.duration);
+  // --- THIS IS THE FIX (Part 2) ---
+  // Removed unused `formattedDuration` variable
+  // const formattedDuration = formatISODuration(video.duration);
+  // --- END THE FIX ---
 
   return (
     <div
@@ -66,8 +73,6 @@ export function PlayerDisabledView({
           </p>
         </div>
         
-        {/* --- THIS IS THE FIX (Part 1) --- */}
-        {/* Check if we are in the "waiting for skip" state */}
         {isSkipping ? (
           // If YES, show the "Next Singer" timer
           <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
@@ -84,19 +89,16 @@ export function PlayerDisabledView({
                 "Queue is empty... go add a song!"
               )}
             </h3>
-            {/* --- THIS IS THE FIX (Part 2) --- */}
             {/* Also show the button here so it can be re-clicked */}
             <Button
               type="button"
               size="lg"
               className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700 mt-4"
               onClick={onOpenYouTubeAndAutoSkip} 
-              // disabled={isSkipping} // <-- REMOVED
             >
               <Youtube className="mr-2" size={24} />
               Re-open & Restart Timer
             </Button>
-            {/* --- END THE FIX --- */}
           </div>
         ) : (
           // If NO, show the "Open on YouTube" button
@@ -110,9 +112,6 @@ export function PlayerDisabledView({
               size="lg"
               className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
               onClick={onOpenYouTubeAndAutoSkip} 
-              // --- THIS IS THE FIX (Part 3) ---
-              // disabled={isSkipping} // <-- REMOVED
-              // --- END THE FIX ---
             >
               <Youtube className="mr-2" size={24} />
               Open & Auto-Skip
