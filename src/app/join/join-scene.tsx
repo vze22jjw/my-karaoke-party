@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useLocalStorage, useViewportSize } from "@mantine/hooks";
+import { useLocalStorage } from "@mantine/hooks";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -18,9 +18,8 @@ import {
 } from "~/components/ui/ui/form";
 import { Input } from "~/components/ui/ui/input";
 import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import Confetti from "react-canvas-confetti"; // <-- IMPORT CONFETTI
 
 const formSchema = z.object({
   partyCode: z.string().min(4),
@@ -40,28 +39,6 @@ export default function JoinScene({
     defaultValue: "",
   });
 
-  // --- START: CONFETTI LOGIC ---
-  const { width, height } = useViewportSize();
-  const confettiRef = useRef<confetti.CreateTypes | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
-    confettiRef.current = instance;
-  }, []);
-
-  const fireConfetti = useCallback(() => {
-    if (confettiRef.current) {
-      setShowConfetti(true);
-      confettiRef.current({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-      setTimeout(() => setShowConfetti(false), 5000);
-    }
-  }, []);
-  // --- END: CONFETTI LOGIC ---
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -73,7 +50,6 @@ export default function JoinScene({
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     setName(values.name);
-    fireConfetti(); // <-- FIRE CONFETTI
 
     const codeToJoin = partyHash ?? values.partyCode;
     setTimeout(() => {
@@ -91,24 +67,6 @@ export default function JoinScene({
 
   return (
     <main className="flex min-h-screen flex-col items-center text-white">
-      {/* --- ADD CONFETTI COMPONENT --- */}
-      <Confetti
-        refConfetti={onConfettiInit}
-        width={width}
-        height={height}
-        style={{
-          position: 'fixed',
-          width: '100%',
-          height: '100%',
-          zIndex: 200,
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
-          display: showConfetti ? 'block' : 'none',
-        }}
-      />
-      {/* --- END CONFETTI COMPONENT --- */}
-
       <div className="container flex flex-1 flex-col items-center gap-4 px-4 py-4">
         <Image
           src={logo}

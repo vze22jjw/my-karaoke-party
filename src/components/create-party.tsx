@@ -1,9 +1,9 @@
 /* eslint-disable */
 "use client";
 
-import { useLocalStorage, useViewportSize } from "@mantine/hooks";
+import { useLocalStorage } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
-import { useState, useCallback, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { api } from "~/trpc/react";
 import { Button } from "./ui/ui/button";
@@ -31,7 +31,6 @@ import {
 } from "./ui/ui/form";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import Confetti from "react-canvas-confetti"; // <-- IMPORT CONFETTI
 
 const formSchema = z.object({
   partyName: z
@@ -58,28 +57,6 @@ export function CreateParty() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
 
-  // --- START: CONFETTI LOGIC ---
-  const { width, height } = useViewportSize();
-  const confettiRef = useRef<confetti.CreateTypes | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
-    confettiRef.current = instance;
-  }, []);
-
-  const fireConfetti = useCallback(() => {
-    if (confettiRef.current) {
-      setShowConfetti(true);
-      confettiRef.current({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-      setTimeout(() => setShowConfetti(false), 5000);
-    }
-  }, []);
-  // --- END: CONFETTI LOGIC ---
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -93,7 +70,6 @@ export function CreateParty() {
       if (data.hash) {
         setName(form.getValues("yourName"));
         toast.success(`Party "${data.name}" created!`);
-        fireConfetti(); // <-- FIRE CONFETTI
         setTimeout(() => {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           router.push(`/host/${data.hash}`);
@@ -112,105 +88,85 @@ export function CreateParty() {
   }
 
   return (
-    <>
-      {/* --- ADD CONFETTI COMPONENT --- */}
-      <Confetti
-        refConfetti={onConfettiInit}
-        width={width}
-        height={height}
-        style={{
-          position: 'fixed',
-          width: '100%',
-          height: '100%',
-          zIndex: 200,
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
-          display: showConfetti ? 'block' : 'none',
-        }}
-      />
-      {/* --- END CONFETTI COMPONENT --- */}
-
-      <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        <DrawerTrigger asChild>
-          <div className="w-full">
-            <ButtonHoverGradient type="button" className="w-full">
-              Create Party 🎉
-            </ButtonHoverGradient>
-          </div>
-        </DrawerTrigger>
-        <DrawerContent>
-          <div className="mx-auto w-full max-w-2xl">
-            <DrawerHeader>
-              <DrawerTitle>Create a New Party</DrawerTitle>
-              <DrawerDescription>
-                Give your party a name and add your name to the singers list.
-              </DrawerDescription>
-            </DrawerHeader>
-            <div className="p-4 pb-0">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerTrigger asChild>
+        <div className="w-full">
+          <ButtonHoverGradient type="button" className="w-full">
+            Create Party 🎉
+          </ButtonHoverGradient>
+        </div>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mx-auto w-full max-w-2xl">
+          <DrawerHeader>
+            <DrawerTitle>Create a New Party</DrawerTitle>
+            <DrawerDescription>
+              Give your party a name and add your name to the singers list.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4 pb-0">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="partyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Party Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="MY AWESOME KARAOKE PARTY"
+                          {...field}
+                          onChange={(e) => {
+                            const uppercaseValue = e.target.value.toUpperCase();
+                            const filteredValue = uppercaseValue.replace(
+                              /[^A-Z0-9 -]/g,
+                              "",
+                            );
+                            field.onChange(filteredValue);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="yourName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={createParty.isPending}
                 >
-                  <FormField
-                    control={form.control}
-                    name="partyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Party Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="MY AWESOME KARAOKE PARTY"
-                            {...field}
-                            onChange={(e) => {
-                              const uppercaseValue = e.target.value.toUpperCase();
-                              const filteredValue = uppercaseValue.replace(
-                                /[^A-Z0-9 -]/g,
-                                "",
-                              );
-                              field.onChange(filteredValue);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="yourName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={createParty.isPending}
-                  >
-                    {createParty.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Let&apos;s Go!
-                  </Button>
-                </form>
-              </Form>
-            </div>
-            <DrawerFooter>
-              <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
+                  {createParty.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Let&apos;s Go!
+                </Button>
+              </form>
+            </Form>
           </div>
-        </DrawerContent>
-      </Drawer>
-    </>
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

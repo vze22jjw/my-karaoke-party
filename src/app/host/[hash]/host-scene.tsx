@@ -1,10 +1,10 @@
 /* eslint-disable */
 "use client";
 
-import { useLocalStorage } from "@mantine/hooks";
+import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import type { Party, IdleMessage } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
@@ -12,6 +12,7 @@ import { api } from "~/trpc/react";
 import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
 import { HostTourModal } from "./components/host-tour-modal";
+import Confetti from "react-canvas-confetti"; // <-- Added
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -47,31 +48,50 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: 10,
   });
 
-  // --- THIS IS THE FIX ---
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: HOST_TOUR_KEY,
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false); // 1. Add mounted state
+  const [isMounted, setIsMounted] = useState(false);
 
-  // 2. Set mounted to true only on the client
+  // --- START: CONFETTI LOGIC ---
+  const { width, height } = useViewportSize();
+  const confettiRef = useRef<confetti.CreateTypes | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
+    confettiRef.current = instance;
+  }, []);
+
+  const fireConfetti = useCallback(() => {
+    if (confettiRef.current) {
+      setShowConfetti(true);
+      confettiRef.current({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      setTimeout(() => setShowConfetti(false), 5000);
+    }
+  }, []);
+  // --- END: CONFETTI LOGIC ---
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 3. Check for tour only *after* mounting
   useEffect(() => {
     if (isMounted && !hasSeenTour) {
       setIsTourOpen(true);
     }
-  }, [isMounted, hasSeenTour]); // 4. Add isMounted to dependency array
+  }, [isMounted, hasSeenTour]);
 
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
+    fireConfetti(); // <-- Trigger confetti when tour closes
   };
-  // --- END THE FIX ---
 
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
@@ -175,6 +195,24 @@ export function HostScene({ party, initialData }: Props) {
 
   return (
     <div className="flex min-h-screen w-full justify-center">
+      {/* --- ADD CONFETTI COMPONENT --- */}
+      <Confetti
+        refConfetti={onConfettiInit}
+        width={width}
+        height={height}
+        style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          zIndex: 200,
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          display: showConfetti ? 'block' : 'none',
+        }}
+      />
+      {/* --- END CONFETTI COMPONENT --- */}
+
       <div className="w-full sm:max-w-md">
         
         <HostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />

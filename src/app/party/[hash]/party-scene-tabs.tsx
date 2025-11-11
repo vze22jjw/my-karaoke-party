@@ -3,8 +3,8 @@
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useEffect, useState, useMemo } from "react";
-import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"; // <-- Added hooks
+import { readLocalStorageValue, useLocalStorage, useViewportSize } from "@mantine/hooks"; // <-- Added useViewportSize
 import { Monitor, Music, Users, History, Plus } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -14,6 +14,7 @@ import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import { PartyTourModal } from "./components/party-tour-modal";
+import Confetti from "react-canvas-confetti"; // <-- Added
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
@@ -43,31 +44,50 @@ export function PartySceneTabs({
     defaultValue: "player",
   });
 
-  // --- THIS IS THE FIX ---
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: GUEST_TOUR_KEY,
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false); // 1. Add mounted state
+  const [isMounted, setIsMounted] = useState(false); 
 
-  // 2. Set mounted to true only on the client
+  // --- START: CONFETTI LOGIC ---
+  const { width, height } = useViewportSize();
+  const confettiRef = useRef<confetti.CreateTypes | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
+    confettiRef.current = instance;
+  }, []);
+
+  const fireConfetti = useCallback(() => {
+    if (confettiRef.current) {
+      setShowConfetti(true);
+      confettiRef.current({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      setTimeout(() => setShowConfetti(false), 5000);
+    }
+  }, []);
+  // --- END: CONFETTI LOGIC ---
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 3. Check for tour only *after* mounting
   useEffect(() => {
     if (isMounted && !hasSeenTour) {
       setIsTourOpen(true);
     }
-  }, [isMounted, hasSeenTour]); // 4. Add isMounted to dependency array
+  }, [isMounted, hasSeenTour]);
 
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
+    fireConfetti(); // <-- Trigger confetti when tour closes
   };
-  // --- END THE FIX ---
 
   const { 
     currentSong, 
@@ -109,6 +129,24 @@ export function PartySceneTabs({
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
       <PartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+
+      {/* --- ADD CONFETTI COMPONENT --- */}
+      <Confetti
+        refConfetti={onConfettiInit}
+        width={width}
+        height={height}
+        style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          zIndex: 200,
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          display: showConfetti ? 'block' : 'none',
+        }}
+      />
+      {/* --- END CONFETTI COMPONENT --- */}
 
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
