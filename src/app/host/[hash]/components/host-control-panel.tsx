@@ -111,11 +111,14 @@ export function HostControlPanel({
   if (!party.hash) return null;
   const totalSongs = playedSongCount + unplayedSongCount;
 
+  // --- THIS IS THE FIX ---
+  // The outer div is now ONLY h-screen and overflow-hidden.
+  // The padding (p-4) has been moved to the inner div.
   return (
-    <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
-      <div className="flex flex-col h-full flex-1 overflow-hidden">
+    <div className="w-full overflow-hidden h-screen">
+      <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         
-        {/* ... (Party Title & Info Panel remain the same) ... */}
+        {/* Party Title & Info Panel (remain flex-shrink-0) */}
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
@@ -153,6 +156,7 @@ export function HostControlPanel({
           </div>
         </div>
 
+        {/* Tabs component now fills the remaining space */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -169,12 +173,11 @@ export function HostControlPanel({
             </TabsTrigger>
           </TabsList>
 
-          {/* --- THIS IS THE PLAYLIST SCROLL FIX --- */}
+          {/* These content panels fill the space and scroll internally */}
           <TabsContent
             value="playlist"
-            className="flex-1 mt-0 flex flex-col" // Use flex-col and remove overflow
+            className="flex-1 overflow-y-auto mt-0"
           >
-          {/* --- END THE FIX --- */}
             <TabPlaylist
               currentSong={currentSong}
               playlist={playlist}
@@ -188,13 +191,10 @@ export function HostControlPanel({
             />
           </TabsContent>
 
-          {/* --- THIS IS THE SETTINGS ALIGNMENT FIX --- */}
-          {/* This tab *should* scroll on its own */}
           <TabsContent
             value="settings"
             className="flex-1 overflow-y-auto mt-0"
           >
-          {/* --- END THE FIX --- */}
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
@@ -221,4 +221,5 @@ export function HostControlPanel({
       </div>
     </div>
   );
+  // --- END THE FIX ---
 }

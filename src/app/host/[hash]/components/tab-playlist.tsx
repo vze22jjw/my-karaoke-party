@@ -42,11 +42,12 @@ export function TabPlaylist({
   }
 
   // --- THIS IS THE FIX ---
-  // Wrap the component in a full-height flex container
+  // The root div is just a simple flex column.
+  // The scrolling is handled by the parent TabsContent.
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {currentSong && (
-        // Player controls are locked to the top (of this container)
+        // Player controls are locked to the top (of this component)
         <div className="flex-shrink-0">
           <PlaybackControls
             currentSong={currentSong}
@@ -59,8 +60,8 @@ export function TabPlaylist({
         </div>
       )}
 
-      {/* The list wrapper takes all remaining space and scrolls */}
-      <div className="flex-1 overflow-y-auto space-y-2 pt-2">
+      {/* The list wrapper is now just a simple div */}
+      <div className="space-y-2 pt-2">
         {nextVideos.map((video, index) => {
           
           // Only hide the first item if there is a currentSong playing
