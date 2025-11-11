@@ -4,14 +4,14 @@
 import { useLocalStorage } from "@mantine/hooks";
 import type { Party, IdleMessage } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useRef, useEffect } from "react"; // <-- IMPORT useEffect
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 import { api } from "~/trpc/react";
 import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
-import { HostTourModal } from "./components/host-tour-modal"; // <-- IMPORT NEW COMPONENT
+import { HostTourModal } from "./components/host-tour-modal";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -30,7 +30,7 @@ type Props = {
 };
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
-const HOST_TOUR_KEY = "has_seen_host_tour_v1"; // <-- Key for tour persistence
+const HOST_TOUR_KEY = "has_seen_host_tour_v1";
 
 export function HostScene({ party, initialData }: Props) {
   const router = useRouter();
@@ -47,25 +47,31 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: 10,
   });
 
-  // --- START: NEW TOUR LOGIC ---
+  // --- THIS IS THE FIX ---
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: HOST_TOUR_KEY,
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // 1. Add mounted state
 
-  // Check on mount if we should show the tour
+  // 2. Set mounted to true only on the client
   useEffect(() => {
-    if (!hasSeenTour) {
+    setIsMounted(true);
+  }, []);
+
+  // 3. Check for tour only *after* mounting
+  useEffect(() => {
+    if (isMounted && !hasSeenTour) {
       setIsTourOpen(true);
     }
-  }, [hasSeenTour]);
+  }, [isMounted, hasSeenTour]); // 4. Add isMounted to dependency array
 
   const handleCloseTour = () => {
     setIsTourOpen(false);
-    setHasSeenTour(true); // Persist that the tour has been seen
+    setHasSeenTour(true);
   };
-  // --- END: NEW TOUR LOGIC ---
+  // --- END THE FIX ---
 
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
@@ -129,7 +135,6 @@ export function HostScene({ party, initialData }: Props) {
   const useQueueRules = settings.orderByFairness;
   const disablePlayback = settings.disablePlayback ?? false; 
   
-  // ... (all other handle... functions remain the same) ...
   const handleToggleRules = async () => {
     const newRulesState = !useQueueRules;
     socketActions.toggleRules(newRulesState);
@@ -172,9 +177,7 @@ export function HostScene({ party, initialData }: Props) {
     <div className="flex min-h-screen w-full justify-center">
       <div className="w-full sm:max-w-md">
         
-        {/* --- START: RENDER THE TOUR MODAL --- */}
         <HostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
-        {/* --- END: RENDER THE TOUR MODAL --- */}
 
         <HostControlPanel
           party={party}

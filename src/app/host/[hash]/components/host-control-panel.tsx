@@ -71,7 +71,6 @@ function useTimeOpen(createdAt: Date) {
   return timeOpen;
 }
 
-
 export function HostControlPanel({
   party,
   activeTab,
@@ -170,11 +169,10 @@ export function HostControlPanel({
             </TabsTrigger>
           </TabsList>
 
-          {/* --- THIS IS THE FIX --- */}
-          {/* Removed `overflow-y-auto` and `space-y-2` */}
+          {/* --- THIS IS THE PLAYLIST SCROLL FIX --- */}
           <TabsContent
             value="playlist"
-            className="flex-1 mt-0 flex flex-col" // Added flex flex-col
+            className="flex-1 mt-0 flex flex-col" // Use flex-col and remove overflow
           >
           {/* --- END THE FIX --- */}
             <TabPlaylist
@@ -190,10 +188,13 @@ export function HostControlPanel({
             />
           </TabsContent>
 
+          {/* --- THIS IS THE SETTINGS ALIGNMENT FIX --- */}
+          {/* This tab *should* scroll on its own */}
           <TabsContent
             value="settings"
             className="flex-1 overflow-y-auto mt-0"
           >
+          {/* --- END THE FIX --- */}
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}

@@ -41,7 +41,7 @@ export function TabPlaylist({
     );
   }
 
-  // --- THIS IS THE FIX (Part 1) ---
+  // --- THIS IS THE FIX ---
   // Wrap the component in a full-height flex container
   return (
     <div className="flex flex-col h-full">
@@ -63,10 +63,8 @@ export function TabPlaylist({
       <div className="flex-1 overflow-y-auto space-y-2 pt-2">
         {nextVideos.map((video, index) => {
           
-          // --- THIS IS THE FIX (Part 2) ---
           // Only hide the first item if there is a currentSong playing
           const isNowPlaying = index === 0 && !!currentSong;
-          // --- END THE FIX (Part 2) ---
 
           return (
             <div
@@ -125,5 +123,5 @@ export function TabPlaylist({
       </div>
     </div>
   );
-  // --- END THE FIX (Part 1) ---
+  // --- END THE FIX ---
 }

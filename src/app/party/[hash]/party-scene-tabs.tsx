@@ -13,10 +13,10 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
-import { PartyTourModal } from "./components/party-tour-modal"; // <-- IMPORT NEW COMPONENT
+import { PartyTourModal } from "./components/party-tour-modal";
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
-const GUEST_TOUR_KEY = "has_seen_guest_tour_v1"; // <-- Key for guest tour
+const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -43,25 +43,31 @@ export function PartySceneTabs({
     defaultValue: "player",
   });
 
-  // --- START: NEW GUEST TOUR LOGIC ---
+  // --- THIS IS THE FIX ---
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: GUEST_TOUR_KEY,
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // 1. Add mounted state
 
-  // Check on mount if we should show the tour
+  // 2. Set mounted to true only on the client
   useEffect(() => {
-    if (!hasSeenTour) {
+    setIsMounted(true);
+  }, []);
+
+  // 3. Check for tour only *after* mounting
+  useEffect(() => {
+    if (isMounted && !hasSeenTour) {
       setIsTourOpen(true);
     }
-  }, [hasSeenTour]);
+  }, [isMounted, hasSeenTour]); // 4. Add isMounted to dependency array
 
   const handleCloseTour = () => {
     setIsTourOpen(false);
-    setHasSeenTour(true); // Persist that the tour has been seen
+    setHasSeenTour(true);
   };
-  // --- END: NEW GUEST TOUR LOGIC ---
+  // --- END THE FIX ---
 
   const { 
     currentSong, 
@@ -102,9 +108,7 @@ export function PartySceneTabs({
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
-      {/* --- START: RENDER THE TOUR MODAL --- */}
       <PartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
-      {/* --- END: RENDER THE TOUR MODAL --- */}
 
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
