@@ -19,7 +19,8 @@ export function HostTourModal({ isOpen, onClose }: Props) {
   return (
     <Drawer open={isOpen} onClose={onClose}>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-2xl p-4 pb-8">
+        {/* Increased bottom padding (pb-32) to lift content above toast area */}
+        <div className="mx-auto w-full max-w-2xl p-4 pb-32">
           <DrawerHeader>
             <DrawerTitle className="text-3xl font-bold">
               Welcome to Your Party!
