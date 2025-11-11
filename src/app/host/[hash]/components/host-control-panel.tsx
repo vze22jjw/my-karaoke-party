@@ -1,6 +1,6 @@
 "use client";
 
-import type { Party } from "@prisma/client";
+import type { Party, IdleMessage } from "@prisma/client"; // <-- ADD IdleMessage
 import { ListMusic, Settings, Users, Clock, Music } from "lucide-react";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -16,7 +16,7 @@ type Props = {
   playlist: KaraokeParty["playlist"]; 
   playedPlaylist: VideoInPlaylist[];
   onRemoveSong: (videoId: string) => void;
-  onMarkAsPlayed: () => void; // This is handleSkip
+  onMarkAsPlayed: () => void;
   useQueueRules: boolean;
   onToggleRules: () => void;
   disablePlayback: boolean; 
@@ -36,16 +36,17 @@ type Props = {
   singerCount: number;
   playedSongCount: number;
   unplayedSongCount: number;
-  // --- THIS IS THE FIX ---
-  partyStatus: string; // <-- THIS WAS MISSING
-  onStartParty: () => void; // <-- THIS WAS MISSING
-  // --- END THE FIX ---
+  partyStatus: string;
+  onStartParty: () => void;
+  hostIdleMessages: IdleMessage[]; // <-- ADD THIS
+  onAddIdleMessage: (vars: { hostName: string; message: string }) => void; // <-- ADD THIS
+  onDeleteIdleMessage: (vars: { id: number }) => void; // <-- ADD THIS
+  onSyncIdleMessages: (messages: string[]) => void; // <-- ADD THIS
 };
 
-// A simple hook to calculate and update the time ago string
+// ... (useTimeOpen hook) ...
 function useTimeOpen(createdAt: Date) {
   const [timeOpen, setTimeOpen] = useState("");
-
   useEffect(() => {
     const calculateTime = () => {
       const now = new Date();
@@ -53,7 +54,6 @@ function useTimeOpen(createdAt: Date) {
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMins / 60);
       const diffDays = Math.floor(diffHours / 24);
-
       if (diffDays > 0) {
         setTimeOpen(`Open for ${diffDays}d ${diffHours % 24}h`);
       } else if (diffHours > 0) {
@@ -64,14 +64,13 @@ function useTimeOpen(createdAt: Date) {
         setTimeOpen("Open just now");
       }
     };
-
-    calculateTime(); // Set initial time
-    const interval = setInterval(calculateTime, 60000); // Update every minute
+    calculateTime();
+    const interval = setInterval(calculateTime, 60000);
     return () => clearInterval(interval);
   }, [createdAt]);
-
   return timeOpen;
 }
+
 
 export function HostControlPanel({
   party,
@@ -81,7 +80,7 @@ export function HostControlPanel({
   playlist,
   playedPlaylist,
   onRemoveSong,
-  onMarkAsPlayed, // This is handleSkip
+  onMarkAsPlayed,
   useQueueRules,
   onToggleRules,
   disablePlayback, 
@@ -101,33 +100,30 @@ export function HostControlPanel({
   singerCount,
   playedSongCount,
   unplayedSongCount,
-  partyStatus, // <-- Prop is now correctly destructured
-  onStartParty, // <-- Prop is now correctly destructured
+  partyStatus,
+  onStartParty,
+  hostIdleMessages, // <-- ADD THIS
+  onAddIdleMessage, // <-- ADD THIS
+  onDeleteIdleMessage, // <-- ADD THIS
+  onSyncIdleMessages, // <-- ADD THIS
 }: Props) {
 
-  // Hooks MUST be called at the top level, before any conditional returns.
   const timeOpen = useTimeOpen(party.createdAt);
-
-  if (!party.hash) return null; // <-- Conditional return is now AFTER the hook
-
+  if (!party.hash) return null;
   const totalSongs = playedSongCount + unplayedSongCount;
 
   return (
     <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
       <div className="flex flex-col h-full flex-1 overflow-hidden">
         
-        {/* === Party Title === */}
+        {/* ... (Party Title & Info Panel) ... */}
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
           </h1>
         </div>
-
-        {/* === New Info Panel === */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-xs text-muted-foreground mb-4 space-y-2">
-          
           <div className="flex justify-between items-center">
-            {/* Host & Code */}
             <div className="flex flex-col">
               <span className="font-mono text-lg font-bold text-foreground">
                 CODE: {party.hash}
@@ -136,23 +132,17 @@ export function HostControlPanel({
                 Host: {hostName ?? "..."}
               </span>
             </div>
-            
-            {/* Time Open */}
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
               <span>{timeOpen}</span>
             </div>
           </div>
-          
           <div className="flex justify-between items-center border-t pt-2">
-            {/* Singers */}
             <div className="flex items-center gap-1.5">
               <Users className="h-4 w-4" />
               <span className="font-medium text-foreground">{singerCount}</span>
               <span>{singerCount === 1 ? "Singer" : "Singers"}</span>
             </div>
-            
-            {/* Songs */}
             <div className="flex items-center gap-1.5">
               <Music className="h-4 w-4" />
               <span className="font-medium text-foreground">{totalSongs}</span>
@@ -162,15 +152,14 @@ export function HostControlPanel({
               </span>
             </div>
           </div>
-          
         </div>
 
-        {/* === Tabs === */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden" 
         >
+          {/* ... (TabsList & "playlist" TabsContent) ... */}
           <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
               <ListMusic className="h-4 w-4" />
@@ -181,7 +170,6 @@ export function HostControlPanel({
               <span className="inline">Settings</span>
             </TabsTrigger>
           </TabsList>
-
           <TabsContent
             value="playlist"
             className="flex-1 overflow-y-auto mt-0 space-y-2"
@@ -216,8 +204,13 @@ export function HostControlPanel({
               onConfirmClose={onConfirmClose}
               onCancelClose={onCancelClose}
               playedPlaylist={playedPlaylist}
-              partyStatus={partyStatus} // <-- This prop is now valid
-              onStartParty={onStartParty} // <-- This prop is now valid
+              partyStatus={partyStatus}
+              onStartParty={onStartParty}
+              hostName={hostName} // <-- PASS HOSTNAME
+              hostIdleMessages={hostIdleMessages}
+              onAddIdleMessage={onAddIdleMessage}
+              onDeleteIdleMessage={onDeleteIdleMessage}
+              onSyncIdleMessages={onSyncIdleMessages}
             />
           </TabsContent>
         </Tabs>

@@ -47,6 +47,7 @@ if [ "$BUILD_TYPE" == "release" ]; then
     echo "Release build version: $VERSION"
 else
     export VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
+    export ECR_BUILD="false"
     echo "Development build version: $VERSION"
 fi
 

@@ -15,7 +15,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADD THIS
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -44,9 +45,10 @@ export default async function PartyHashPage({ params }: Props) {
     settings: { orderByFairness: true },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
-    status: "OPEN", // <-- ADD THIS
+    status: "OPEN",
+    idleMessages: [], // <-- ADD THIS
   };
-
+  
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {

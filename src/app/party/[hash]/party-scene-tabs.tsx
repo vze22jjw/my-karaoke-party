@@ -23,7 +23,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADD THIS
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 export function PartySceneTabs({
@@ -48,7 +49,8 @@ export function PartySceneTabs({
     participants, 
     isPlaying,
     remainingTime,
-    partyStatus // <-- GET THIS
+    partyStatus,
+    idleMessages // <-- GET THIS
   } = usePartySocket(
     party.hash!,
     initialData, 
@@ -82,7 +84,6 @@ export function PartySceneTabs({
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
           {party.name}
         </h1>
-        {/* --- ADDED PARTY STATUS INDICATOR --- */}
         {partyStatus === "OPEN" && (
           <p className="text-center text-green-400 font-medium animate-pulse">
             Party is OPEN (Waiting for host to start)

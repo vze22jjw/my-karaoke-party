@@ -19,7 +19,7 @@ FROM base AS builder
 WORKDIR /app
 
 ARG VERSION
-ARG ECR_BUILD:BOOL=false
+ARG ECR_BUILD=false
 ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
 
 # Copy files needed for dependency installation first

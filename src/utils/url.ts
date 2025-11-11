@@ -1,6 +1,7 @@
-import { env } from "~/env";
-
 // --- THIS IS THE FIX ---
+// import { env } from "~/env"; // <-- This line is removed
+// --- END THE FIX ---
+
 // This function now behaves like the tRPC getBaseUrl
 // It determines the URL at RUNTIME.
 function getBaseUrl() {
@@ -11,8 +12,6 @@ function getBaseUrl() {
   
   // Server-side (during SSR or API route):
   // We fall back to the env var. This is now a RUNTIME variable.
-  // Note: We use NEXT_PUBLIC_APP_URL here *only* because your compose file
-  // is already set to pass it. We can now treat it as a runtime var.
   if (process.env.NEXT_PUBLIC_APP_URL) {
     return process.env.NEXT_PUBLIC_APP_URL;
   }
@@ -22,7 +21,6 @@ function getBaseUrl() {
 }
 
 const BASE_URL = getBaseUrl();
-// --- END THE FIX ---
 
 const INCLUDES_FORWARD_SLASH_AT_START_REGEX = /^\/(.|\n)*$/;
 const INCLUDES_FORWARD_SLASH_AT_START = (str: string) =>

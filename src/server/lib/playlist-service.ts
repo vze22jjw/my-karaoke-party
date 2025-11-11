@@ -2,7 +2,7 @@ import { db } from "~/server/db";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import type { PlaylistItem } from "@prisma/client";
 import { type KaraokeParty, type VideoInPlaylist } from "party";
-import { parseISO8601Duration } from "~/utils/string"; // Import the parser
+import { parseISO8601Duration } from "~/utils/string";
 
 /**
  * Helper to format Prisma items into the VideoInPlaylist type.
@@ -32,7 +32,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADDED
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
@@ -98,17 +99,14 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
   }
 
-  // --- START: NEW PARTY STATE LOGIC ---
   if (party.status === "OPEN") {
-    // Party is open, but not started. Don't show a current song.
-    // Put the "current" song back at the start of the unplayed list.
     const allUnplayed = currentSongItem
       ? [formatPlaylistItem(currentSongItem), ...unplayedPlaylist]
       : unplayedPlaylist;
   
     return {
       currentSong: null,
-      unplayed: allUnplayed, // Full unplayed list
+      unplayed: allUnplayed,
       played: playedPlaylist,
       settings: {
         orderByFairness: useQueueRules,
@@ -116,11 +114,11 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       },
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
-      status: party.status, // Pass the status
+      status: party.status,
+      idleMessages: party.idleMessages, // <-- ADD THIS
     };
   
   } else {
-    // Party is STARTED, return the normal state.
     return {
       currentSong: formattedCurrentSong,
       unplayed: unplayedPlaylist,
@@ -131,8 +129,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       },
       currentSongStartedAt: party.currentSongStartedAt,
       currentSongRemainingDuration: remainingDuration,
-      status: party.status, // Pass the status
+      status: party.status,
+      idleMessages: party.idleMessages, // <-- ADD THIS
     };
   }
-  // --- END: NEW PARTY STATE LOGIC ---
 }

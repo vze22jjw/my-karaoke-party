@@ -6,7 +6,7 @@ import { Maximize, Minimize } from "lucide-react";
 import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
-import { PlayerDisabledView } from "~/components/player-disabled-view"; // <-- IMPORTED
+import { PlayerDisabledView } from "~/components/player-disabled-view";
 
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
@@ -24,8 +24,9 @@ type Props = {
   onPause: () => void;
   remainingTime: number; 
   onOpenYouTubeAndAutoSkip: () => void;
-  isPlaybackDisabled: boolean; // <-- ADDED PROP
-  isSkipping: boolean; // <-- ADDED PROP
+  isPlaybackDisabled: boolean;
+  isSkipping: boolean;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 export function PlayerDesktopView({
@@ -44,8 +45,9 @@ export function PlayerDesktopView({
   onPause,
   remainingTime, 
   onOpenYouTubeAndAutoSkip,
-  isPlaybackDisabled, // <-- ADDED PROP
-  isSkipping, // <-- ADDED PROP
+  isPlaybackDisabled,
+  isSkipping,
+  idleMessages, // <-- ADD THIS
 }: Props) {
   return (
     <div className="hidden sm:block sm:w-full h-screen"> 
@@ -60,8 +62,6 @@ export function PlayerDesktopView({
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>
 
-          {/* === THIS IS THE FIX === */}
-          {/* This logic now correctly prioritizes isPlaybackDisabled */}
           {currentVideo ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
@@ -95,9 +95,9 @@ export function PlayerDesktopView({
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={isFullscreen ? "bg-gradient" : ""}
+              idleMessages={idleMessages} // <-- PASS PROP
             />
           )}
-          {/* === END THE FIX === */}
 
         </div>
       </div>

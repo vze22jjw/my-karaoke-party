@@ -14,7 +14,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADD THIS
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -46,7 +47,8 @@ export default async function PartyPage({ params }: Props) {
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
-    status: "OPEN", // <-- ADD THIS
+    status: "OPEN",
+    idleMessages: [], // <-- ADD THIS
   };
 
   try {

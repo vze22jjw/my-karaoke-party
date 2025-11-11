@@ -15,13 +15,18 @@ import {
   FileJson,
   ListTree,
   Play,
+  Send,
+  Plus,
+  X,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
 import { type VideoInPlaylist } from "party";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { decode } from "html-entities";
+import { Textarea } from "~/components/ui/ui/textarea"; // <-- This import is now used
+import { type IdleMessage } from "@prisma/client";
 
 type Props = {
   partyHash: string;
@@ -38,6 +43,11 @@ type Props = {
   playedPlaylist: VideoInPlaylist[];
   partyStatus: string;
   onStartParty: () => void;
+  hostName: string | null;
+  hostIdleMessages: IdleMessage[];
+  onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
+  onDeleteIdleMessage: (vars: { id: number }) => void;
+  onSyncIdleMessages: (messages: string[]) => void;
 };
 
 const ToggleButton = ({
@@ -85,6 +95,7 @@ const ToggleButton = ({
   </div>
 );
 
+
 export function TabSettings({
   partyHash,
   useQueueRules,
@@ -100,6 +111,11 @@ export function TabSettings({
   playedPlaylist,
   partyStatus,
   onStartParty,
+  hostName,
+  hostIdleMessages,
+  onAddIdleMessage,
+  onDeleteIdleMessage,
+  onSyncIdleMessages,
 }: Props) {
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
@@ -111,30 +127,54 @@ export function TabSettings({
     "text",
   );
 
-  // --- START: UPDATED EXPORT LOGIC ---
-  /**
-   * Cleans the title by decoding HTML and removing pipe characters.
-   */
+  const [newMessage, setNewMessage] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const messagesRemaining = 20 - hostIdleMessages.length;
+
+  useEffect(() => {
+    // This syncs the text area if the messages are updated
+    // (e.g. loading for the first time)
+  }, [hostIdleMessages]);
+
+  const handleAddMessage = () => {
+    if (!newMessage.trim() || !hostName) return;
+    if (messagesRemaining <= 0) {
+      toast.error("You have reached the 20 message limit.");
+      return;
+    }
+    onAddIdleMessage({ hostName, message: newMessage });
+    setNewMessage(""); // Clear input
+  };
+
+  const handleDeleteMessage = (id: number) => {
+    if (confirm("Are you sure you want to delete this message?")) {
+      onDeleteIdleMessage({ id });
+    }
+  };
+
+  const handleSyncToParty = () => {
+    setIsSyncing(true);
+    const messagesToSync = hostIdleMessages.map((m) => m.message).slice(0, 10);
+    onSyncIdleMessages(messagesToSync);
+    toast.success(
+      `Synced ${messagesToSync.length} messages to the player!`,
+    );
+    setTimeout(() => setIsSyncing(false), 1000);
+  };
+
   const parseSongInfo = (title: string, singer: string) => {
     if (!title) {
       return { title: "Untitled", singer };
     }
-    
-    // 1. Decode HTML entities
     let cleanTitle = decode(title);
-    
-    // 2. Remove anything after a pipe "|"
     const pipeParts = cleanTitle.split("|");
-    cleanTitle = (pipeParts[0] ?? "").trim(); // Safely get part 0
-
-    // 3. Return the cleaned title and singer
+    cleanTitle = (pipeParts[0] ?? "").trim();
     return {
-      title: cleanTitle || "Untitled", // Fallback if title was just "|"
+      title: cleanTitle || "Untitled",
       singer: singer,
     };
   };
 
-  // 2. Memoize the processed list
   const processedList = useMemo(() => {
     return playedPlaylist.map((song) =>
       parseSongInfo(song.title, song.singerName),
@@ -142,31 +182,24 @@ export function TabSettings({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playedPlaylist]);
 
-  // 3. Generate export strings based on format (NO SINGER NAME)
   const getDataToCopy = () => {
     switch (exportFormat) {
       case "json":
-        // Format: [{"Title": "Title1"}, {"Title": "Title2"}]
         const jsonList = processedList.map((s) => ({
           Title: s.title,
         }));
         return JSON.stringify(jsonList, null, 2);
-
       case "csv":
-        // Format: "Title" (quoted for safety)
         const header = "Title\n";
         const rows = processedList
           .map((s) => `"${s.title.replace(/"/g, '""')}"`)
           .join("\n");
         return header + rows;
-
       case "text":
       default:
-        // Format: "Title1\nTitle2"
         return processedList.map((s) => s.title).join("\n");
     }
   };
-  // --- END: UPDATED EXPORT LOGIC ---
 
   const handleCopy = async () => {
     if (processedList.length === 0) {
@@ -184,10 +217,10 @@ export function TabSettings({
     }
   };
 
+
   return (
     <div className="space-y-6">
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        {/* ... Party Links section ... */}
         <h3 className="text-lg font-medium">Party Links</h3>
         <div className="space-y-4">
           <div className="space-y-1">
@@ -235,6 +268,76 @@ export function TabSettings({
           </Button>
         </div>
       )}
+      
+      <div className="space-y-3 rounded-lg border bg-card p-4">
+        <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
+        <p className="text-sm text-muted-foreground">
+          Messages are tied to your host name ({hostName ?? "..."}) and saved
+          in the database. (Max 20)
+        </p>
+
+        <div className="flex w-full items-center space-x-2">
+          <Input
+            type="text"
+            placeholder="Add a new message (e.g., Lyric -- Author)"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            disabled={messagesRemaining <= 0}
+            className="bg-background"
+          />
+          <Button
+            type="button"
+            onClick={handleAddMessage}
+            disabled={messagesRemaining <= 0 || !newMessage.trim()}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {messagesRemaining} slot{messagesRemaining !== 1 ? "s" : ""} remaining
+        </p>
+
+        <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-muted/50 p-2 space-y-2">
+          {hostIdleMessages.length > 0 ? (
+            hostIdleMessages.map((msg) => (
+              <div
+                key={msg.id}
+                className="flex items-center justify-between rounded bg-background p-2"
+              >
+                <p className="text-sm truncate pr-2">{msg.message}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 flex-shrink-0 text-red-500"
+                  onClick={() => handleDeleteMessage(msg.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-sm text-muted-foreground p-4">
+              Your message library is empty.
+            </p>
+          )}
+        </div>
+
+        <Button
+          type="button"
+          onClick={handleSyncToParty}
+          disabled={isSyncing || hostIdleMessages.length === 0}
+          className="w-full"
+        >
+          {isSyncing ? (
+            <Check className="mr-2 h-4 w-4" />
+          ) : (
+            <Send className="mr-2 h-4 w-4" />
+          )}
+          {isSyncing
+            ? "Synced!"
+            : `Sync ${Math.min(hostIdleMessages.length, 10)} Messages to Player`}
+        </Button>
+      </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Party Rules</h3>
@@ -376,12 +479,10 @@ export function TabSettings({
         <div className="space-y-4 rounded-lg border border-destructive/50 p-4">
           <div>
             <Label className="text-base">End Party</Label>
-            {/* --- THIS IS THE FIX for react/no-unescaped-entities --- */}
             <p className="text-sm text-muted-foreground">
               This will close the party, delete all songs, and disconnect
               everyone. This can&apos;t be undone.
             </p>
-            {/* --- END THE FIX --- */}
           </div>
           {isConfirmingClose ? (
             <Alert>

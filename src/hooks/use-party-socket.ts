@@ -17,7 +17,8 @@ interface SocketActions {
   playbackPlay: (currentTime?: number) => void;
   playbackPause: () => void;
   startSkipTimer: () => void; 
-  startParty: () => void; // <-- ADD THIS
+  startParty: () => void;
+  updateIdleMessages: (messages: string[]) => void; // <-- ADD THIS
 }
 
 type Participant = {
@@ -37,7 +38,8 @@ interface UsePartySocketReturn {
   hostName: string | null;
   isSkipping: boolean; 
   remainingTime: number; 
-  partyStatus: string; // <-- ADD THIS
+  partyStatus: string;
+  idleMessages: string[]; // <-- ADD THIS
 }
 
 type PartySocketData = {
@@ -47,7 +49,8 @@ type PartySocketData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADD THIS
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 const LOG_TAG = "[SocketClient]";
@@ -76,7 +79,8 @@ export function usePartySocket(
   const [isPlaying, setIsPlaying] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
-  const [partyStatus, setPartyStatus] = useState(initialData.status); // <-- ADD THIS
+  const [partyStatus, setPartyStatus] = useState(initialData.status);
+  const [idleMessages, setIdleMessages] = useState(initialData.idleMessages); // <-- ADD THIS
 
   const [remainingTime, setRemainingTime] = useState(() => {
     if (initialData.currentSongStartedAt) {
@@ -105,21 +109,16 @@ export function usePartySocket(
 
   const startSyncedCountdown = useCallback((startedAt: string, remainingDuration: number) => {
     stopCountdown();
-
     const startTime = new Date(startedAt).getTime();
-
     const updateTimer = () => {
       const elapsedMs = new Date().getTime() - startTime;
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
       const newRemainingTime = Math.max(0, remainingDuration - elapsedSeconds);
-
       setRemainingTime(newRemainingTime);
-
       if (newRemainingTime <= 0) {
         stopCountdown();
       }
     };
-    
     updateTimer(); 
     timerIntervalRef.current = setInterval(updateTimer, 1000); 
   }, [stopCountdown]);
@@ -128,9 +127,7 @@ export function usePartySocket(
     stopCountdown();
     const durationMs = parseISO8601Duration(song?.duration);
     const durationInSeconds = durationMs ? Math.floor(durationMs / 1000) : 0;
-    
     debugLog(LOG_TAG, `Resetting countdown for ${song?.title ?? 'No Song'}. Duration: ${song?.duration ?? 'N/A'} (${durationInSeconds}s)`);
-    
     setRemainingTime(durationInSeconds);
   }, [stopCountdown]);
 
@@ -172,7 +169,8 @@ export function usePartySocket(
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
-        setPartyStatus(partyData.status); // <-- ADD THIS
+        setPartyStatus(partyData.status);
+        setIdleMessages(partyData.idleMessages); // <-- ADD THIS
 
         if (partyData.currentSongStartedAt) {
           setIsPlaying(true);
@@ -221,6 +219,13 @@ export function usePartySocket(
         debugLog(LOG_TAG, "Received 'skip-timer-started', disabling skip buttons.");
         setIsSkipping(true);
       });
+      
+      // --- ADD THIS NEW LISTENER ---
+      newSocket.on("idle-messages-updated", (messages: string[]) => {
+        debugLog(LOG_TAG, "Received 'idle-messages-updated'", messages);
+        setIdleMessages(messages);
+      });
+      // --- END NEW LISTENER ---
 
     };
 
@@ -251,6 +256,7 @@ export function usePartySocket(
   }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown]); 
 
   const socketActions: SocketActions = useMemo(() => ({
+    // ... (all other actions) ...
     addSong: (videoId, title, coverUrl, singerName) => {
       const data = { partyHash, videoId, title, coverUrl, singerName };
       debugLog(LOG_TAG, "Emitting 'add-song'", data);
@@ -307,6 +313,15 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'start-party'", data);
       socketRef.current?.emit("start-party", data);
     },
+    
+    // --- ADD THIS NEW ACTION ---
+    updateIdleMessages: (messages: string[]) => {
+      const data = { partyHash, messages };
+      debugLog(LOG_TAG, "Emitting 'update-idle-messages'");
+      socketRef.current?.emit("update-idle-messages", data);
+    },
+    // --- END NEW ACTION ---
+
   }), [partyHash, singerName]);
 
   return { 
@@ -321,6 +336,7 @@ export function usePartySocket(
     hostName, 
     isSkipping,
     remainingTime,
-    partyStatus, // <-- ADD THIS
+    partyStatus,
+    idleMessages, // <-- ADD THIS
   };
 }

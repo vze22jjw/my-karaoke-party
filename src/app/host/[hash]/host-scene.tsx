@@ -2,14 +2,16 @@
 "use client";
 
 import { useLocalStorage } from "@mantine/hooks";
-import type { Party } from "@prisma/client";
+import type { Party, IdleMessage } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
+import { api } from "~/trpc/react";
+import LoaderFull from "~/components/loader-full";
+import { toast } from "sonner"; // <-- THIS IS THE FIX
 
-// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -17,7 +19,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADD THIS
+  status: string;
+  idleMessages: string[];
 };
 
 type Props = {
@@ -49,21 +52,53 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
-    playedPlaylist, 
+    playedPlaylist,
     settings, 
     socketActions, 
     isConnected,
     isSkipping,
     isPlaying, 
     remainingTime,
-    participants, 
+    participants,
     hostName,
-    partyStatus // <-- GET THIS
+    partyStatus,
+    idleMessages // This is the PARTY's current messages
   } = usePartySocket(
     party.hash,
     initialData, 
     "Host"
   );
+  
+  const { 
+    data: hostIdleMessages, 
+    isLoading: isLoadingMessages,
+    refetch: refetchIdleMessages 
+  } = api.idleMessage.getByHost.useQuery(
+    { hostName: hostName ?? "" },
+    { enabled: !!hostName } // Only fetch when we know the host name
+  );
+
+  const addIdleMessage = api.idleMessage.add.useMutation({
+    onSuccess: () => {
+      void refetchIdleMessages();
+    },
+    onError: (error) => {
+      toast.error("Failed to add message", {
+        description: error.message,
+      });
+    },
+  });
+
+  const deleteIdleMessage = api.idleMessage.delete.useMutation({
+    onSuccess: () => {
+      void refetchIdleMessages();
+    },
+    onError: (error) => {
+      toast.error("Failed to delete message", {
+        description: error.message,
+      });
+    },
+  });
   
   const singerCount = participants.length;
   const playedSongCount = playedPlaylist.length;
@@ -105,9 +140,12 @@ export function HostScene({ party, initialData }: Props) {
   const cancelCloseParty = () => {
     setIsConfirmingClose(false);
   };
+  
+  if (isLoadingMessages && activeTab === "settings") {
+    return <LoaderFull />;
+  }
 
   return (
-    // This is the tablet-view wrapper
     <div className="flex min-h-screen w-full justify-center">
       <div className="w-full sm:max-w-md"> 
         <HostControlPanel
@@ -138,8 +176,12 @@ export function HostScene({ party, initialData }: Props) {
           singerCount={singerCount}
           playedSongCount={playedSongCount}
           unplayedSongCount={unplayedSongCount}
-          partyStatus={partyStatus} // <-- PASS PROP
-          onStartParty={socketActions.startParty} // <-- PASS PROP
+          partyStatus={partyStatus}
+          onStartParty={socketActions.startParty}
+          hostIdleMessages={hostIdleMessages ?? []}
+          onAddIdleMessage={addIdleMessage.mutate}
+          onDeleteIdleMessage={deleteIdleMessage.mutate}
+          onSyncIdleMessages={socketActions.updateIdleMessages}
         />
       </div>
     </div>

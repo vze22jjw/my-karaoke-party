@@ -17,8 +17,6 @@ import { PlayerDisabledView } from "~/components/player-disabled-view";
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
-// --- THIS IS THE FIX ---
-// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -26,9 +24,9 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- THIS LINE WAS MISSING
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
-// --- END THE FIX ---
 
 type Props = {
   party: Party;
@@ -50,10 +48,11 @@ export default function PlayerScene({ party, initialData }: Props) {
     isPlaying,
     settings,
     isSkipping, 
-    remainingTime 
+    remainingTime,
+    idleMessages // <-- GET THIS
   } = usePartySocket(
     party.hash,
-    initialData, // <-- This now has the correct type
+    initialData,
     "Player" 
   );
   
@@ -62,8 +61,8 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const doTheSkip = useCallback(() => {
     setForceAutoplay(false); 
-    socketActions.markAsPlayed(); // This advances to the next song
-    socketActions.playbackPause(); // This ensures the new song is paused
+    socketActions.markAsPlayed();
+    socketActions.playbackPause();
   }, [socketActions]);
 
   useEffect(() => {
@@ -143,10 +142,10 @@ export default function PlayerScene({ party, initialData }: Props) {
           currentVideo={currentSong ?? undefined}
           isPlaybackDisabled={isPlaybackDisabled}
           isSkipping={isSkipping}
+          idleMessages={idleMessages} // <-- PASS PROP
           {...commonPlayerProps}
         />
         
-        {/* Render Mobile View (hidden on desktop) */}
         <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
           <Button
             onClick={toggle}
@@ -179,6 +178,7 @@ export default function PlayerScene({ party, initialData }: Props) {
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={fullscreen ? "bg-gradient" : ""}
+              idleMessages={idleMessages} // <-- PASS PROP
             />
           )}
         </div>

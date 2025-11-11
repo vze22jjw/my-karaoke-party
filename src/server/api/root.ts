@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { partyRouter } from "./routers/party";
 import { playlistRouter } from "./routers/playlist";
 import { youtubeRouter } from "./routers/youtube";
+import { idleMessageRouter } from "./routers/idleMessage"; // <-- ADD THIS
 
 /**
  * This is the primary router for your server.
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   party: partyRouter,
   playlist: playlistRouter,
   youtube: youtubeRouter,
+  idleMessage: idleMessageRouter, // <-- ADD THIS
 });
 
 // export type definition of API
@@ -22,6 +24,6 @@ export type AppRouter = typeof appRouter;
  * @example
  * const trpc = createCaller(createContext);
  * const res = await trpc.post.all();
- *       ^? Post[]
+ * ^? Post[]
  */
 export const createCaller = createCallerFactory(appRouter);

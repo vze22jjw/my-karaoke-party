@@ -42,12 +42,10 @@ function getRandomDurationISO(): string {
   return isoDuration;
 }
 
-// --- THIS IS THE FIX: Re-added the type definition ---
 type Participant = {
   name: string;
   role: string;
 };
-// --- END THE FIX ---
 
 async function getSingers(partyId: number): Promise<Participant[]> {
   const participants = await db.partyParticipant.findMany({
@@ -130,6 +128,7 @@ const updateAndEmitPlaylist = async (io: Server, partyHash: string, triggeredBy:
         CurrentSong: partyData.currentSong?.title ?? "None",
         Unplayed: formatPlaylistForLog(partyData.unplayed),
         Played: formatPlaylistForLog(partyData.played),
+        IdleMessages: partyData.idleMessages,
       }
     );
     
@@ -233,7 +232,10 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
           const { isNew } = await registerParticipant(party.id, data.singerName);
           if (isNew) {
+            // --- THIS IS THE FIX ---
+            // Use data.partyHash instead of partyHash
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
+            // --- END THE FIX ---
           }
 
           const existing = await db.playlistItem.findFirst({
@@ -558,6 +560,40 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
 
+    socket.on(
+      "update-idle-messages",
+      async (data: { partyHash: string; messages: string[] }) => {
+        debugLog(
+          LOG_TAG,
+          `Received 'update-idle-messages' for room ${data.partyHash}`,
+        );
+        try {
+          // Clean, filter, and limit to 10
+          const messagesArray = data.messages
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .slice(0, 10);
+
+          await db.party.update({
+            where: { hash: data.partyHash },
+            data: {
+              idleMessages: messagesArray,
+              lastActivityAt: new Date(),
+            },
+          });
+
+          // Broadcast the new list to ALL clients in the room
+          debugLog(
+            LOG_TAG,
+            `Emitting 'idle-messages-updated' to room ${data.partyHash}`,
+          );
+          io.to(data.partyHash).emit("idle-messages-updated", messagesArray);
+        } catch (error) {
+          console.error("Error updating idle messages:", error);
+        }
+      },
+    );
+    
     socket.on("start-skip-timer", (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Broadcasting 'skip-timer-started' to room ${data.partyHash}`);
       socket.broadcast.to(data.partyHash).emit("skip-timer-started");

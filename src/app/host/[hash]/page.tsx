@@ -14,7 +14,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
-  status: string; // <-- ADD THIS
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -43,7 +44,8 @@ export default async function HostPage({ params }: Props) {
     settings: { orderByFairness: true },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
-    status: "OPEN", // <-- ADD THIS
+    status: "OPEN",
+    idleMessages: [], // <-- ADD THIS
   };
 
   try {
@@ -51,7 +53,7 @@ export default async function HostPage({ params }: Props) {
     const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
-        revalidate: 0, // Force dynamic fetch
+        revalidate: 0,
       },
     });
 
