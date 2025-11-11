@@ -233,7 +233,8 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           const { isNew } = await registerParticipant(party.id, data.singerName);
           if (isNew) {
             // --- THIS IS THE FIX ---
-            // Use data.partyHash instead of partyHash
+            // Ensures the "new-singer-joined" toast is only sent
+            // to clients in the *same party* (room).
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
             // --- END THE FIX ---
           }
