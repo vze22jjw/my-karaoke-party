@@ -1,7 +1,7 @@
 import axios from "axios";
 import { env } from "~/env";
 
-// ... (interfaces Thumbnail, Thumbnails, SearchResultSnippet, SearchResultItem, YouTubeSearchResponse remain the same)
+// ... (interfaces Thumbnail, Thumbnails, SearchResultSnippet, SearchResultItem, YouTubeSearchResponse, VideoDetailsResponse remain the same) ...
 interface Thumbnail {
   url: string;
   width: number;
@@ -42,7 +42,6 @@ interface YouTubeSearchResponse {
   };
   items: SearchResultItem[];
 }
-// --- THIS IS THE NEW INTERFACE FOR THE VIDEOS.LIST ENDPOINT ---
 interface VideoDetailsResponse {
   items: {
     id: string;
@@ -61,7 +60,6 @@ class YouTubeDataAPI {
     this.apiKeys = apiKeys;
   }
 
-  // --- THIS IS THE NEW FUNCTION ---
   async getVideoDuration(videoId: string): Promise<string | null> {
     let lastError: unknown;
 
@@ -92,7 +90,6 @@ class YouTubeDataAPI {
     console.error(`All YouTube API keys failed. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
     return null;
   }
-  // --- END NEW FUNCTION ---
 
   async searchVideo(query: string, maxResults = 10) {
     let lastError: unknown;
@@ -131,7 +128,11 @@ class YouTubeDataAPI {
 
 export { YouTubeDataAPI };
 
-const apiKeys = env.YOUTUBE_API_KEY.split(",");
+// --- THIS IS THE FIX ---
+// We provide a fallback empty string `?? ""` so that .split()
+// will not crash even if env.YOUTUBE_API_KEY is undefined during the build.
+const apiKeys = (env.YOUTUBE_API_KEY ?? "").split(",");
+// --- END THE FIX ---
 
 const youtubeAPI = new YouTubeDataAPI(apiKeys);
 

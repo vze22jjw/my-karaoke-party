@@ -1,7 +1,28 @@
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? `https://${process.env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : "http://localhost:3000";
+import { env } from "~/env";
+
+// --- THIS IS THE FIX ---
+// This function now behaves like the tRPC getBaseUrl
+// It determines the URL at RUNTIME.
+function getBaseUrl() {
+  if (typeof window !== "undefined") {
+    // Client-side: use the browser's origin
+    return window.location.origin;
+  }
+  
+  // Server-side (during SSR or API route):
+  // We fall back to the env var. This is now a RUNTIME variable.
+  // Note: We use NEXT_PUBLIC_APP_URL here *only* because your compose file
+  // is already set to pass it. We can now treat it as a runtime var.
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+
+  // Fallback for local development
+  return `http://localhost:${process.env.PORT ?? 3000}`;
+}
+
+const BASE_URL = getBaseUrl();
+// --- END THE FIX ---
 
 const INCLUDES_FORWARD_SLASH_AT_START_REGEX = /^\/(.|\n)*$/;
 const INCLUDES_FORWARD_SLASH_AT_START = (str: string) =>
