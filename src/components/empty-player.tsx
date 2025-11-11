@@ -2,12 +2,12 @@ import Image from "next/image";
 import { QrCode } from "./qr-code";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { cn } from "~/lib/utils";
-import { useEffect, useState } from "react"; // <-- ADDED
+import { useEffect, useState } from "react";
 
 type Props = {
   joinPartyUrl: string;
   className?: string;
-  idleMessages: string[]; // <-- ADDED
+  idleMessages: string[];
 };
 
 // --- START: NEW SLIDESHOW COMPONENT ---
@@ -15,7 +15,7 @@ function IdleSlideshow({ messages }: { messages: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (messages.length <= 1) return; // No need to cycle if 1 or 0 messages
+    if (messages.length <= 1) return; // No need to cycle
 
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length);
@@ -26,7 +26,6 @@ function IdleSlideshow({ messages }: { messages: string[] }) {
 
   if (messages.length === 0) return null;
 
-  // Parse "Quote -- Author" format
   const currentMessage = messages[currentIndex] ?? "";
   const parts = currentMessage.split(" -- ");
   const quote = parts[0] ?? "";
@@ -37,11 +36,17 @@ function IdleSlideshow({ messages }: { messages: string[] }) {
       key={currentIndex} // Key change triggers animation
       className="flex w-full flex-col items-center justify-center text-center animate-in fade-in-0 duration-1000"
     >
-      <blockquote className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
+      <blockquote
+        // --- THIS IS THE FIX: Added text-outline and text-white ---
+        className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl"
+      >
         &ldquo;{quote}&rdquo;
       </blockquote>
       {author && (
-        <cite className="text-outline mt-4 text-2xl lg:text-3xl not-italic">
+        <cite
+          // --- THIS IS THE FIX: Added text-outline and text-white ---
+          className="text-outline mt-4 scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl not-italic"
+        >
           - {author}
         </cite>
       )}
@@ -56,40 +61,53 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col items-center p-6",
+        "relative flex h-full w-full flex-col items-center p-6",
         className,
       )}
     >
-      {/* --- START: UPDATED LOGIC --- */}
-      <div className="flex w-full basis-1/4 items-start justify-center">
+      {/* --- START: BACKGROUND LOGO --- */}
+      {/* This is the large, faded logo in the background */}
+      <div className="absolute inset-0 top-1/4 flex h-1/2 w-full items-center justify-center opacity-50">
         <Image
           src={logo}
           alt="My Karaoke Party"
           priority
-          className="mx-auto object-contain max-h-[15vh] w-auto" // Smaller logo at top
+          className="mx-auto object-contain"
         />
       </div>
-      <div className="flex w-full basis-2/4 items-center justify-center px-4">
-        {hasMessages ? (
-          <IdleSlideshow messages={idleMessages} />
-        ) : (
-          <p className="text-outline text-3xl text-center">
-            Waiting for the host to start the party...
-          </p>
-        )}
+      {/* --- END: BACKGROUND LOGO --- */}
+
+      {/* --- START: FOREGROUND CONTENT --- */}
+      {/* This div is a container to ensure content is layered on top */}
+      <div className="z-10 flex h-full w-full flex-col">
+        {/* Spacer to push content to middle */}
+        <div className="flex w-full basis-1/4 items-start justify-center" />
+        
+        {/* Main Content Area */}
+        <div className="flex w-full basis-2/4 items-center justify-center px-4">
+          {hasMessages ? (
+            <IdleSlideshow messages={idleMessages} />
+          ) : (
+            // Default text also gets the outline for consistency
+            <p className="text-outline text-3xl text-center text-white">
+              Waiting for the host to start the party...
+            </p>
+          )}
+        </div>
+        
+        {/* QR Code Footer */}
+        <div className="relative flex w-full basis-1/4 items-end text-center">
+          <QrCode url={joinPartyUrl} />
+          <a
+            href={joinPartyUrl}
+            target="_blank"
+            className="font-mono text-xl text-white pl-4"
+          >
+            {joinPartyUrl.split("//")[1]}
+          </a>
+        </div>
       </div>
-      {/* --- END: UPDATED LOGIC --- */}
-      
-      <div className="relative flex w-full basis-1/4 items-end text-center">
-        <QrCode url={joinPartyUrl} />
-        <a
-          href={joinPartyUrl}
-          target="_blank"
-          className="font-mono text-xl text-white pl-4"
-        >
-          {joinPartyUrl.split("//")[1]}
-        </a>
-      </div>
+      {/* --- END: FOREGROUND CONTENT --- */}
     </div>
   );
 }

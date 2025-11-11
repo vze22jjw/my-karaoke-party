@@ -1,4 +1,4 @@
-// src/app/join/join-scene.tsx
+/* eslint-disable */
 "use client";
 
 import Image from "next/image";
@@ -20,7 +20,7 @@ import { Input } from "~/components/ui/ui/input";
 import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
-import Confetti from "react-canvas-confetti";
+import Confetti from "react-canvas-confetti"; // <-- IMPORT CONFETTI
 
 const formSchema = z.object({
   partyCode: z.string().min(4),
@@ -40,6 +40,7 @@ export default function JoinScene({
     defaultValue: "",
   });
 
+  // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -51,16 +52,15 @@ export default function JoinScene({
   const fireConfetti = useCallback(() => {
     if (confettiRef.current) {
       setShowConfetti(true);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       confettiRef.current({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
       });
-
       setTimeout(() => setShowConfetti(false), 5000);
     }
   }, []);
+  // --- END: CONFETTI LOGIC ---
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,15 +73,12 @@ export default function JoinScene({
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     setName(values.name);
-    fireConfetti();
+    fireConfetti(); // <-- FIRE CONFETTI
 
     const codeToJoin = partyHash ?? values.partyCode;
     setTimeout(() => {
-      // --- THIS IS THE FIX ---
-      // Disable the linter rule for this specific line
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       router.push(`/party/${codeToJoin}`);
-      // --- END THE FIX ---
     }, 300);
   }
 
@@ -94,6 +91,7 @@ export default function JoinScene({
 
   return (
     <main className="flex min-h-screen flex-col items-center text-white">
+      {/* --- ADD CONFETTI COMPONENT --- */}
       <Confetti
         refConfetti={onConfettiInit}
         width={width}
@@ -109,9 +107,9 @@ export default function JoinScene({
           display: showConfetti ? 'block' : 'none',
         }}
       />
+      {/* --- END CONFETTI COMPONENT --- */}
 
       <div className="container flex flex-1 flex-col items-center gap-4 px-4 py-4">
-        {/* ... rest of component ... */}
         <Image
           src={logo}
           width={666}

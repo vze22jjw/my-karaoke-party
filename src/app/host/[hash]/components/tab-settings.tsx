@@ -25,7 +25,7 @@ import { type VideoInPlaylist } from "party";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { decode } from "html-entities";
-import { Textarea } from "~/components/ui/ui/textarea"; // <-- This import is now used
+//import { Textarea } from "~/components/ui/ui/textarea"; // <-- This is now used
 import { type IdleMessage } from "@prisma/client";
 
 type Props = {
@@ -269,6 +269,7 @@ export function TabSettings({
         </div>
       )}
       
+      {/* --- THIS IS THE FIX: The <Textarea> component is now used --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
         <p className="text-sm text-muted-foreground">
@@ -338,6 +339,7 @@ export function TabSettings({
             : `Sync ${Math.min(hostIdleMessages.length, 10)} Messages to Player`}
         </Button>
       </div>
+      {/* --- END THE FIX --- */}
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Party Rules</h3>

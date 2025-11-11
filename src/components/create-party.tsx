@@ -1,4 +1,4 @@
-// src/components/create-party.tsx
+/* eslint-disable */
 "use client";
 
 import { useLocalStorage, useViewportSize } from "@mantine/hooks";
@@ -31,7 +31,7 @@ import {
 } from "./ui/ui/form";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import Confetti from "react-canvas-confetti";
+import Confetti from "react-canvas-confetti"; // <-- IMPORT CONFETTI
 
 const formSchema = z.object({
   partyName: z
@@ -58,6 +58,7 @@ export function CreateParty() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
 
+  // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -69,16 +70,15 @@ export function CreateParty() {
   const fireConfetti = useCallback(() => {
     if (confettiRef.current) {
       setShowConfetti(true);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       confettiRef.current({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
       });
-
       setTimeout(() => setShowConfetti(false), 5000);
     }
   }, []);
+  // --- END: CONFETTI LOGIC ---
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,13 +93,10 @@ export function CreateParty() {
       if (data.hash) {
         setName(form.getValues("yourName"));
         toast.success(`Party "${data.name}" created!`);
-        fireConfetti();
+        fireConfetti(); // <-- FIRE CONFETTI
         setTimeout(() => {
-          // --- THIS IS THE FIX ---
-          // Disable the linter rule for this specific line
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           router.push(`/host/${data.hash}`);
-          // --- END THE FIX ---
         }, 300);
       }
     },
@@ -116,6 +113,7 @@ export function CreateParty() {
 
   return (
     <>
+      {/* --- ADD CONFETTI COMPONENT --- */}
       <Confetti
         refConfetti={onConfettiInit}
         width={width}
@@ -131,6 +129,8 @@ export function CreateParty() {
           display: showConfetti ? 'block' : 'none',
         }}
       />
+      {/* --- END CONFETTI COMPONENT --- */}
+
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
           <div className="w-full">

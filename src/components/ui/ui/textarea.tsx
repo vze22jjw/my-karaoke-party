@@ -2,10 +2,7 @@ import * as React from "react"
 
 import { cn } from "~/lib/utils"
 
-// --- THIS IS THE FIX ---
-// We remove the empty interface and type the props directly.
 export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
-// --- END THE FIX ---
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {

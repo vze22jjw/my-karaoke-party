@@ -13,8 +13,10 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
+import { PartyTourModal } from "./components/party-tour-modal"; // <-- IMPORT NEW COMPONENT
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
+const GUEST_TOUR_KEY = "has_seen_guest_tour_v1"; // <-- Key for guest tour
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -24,7 +26,7 @@ type InitialPartyData = {
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[];
 };
 
 export function PartySceneTabs({
@@ -41,6 +43,26 @@ export function PartySceneTabs({
     defaultValue: "player",
   });
 
+  // --- START: NEW GUEST TOUR LOGIC ---
+  const [hasSeenTour, setHasSeenTour] = useLocalStorage({
+    key: GUEST_TOUR_KEY,
+    defaultValue: false,
+  });
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  // Check on mount if we should show the tour
+  useEffect(() => {
+    if (!hasSeenTour) {
+      setIsTourOpen(true);
+    }
+  }, [hasSeenTour]);
+
+  const handleCloseTour = () => {
+    setIsTourOpen(false);
+    setHasSeenTour(true); // Persist that the tour has been seen
+  };
+  // --- END: NEW GUEST TOUR LOGIC ---
+
   const { 
     currentSong, 
     unplayedPlaylist, 
@@ -50,7 +72,7 @@ export function PartySceneTabs({
     isPlaying,
     remainingTime,
     partyStatus,
-    idleMessages // <-- GET THIS
+    idleMessages
   } = usePartySocket(
     party.hash!,
     initialData, 
@@ -80,6 +102,10 @@ export function PartySceneTabs({
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
+      {/* --- START: RENDER THE TOUR MODAL --- */}
+      <PartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+      {/* --- END: RENDER THE TOUR MODAL --- */}
+
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
           {party.name}

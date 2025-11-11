@@ -1,6 +1,6 @@
 "use client";
 
-import type { Party, IdleMessage } from "@prisma/client"; // <-- ADD IdleMessage
+import type { Party, IdleMessage } from "@prisma/client";
 import { ListMusic, Settings, Users, Clock, Music } from "lucide-react";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -38,13 +38,13 @@ type Props = {
   unplayedSongCount: number;
   partyStatus: string;
   onStartParty: () => void;
-  hostIdleMessages: IdleMessage[]; // <-- ADD THIS
-  onAddIdleMessage: (vars: { hostName: string; message: string }) => void; // <-- ADD THIS
-  onDeleteIdleMessage: (vars: { id: number }) => void; // <-- ADD THIS
-  onSyncIdleMessages: (messages: string[]) => void; // <-- ADD THIS
+  hostIdleMessages: IdleMessage[];
+  onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
+  onDeleteIdleMessage: (vars: { id: number }) => void;
+  onSyncIdleMessages: (messages: string[]) => void;
 };
 
-// ... (useTimeOpen hook) ...
+// ... (useTimeOpen hook remains the same) ...
 function useTimeOpen(createdAt: Date) {
   const [timeOpen, setTimeOpen] = useState("");
   useEffect(() => {
@@ -102,10 +102,10 @@ export function HostControlPanel({
   unplayedSongCount,
   partyStatus,
   onStartParty,
-  hostIdleMessages, // <-- ADD THIS
-  onAddIdleMessage, // <-- ADD THIS
-  onDeleteIdleMessage, // <-- ADD THIS
-  onSyncIdleMessages, // <-- ADD THIS
+  hostIdleMessages,
+  onAddIdleMessage,
+  onDeleteIdleMessage,
+  onSyncIdleMessages,
 }: Props) {
 
   const timeOpen = useTimeOpen(party.createdAt);
@@ -116,7 +116,7 @@ export function HostControlPanel({
     <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
       <div className="flex flex-col h-full flex-1 overflow-hidden">
         
-        {/* ... (Party Title & Info Panel) ... */}
+        {/* ... (Party Title & Info Panel remain the same) ... */}
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
@@ -159,7 +159,6 @@ export function HostControlPanel({
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden" 
         >
-          {/* ... (TabsList & "playlist" TabsContent) ... */}
           <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
               <ListMusic className="h-4 w-4" />
@@ -170,10 +169,14 @@ export function HostControlPanel({
               <span className="inline">Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* --- THIS IS THE FIX --- */}
+          {/* Removed `overflow-y-auto` and `space-y-2` */}
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-y-auto mt-0 space-y-2"
+            className="flex-1 mt-0 flex flex-col" // Added flex flex-col
           >
+          {/* --- END THE FIX --- */}
             <TabPlaylist
               currentSong={currentSong}
               playlist={playlist}
@@ -206,7 +209,7 @@ export function HostControlPanel({
               playedPlaylist={playedPlaylist}
               partyStatus={partyStatus}
               onStartParty={onStartParty}
-              hostName={hostName} // <-- PASS HOSTNAME
+              hostName={hostName}
               hostIdleMessages={hostIdleMessages}
               onAddIdleMessage={onAddIdleMessage}
               onDeleteIdleMessage={onDeleteIdleMessage}
