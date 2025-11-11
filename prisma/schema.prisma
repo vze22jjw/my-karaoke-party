@@ -27,20 +27,24 @@ model Party {
     name           String
     createdAt      DateTime       @default(now())
     lastActivityAt DateTime       @default(now())
-    orderByFairness Boolean        @default(true) // Default to "ON (Fairness)"
+    orderByFairness Boolean        @default(true)
     disablePlayback Boolean        @default(false)
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
-    // --- THIS IS THE FIX ---
-    // Add fields to track the *exact* state of the current song
-    currentSongId                 String?   // Stores the videoId of the song being played
-    currentSongStartedAt          DateTime? // Stores the *server timestamp* of when 'play' was pressed
-    currentSongRemainingDuration  Int?      // Stores the *remaining seconds* when paused
-    // --- END THE FIX ---
+    currentSongId                 String?
+    currentSongStartedAt          DateTime?
+    currentSongRemainingDuration  Int?
+    
+    status         String         @default("OPEN") // OPEN, STARTED, CLOSED
+
+    // --- ADD THIS ---
+    idleMessages   String[]       @default([]) // Stores up to 10 lines for this specific party
+    // --- END ADD ---
 
     @@index([hash])
     @@index([lastActivityAt])
+    @@index([status])
 }
 
 model PartyParticipant {
@@ -49,7 +53,7 @@ model PartyParticipant {
     party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
     name      String
     joinedAt  DateTime @default(now())
-    role      String   @default("Guest") // Add role, default to "Guest"
+    role      String   @default("Guest") 
 
     @@unique([partyId, name])
     @@index([partyId])
@@ -69,8 +73,19 @@ model PlaylistItem {
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
     orderIndex Int       @default(0)
-    randomBreaker Float?   // New field for fair queue tie-breaker
+    randomBreaker Float?
 
     @@index([partyId])
     @@index([playedAt])
 }
+
+// --- ADD THIS NEW MODEL ---
+model IdleMessage {
+  id        Int      @id @default(autoincrement())
+  hostName  String   // The host's name this message belongs to
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([hostName])
+}
+// --- END ADD ---

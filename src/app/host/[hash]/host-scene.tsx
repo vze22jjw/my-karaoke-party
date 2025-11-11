@@ -1,15 +1,19 @@
 /* eslint-disable */
 "use client";
 
-import { useLocalStorage } from "@mantine/hooks";
-import type { Party } from "@prisma/client";
+import { useLocalStorage, useViewportSize } from "@mantine/hooks";
+import type { Party, IdleMessage } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
+import { api } from "~/trpc/react";
+import LoaderFull from "~/components/loader-full";
+import { toast } from "sonner";
+import { HostTourModal } from "./components/host-tour-modal";
+import Confetti from "react-canvas-confetti"; // <-- Added
 
-// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -17,6 +21,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string;
+  idleMessages: string[];
 };
 
 type Props = {
@@ -25,6 +31,7 @@ type Props = {
 };
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
+const HOST_TOUR_KEY = "has_seen_host_tour_v1";
 
 export function HostScene({ party, initialData }: Props) {
   const router = useRouter();
@@ -41,6 +48,51 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: 10,
   });
 
+  const [hasSeenTour, setHasSeenTour] = useLocalStorage({
+    key: HOST_TOUR_KEY,
+    defaultValue: false,
+  });
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // --- START: CONFETTI LOGIC ---
+  const { width, height } = useViewportSize();
+  const confettiRef = useRef<confetti.CreateTypes | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
+    confettiRef.current = instance;
+  }, []);
+
+  const fireConfetti = useCallback(() => {
+    if (confettiRef.current) {
+      setShowConfetti(true);
+      confettiRef.current({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      setTimeout(() => setShowConfetti(false), 5000);
+    }
+  }, []);
+  // --- END: CONFETTI LOGIC ---
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted && !hasSeenTour) {
+      setIsTourOpen(true);
+    }
+  }, [isMounted, hasSeenTour]);
+
+  const handleCloseTour = () => {
+    setIsTourOpen(false);
+    setHasSeenTour(true);
+    fireConfetti(); // <-- Trigger confetti when tour closes
+  };
+
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
   }
@@ -48,27 +100,57 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
-    playedPlaylist, // <-- GET THIS
+    playedPlaylist,
     settings, 
     socketActions, 
     isConnected,
     isSkipping,
     isPlaying, 
     remainingTime,
-    participants, // <-- GET THIS
-    hostName      // <-- GET THIS
+    participants,
+    hostName,
+    partyStatus,
+    idleMessages
   } = usePartySocket(
     party.hash,
     initialData, 
     "Host"
   );
   
-  // --- THIS IS THE FIX (Part 1) ---
-  // Calculate counts
+  const { 
+    data: hostIdleMessages, 
+    isLoading: isLoadingMessages,
+    refetch: refetchIdleMessages 
+  } = api.idleMessage.getByHost.useQuery(
+    { hostName: hostName ?? "" },
+    { enabled: !!hostName }
+  );
+
+  const addIdleMessage = api.idleMessage.add.useMutation({
+    onSuccess: () => {
+      void refetchIdleMessages();
+    },
+    onError: (error) => {
+      toast.error("Failed to add message", {
+        description: error.message,
+      });
+    },
+  });
+
+  const deleteIdleMessage = api.idleMessage.delete.useMutation({
+    onSuccess: () => {
+      void refetchIdleMessages();
+    },
+    onError: (error) => {
+      toast.error("Failed to delete message", {
+        description: error.message,
+      });
+    },
+  });
+  
   const singerCount = participants.length;
   const playedSongCount = playedPlaylist.length;
   const unplayedSongCount = unplayedPlaylist.length + (currentSong ? 1 : 0);
-  // --- END THE FIX ---
   
   const useQueueRules = settings.orderByFairness;
   const disablePlayback = settings.disablePlayback ?? false; 
@@ -91,7 +173,7 @@ export function HostScene({ party, initialData }: Props) {
     if (isSkipping) return; 
     socketActions.startSkipTimer(); 
     socketActions.markAsPlayed();
-    socketActions.playbackPause(); // Pause for next singer
+    socketActions.playbackPause();
   };
   
   const handleCloseParty = () => {
@@ -106,17 +188,42 @@ export function HostScene({ party, initialData }: Props) {
   const cancelCloseParty = () => {
     setIsConfirmingClose(false);
   };
+  
+  if (isLoadingMessages && activeTab === "settings") {
+    return <LoaderFull />;
+  }
 
   return (
-    // This is the tablet-view wrapper
     <div className="flex min-h-screen w-full justify-center">
-      <div className="w-full sm:max-w-md"> 
+      {/* --- ADD CONFETTI COMPONENT --- */}
+      <Confetti
+        refConfetti={onConfettiInit}
+        width={width}
+        height={height}
+        style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          zIndex: 200,
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          display: showConfetti ? 'block' : 'none',
+        }}
+      />
+      {/* --- END CONFETTI COMPONENT --- */}
+
+      <div className="w-full sm:max-w-md">
+        
+        <HostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+
         <HostControlPanel
           party={party}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           currentSong={currentSong}
           playlist={unplayedPlaylist}
+          playedPlaylist={playedPlaylist}
           onRemoveSong={removeSong}
           onMarkAsPlayed={handleSkip} 
           useQueueRules={useQueueRules} 
@@ -134,13 +241,16 @@ export function HostScene({ party, initialData }: Props) {
           remainingTime={remainingTime}
           onPlay={socketActions.playbackPlay}
           onPause={socketActions.playbackPause}
-          // --- THIS IS THE FIX (Part 2) ---
-          // Pass all the new props
           hostName={hostName}
           singerCount={singerCount}
           playedSongCount={playedSongCount}
           unplayedSongCount={unplayedSongCount}
-          // --- END THE FIX ---
+          partyStatus={partyStatus}
+          onStartParty={socketActions.startParty}
+          hostIdleMessages={hostIdleMessages ?? []}
+          onAddIdleMessage={addIdleMessage.mutate}
+          onDeleteIdleMessage={deleteIdleMessage.mutate}
+          onSyncIdleMessages={socketActions.updateIdleMessages}
         />
       </div>
     </div>

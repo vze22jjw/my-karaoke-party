@@ -2,7 +2,7 @@ import { db } from "~/server/db";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import type { PlaylistItem } from "@prisma/client";
 import { type KaraokeParty, type VideoInPlaylist } from "party";
-import { parseISO8601Duration } from "~/utils/string"; // Import the parser
+import { parseISO8601Duration } from "~/utils/string";
 
 /**
  * Helper to format Prisma items into the VideoInPlaylist type.
@@ -31,7 +31,9 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   played: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
-  currentSongRemainingDuration: number | null; // <-- Add this
+  currentSongRemainingDuration: number | null;
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
@@ -87,32 +89,48 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     : null;
   const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem);
 
-  // --- THIS IS THE FIX (Part 2) ---
-  // If the song is playing, we pass the start time.
-  // If it's paused or stopped, we pass the stored remaining duration.
   let remainingDuration: number | null = null;
   
   if (party.currentSongStartedAt) {
-    // Song is actively playing, pass the remaining duration from when it was started
     remainingDuration = party.currentSongRemainingDuration;
   } else if (party.currentSongRemainingDuration) {
-    // Song is paused, pass the stored remaining duration
     remainingDuration = party.currentSongRemainingDuration;
   } else if (formattedCurrentSong?.duration) {
-    // Song is stopped, get its full duration
     remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
   }
-  // --- END THE FIX ---
 
-  return {
-    currentSong: formattedCurrentSong,
-    unplayed: unplayedPlaylist,
-    played: playedPlaylist,
-    settings: {
-      orderByFairness: useQueueRules,
-      disablePlayback: party.disablePlayback,
-    },
-    currentSongStartedAt: party.currentSongStartedAt,
-    currentSongRemainingDuration: remainingDuration,
-  };
+  if (party.status === "OPEN") {
+    const allUnplayed = currentSongItem
+      ? [formatPlaylistItem(currentSongItem), ...unplayedPlaylist]
+      : unplayedPlaylist;
+  
+    return {
+      currentSong: null,
+      unplayed: allUnplayed,
+      played: playedPlaylist,
+      settings: {
+        orderByFairness: useQueueRules,
+        disablePlayback: party.disablePlayback,
+      },
+      currentSongStartedAt: null,
+      currentSongRemainingDuration: null,
+      status: party.status,
+      idleMessages: party.idleMessages, // <-- ADD THIS
+    };
+  
+  } else {
+    return {
+      currentSong: formattedCurrentSong,
+      unplayed: unplayedPlaylist,
+      played: playedPlaylist,
+      settings: {
+        orderByFairness: useQueueRules,
+        disablePlayback: party.disablePlayback,
+      },
+      currentSongStartedAt: party.currentSongStartedAt,
+      currentSongRemainingDuration: remainingDuration,
+      status: party.status,
+      idleMessages: party.idleMessages, // <-- ADD THIS
+    };
+  }
 }

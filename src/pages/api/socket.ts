@@ -123,10 +123,12 @@ const updateAndEmitPlaylist = async (io: Server, partyHash: string, triggeredBy:
       LOG_TAG,
       `Emitting 'playlist-updated' to room ${partyHash} (triggered by ${triggeredBy})`,
       {
+        Status: partyData.status,
         Settings: partyData.settings,
         CurrentSong: partyData.currentSong?.title ?? "None",
         Unplayed: formatPlaylistForLog(partyData.unplayed),
         Played: formatPlaylistForLog(partyData.played),
+        IdleMessages: partyData.idleMessages,
       }
     );
     
@@ -165,12 +167,16 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
         const oneDayAgo = new Date();
         oneDayAgo.setHours(oneDayAgo.getHours() - 24);
         const parties = await db.party.findMany({
-          where: { createdAt: { gte: oneDayAgo } },
+          where: { 
+            createdAt: { gte: oneDayAgo },
+            status: { not: "CLOSED" }
+          },
           orderBy: { createdAt: "desc" },
           select: {
             hash: true,
             name: true,
             createdAt: true,
+            status: true,
             _count: {
               select: { playlistItems: true, participants: true },
             },
@@ -183,6 +189,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           createdAt: party.createdAt.toISOString(),
           songCount: party._count.playlistItems,
           singerCount: party._count.participants,
+          status: party.status,
         }));
 
         socket.emit("open-parties-list", { parties: formattedParties });
@@ -225,7 +232,11 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
           const { isNew } = await registerParticipant(party.id, data.singerName);
           if (isNew) {
+            // --- THIS IS THE FIX ---
+            // Ensures the "new-singer-joined" toast is only sent
+            // to clients in the *same party* (room).
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
+            // --- END THE FIX ---
           }
 
           const existing = await db.playlistItem.findFirst({
@@ -294,6 +305,11 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           debugLog(LOG_TAG, "Party not found, cannot mark as played.");
           return;
         }
+        
+        if (party.status === "OPEN") {
+          debugLog(LOG_TAG, "Party is OPEN, skipping disabled.");
+          return;
+        }
 
         const allItems: PlaylistItem[] = party.playlistItems;
         const playedItems = allItems.filter((item) => item.playedAt);
@@ -348,28 +364,43 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
         console.error("Error marking as played:", error);
       }
     });
+
+    socket.on("start-party", async (data: { partyHash: string }) => {
+      debugLog(LOG_TAG, `Received 'start-party' for room ${data.partyHash}`, data);
+      try {
+        await db.party.update({
+          where: { hash: data.partyHash },
+          data: { 
+            status: "STARTED",
+            lastActivityAt: new Date(),
+          },
+        });
+        await updateAndEmitPlaylist(io, data.partyHash, "start-party");
+      } catch (error) {
+        console.error("Error starting party:", error);
+      }
+    });
     
     socket.on("playback-play", async (data: { partyHash: string, currentTime?: number }) => {
       debugLog(LOG_TAG, `Received 'playback-play' for room ${data.partyHash}`, data);
       try {
         const party = await db.party.findUnique({ 
           where: { hash: data.partyHash },
-          include: { 
-            playlistItems: {
-              where: { playedAt: null },
-              orderBy: { addedAt: "asc" }
-            }
-          }
         });
         if (!party) return;
+        
+        if (party.status === "OPEN") {
+          debugLog(LOG_TAG, "Party is OPEN, playback disabled.");
+          return;
+        }
 
-        const allItems = await db.playlistItem.findMany({
+        const allDbItems = await db.playlistItem.findMany({
           where: { partyId: party.id },
           orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }]
         });
         
-        const playedItems = allItems.filter(item => item.playedAt);
-        const unplayedItems = allItems.filter(item => !item.playedAt);
+        const playedItems = allDbItems.filter(item => item.playedAt);
+        const unplayedItems = allDbItems.filter(item => !item.playedAt);
         
         const lastPlayedSong = playedItems.length > 0
             ? playedItems.reduce((latest, current) =>
@@ -379,7 +410,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
         let fairlySortedUnplayed: PlaylistItem[] = [];
         if (party.orderByFairness) {
           fairlySortedUnplayed = orderByRoundRobin(
-            allItems as FairnessPlaylistItem[],
+            allDbItems as FairnessPlaylistItem[],
             unplayedItems as FairnessPlaylistItem[],
             lastPlayedSong?.singerName ?? null,
           ) as PlaylistItem[];
@@ -395,6 +426,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
         const now = new Date();
         let remainingDuration: number;
+        
         const totalDurationMs = parseISO8601Duration(currentSong.duration) ?? 0;
         const totalDurationSec = Math.floor(totalDurationMs / 1000);
 
@@ -436,15 +468,17 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           return;
         }
 
+        if (party.status === "OPEN") {
+          debugLog(LOG_TAG, "Party is OPEN, playback disabled.");
+          return;
+        }
+
         if (!party.currentSongStartedAt || party.currentSongRemainingDuration === null) {
           debugLog(LOG_TAG, "Playback-pause failed: Not playing or no duration.");
           return;
         }
 
-        // --- THIS IS THE FIX ---
-        // Removed the unnecessary `!` which caused the linter error
         const elapsedMs = new Date().getTime() - party.currentSongStartedAt.getTime();
-        // --- END THE FIX ---
         const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
         const newRemainingDuration = Math.max(0, party.currentSongRemainingDuration - elapsedSeconds);
@@ -495,7 +529,13 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     socket.on("close-party", async (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Received 'close-party' for room ${data.partyHash}`, data);
       try {
-        await db.party.delete({ where: { hash: data.partyHash } });
+        await db.party.update({ 
+          where: { hash: data.partyHash },
+          data: {
+            status: "CLOSED",
+            lastActivityAt: new Date(),
+          }
+        });
         debugLog(LOG_TAG, `Emitting 'party-closed' to room ${data.partyHash}`);
         io.to(data.partyHash).emit("party-closed");
       } catch (error) {
@@ -521,6 +561,40 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       }
     });
 
+    socket.on(
+      "update-idle-messages",
+      async (data: { partyHash: string; messages: string[] }) => {
+        debugLog(
+          LOG_TAG,
+          `Received 'update-idle-messages' for room ${data.partyHash}`,
+        );
+        try {
+          // Clean, filter, and limit to 10
+          const messagesArray = data.messages
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .slice(0, 10);
+
+          await db.party.update({
+            where: { hash: data.partyHash },
+            data: {
+              idleMessages: messagesArray,
+              lastActivityAt: new Date(),
+            },
+          });
+
+          // Broadcast the new list to ALL clients in the room
+          debugLog(
+            LOG_TAG,
+            `Emitting 'idle-messages-updated' to room ${data.partyHash}`,
+          );
+          io.to(data.partyHash).emit("idle-messages-updated", messagesArray);
+        } catch (error) {
+          console.error("Error updating idle messages:", error);
+        }
+      },
+    );
+    
     socket.on("start-skip-timer", (data: { partyHash: string }) => {
       debugLog(LOG_TAG, `Broadcasting 'skip-timer-started' to room ${data.partyHash}`);
       socket.broadcast.to(data.partyHash).emit("skip-timer-started");

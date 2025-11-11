@@ -2,16 +2,6 @@
 
 set -e
 
-# Import environment variables
-if [ -f ../.env ]; then
-    echo "Loading environment variables from .env file..."
-    # Export all variables from .env file, ignoring comments and empty lines
-    export $(cat ../.env | grep -v '^#' | xargs)
-else
-    echo "Error: .env file not found in parent directory"
-    exit 1
-fi
-
 # Function to check if container exists and is running
 check_container() {
     local container_name=$1
@@ -27,7 +17,7 @@ check_container() {
 }
 
 # Check for required containers using env variables
-required_containers=("${POSTGRES_CONTAINER:-mykaraoke-postgres}")
+required_containers="mykaraoke-postgres"
 
 need_full_compose=false
 for container in "${required_containers[@]}"; do
@@ -39,23 +29,20 @@ done
 
 if [ "$need_full_compose" = true ]; then
     echo "Some required containers are missing or not running. Performing full compose up..."
-    docker compose --env-file ../.env up -d
+    docker compose up -d
 else
     echo "All required containers are running. Rebuilding only mk-app..."
     # Stop and remove only the app container
     docker compose stop mk-app || true
     docker compose rm -f mk-app || true
 
-    # Remove the app image
-    docker rmi ${APP_IMAGE:-my-karaoke-party-mk-app} || true
-
     # Rebuild and start the app container, keeping other services running
-    docker compose up -d --no-deps --build mk-app
+    docker compose up -d --no-deps mk-app
 fi
 
 # Show logs from the app container
 echo "Showing logs for mk-app container..."
-docker logs ${APP_CONTAINER:-mykaraoke-app}
+docker logs mykaraoke-app
 
 # Clean up environment variables
-unset $(cat ../.env | grep -v '^#' | sed -E 's/(.*)=.*/\1/' | xargs)
+unset $(cat .env | grep -v '^#' | sed -E 's/(.*)=.*/\1/' | xargs)

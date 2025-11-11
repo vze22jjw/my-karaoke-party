@@ -9,12 +9,18 @@ RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
+ARG VERSION
+
 # ========================================
 # Stage 1: Build the application
 # ========================================
 FROM base AS builder
 
 WORKDIR /app
+
+ARG VERSION
+ARG ECR_BUILD=false
+ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
 
 # Copy files needed for dependency installation first
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
@@ -26,6 +32,8 @@ RUN pnpm install
 
 # Copy the rest of the source code (respecting .dockerignore)
 COPY . .
+
+ENV SKIP_ENV_VALIDATION=${ECR_BUILD}
 
 # Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1

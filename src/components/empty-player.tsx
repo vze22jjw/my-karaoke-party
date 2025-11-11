@@ -1,40 +1,113 @@
 import Image from "next/image";
 import { QrCode } from "./qr-code";
-
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { cn } from "~/lib/utils";
+import { useEffect, useState } from "react";
 
 type Props = {
   joinPartyUrl: string;
   className?: string;
+  idleMessages: string[];
 };
 
-export function EmptyPlayer({ joinPartyUrl, className }: Props) {
+// --- START: NEW SLIDESHOW COMPONENT ---
+function IdleSlideshow({ messages }: { messages: string[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (messages.length <= 1) return; // No need to cycle
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length);
+    }, 7000); // 7-second slide duration
+
+    return () => clearInterval(interval);
+  }, [messages.length]);
+
+  if (messages.length === 0) return null;
+
+  const currentMessage = messages[currentIndex] ?? "";
+  const parts = currentMessage.split(" -- ");
+  const quote = parts[0] ?? "";
+  const author = parts[1] ?? "";
+
+  return (
+    <div
+      key={currentIndex} // Key change triggers animation
+      className="flex w-full flex-col items-center justify-center text-center animate-in fade-in-0 duration-1000"
+    >
+      <blockquote
+        // --- THIS IS THE FIX: Added text-outline and text-white ---
+        className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl"
+      >
+        &ldquo;{quote}&rdquo;
+      </blockquote>
+      {author && (
+        <cite
+          // --- THIS IS THE FIX: Added text-outline and text-white ---
+          className="text-outline mt-4 scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl not-italic"
+        >
+          - {author}
+        </cite>
+      )}
+    </div>
+  );
+}
+// --- END: NEW SLIDESHOW COMPONENT ---
+
+export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
+  const hasMessages = idleMessages.length > 0;
+
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col items-center p-6 pb-1",
-        className
+        "relative flex h-full w-full flex-col items-center p-6",
+        className,
       )}
     >
-      <div className="flex w-full basis-3/4 items-center justify-center">
+      {/* --- START: BACKGROUND LOGO --- */}
+      {/* This is the large, faded logo in the background */}
+      <div className="absolute inset-0 top-1/4 flex h-1/2 w-full items-center justify-center opacity-50">
         <Image
           src={logo}
           alt="My Karaoke Party"
           priority
-          className="mx-auto object-contain duration-1000 animate-in zoom-in-150 spin-in-180 max-h-[40vh]"
+          className="mx-auto object-contain"
         />
       </div>
-      <div className="relative flex w-full basis-1/4 items-end text-center">
-        <QrCode url={joinPartyUrl} />
-        <a
-          href={joinPartyUrl}
-          target="_blank"
-          className="font-mono text-xl text-white pl-4"
-        >
-          {joinPartyUrl.split("//")[1]}
-        </a>
+      {/* --- END: BACKGROUND LOGO --- */}
+
+      {/* --- START: FOREGROUND CONTENT --- */}
+      {/* This div is a container to ensure content is layered on top */}
+      <div className="z-10 flex h-full w-full flex-col">
+        {/* Spacer to push content to middle */}
+        <div className="flex w-full basis-1/4 items-start justify-center" />
+        
+        {/* Main Content Area */}
+        <div className="flex w-full basis-2/4 items-center justify-center px-4">
+          {hasMessages ? (
+            <IdleSlideshow messages={idleMessages} />
+          ) : (
+            // Default text also gets the outline for consistency
+            <p className="text-outline text-3xl text-center text-white">
+              Waiting for the host to start the party...
+            </p>
+          )}
+        </div>
+        
+        {/* QR Code Footer */}
+        <div className="relative flex w-full basis-1/4 items-end text-center">
+          <QrCode url={joinPartyUrl} />
+          <a
+            href={joinPartyUrl}
+            target="_blank"
+            className="font-mono text-xl text-white pl-4"
+          >
+            {joinPartyUrl.split("//")[1]}
+          </a>
+        </div>
       </div>
+      {/* --- END: FOREGROUND CONTENT --- */}
     </div>
   );
 }

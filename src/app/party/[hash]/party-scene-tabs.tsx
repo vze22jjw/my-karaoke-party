@@ -3,8 +3,8 @@
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useEffect, useState, useMemo } from "react";
-import { readLocalStorageValue, useLocalStorage } from "@mantine/hooks";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"; // <-- Added hooks
+import { readLocalStorageValue, useLocalStorage, useViewportSize } from "@mantine/hooks"; // <-- Added useViewportSize
 import { Monitor, Music, Users, History, Plus } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -13,11 +13,12 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
+import { PartyTourModal } from "./components/party-tour-modal";
+import Confetti from "react-canvas-confetti"; // <-- Added
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
+const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
 
-// --- THIS IS THE FIX (Part 1) ---
-// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -25,8 +26,9 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string;
+  idleMessages: string[];
 };
-// --- END THE FIX ---
 
 export function PartySceneTabs({
   party,
@@ -42,6 +44,51 @@ export function PartySceneTabs({
     defaultValue: "player",
   });
 
+  const [hasSeenTour, setHasSeenTour] = useLocalStorage({
+    key: GUEST_TOUR_KEY,
+    defaultValue: false,
+  });
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); 
+
+  // --- START: CONFETTI LOGIC ---
+  const { width, height } = useViewportSize();
+  const confettiRef = useRef<confetti.CreateTypes | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
+    confettiRef.current = instance;
+  }, []);
+
+  const fireConfetti = useCallback(() => {
+    if (confettiRef.current) {
+      setShowConfetti(true);
+      confettiRef.current({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      setTimeout(() => setShowConfetti(false), 5000);
+    }
+  }, []);
+  // --- END: CONFETTI LOGIC ---
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted && !hasSeenTour) {
+      setIsTourOpen(true);
+    }
+  }, [isMounted, hasSeenTour]);
+
+  const handleCloseTour = () => {
+    setIsTourOpen(false);
+    setHasSeenTour(true);
+    fireConfetti(); // <-- Trigger confetti when tour closes
+  };
+
   const { 
     currentSong, 
     unplayedPlaylist, 
@@ -49,10 +96,12 @@ export function PartySceneTabs({
     socketActions,
     participants, 
     isPlaying,
-    remainingTime // <-- GET new timer state
+    remainingTime,
+    partyStatus,
+    idleMessages
   } = usePartySocket(
     party.hash!,
-    initialData, // <-- This now has the correct type
+    initialData, 
     name 
   );
   
@@ -79,10 +128,35 @@ export function PartySceneTabs({
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
+      <PartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+
+      {/* --- ADD CONFETTI COMPONENT --- */}
+      <Confetti
+        refConfetti={onConfettiInit}
+        width={width}
+        height={height}
+        style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          zIndex: 200,
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          display: showConfetti ? 'block' : 'none',
+        }}
+      />
+      {/* --- END CONFETTI COMPONENT --- */}
+
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
           {party.name}
         </h1>
+        {partyStatus === "OPEN" && (
+          <p className="text-center text-green-400 font-medium animate-pulse">
+            Party is OPEN (Waiting for host to start)
+          </p>
+        )}
       </div>
 
       <Tabs

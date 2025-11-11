@@ -1,6 +1,6 @@
 "use client";
 
-import type { Party } from "@prisma/client";
+import type { Party, IdleMessage } from "@prisma/client";
 import { ListMusic, Settings, Users, Clock, Music } from "lucide-react";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -14,8 +14,9 @@ type Props = {
   setActiveTab: (value: string) => void;
   currentSong: VideoInPlaylist | null; 
   playlist: KaraokeParty["playlist"]; 
+  playedPlaylist: VideoInPlaylist[];
   onRemoveSong: (videoId: string) => void;
-  onMarkAsPlayed: () => void; // This is handleSkip
+  onMarkAsPlayed: () => void;
   useQueueRules: boolean;
   onToggleRules: () => void;
   disablePlayback: boolean; 
@@ -35,12 +36,17 @@ type Props = {
   singerCount: number;
   playedSongCount: number;
   unplayedSongCount: number;
+  partyStatus: string;
+  onStartParty: () => void;
+  hostIdleMessages: IdleMessage[];
+  onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
+  onDeleteIdleMessage: (vars: { id: number }) => void;
+  onSyncIdleMessages: (messages: string[]) => void;
 };
 
-// A simple hook to calculate and update the time ago string
+// ... (useTimeOpen hook remains the same) ...
 function useTimeOpen(createdAt: Date) {
   const [timeOpen, setTimeOpen] = useState("");
-
   useEffect(() => {
     const calculateTime = () => {
       const now = new Date();
@@ -48,7 +54,6 @@ function useTimeOpen(createdAt: Date) {
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMins / 60);
       const diffDays = Math.floor(diffHours / 24);
-
       if (diffDays > 0) {
         setTimeOpen(`Open for ${diffDays}d ${diffHours % 24}h`);
       } else if (diffHours > 0) {
@@ -59,12 +64,10 @@ function useTimeOpen(createdAt: Date) {
         setTimeOpen("Open just now");
       }
     };
-
-    calculateTime(); // Set initial time
-    const interval = setInterval(calculateTime, 60000); // Update every minute
+    calculateTime();
+    const interval = setInterval(calculateTime, 60000);
     return () => clearInterval(interval);
   }, [createdAt]);
-
   return timeOpen;
 }
 
@@ -74,8 +77,9 @@ export function HostControlPanel({
   setActiveTab,
   currentSong,
   playlist,
+  playedPlaylist,
   onRemoveSong,
-  onMarkAsPlayed, // This is handleSkip
+  onMarkAsPlayed,
   useQueueRules,
   onToggleRules,
   disablePlayback, 
@@ -95,31 +99,33 @@ export function HostControlPanel({
   singerCount,
   playedSongCount,
   unplayedSongCount,
+  partyStatus,
+  onStartParty,
+  hostIdleMessages,
+  onAddIdleMessage,
+  onDeleteIdleMessage,
+  onSyncIdleMessages,
 }: Props) {
 
-  // Hooks MUST be called at the top level, before any conditional returns.
   const timeOpen = useTimeOpen(party.createdAt);
-
-  if (!party.hash) return null; // <-- Conditional return is now AFTER the hook
-
+  if (!party.hash) return null;
   const totalSongs = playedSongCount + unplayedSongCount;
 
+  // --- THIS IS THE FIX ---
+  // The outer div is now ONLY h-screen and overflow-hidden.
+  // The padding (p-4) has been moved to the inner div.
   return (
-    <div className="w-full overflow-hidden border-border h-screen flex flex-col p-4">
-      <div className="flex flex-col h-full flex-1 overflow-hidden">
+    <div className="w-full overflow-hidden h-screen">
+      <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         
-        {/* === Party Title === */}
+        {/* Party Title & Info Panel (remain flex-shrink-0) */}
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
           </h1>
         </div>
-
-        {/* === New Info Panel === */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-xs text-muted-foreground mb-4 space-y-2">
-          
           <div className="flex justify-between items-center">
-            {/* Host & Code */}
             <div className="flex flex-col">
               <span className="font-mono text-lg font-bold text-foreground">
                 CODE: {party.hash}
@@ -128,23 +134,17 @@ export function HostControlPanel({
                 Host: {hostName ?? "..."}
               </span>
             </div>
-            
-            {/* Time Open */}
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
               <span>{timeOpen}</span>
             </div>
           </div>
-          
           <div className="flex justify-between items-center border-t pt-2">
-            {/* Singers */}
             <div className="flex items-center gap-1.5">
               <Users className="h-4 w-4" />
               <span className="font-medium text-foreground">{singerCount}</span>
               <span>{singerCount === 1 ? "Singer" : "Singers"}</span>
             </div>
-            
-            {/* Songs */}
             <div className="flex items-center gap-1.5">
               <Music className="h-4 w-4" />
               <span className="font-medium text-foreground">{totalSongs}</span>
@@ -154,10 +154,9 @@ export function HostControlPanel({
               </span>
             </div>
           </div>
-          
         </div>
 
-        {/* === Tabs === */}
+        {/* Tabs component now fills the remaining space */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -174,9 +173,10 @@ export function HostControlPanel({
             </TabsTrigger>
           </TabsList>
 
+          {/* These content panels fill the space and scroll internally */}
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-y-auto mt-0 space-y-2"
+            className="flex-1 overflow-y-auto mt-0"
           >
             <TabPlaylist
               currentSong={currentSong}
@@ -191,13 +191,10 @@ export function HostControlPanel({
             />
           </TabsContent>
 
-          {/* --- THIS IS THE FIX --- */}
-          {/* Removed the redundant `space-y-6` class from this container */}
           <TabsContent
             value="settings"
             className="flex-1 overflow-y-auto mt-0"
           >
-          {/* --- END THE FIX --- */}
             <TabSettings
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
@@ -210,10 +207,19 @@ export function HostControlPanel({
               isConfirmingClose={isConfirmingClose}
               onConfirmClose={onConfirmClose}
               onCancelClose={onCancelClose}
+              playedPlaylist={playedPlaylist}
+              partyStatus={partyStatus}
+              onStartParty={onStartParty}
+              hostName={hostName}
+              hostIdleMessages={hostIdleMessages}
+              onAddIdleMessage={onAddIdleMessage}
+              onDeleteIdleMessage={onDeleteIdleMessage}
+              onSyncIdleMessages={onSyncIdleMessages}
             />
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
+  // --- END THE FIX ---
 }

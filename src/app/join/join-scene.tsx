@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import Image from "next/image";
@@ -10,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
-  FormDescription, // <-- Import FormDescription
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,10 +19,10 @@ import {
 import { Input } from "~/components/ui/ui/input";
 import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
 import { useEffect } from "react";
-import Link from "next/link"; // <-- Import Link
+import Link from "next/link";
 
 const formSchema = z.object({
-  partyCode: z.string().min(4), // <-- FIX: Changed from min(8) to min(4)
+  partyCode: z.string().min(4),
   name: z.string().min(2).max(20),
 });
 
@@ -30,16 +31,14 @@ export default function JoinScene({
   partyName,
 }: {
   partyHash?: string;
-  partyName?: string; // <-- Added prop
+  partyName?: string;
 }) {
   const router = useRouter();
-
   const [name, setName] = useLocalStorage({
     key: "name",
     defaultValue: "",
   });
 
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,35 +47,27 @@ export default function JoinScene({
     },
   });
 
-  // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
     console.log(values);
-
     setName(values.name);
 
-    // --- Use partyHash from prop if available, otherwise from form ---
     const codeToJoin = partyHash ?? values.partyCode;
-    router.push(`/party/${codeToJoin}`);
+    setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      router.push(`/party/${codeToJoin}`);
+    }, 300);
   }
 
-  // --- START: FIX ---
-  // This useEffect updates the form fields when props change (e.g., navigating
-  // from one join link to another) or when name loads from local storage.
   useEffect(() => {
     form.setValue("name", name);
     if (partyHash) {
       form.setValue("partyCode", partyHash);
     }
   }, [name, partyHash, form]);
-  // --- END: FIX ---
 
   return (
     <main className="flex min-h-screen flex-col items-center text-white">
       <div className="container flex flex-1 flex-col items-center gap-4 px-4 py-4">
-        {" "}
-        {/* <-- Reduced gap and vertical padding */}
         <Image
           src={logo}
           width={666}
@@ -86,27 +77,20 @@ export default function JoinScene({
           placeholder="blur"
           className="h-auto w-full max-w-sm flex-shrink-0 sm:max-w-[666px]"
         />
-        {/* Wrapper for remaining content, set to center */}
         <div className="flex w-full max-w-xs flex-1 flex-col items-center justify-center px-5">
-          {" "}
-          {/* <-- Reduced max-width and removed vertical padding */}
-          {/* --- START: Conditionally render party name --- */}
           {partyName && (
             <div className="mb-4 w-full text-center">
               <p className="text-sm text-white/80">Joining:</p>
-              {/* <-- Updated text color */}
               <h1 className="text-outline scroll-m-20 text-xl font-extrabold tracking-tight uppercase break-words sm:text-2xl">
                 {partyName}
               </h1>
             </div>
           )}
-          {/* --- END: Conditionally render party name --- */}
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex w-full flex-col space-y-4 text-left"
             >
-              {/* --- START: Conditional Party Code Field --- */}
               {!partyHash && (
                 <FormField
                   control={form.control}
@@ -114,7 +98,6 @@ export default function JoinScene({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Party Code</FormLabel>
-                      {/* <-- Updated Label */}
                       <FormControl>
                         <Input
                           placeholder="Enter the party code..."
@@ -126,16 +109,13 @@ export default function JoinScene({
                   )}
                 />
               )}
-              {/* --- END: Conditional Party Code Field --- */}
 
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    {/* --- START: Modified Label --- */}
                     <FormLabel>Name</FormLabel>
-                    {/* --- END: Modified Label --- */}
                     <FormControl>
                       <Input
                         placeholder="Enter your name..."
@@ -165,17 +145,15 @@ export default function JoinScene({
             </form>
           </Form>
 
-          {/* --- START: Updated back link --- */}
           {partyHash && (
             <Link
               href="/?openParties=true"
               className="mt-4 text-sm text-white/80 sm:hover:text-white sm:hover:underline"
-              replace // Use replace to not add to browser history
+              replace
             >
               &larr; Back to parties list
             </Link>
           )}
-          {/* --- END: Updated back link --- */}
         </div>
       </div>
     </main>

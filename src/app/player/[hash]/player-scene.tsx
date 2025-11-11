@@ -17,7 +17,6 @@ import { PlayerDisabledView } from "~/components/player-disabled-view";
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
 
-// This type *must* match the type in page.tsx and the hook
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -25,6 +24,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  status: string;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 type Props = {
@@ -47,10 +48,11 @@ export default function PlayerScene({ party, initialData }: Props) {
     isPlaying,
     settings,
     isSkipping, 
-    remainingTime 
+    remainingTime,
+    idleMessages // <-- GET THIS
   } = usePartySocket(
     party.hash,
-    initialData, // <-- This now has the correct type
+    initialData,
     "Player" 
   );
   
@@ -59,8 +61,8 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const doTheSkip = useCallback(() => {
     setForceAutoplay(false); 
-    socketActions.markAsPlayed(); // This advances to the next song
-    socketActions.playbackPause(); // This ensures the new song is paused
+    socketActions.markAsPlayed();
+    socketActions.playbackPause();
   }, [socketActions]);
 
   useEffect(() => {
@@ -82,32 +84,25 @@ export default function PlayerScene({ party, initialData }: Props) {
     doTheSkip(); 
   };
   
-  // --- THIS IS THE FIX ---
-  // Removed `isSkipping` from the initial check.
-  // This allows the button to be clicked again to restart the timer.
   const handleOpenYouTubeAndAutoSkip = () => {
-    if (!currentSong) return; // Only guard against no song
+    if (!currentSong) return; 
 
-    // 1. Tell all clients we are in "skip mode"
     socketActions.startSkipTimer(); 
   
     const durationMs = parseISO8601Duration(currentSong.duration);
   
     if (durationMs && durationMs > 0) {
-      // 2. Tell server to start playback, which starts/restarts the timer
       socketActions.playbackPlay(); 
     } else {
       console.log("Song has no duration, auto-skip timer will not start.");
     }
   
-    // 3. Open the YouTube tab
     window.open(
       `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
       "_blank",
       "fullscreen=yes",
     );
   };
-  // --- END THE FIX ---
 
   
   const handlePlay = (currentTime?: number) => {
@@ -141,15 +136,16 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
-        {/* Render Desktop View (hidden on mobile) */}
         <PlayerDesktopView
           playerRef={ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={toggle}
-          currentVideo={currentSong ?? undefined} 
-          {...commonPlayerProps} // <-- All props are passed
+          currentVideo={currentSong ?? undefined}
+          isPlaybackDisabled={isPlaybackDisabled}
+          isSkipping={isSkipping}
+          idleMessages={idleMessages} // <-- PASS PROP
+          {...commonPlayerProps}
         />
         
-        {/* Render Mobile View (hidden on desktop) */}
         <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
           <Button
             onClick={toggle}
@@ -160,26 +156,29 @@ export default function PlayerScene({ party, initialData }: Props) {
             {fullscreen ? <Minimize /> : <Maximize />}
           </Button>
           
-          {isPlaybackDisabled && currentSong ? ( 
-            <PlayerDisabledView
-              video={currentSong}
-              nextSong={nextSong} 
-              joinPartyUrl={joinPartyUrl}
-              isFullscreen={fullscreen}
-              onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
-              onSkip={handleSkip} 
-              isSkipping={isSkipping} 
-              remainingTime={remainingTime} 
-            />
-          ) : currentSong ? ( 
-            <Player
-              video={currentSong}
-              {...commonPlayerProps} // <-- All props are passed
-            />
+          {currentSong ? (
+            isPlaybackDisabled ? (
+              <PlayerDisabledView
+                video={currentSong}
+                nextSong={nextSong} 
+                joinPartyUrl={joinPartyUrl}
+                isFullscreen={fullscreen}
+                onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
+                onSkip={handleSkip} 
+                isSkipping={isSkipping} 
+                remainingTime={remainingTime} 
+              />
+            ) : ( 
+              <Player
+                video={currentSong}
+                {...commonPlayerProps}
+              />
+            )
           ) : (
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={fullscreen ? "bg-gradient" : ""}
+              idleMessages={idleMessages} // <-- PASS PROP
             />
           )}
         </div>

@@ -6,6 +6,7 @@ import { Maximize, Minimize } from "lucide-react";
 import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
+import { PlayerDisabledView } from "~/components/player-disabled-view";
 
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
@@ -19,12 +20,13 @@ type Props = {
   forceAutoplay: boolean;
   onAutoplayed: () => void;
   isPlaying: boolean;
-  // --- THIS IS THE FIX (Part 1) ---
   onPlay: (currentTime?: number) => void;
-  // --- END THE FIX ---
   onPause: () => void;
   remainingTime: number; 
   onOpenYouTubeAndAutoSkip: () => void;
+  isPlaybackDisabled: boolean;
+  isSkipping: boolean;
+  idleMessages: string[]; // <-- ADD THIS
 };
 
 export function PlayerDesktopView({
@@ -43,6 +45,9 @@ export function PlayerDesktopView({
   onPause,
   remainingTime, 
   onOpenYouTubeAndAutoSkip,
+  isPlaybackDisabled,
+  isSkipping,
+  idleMessages, // <-- ADD THIS
 }: Props) {
   return (
     <div className="hidden sm:block sm:w-full h-screen"> 
@@ -56,28 +61,44 @@ export function PlayerDesktopView({
           >
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>
+
           {currentVideo ? (
-            <Player
-              video={currentVideo}
-              nextSong={nextSong}
-              joinPartyUrl={joinPartyUrl}
-              isFullscreen={isFullscreen}
-              onPlayerEnd={onPlayerEnd}
-              onSkip={onSkip}
-              forceAutoplay={forceAutoplay}
-              onAutoplayed={onAutoplayed}
-              isPlaying={isPlaying}
-              onPlay={onPlay} // <-- This now passes the new function
-              onPause={onPause}
-              remainingTime={remainingTime}
-              onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
-            />
+            isPlaybackDisabled ? (
+              <PlayerDisabledView
+                video={currentVideo}
+                nextSong={nextSong}
+                joinPartyUrl={joinPartyUrl}
+                isFullscreen={isFullscreen}
+                onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
+                onSkip={onSkip}
+                isSkipping={isSkipping}
+                remainingTime={remainingTime}
+              />
+            ) : (
+              <Player
+                video={currentVideo}
+                nextSong={nextSong}
+                joinPartyUrl={joinPartyUrl}
+                isFullscreen={isFullscreen}
+                onPlayerEnd={onPlayerEnd}
+                onSkip={onSkip}
+                forceAutoplay={forceAutoplay}
+                onAutoplayed={onAutoplayed}
+                isPlaying={isPlaying}
+                onPlay={onPlay}
+                onPause={onPause}
+                remainingTime={remainingTime}
+                onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
+              />
+            )
           ) : (
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={isFullscreen ? "bg-gradient" : ""}
+              idleMessages={idleMessages} // <-- PASS PROP
             />
           )}
+
         </div>
       </div>
     </div>
