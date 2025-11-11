@@ -43,6 +43,8 @@ fi
 # Version configuration
 if [ "$BUILD_TYPE" == "release" ]; then
     export VERSION="0.0.1-B_$(date "+%y%S")"
+    export ECR_BUILD="true"
+    echo "Release build version: $VERSION"
 else
     export VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
     echo "Development build version: $VERSION"
@@ -84,6 +86,7 @@ AWS_PROFILE="$AWS_PROFILE"
 AWS_REGION="$AWS_REGION"
 ECR_REGISTRY="$ECR_REGISTRY"
 ECR_REPOSITORY="$ECR_REPOSITORY"
+LOCAL_IMAGE_NAME="my-karaoke-party"
 TAG0="app-latest"
 TAG1="app-${VERSION}"
 PLATFORMS="linux/arm64,linux/amd64"
@@ -102,6 +105,7 @@ docker buildx use "${BUILDER_NAME}"
 
 # Build command base
 BUILD_CMD="docker buildx build \
+    --build-arg ECR_BUILD=${ECR_BUILD} \
     --build-arg VERSION=${VERSION} \
     --target runner"
 
@@ -144,11 +148,11 @@ else
     # Build and load locally
     $BUILD_CMD \
         --platform linux/arm64 \
-        --tag my-karaoke-party:${TAG0} \
+        --tag ${LOCAL_IMAGE_NAME}:${TAG0} \
         --load .
     
     echo "Successfully built local images:"
-    echo "- my-karaoke-party:${TAG0}"
+    echo "- ${LOCAL_IMAGE_NAME}:${TAG0}"
 fi
 
 # Clean up builder only if we created it in this run

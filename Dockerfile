@@ -19,6 +19,7 @@ FROM base AS builder
 WORKDIR /app
 
 ARG VERSION
+ARG ECR_BUILD:BOOL=false
 ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
 
 # Copy files needed for dependency installation first
@@ -32,7 +33,7 @@ RUN pnpm install
 # Copy the rest of the source code (respecting .dockerignore)
 COPY . .
 
-ENV SKIP_ENV_VALIDATION=true
+ENV SKIP_ENV_VALIDATION=${ECR_BUILD}
 
 # Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
