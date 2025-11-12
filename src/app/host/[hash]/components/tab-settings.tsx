@@ -18,6 +18,7 @@ import {
   Send,
   Plus,
   X,
+  Lightbulb, // <-- ADDED ICON
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
@@ -25,7 +26,6 @@ import { type VideoInPlaylist } from "party";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { decode } from "html-entities";
-//import { Textarea } from "~/components/ui/ui/textarea"; // <-- This is now used
 import { type IdleMessage } from "@prisma/client";
 
 type Props = {
@@ -48,6 +48,8 @@ type Props = {
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
   onSyncIdleMessages: (messages: string[]) => void;
+  themeSuggestions: string[]; // <-- ADDED
+  onUpdateThemeSuggestions: (suggestions: string[]) => void; // <-- ADDED
 };
 
 const ToggleButton = ({
@@ -116,6 +118,8 @@ export function TabSettings({
   onAddIdleMessage,
   onDeleteIdleMessage,
   onSyncIdleMessages,
+  themeSuggestions, // <-- ADDED
+  onUpdateThemeSuggestions, // <-- ADDED
 }: Props) {
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
@@ -131,10 +135,9 @@ export function TabSettings({
   const [isSyncing, setIsSyncing] = useState(false);
   const messagesRemaining = 20 - hostIdleMessages.length;
 
-  useEffect(() => {
-    // This syncs the text area if the messages are updated
-    // (e.g. loading for the first time)
-  }, [hostIdleMessages]);
+  // --- ADDED STATE ---
+  const [newSuggestion, setNewSuggestion] = useState("");
+  // -------------------
 
   const handleAddMessage = () => {
     if (!newMessage.trim() || !hostName) return;
@@ -161,6 +164,20 @@ export function TabSettings({
     );
     setTimeout(() => setIsSyncing(false), 1000);
   };
+
+  // --- ADDED HANDLERS ---
+  const handleAddSuggestion = () => {
+    if (!newSuggestion.trim()) return;
+    const updated = [...themeSuggestions, newSuggestion.trim()];
+    onUpdateThemeSuggestions(updated);
+    setNewSuggestion("");
+  };
+
+  const handleDeleteSuggestion = (index: number) => {
+    const updated = themeSuggestions.filter((_, i) => i !== index);
+    onUpdateThemeSuggestions(updated);
+  };
+  // -----------------------
 
   const parseSongInfo = (title: string, singer: string) => {
     if (!title) {
@@ -268,8 +285,65 @@ export function TabSettings({
           </Button>
         </div>
       )}
+
+      {/* --- NEW SECTION: Party Theme / Song Suggestions --- */}
+      <div className="space-y-3 rounded-lg border bg-card p-4">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-yellow-500" />
+          Party Theme / Song Suggestions
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Add numbered prompts to help your guests pick songs! These will appear at the top of the History tab.
+        </p>
+
+        <div className="flex w-full items-center space-x-2">
+          <Input
+            type="text"
+            placeholder="e.g. 'Songs featuring a color in the title'"
+            value={newSuggestion}
+            onChange={(e) => setNewSuggestion(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddSuggestion()}
+            className="bg-background"
+          />
+          <Button
+            type="button"
+            onClick={handleAddSuggestion}
+            disabled={!newSuggestion.trim()}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="max-h-60 w-full overflow-y-auto rounded-md border bg-muted/50 p-2 space-y-2">
+          {themeSuggestions.length > 0 ? (
+            themeSuggestions.map((text, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between rounded bg-background p-2"
+              >
+                <div className="flex gap-2 overflow-hidden">
+                  <span className="font-bold text-primary min-w-[1.5rem]">{index + 1}.</span>
+                  <p className="text-sm truncate">{text}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 flex-shrink-0 text-red-500"
+                  onClick={() => handleDeleteSuggestion(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-sm text-muted-foreground p-4">
+              No suggestions added yet.
+            </p>
+          )}
+        </div>
+      </div>
+      {/* --- END NEW SECTION --- */}
       
-      {/* --- THIS IS THE FIX: The <Textarea> component is now used --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
         <p className="text-sm text-muted-foreground">
@@ -339,7 +413,6 @@ export function TabSettings({
             : `Sync ${Math.min(hostIdleMessages.length, 10)} Messages to Player`}
         </Button>
       </div>
-      {/* --- END THE FIX --- */}
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Party Rules</h3>

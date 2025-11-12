@@ -18,7 +18,8 @@ interface SocketActions {
   playbackPause: () => void;
   startSkipTimer: () => void; 
   startParty: () => void;
-  updateIdleMessages: (messages: string[]) => void; // <-- ADD THIS
+  updateIdleMessages: (messages: string[]) => void;
+  updateThemeSuggestions: (suggestions: string[]) => void; // <-- ADDED
 }
 
 type Participant = {
@@ -39,7 +40,8 @@ interface UsePartySocketReturn {
   isSkipping: boolean; 
   remainingTime: number; 
   partyStatus: string;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 }
 
 type PartySocketData = {
@@ -50,7 +52,8 @@ type PartySocketData = {
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 };
 
 const LOG_TAG = "[SocketClient]";
@@ -80,7 +83,8 @@ export function usePartySocket(
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
   const [partyStatus, setPartyStatus] = useState(initialData.status);
-  const [idleMessages, setIdleMessages] = useState(initialData.idleMessages); // <-- ADD THIS
+  const [idleMessages, setIdleMessages] = useState(initialData.idleMessages);
+  const [themeSuggestions, setThemeSuggestions] = useState(initialData.themeSuggestions); // <-- ADDED
 
   const [remainingTime, setRemainingTime] = useState(() => {
     if (initialData.currentSongStartedAt) {
@@ -170,7 +174,8 @@ export function usePartySocket(
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
         setPartyStatus(partyData.status);
-        setIdleMessages(partyData.idleMessages); // <-- ADD THIS
+        setIdleMessages(partyData.idleMessages);
+        setThemeSuggestions(partyData.themeSuggestions); // <-- ADDED
 
         if (partyData.currentSongStartedAt) {
           setIsPlaying(true);
@@ -220,12 +225,17 @@ export function usePartySocket(
         setIsSkipping(true);
       });
       
-      // --- ADD THIS NEW LISTENER ---
       newSocket.on("idle-messages-updated", (messages: string[]) => {
         debugLog(LOG_TAG, "Received 'idle-messages-updated'", messages);
         setIdleMessages(messages);
       });
-      // --- END NEW LISTENER ---
+
+      // --- ADDED ---
+      newSocket.on("theme-suggestions-updated", (suggestions: string[]) => {
+        debugLog(LOG_TAG, "Received 'theme-suggestions-updated'", suggestions);
+        setThemeSuggestions(suggestions);
+      });
+      // --- END ADDED ---
 
     };
 
@@ -313,14 +323,18 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'start-party'", data);
       socketRef.current?.emit("start-party", data);
     },
-    
-    // --- ADD THIS NEW ACTION ---
     updateIdleMessages: (messages: string[]) => {
       const data = { partyHash, messages };
       debugLog(LOG_TAG, "Emitting 'update-idle-messages'");
       socketRef.current?.emit("update-idle-messages", data);
     },
-    // --- END NEW ACTION ---
+    // --- ADDED ---
+    updateThemeSuggestions: (suggestions: string[]) => {
+      const data = { partyHash, suggestions };
+      debugLog(LOG_TAG, "Emitting 'update-theme-suggestions'");
+      socketRef.current?.emit("update-theme-suggestions", data);
+    },
+    // --- END ADDED ---
 
   }), [partyHash, singerName]);
 
@@ -337,6 +351,7 @@ export function usePartySocket(
     isSkipping,
     remainingTime,
     partyStatus,
-    idleMessages, // <-- ADD THIS
+    idleMessages,
+    themeSuggestions, // <-- ADDED
   };
 }

@@ -23,6 +23,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 };
 
 type Props = {
@@ -69,7 +70,7 @@ export function HostScene({ party, initialData }: Props) {
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
-        zIndex: 200, // Ensure particles are on top
+        zIndex: 200,
       });
     }
   }, []);
@@ -88,7 +89,6 @@ export function HostScene({ party, initialData }: Props) {
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
-    // Small timeout ensures the modal is visually clearing/gone before the pop
     setTimeout(() => {
       fireConfetti();
     }, 300);
@@ -111,7 +111,8 @@ export function HostScene({ party, initialData }: Props) {
     participants,
     hostName,
     partyStatus,
-    idleMessages
+    idleMessages,
+    themeSuggestions // <-- ADDED
   } = usePartySocket(
     party.hash,
     initialData, 
@@ -208,7 +209,7 @@ export function HostScene({ party, initialData }: Props) {
           zIndex: 200,
           top: 0,
           left: 0,
-          pointerEvents: 'none', // Crucial: lets clicks pass through
+          pointerEvents: 'none',
         }}
       />
       {/* --- END CONFETTI COMPONENT --- */}
@@ -251,6 +252,8 @@ export function HostScene({ party, initialData }: Props) {
           onAddIdleMessage={addIdleMessage.mutate}
           onDeleteIdleMessage={deleteIdleMessage.mutate}
           onSyncIdleMessages={socketActions.updateIdleMessages}
+          themeSuggestions={themeSuggestions} // <-- ADDED
+          onUpdateThemeSuggestions={socketActions.updateThemeSuggestions} // <-- ADDED
         />
       </div>
     </div>

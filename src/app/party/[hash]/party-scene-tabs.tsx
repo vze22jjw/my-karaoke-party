@@ -28,6 +28,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 };
 
 export function PartySceneTabs({
@@ -98,7 +99,8 @@ export function PartySceneTabs({
     isPlaying,
     remainingTime,
     partyStatus,
-    idleMessages
+    idleMessages,
+    themeSuggestions // <-- ADDED
   } = usePartySocket(
     party.hash!,
     initialData, 
@@ -223,7 +225,10 @@ export function PartySceneTabs({
           value="history"
           className="flex-1 overflow-y-auto mt-0"
         >
-          <TabHistory playlist={playedPlaylist} />
+          <TabHistory 
+            playlist={playedPlaylist} 
+            themeSuggestions={themeSuggestions} // <-- ADDED PROP
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -33,7 +33,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[]; 
+  themeSuggestions: string[]; // <-- ADDED
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
@@ -115,7 +116,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
       status: party.status,
-      idleMessages: party.idleMessages, // <-- ADD THIS
+      idleMessages: party.idleMessages,
+      themeSuggestions: party.themeSuggestions, // <-- ADDED
     };
   
   } else {
@@ -130,7 +132,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSongStartedAt: party.currentSongStartedAt,
       currentSongRemainingDuration: remainingDuration,
       status: party.status,
-      idleMessages: party.idleMessages, // <-- ADD THIS
+      idleMessages: party.idleMessages,
+      themeSuggestions: party.themeSuggestions, // <-- ADDED
     };
   }
 }
