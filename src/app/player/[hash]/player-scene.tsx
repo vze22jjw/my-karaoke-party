@@ -25,7 +25,8 @@ type InitialPartyData = {
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 };
 
 type Props = {
@@ -49,7 +50,7 @@ export default function PlayerScene({ party, initialData }: Props) {
     settings,
     isSkipping, 
     remainingTime,
-    idleMessages // <-- GET THIS
+    idleMessages 
   } = usePartySocket(
     party.hash,
     initialData,
@@ -142,7 +143,7 @@ export default function PlayerScene({ party, initialData }: Props) {
           currentVideo={currentSong ?? undefined}
           isPlaybackDisabled={isPlaybackDisabled}
           isSkipping={isSkipping}
-          idleMessages={idleMessages} // <-- PASS PROP
+          idleMessages={idleMessages} 
           {...commonPlayerProps}
         />
         
@@ -178,7 +179,7 @@ export default function PlayerScene({ party, initialData }: Props) {
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={fullscreen ? "bg-gradient" : ""}
-              idleMessages={idleMessages} // <-- PASS PROP
+              idleMessages={idleMessages}
             />
           )}
         </div>

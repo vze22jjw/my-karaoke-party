@@ -15,7 +15,8 @@ type InitialPartyData = {
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -45,7 +46,8 @@ export default async function HostPage({ params }: Props) {
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
     status: "OPEN",
-    idleMessages: [], // <-- ADD THIS
+    idleMessages: [],
+    themeSuggestions: [], // <-- ADDED
   };
 
   try {

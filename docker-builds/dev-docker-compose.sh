@@ -41,7 +41,7 @@ else
 fi
 
 # Show logs from the app container
-echo "Showing logs for mk-app container..."
+echo "Showing logs for mk-app container..." && sleep 5
 docker logs mykaraoke-app
 
 # Clean up environment variables

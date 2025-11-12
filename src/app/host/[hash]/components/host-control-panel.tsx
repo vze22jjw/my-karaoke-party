@@ -42,6 +42,8 @@ type Props = {
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
   onSyncIdleMessages: (messages: string[]) => void;
+  themeSuggestions: string[]; // <-- ADDED
+  onUpdateThemeSuggestions: (suggestions: string[]) => void; // <-- ADDED
 };
 
 // ... (useTimeOpen hook remains the same) ...
@@ -105,20 +107,19 @@ export function HostControlPanel({
   onAddIdleMessage,
   onDeleteIdleMessage,
   onSyncIdleMessages,
+  themeSuggestions, // <-- ADDED
+  onUpdateThemeSuggestions, // <-- ADDED
 }: Props) {
 
   const timeOpen = useTimeOpen(party.createdAt);
   if (!party.hash) return null;
   const totalSongs = playedSongCount + unplayedSongCount;
 
-  // --- THIS IS THE FIX ---
-  // The outer div is now ONLY h-screen and overflow-hidden.
-  // The padding (p-4) has been moved to the inner div.
   return (
-    <div className="w-full overflow-hidden h-screen">
+    <div className="w-full overflow-hidden h-[100dvh]">
       <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         
-        {/* Party Title & Info Panel (remain flex-shrink-0) */}
+        {/* Party Title & Info Panel */}
         <div className="flex-shrink-0">
           <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
             {party.name}
@@ -156,7 +157,6 @@ export function HostControlPanel({
           </div>
         </div>
 
-        {/* Tabs component now fills the remaining space */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -173,10 +173,9 @@ export function HostControlPanel({
             </TabsTrigger>
           </TabsList>
 
-          {/* These content panels fill the space and scroll internally */}
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-y-auto mt-0"
+            className="flex-1 overflow-y-auto mt-0 pb-6"
           >
             <TabPlaylist
               currentSong={currentSong}
@@ -193,7 +192,7 @@ export function HostControlPanel({
 
           <TabsContent
             value="settings"
-            className="flex-1 overflow-y-auto mt-0"
+            className="flex-1 overflow-y-auto mt-0 pb-6"
           >
             <TabSettings
               useQueueRules={useQueueRules}
@@ -215,11 +214,12 @@ export function HostControlPanel({
               onAddIdleMessage={onAddIdleMessage}
               onDeleteIdleMessage={onDeleteIdleMessage}
               onSyncIdleMessages={onSyncIdleMessages}
+              themeSuggestions={themeSuggestions} // <-- ADDED
+              onUpdateThemeSuggestions={onUpdateThemeSuggestions} // <-- ADDED
             />
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
-  // --- END THE FIX ---
 }

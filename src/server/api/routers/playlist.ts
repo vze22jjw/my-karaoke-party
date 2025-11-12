@@ -169,4 +169,55 @@ export const playlistRouter = createTRPCRouter({
 
       return { success: true, count: updated.count };
     }),
+
+  // --- NEW PROCEDURE ---
+  getGlobalStats: publicProcedure.query(async ({ ctx }) => {
+    // Top 5 most played songs across all parties
+    const topSongs = await ctx.db.playlistItem.groupBy({
+      by: ["videoId", "title", "coverUrl"],
+      where: {
+        playedAt: { not: null },
+      },
+      _count: {
+        videoId: true,
+      },
+      orderBy: {
+        _count: {
+          videoId: "desc",
+        },
+      },
+      take: 5,
+    });
+
+    // Top 5 singers by number of songs sung across all parties
+    const topSingers = await ctx.db.playlistItem.groupBy({
+      by: ["singerName"],
+      where: {
+        playedAt: { not: null },
+      },
+      _count: {
+        singerName: true,
+      },
+      orderBy: {
+        _count: {
+          singerName: "desc",
+        },
+      },
+      take: 5,
+    });
+
+    return {
+      topSongs: topSongs.map((s) => ({
+        id: s.videoId,
+        title: s.title,
+        coverUrl: s.coverUrl,
+        count: s._count.videoId,
+      })),
+      topSingers: topSingers.map((s) => ({
+        name: s.singerName,
+        count: s._count.singerName,
+      })),
+    };
+  }),
+  // --- END NEW PROCEDURE ---
 });

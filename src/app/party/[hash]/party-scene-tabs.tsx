@@ -3,8 +3,8 @@
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useEffect, useState, useMemo, useCallback, useRef } from "react"; // <-- Added hooks
-import { readLocalStorageValue, useLocalStorage, useViewportSize } from "@mantine/hooks"; // <-- Added useViewportSize
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { readLocalStorageValue, useLocalStorage, useViewportSize } from "@mantine/hooks";
 import { Monitor, Music, Users, History, Plus } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -14,7 +14,7 @@ import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import { PartyTourModal } from "./components/party-tour-modal";
-import Confetti from "react-canvas-confetti"; // <-- Added
+import Confetti from "react-canvas-confetti";
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
@@ -28,6 +28,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
+  themeSuggestions: string[]; // <-- ADDED
 };
 
 export function PartySceneTabs({
@@ -54,7 +55,6 @@ export function PartySceneTabs({
   // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
 
   const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
     confettiRef.current = instance;
@@ -62,13 +62,12 @@ export function PartySceneTabs({
 
   const fireConfetti = useCallback(() => {
     if (confettiRef.current) {
-      setShowConfetti(true);
       confettiRef.current({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
+        zIndex: 200,
       });
-      setTimeout(() => setShowConfetti(false), 5000);
     }
   }, []);
   // --- END: CONFETTI LOGIC ---
@@ -86,7 +85,9 @@ export function PartySceneTabs({
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
-    fireConfetti(); // <-- Trigger confetti when tour closes
+    setTimeout(() => {
+      fireConfetti();
+    }, 300);
   };
 
   const { 
@@ -98,7 +99,8 @@ export function PartySceneTabs({
     isPlaying,
     remainingTime,
     partyStatus,
-    idleMessages
+    idleMessages,
+    themeSuggestions // <-- ADDED
   } = usePartySocket(
     party.hash!,
     initialData, 
@@ -142,8 +144,7 @@ export function PartySceneTabs({
           zIndex: 200,
           top: 0,
           left: 0,
-          pointerEvents: 'none',
-          display: showConfetti ? 'block' : 'none',
+          pointerEvents: 'none', // Crucial
         }}
       />
       {/* --- END CONFETTI COMPONENT --- */}
@@ -224,7 +225,10 @@ export function PartySceneTabs({
           value="history"
           className="flex-1 overflow-y-auto mt-0"
         >
-          <TabHistory playlist={playedPlaylist} />
+          <TabHistory 
+            playlist={playedPlaylist} 
+            themeSuggestions={themeSuggestions} // <-- ADDED PROP
+          />
         </TabsContent>
       </Tabs>
     </div>

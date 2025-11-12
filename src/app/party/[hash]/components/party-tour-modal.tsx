@@ -25,9 +25,12 @@ type Props = {
 export function PartyTourModal({ isOpen, onClose }: Props) {
   return (
     <Drawer open={isOpen} onClose={onClose}>
-      <DrawerContent>
-        {/* Increased bottom padding (pb-32) to lift content above toast area */}
-        <div className="mx-auto w-full max-w-2xl p-4 pb-32">
+      {/* DrawerContent now uses flex-col and h-full to take full available height */}
+      {/* The 'snap-align-none' is crucial to prevent it from snapping to the center */}
+      <DrawerContent className="flex flex-col h-full snap-align-none">
+        {/* Inner div contains padding and controls overflow */}
+        {/* pt-8 for top padding, pb-32 for bottom safe area, overflow-y-auto for internal scroll */}
+        <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-32 flex-1 overflow-y-auto">
           <DrawerHeader>
             <DrawerTitle className="text-3xl font-bold">
               Welcome to the Party!
@@ -67,16 +70,18 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
               </div>
             </div>
 
-            {/* Step 3: History */}
+            {/* Step 3: History & Suggestions */}
             <div className="flex items-start gap-4 rounded-lg border bg-muted/50 p-4">
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-500 text-white">
                 <History className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">History</h3>
+                {/* --- UPDATED TEXT --- */}
+                <h3 className="text-lg font-semibold">History & Suggestions</h3>
                 <p className="text-sm text-muted-foreground">
-                  See all the songs that have already been played tonight.
+                  See played songs and check the <strong>Song Suggestions</strong> for inspiration!
                 </p>
+                {/* --- END UPDATED TEXT --- */}
               </div>
             </div>
 

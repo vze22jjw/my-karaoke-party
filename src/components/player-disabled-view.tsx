@@ -131,7 +131,8 @@ export function PlayerDisabledView({
         <a
           href={joinPartyUrl}
           target="_blank"
-          className="font-mono text-xl text-white pl-4"
+          // --- FIX: Added text-outline ---
+          className="font-mono text-xl text-white pl-4 text-outline"
         >
           {joinPartyUrl.split("//")[1]}
         </a>

@@ -164,12 +164,9 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     socket.on("request-open-parties", async () => {
       debugLog(LOG_TAG, `Received 'request-open-parties' from ${socket.id}`);
       try {
-        const oneDayAgo = new Date();
-        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
         const parties = await db.party.findMany({
           where: { 
-            createdAt: { gte: oneDayAgo },
-            status: { not: "CLOSED" }
+            status: { in: ["OPEN", "STARTED"] }
           },
           orderBy: { createdAt: "desc" },
           select: {
@@ -232,11 +229,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
           const { isNew } = await registerParticipant(party.id, data.singerName);
           if (isNew) {
-            // --- THIS IS THE FIX ---
-            // Ensures the "new-singer-joined" toast is only sent
-            // to clients in the *same party* (room).
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
-            // --- END THE FIX ---
           }
 
           const existing = await db.playlistItem.findFirst({
@@ -599,6 +592,41 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
       debugLog(LOG_TAG, `Broadcasting 'skip-timer-started' to room ${data.partyHash}`);
       socket.broadcast.to(data.partyHash).emit("skip-timer-started");
     });
+
+    // --- ADDED FOR THEME SUGGESTIONS ---
+    socket.on(
+      "update-theme-suggestions",
+      async (data: { partyHash: string; suggestions: string[] }) => {
+        debugLog(
+          LOG_TAG,
+          `Received 'update-theme-suggestions' for room ${data.partyHash}`,
+        );
+        try {
+          // Clean and filter
+          const suggestionsArray = data.suggestions
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .slice(0, 10);
+
+          await db.party.update({
+            where: { hash: data.partyHash },
+            data: {
+              themeSuggestions: suggestionsArray,
+              lastActivityAt: new Date(),
+            },
+          });
+
+          debugLog(
+            LOG_TAG,
+            `Emitting 'theme-suggestions-updated' to room ${data.partyHash}`,
+          );
+          io.to(data.partyHash).emit("theme-suggestions-updated", suggestionsArray);
+        } catch (error) {
+          console.error("Error updating theme suggestions:", error);
+        }
+      },
+    );
+    // --- END ADDED ---
   });
 
   res.end();

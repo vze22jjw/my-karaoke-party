@@ -32,15 +32,14 @@ model Party {
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
-    currentSongId                 String?
+    currentSongId             String?
     currentSongStartedAt          DateTime?
     currentSongRemainingDuration  Int?
-    
     status         String         @default("OPEN") // OPEN, STARTED, CLOSED
-
-    // --- ADD THIS ---
     idleMessages   String[]       @default([]) // Stores up to 10 lines for this specific party
-    // --- END ADD ---
+    // --- ADDED ---
+    themeSuggestions String[]     @default([]) // Stores song suggestions/prompts
+    // -------------
 
     @@index([hash])
     @@index([lastActivityAt])
@@ -74,12 +73,10 @@ model PlaylistItem {
     playedAt   DateTime?
     orderIndex Int       @default(0)
     randomBreaker Float?
-
     @@index([partyId])
     @@index([playedAt])
 }
 
-// --- ADD THIS NEW MODEL ---
 model IdleMessage {
   id        Int      @id @default(autoincrement())
   hostName  String   // The host's name this message belongs to
@@ -88,4 +85,3 @@ model IdleMessage {
 
   @@index([hostName])
 }
-// --- END ADD ---
