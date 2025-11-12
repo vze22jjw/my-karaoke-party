@@ -25,7 +25,6 @@ type Props = {
 export function PartyTourModal({ isOpen, onClose }: Props) {
   return (
     <Drawer open={isOpen} onClose={onClose}>
-      {/* --- FIX START --- */}
       {/* DrawerContent now uses flex-col and h-full to take full available height */}
       {/* The 'snap-align-none' is crucial to prevent it from snapping to the center */}
       <DrawerContent className="flex flex-col h-full snap-align-none">
@@ -71,16 +70,18 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
               </div>
             </div>
 
-            {/* Step 3: History */}
+            {/* Step 3: History & Suggestions */}
             <div className="flex items-start gap-4 rounded-lg border bg-muted/50 p-4">
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-500 text-white">
                 <History className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">History</h3>
+                {/* --- UPDATED TEXT --- */}
+                <h3 className="text-lg font-semibold">History & Suggestions</h3>
                 <p className="text-sm text-muted-foreground">
-                  See all the songs that have already been played tonight.
+                  See played songs and check the <strong>Song Suggestions</strong> for inspiration!
                 </p>
+                {/* --- END UPDATED TEXT --- */}
               </div>
             </div>
 
@@ -112,7 +113,6 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
           </div>
         </div>
       </DrawerContent>
-      {/* --- FIX END --- */}
     </Drawer>
   );
 }
