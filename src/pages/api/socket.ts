@@ -164,12 +164,11 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     socket.on("request-open-parties", async () => {
       debugLog(LOG_TAG, `Received 'request-open-parties' from ${socket.id}`);
       try {
-        const oneDayAgo = new Date();
-        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+        // --- FIX: Removed time filtering completely ---
+        // Now fetching ALL parties that are OPEN or STARTED
         const parties = await db.party.findMany({
           where: { 
-            createdAt: { gte: oneDayAgo },
-            status: { not: "CLOSED" }
+            status: { in: ["OPEN", "STARTED"] }
           },
           orderBy: { createdAt: "desc" },
           select: {
@@ -232,11 +231,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
           const { isNew } = await registerParticipant(party.id, data.singerName);
           if (isNew) {
-            // --- THIS IS THE FIX ---
-            // Ensures the "new-singer-joined" toast is only sent
-            // to clients in the *same party* (room).
             socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
-            // --- END THE FIX ---
           }
 
           const existing = await db.playlistItem.findFirst({

@@ -42,7 +42,7 @@ fi
 
 # Version configuration
 if [ "$BUILD_TYPE" == "release" ]; then
-    export VERSION="0.0.1-B_$(date "+%y%S")"
+    export VERSION="v0.0.1-$(git rev-parse --short HEAD)"
     export ECR_BUILD="true"
     echo "Release build version: $VERSION"
 else

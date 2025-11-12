@@ -25,9 +25,13 @@ type Props = {
 export function PartyTourModal({ isOpen, onClose }: Props) {
   return (
     <Drawer open={isOpen} onClose={onClose}>
-      <DrawerContent>
-        {/* Increased bottom padding (pb-32) to lift content above toast area */}
-        <div className="mx-auto w-full max-w-2xl p-4 pb-32">
+      {/* --- FIX START --- */}
+      {/* DrawerContent now uses flex-col and h-full to take full available height */}
+      {/* The 'snap-align-none' is crucial to prevent it from snapping to the center */}
+      <DrawerContent className="flex flex-col h-full snap-align-none">
+        {/* Inner div contains padding and controls overflow */}
+        {/* pt-8 for top padding, pb-32 for bottom safe area, overflow-y-auto for internal scroll */}
+        <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-32 flex-1 overflow-y-auto">
           <DrawerHeader>
             <DrawerTitle className="text-3xl font-bold">
               Welcome to the Party!
@@ -108,6 +112,7 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
           </div>
         </div>
       </DrawerContent>
+      {/* --- FIX END --- */}
     </Drawer>
   );
 }

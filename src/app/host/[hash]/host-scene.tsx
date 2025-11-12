@@ -12,7 +12,7 @@ import { api } from "~/trpc/react";
 import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
 import { HostTourModal } from "./components/host-tour-modal";
-import Confetti from "react-canvas-confetti"; // <-- Added
+import Confetti from "react-canvas-confetti";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -58,7 +58,6 @@ export function HostScene({ party, initialData }: Props) {
   // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
 
   const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
     confettiRef.current = instance;
@@ -66,13 +65,12 @@ export function HostScene({ party, initialData }: Props) {
 
   const fireConfetti = useCallback(() => {
     if (confettiRef.current) {
-      setShowConfetti(true);
       confettiRef.current({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
+        zIndex: 200, // Ensure particles are on top
       });
-      setTimeout(() => setShowConfetti(false), 5000);
     }
   }, []);
   // --- END: CONFETTI LOGIC ---
@@ -90,7 +88,10 @@ export function HostScene({ party, initialData }: Props) {
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
-    fireConfetti(); // <-- Trigger confetti when tour closes
+    // Small timeout ensures the modal is visually clearing/gone before the pop
+    setTimeout(() => {
+      fireConfetti();
+    }, 300);
   };
 
   if (!party.hash) {
@@ -207,8 +208,7 @@ export function HostScene({ party, initialData }: Props) {
           zIndex: 200,
           top: 0,
           left: 0,
-          pointerEvents: 'none',
-          display: showConfetti ? 'block' : 'none',
+          pointerEvents: 'none', // Crucial: lets clicks pass through
         }}
       />
       {/* --- END CONFETTI COMPONENT --- */}

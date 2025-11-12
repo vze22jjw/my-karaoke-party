@@ -4,14 +4,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Busca parties criadas nas últimas 24 horas e ordena por criação mais recente
-    const oneDayAgo = new Date();
-    oneDayAgo.setHours(oneDayAgo.getHours() - 24);
-
+    // Fetch ALL parties that are currently OPEN or STARTED
+    // We no longer filter by time; we rely on the status (and auto-cleanup for inactive ones)
     const parties = await db.party.findMany({
       where: {
-        createdAt: {
-          gte: oneDayAgo,
+        status: {
+          in: ["OPEN", "STARTED"],
         },
       },
       orderBy: {
@@ -24,19 +22,19 @@ export async function GET() {
         _count: {
           select: {
             playlistItems: true,
-            participants: true, // <-- Added this
+            participants: true,
           },
         },
       },
     });
 
-    // Formata a resposta
+    // Format the response
     const formattedParties = parties.map((party) => ({
       hash: party.hash,
       name: party.name,
       createdAt: party.createdAt,
       songCount: party._count.playlistItems,
-      singerCount: party._count.participants, // <-- Added this
+      singerCount: party._count.participants,
     }));
 
     return NextResponse.json(formattedParties);
