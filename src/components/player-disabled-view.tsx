@@ -33,10 +33,8 @@ export function PlayerDisabledView({
   return (
     <div
       className={cn(
-        // --- THIS IS THE FIX ---
-        // Removed `pb-1` so the `p-4` padding applies to all sides
-        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 text-center",
-        // --- END THE FIX ---
+        // FIX: Added overflow-hidden
+        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 text-center overflow-hidden",
         isFullscreen && "bg-gradient",
       )}
     >
@@ -131,7 +129,6 @@ export function PlayerDisabledView({
         <a
           href={joinPartyUrl}
           target="_blank"
-          // --- FIX: Added text-outline ---
           className="font-mono text-xl text-white pl-4 text-outline"
         >
           {joinPartyUrl.split("//")[1]}

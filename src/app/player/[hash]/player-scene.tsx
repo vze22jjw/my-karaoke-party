@@ -26,7 +26,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 };
 
 type Props = {
@@ -147,16 +147,9 @@ export default function PlayerScene({ party, initialData }: Props) {
           {...commonPlayerProps}
         />
         
+        {/* MOBILE VIEW */}
         <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
-          <Button
-            onClick={toggle}
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-0 right-3 z-10"
-          >
-            {fullscreen ? <Minimize /> : <Maximize />}
-          </Button>
-          
+          {/* Render Player Content FIRST */}
           {currentSong ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
@@ -182,6 +175,18 @@ export default function PlayerScene({ party, initialData }: Props) {
               idleMessages={idleMessages}
             />
           )}
+
+          {/* Render Fullscreen Toggle Button LAST (Top of stack) */}
+          <Button
+            onClick={toggle}
+            variant="ghost"
+            size="icon"
+            // FIX: Added translate-z-0 via style and z-[100]
+            className="absolute bottom-6 right-3 z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+            style={{ transform: "translate3d(0, 0, 0)" }}
+          >
+            {fullscreen ? <Minimize /> : <Maximize />}
+          </Button>
         </div>
         
       </div>

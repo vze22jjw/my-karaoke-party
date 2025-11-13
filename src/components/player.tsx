@@ -115,23 +115,19 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
-  // --- THIS IS THE FIX (Part 1) ---
-  // This function NO LONGER opens a window.
-  // It only calls the prop, which points to the main
-  // handleOpenYouTubeAndAutoSkip function in player-scene.tsx.
   const openYouTubeTab = () => {
     if (onOpenYouTubeAndAutoSkip) {
       onOpenYouTubeAndAutoSkip();
     }
   };
-  // --- END THE FIX ---
 
   if (showOpenInYouTubeButton) {
     // This is the error view shown for videos that fail to load
     return (
       <div
         className={cn(
-          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 pb-1 text-center",
+          // FIX: Increased padding to p-6 and removed pb-1 to fix bottom spacing
+          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
           isFullscreen && "bg-gradient"
         )}
       >
@@ -193,7 +189,6 @@ export function Player({
           <a
             href={joinPartyUrl}
             target="_blank"
-            // --- FIX: Added text-outline ---
             className="font-mono text-xl text-white pl-4 text-outline"
           >
             {joinPartyUrl.split("//")[1]}
@@ -268,8 +263,18 @@ export function Player({
       )}
 
 
-      <div className="absolute bottom-12 left-0 z-10 flex w-full flex-row justify-between px-4">
-        <QrCode url={joinPartyUrl} />
+      {/* FIX: Adjusted bottom spacing to bottom-6 and px-6 to align with left margin */}
+      <div className="absolute bottom-6 left-0 z-10 flex w-full flex-row justify-between px-6 items-end">
+        <div className="flex items-end">
+          <QrCode url={joinPartyUrl} />
+          <a
+            href={joinPartyUrl}
+            target="_blank"
+            className="font-mono text-xl text-white pl-4 text-outline hidden sm:block"
+          >
+            {joinPartyUrl.split("//")[1]}
+          </a>
+        </div>
 
         <div
           className={`self-end p-2 ${

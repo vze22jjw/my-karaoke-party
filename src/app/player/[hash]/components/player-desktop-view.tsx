@@ -26,7 +26,7 @@ type Props = {
   onOpenYouTubeAndAutoSkip: () => void;
   isPlaybackDisabled: boolean;
   isSkipping: boolean;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[]; 
 };
 
 export function PlayerDesktopView({
@@ -47,21 +47,14 @@ export function PlayerDesktopView({
   onOpenYouTubeAndAutoSkip,
   isPlaybackDisabled,
   isSkipping,
-  idleMessages, // <-- ADD THIS
+  idleMessages, 
 }: Props) {
   return (
     <div className="hidden sm:block sm:w-full h-screen"> 
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
-          <Button
-            onClick={onToggleFullscreen}
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-0 right-3 z-10"
-          >
-            {isFullscreen ? <Minimize /> : <Maximize />}
-          </Button>
-
+          
+          {/* Content Rendered First */}
           {currentVideo ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
@@ -95,9 +88,22 @@ export function PlayerDesktopView({
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={isFullscreen ? "bg-gradient" : ""}
-              idleMessages={idleMessages} // <-- PASS PROP
+              idleMessages={idleMessages} 
             />
           )}
+
+          {/* Fullscreen Toggle Button Rendered Last */}
+          <Button
+            onClick={onToggleFullscreen}
+            variant="ghost"
+            size="icon"
+            // FIX: Added translate-z-0 (via style) to force new stacking context/layer over video
+            // Increased z-index to z-[100]
+            className="absolute bottom-6 right-3 z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+            style={{ transform: "translate3d(0, 0, 0)" }}
+          >
+            {isFullscreen ? <Minimize /> : <Maximize />}
+          </Button>
 
         </div>
       </div>
