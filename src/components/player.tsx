@@ -122,12 +122,10 @@ export function Player({
   };
 
   if (showOpenInYouTubeButton) {
-    // This is the error view shown for videos that fail to load
     return (
       <div
         className={cn(
-          // FIX: Increased padding to p-6 and removed pb-1 to fix bottom spacing
-          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
+          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 pb-1 text-center overflow-hidden",
           isFullscreen && "bg-gradient"
         )}
       >
@@ -262,9 +260,8 @@ export function Player({
         </div>
       )}
 
-
-      {/* FIX: Adjusted bottom spacing to bottom-6 and px-6 to align with left margin */}
-      <div className="absolute bottom-6 left-0 z-10 flex w-full flex-row justify-between px-6 items-end">
+      {/* FIX: Changed bottom-12 to bottom-20 to clear YouTube player controls */}
+      <div className="absolute bottom-20 left-0 z-10 flex w-full flex-row justify-between px-4 items-end">
         <div className="flex items-end">
           <QrCode url={joinPartyUrl} />
           <a
@@ -277,7 +274,8 @@ export function Player({
         </div>
 
         <div
-          className={`self-end p-2 ${
+          // FIX: Maintained mr-16 to avoid overlap with the fullscreen button
+          className={`self-end p-2 mr-16 ${
             internalIsPlaying && isFullscreen ? "hidden" : "block"
           }`}
         >

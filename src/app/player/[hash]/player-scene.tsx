@@ -16,7 +16,7 @@ import type { RefCallback } from "react";
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
-import { cn } from "~/lib/utils"; // Added for cleaner class merging
+import { cn } from "~/lib/utils";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -48,9 +48,9 @@ export default function PlayerScene({ party, initialData }: Props) {
     unplayedPlaylist, 
     socketActions, 
     isPlaying,
-    settings,
+    settings, 
     isSkipping, 
-    remainingTime,
+    remainingTime, 
     idleMessages 
   } = usePartySocket(
     party.hash,
@@ -58,7 +58,6 @@ export default function PlayerScene({ party, initialData }: Props) {
     "Player" 
   );
   
-  // --- FIX: Split fullscreen hooks for Desktop and Mobile ---
   const desktopScreen = useFullscreen();
   const mobileScreen = useFullscreen();
 
@@ -142,11 +141,9 @@ export default function PlayerScene({ party, initialData }: Props) {
         
         {/* DESKTOP VIEW */}
         <PlayerDesktopView
-          // --- FIX: Use dedicated desktop fullscreen props ---
           playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={desktopScreen.toggle}
           isFullscreen={desktopScreen.fullscreen}
-          
           currentVideo={currentSong ?? undefined}
           isPlaybackDisabled={isPlaybackDisabled}
           isSkipping={isSkipping}
@@ -157,7 +154,6 @@ export default function PlayerScene({ party, initialData }: Props) {
         {/* MOBILE VIEW */}
         <div 
           className="relative h-full sm:hidden" 
-          // --- FIX: Use dedicated mobile fullscreen ref ---
           ref={mobileScreen.ref as RefCallback<HTMLDivElement>}
         >
           {currentSong ? (
@@ -187,17 +183,16 @@ export default function PlayerScene({ party, initialData }: Props) {
             />
           )}
 
-          {/* Render Fullscreen Toggle Button LAST (Top of stack) */}
           <Button
             onClick={mobileScreen.toggle}
             variant="ghost"
             size="icon"
-            // FIX: Use fixed positioning when fullscreen to ensure clickability
+            // FIX: Changed to bottom-20 for safer touch area and to clear controls
             className={cn(
               "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
               mobileScreen.fullscreen 
-                ? "fixed bottom-6 right-6" // Fixed relative to screen in FS mode
-                : "absolute bottom-6 right-3" // Absolute relative to container in normal mode
+                ? "fixed bottom-20 right-6" 
+                : "absolute bottom-20 right-3"
             )}
           >
             {mobileScreen.fullscreen ? <Minimize /> : <Maximize />}

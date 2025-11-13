@@ -7,7 +7,7 @@ import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view";
-import { cn } from "~/lib/utils"; // Ensure cn is imported
+import { cn } from "~/lib/utils";
 
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
@@ -55,7 +55,6 @@ export function PlayerDesktopView({
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
           
-          {/* Content Rendered First */}
           {currentVideo ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
@@ -93,18 +92,18 @@ export function PlayerDesktopView({
             />
           )}
 
-          {/* Fullscreen Toggle Button Rendered Last */}
           <Button
             onClick={onToggleFullscreen}
             variant="ghost"
             size="icon"
-            // FIX: Conditional positioning. Fixed when FS, Absolute when normal.
+            // FIX: Increased bottom padding to bottom-20 to clear YouTube controls
             className={cn(
               "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
               isFullscreen 
-                ? "fixed bottom-6 right-6" // Escapes container stacking context
-                : "absolute bottom-6 right-3" // Standard positioning
+                ? "fixed bottom-20 right-6" 
+                : "absolute bottom-20 right-3"
             )}
+            style={{ transform: "translate3d(0, 0, 0)" }}
           >
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>
