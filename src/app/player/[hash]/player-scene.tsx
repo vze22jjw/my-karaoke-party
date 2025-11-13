@@ -16,6 +16,7 @@ import type { RefCallback } from "react";
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
+import { cn } from "~/lib/utils";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -26,7 +27,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 };
 
 type Props = {
@@ -47,9 +48,9 @@ export default function PlayerScene({ party, initialData }: Props) {
     unplayedPlaylist, 
     socketActions, 
     isPlaying,
-    settings,
+    settings, 
     isSkipping, 
-    remainingTime,
+    remainingTime, 
     idleMessages 
   } = usePartySocket(
     party.hash,
@@ -57,7 +58,9 @@ export default function PlayerScene({ party, initialData }: Props) {
     "Player" 
   );
   
-  const { ref, toggle, fullscreen } = useFullscreen();
+  const desktopScreen = useFullscreen();
+  const mobileScreen = useFullscreen();
+
   const nextSong = unplayedPlaylist[0];
 
   const doTheSkip = useCallback(() => {
@@ -120,7 +123,6 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const commonPlayerProps = {
     joinPartyUrl: joinPartyUrl,
-    isFullscreen: fullscreen,
     onPlayerEnd: handlePlayerEnd,
     onSkip: handleSkip,
     forceAutoplay: forceAutoplay,
@@ -137,9 +139,11 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
+        {/* DESKTOP VIEW */}
         <PlayerDesktopView
-          playerRef={ref as RefCallback<HTMLDivElement>}
-          onToggleFullscreen={toggle}
+          playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
+          onToggleFullscreen={desktopScreen.toggle}
+          isFullscreen={desktopScreen.fullscreen}
           currentVideo={currentSong ?? undefined}
           isPlaybackDisabled={isPlaybackDisabled}
           isSkipping={isSkipping}
@@ -147,23 +151,18 @@ export default function PlayerScene({ party, initialData }: Props) {
           {...commonPlayerProps}
         />
         
-        <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
-          <Button
-            onClick={toggle}
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-0 right-3 z-10"
-          >
-            {fullscreen ? <Minimize /> : <Maximize />}
-          </Button>
-          
+        {/* MOBILE VIEW */}
+        <div 
+          className="relative h-full sm:hidden" 
+          ref={mobileScreen.ref as RefCallback<HTMLDivElement>}
+        >
           {currentSong ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
                 video={currentSong}
                 nextSong={nextSong} 
                 joinPartyUrl={joinPartyUrl}
-                isFullscreen={fullscreen}
+                isFullscreen={mobileScreen.fullscreen}
                 onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
                 onSkip={handleSkip} 
                 isSkipping={isSkipping} 
@@ -172,16 +171,32 @@ export default function PlayerScene({ party, initialData }: Props) {
             ) : ( 
               <Player
                 video={currentSong}
+                isFullscreen={mobileScreen.fullscreen}
                 {...commonPlayerProps}
               />
             )
           ) : (
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
-              className={fullscreen ? "bg-gradient" : ""}
+              className={mobileScreen.fullscreen ? "bg-gradient" : ""}
               idleMessages={idleMessages}
             />
           )}
+
+          <Button
+            onClick={mobileScreen.toggle}
+            variant="ghost"
+            size="icon"
+            // FIX: Changed to bottom-20 for safer touch area and to clear controls
+            className={cn(
+              "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
+              mobileScreen.fullscreen 
+                ? "fixed bottom-20 right-6" 
+                : "absolute bottom-20 right-3"
+            )}
+          >
+            {mobileScreen.fullscreen ? <Minimize /> : <Maximize />}
+          </Button>
         </div>
         
       </div>

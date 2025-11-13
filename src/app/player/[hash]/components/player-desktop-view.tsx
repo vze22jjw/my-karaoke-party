@@ -7,6 +7,7 @@ import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view";
+import { cn } from "~/lib/utils";
 
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
@@ -26,7 +27,7 @@ type Props = {
   onOpenYouTubeAndAutoSkip: () => void;
   isPlaybackDisabled: boolean;
   isSkipping: boolean;
-  idleMessages: string[]; // <-- ADD THIS
+  idleMessages: string[]; 
 };
 
 export function PlayerDesktopView({
@@ -47,21 +48,13 @@ export function PlayerDesktopView({
   onOpenYouTubeAndAutoSkip,
   isPlaybackDisabled,
   isSkipping,
-  idleMessages, // <-- ADD THIS
+  idleMessages, 
 }: Props) {
   return (
     <div className="hidden sm:block sm:w-full h-screen"> 
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
-          <Button
-            onClick={onToggleFullscreen}
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-0 right-3 z-10"
-          >
-            {isFullscreen ? <Minimize /> : <Maximize />}
-          </Button>
-
+          
           {currentVideo ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
@@ -95,9 +88,25 @@ export function PlayerDesktopView({
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={isFullscreen ? "bg-gradient" : ""}
-              idleMessages={idleMessages} // <-- PASS PROP
+              idleMessages={idleMessages} 
             />
           )}
+
+          <Button
+            onClick={onToggleFullscreen}
+            variant="ghost"
+            size="icon"
+            // FIX: Increased bottom padding to bottom-20 to clear YouTube controls
+            className={cn(
+              "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
+              isFullscreen 
+                ? "fixed bottom-20 right-6" 
+                : "absolute bottom-20 right-3"
+            )}
+            style={{ transform: "translate3d(0, 0, 0)" }}
+          >
+            {isFullscreen ? <Minimize /> : <Maximize />}
+          </Button>
 
         </div>
       </div>

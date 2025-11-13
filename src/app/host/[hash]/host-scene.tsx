@@ -23,7 +23,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 };
 
 type Props = {
@@ -101,7 +101,7 @@ export function HostScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
-    playedPlaylist,
+    playedPlaylist, 
     settings, 
     socketActions, 
     isConnected,
@@ -112,7 +112,7 @@ export function HostScene({ party, initialData }: Props) {
     hostName,
     partyStatus,
     idleMessages,
-    themeSuggestions // <-- ADDED
+    themeSuggestions
   } = usePartySocket(
     party.hash,
     initialData, 
@@ -196,7 +196,8 @@ export function HostScene({ party, initialData }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen w-full justify-center">
+    // --- FIX: Added "bg-gradient" here explicitly ---
+    <div className="flex min-h-screen w-full justify-center bg-gradient">
       {/* --- ADD CONFETTI COMPONENT --- */}
       <Confetti
         refConfetti={onConfettiInit}
@@ -252,8 +253,8 @@ export function HostScene({ party, initialData }: Props) {
           onAddIdleMessage={addIdleMessage.mutate}
           onDeleteIdleMessage={deleteIdleMessage.mutate}
           onSyncIdleMessages={socketActions.updateIdleMessages}
-          themeSuggestions={themeSuggestions} // <-- ADDED
-          onUpdateThemeSuggestions={socketActions.updateThemeSuggestions} // <-- ADDED
+          themeSuggestions={themeSuggestions}
+          onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
         />
       </div>
     </div>

@@ -37,14 +37,12 @@ function IdleSlideshow({ messages }: { messages: string[] }) {
       className="flex w-full flex-col items-center justify-center text-center animate-in fade-in-0 duration-1000"
     >
       <blockquote
-        // --- THIS IS THE FIX: Added text-outline and text-white ---
         className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl"
       >
         &ldquo;{quote}&rdquo;
       </blockquote>
       {author && (
         <cite
-          // --- THIS IS THE FIX: Added text-outline and text-white ---
           className="text-outline mt-4 scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl not-italic"
         >
           - {author}
@@ -61,7 +59,8 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
   return (
     <div
       className={cn(
-        "relative flex h-full w-full flex-col items-center p-6",
+        // FIX: Added overflow-hidden to prevent scrolling
+        "relative flex h-full w-full flex-col items-center p-6 overflow-hidden",
         className,
       )}
     >
@@ -80,11 +79,11 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
       {/* --- START: FOREGROUND CONTENT --- */}
       {/* This div is a container to ensure content is layered on top */}
       <div className="z-10 flex h-full w-full flex-col">
-        {/* Spacer to push content to middle */}
-        <div className="flex w-full basis-1/4 items-start justify-center" />
+        {/* Spacer to push content to middle - Added min-h-0 to allow shrinking */}
+        <div className="flex w-full basis-1/4 items-start justify-center min-h-0" />
         
-        {/* Main Content Area */}
-        <div className="flex w-full basis-2/4 items-center justify-center px-4">
+        {/* Main Content Area - Added min-h-0 */}
+        <div className="flex w-full basis-2/4 items-center justify-center px-4 min-h-0">
           {hasMessages ? (
             <IdleSlideshow messages={idleMessages} />
           ) : (
@@ -95,13 +94,12 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
           )}
         </div>
         
-        {/* QR Code Footer */}
-        <div className="relative flex w-full basis-1/4 items-end text-center">
+        {/* QR Code Footer - Added min-h-0 */}
+        <div className="relative flex w-full basis-1/4 items-end text-center min-h-0">
           <QrCode url={joinPartyUrl} />
           <a
             href={joinPartyUrl}
             target="_blank"
-            // --- FIX: Added text-outline ---
             className="font-mono text-xl text-white pl-4 text-outline"
           >
             {joinPartyUrl.split("//")[1]}
