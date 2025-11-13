@@ -16,6 +16,7 @@ import type { RefCallback } from "react";
 import { PlayerDisabledView } from "~/components/player-disabled-view"; 
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
+import { cn } from "~/lib/utils"; // Added for cleaner class merging
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -57,7 +58,10 @@ export default function PlayerScene({ party, initialData }: Props) {
     "Player" 
   );
   
-  const { ref, toggle, fullscreen } = useFullscreen();
+  // --- FIX: Split fullscreen hooks for Desktop and Mobile ---
+  const desktopScreen = useFullscreen();
+  const mobileScreen = useFullscreen();
+
   const nextSong = unplayedPlaylist[0];
 
   const doTheSkip = useCallback(() => {
@@ -120,7 +124,6 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const commonPlayerProps = {
     joinPartyUrl: joinPartyUrl,
-    isFullscreen: fullscreen,
     onPlayerEnd: handlePlayerEnd,
     onSkip: handleSkip,
     forceAutoplay: forceAutoplay,
@@ -137,9 +140,13 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
+        {/* DESKTOP VIEW */}
         <PlayerDesktopView
-          playerRef={ref as RefCallback<HTMLDivElement>}
-          onToggleFullscreen={toggle}
+          // --- FIX: Use dedicated desktop fullscreen props ---
+          playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
+          onToggleFullscreen={desktopScreen.toggle}
+          isFullscreen={desktopScreen.fullscreen}
+          
           currentVideo={currentSong ?? undefined}
           isPlaybackDisabled={isPlaybackDisabled}
           isSkipping={isSkipping}
@@ -148,15 +155,18 @@ export default function PlayerScene({ party, initialData }: Props) {
         />
         
         {/* MOBILE VIEW */}
-        <div className="relative h-full sm:hidden" ref={ref as RefCallback<HTMLDivElement>}>
-          {/* Render Player Content FIRST */}
+        <div 
+          className="relative h-full sm:hidden" 
+          // --- FIX: Use dedicated mobile fullscreen ref ---
+          ref={mobileScreen.ref as RefCallback<HTMLDivElement>}
+        >
           {currentSong ? (
             isPlaybackDisabled ? (
               <PlayerDisabledView
                 video={currentSong}
                 nextSong={nextSong} 
                 joinPartyUrl={joinPartyUrl}
-                isFullscreen={fullscreen}
+                isFullscreen={mobileScreen.fullscreen}
                 onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
                 onSkip={handleSkip} 
                 isSkipping={isSkipping} 
@@ -165,27 +175,32 @@ export default function PlayerScene({ party, initialData }: Props) {
             ) : ( 
               <Player
                 video={currentSong}
+                isFullscreen={mobileScreen.fullscreen}
                 {...commonPlayerProps}
               />
             )
           ) : (
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
-              className={fullscreen ? "bg-gradient" : ""}
+              className={mobileScreen.fullscreen ? "bg-gradient" : ""}
               idleMessages={idleMessages}
             />
           )}
 
           {/* Render Fullscreen Toggle Button LAST (Top of stack) */}
           <Button
-            onClick={toggle}
+            onClick={mobileScreen.toggle}
             variant="ghost"
             size="icon"
-            // FIX: Added translate-z-0 via style and z-[100]
-            className="absolute bottom-6 right-3 z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
-            style={{ transform: "translate3d(0, 0, 0)" }}
+            // FIX: Use fixed positioning when fullscreen to ensure clickability
+            className={cn(
+              "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
+              mobileScreen.fullscreen 
+                ? "fixed bottom-6 right-6" // Fixed relative to screen in FS mode
+                : "absolute bottom-6 right-3" // Absolute relative to container in normal mode
+            )}
           >
-            {fullscreen ? <Minimize /> : <Maximize />}
+            {mobileScreen.fullscreen ? <Minimize /> : <Maximize />}
           </Button>
         </div>
         

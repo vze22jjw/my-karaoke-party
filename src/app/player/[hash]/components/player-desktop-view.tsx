@@ -7,6 +7,7 @@ import { Player } from "~/components/player";
 import { EmptyPlayer } from "~/components/empty-player";
 import type { RefCallback } from "react"; 
 import { PlayerDisabledView } from "~/components/player-disabled-view";
+import { cn } from "~/lib/utils"; // Ensure cn is imported
 
 type Props = {
   playerRef: RefCallback<HTMLDivElement>;
@@ -97,10 +98,13 @@ export function PlayerDesktopView({
             onClick={onToggleFullscreen}
             variant="ghost"
             size="icon"
-            // FIX: Added translate-z-0 (via style) to force new stacking context/layer over video
-            // Increased z-index to z-[100]
-            className="absolute bottom-6 right-3 z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
-            style={{ transform: "translate3d(0, 0, 0)" }}
+            // FIX: Conditional positioning. Fixed when FS, Absolute when normal.
+            className={cn(
+              "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
+              isFullscreen 
+                ? "fixed bottom-6 right-6" // Escapes container stacking context
+                : "absolute bottom-6 right-3" // Standard positioning
+            )}
           >
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>
