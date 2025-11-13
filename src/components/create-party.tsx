@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import { useLocalStorage } from "@mantine/hooks";
+import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,6 @@ import {
   DrawerTrigger,
 } from "./ui/ui/drawer";
 import { Input } from "./ui/ui/input";
-import { ButtonHoverGradient } from "./ui/ui/button-hover-gradient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -30,7 +29,7 @@ import {
   FormMessage,
 } from "./ui/ui/form";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react"; // <-- Added Sparkles
 
 const formSchema = z.object({
   partyName: z
@@ -91,9 +90,16 @@ export function CreateParty() {
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         <div className="w-full">
-          <ButtonHoverGradient type="button" className="w-full">
-            Create Party 🎉
-          </ButtonHoverGradient>
+          {/* --- UPDATED BUTTON --- */}
+          <Button 
+            type="button" 
+            variant="secondary"
+            className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
+          >
+            Create Party
+            <Sparkles className="ml-3 h-6 w-6 text-yellow-400" />
+          </Button>
+          {/* --------------------- */}
         </div>
       </DrawerTrigger>
       <DrawerContent>

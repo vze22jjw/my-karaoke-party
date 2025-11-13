@@ -17,9 +17,10 @@ import {
   FormLabel,
 } from "~/components/ui/ui/form";
 import { Input } from "~/components/ui/ui/input";
-import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
+import { Button } from "~/components/ui/ui/button"; // <-- Changed import
 import { useEffect } from "react";
 import Link from "next/link";
+import { Mic } from "lucide-react"; // <-- Added Mic
 
 const formSchema = z.object({
   partyCode: z.string().min(4),
@@ -136,12 +137,21 @@ export default function JoinScene({
                 )}
               />
 
-              <ButtonHoverGradient
+              {/* --- UPDATED BUTTON --- */}
+              <Button
                 type="submit"
+                className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
+                variant="secondary"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? "Joining..." : "Join Party 🎉"}
-              </ButtonHoverGradient>
+                {form.formState.isSubmitting ? "Joining..." : (
+                  <>
+                    Join Party
+                    <Mic className="ml-3 h-6 w-6 text-cyan-400" />
+                  </>
+                )}
+              </Button>
+              {/* --------------------- */}
             </form>
           </Form>
 
