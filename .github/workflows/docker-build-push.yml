@@ -3,12 +3,13 @@ name: Build and Push to ECR Public
 on:
   pull_request:
     branches: [ "main" ]
-  # Optional: Also trigger on push to main if you want to deploy merges immediately
+    types: [ closed ]
   push:
     branches: [ "main" ]
 
 jobs:
   build-and-push:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
     # Permissions needed to read repo and interact with AWS
@@ -48,7 +49,6 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile default
           aws configure set region us-east-1 --profile default
 
-      # 6. Create .env-build file (Required by your script)
       - name: Create Build Environment Config
         run: |
           mkdir -p docker-builds
@@ -59,9 +59,39 @@ jobs:
           ECR_REPOSITORY=${{ vars.ECR_REPOSITORY }}
           EOF
 
-      # 7. Run Your Build Script
       - name: Build and Push
+        id: build_script
         run: |
           chmod +x docker-builds/docker-build.sh
-          bash docker-builds/docker-build.sh --build-type release --deploy
+          
+          # Capture the output to find the version
+          # We use 'tee' to show output in logs while capturing it
+          OUTPUT=$(bash docker-builds/docker-build.sh --build-type release --deploy | tee /dev/tty)
+          
+          # Extract version from script output (looking for "Release build version: v...")
+          VERSION=$(echo "$OUTPUT" | grep "Release build version:" | awk '{print $4}')
+          
+          # Export variables for the summary step
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "REGISTRY=${{ vars.ECR_REGISTRY }}" >> $GITHUB_ENV
+          echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
+
+      - name: Generate Build Summary
+        if: success()
+        run: |
+          echo "## 🚀 Build Success!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 ECR Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | Tag | Image URI |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Versioned** | \`app-$VERSION\` | \`$REGISTRY/$REPO:app-$VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Latest** | \`app-latest\` | \`$REGISTRY/$REPO:app-latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View in Amazon ECR Public Gallery](https://gallery.ecr.aws/$(echo $REGISTRY | cut -d'/' -f2)/$REPO)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ℹ️ Build Info" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
 
