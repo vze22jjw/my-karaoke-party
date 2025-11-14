@@ -5,14 +5,14 @@ import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 
-type Props = {
-  themeSuggestions: string[];
-};
-
 type SpotifySong = {
   title: string;
   artist: string;
   coverUrl: string;
+};
+
+type Props = {
+  themeSuggestions: string[];
 };
 
 export function TabHistory({ themeSuggestions }: Props) {
@@ -21,53 +21,17 @@ export function TabHistory({ themeSuggestions }: Props) {
     { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 5 }
   );
 
-  const { data: spotifySongs } = api.spotify.getTopKaraokeSongs.useQuery(
+  const { data: spotifyData } = api.spotify.getTopKaraokeSongs.useQuery(
     undefined,
     { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 }
   );
 
-  // Safe cast to ensure typescript knows this is an array
-  const songs = (spotifySongs ?? []) as SpotifySong[];
+  const spotifySongs = (spotifyData ?? []) as SpotifySong[];
 
   return (
     <div className="space-y-4">
       
-      {/* Trending on Spotify */}
-      {songs.length > 0 && (
-        <div className="bg-card rounded-lg p-4 border border-green-500/20">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
-            <Music2 className="h-5 w-5" />
-            Trending on Spotify
-          </h2>
-          <ul className="space-y-3">
-            {songs.map((song, index) => (
-              <li key={index} className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors">
-                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded">
-                  {song.coverUrl ? (
-                    <Image 
-                      src={song.coverUrl} 
-                      alt={song.title} 
-                      fill 
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-muted flex items-center justify-center text-xs">
-                      {index + 1}
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{song.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Song Suggestions (Theme) */}
+      {/* 1. Song Suggestions (Moved to Top) */}
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
@@ -94,7 +58,42 @@ export function TabHistory({ themeSuggestions }: Props) {
         </div>
       )}
 
-      {/* Top Played (Global) */}
+      {/* 2. Trending on Spotify (Moved Below) */}
+      {spotifySongs.length > 0 && (
+        <div className="bg-card rounded-lg p-4 border border-green-500/20">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
+            <Music2 className="h-5 w-5" />
+            Trending on Spotify
+          </h2>
+          <ul className="space-y-3">
+            {spotifySongs.map((song, index) => (
+              <li key={index} className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors">
+                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded">
+                  {song.coverUrl ? (
+                    <Image 
+                      src={song.coverUrl} 
+                      alt={song.title} 
+                      fill 
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-muted flex items-center justify-center text-xs">
+                      {index + 1}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{song.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 3. Top Played (Global) */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Flame className="h-5 w-5 text-orange-500" />
@@ -131,7 +130,7 @@ export function TabHistory({ themeSuggestions }: Props) {
         )}
       </div>
 
-      {/* Top Singers */}
+      {/* 4. Top Singers */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-500" />

@@ -25,6 +25,9 @@ const config = {
     remotePatterns: [
       {
         hostname: "i.ytimg.com"
+      },
+      {
+        hostname: "i.scdn.co" 
       }
     ]
   }
