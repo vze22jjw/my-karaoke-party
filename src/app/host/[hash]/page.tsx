@@ -2,6 +2,8 @@ import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "party";
 import { HostScene } from "./host-scene"; 
+import { cookies } from "next/headers"; // <-- Import cookies
+import { AdminLogin } from "~/components/admin-login"; // <-- Import Login Component
 
 type Props = {
   params: { hash: string };
@@ -16,7 +18,7 @@ type InitialPartyData = {
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[]; 
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -31,6 +33,15 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function HostPage({ params }: Props) {
+  // --- AUTH CHECK ---
+  const cookieStore = cookies();
+  const isAuthenticated = cookieStore.get("admin_token_verified")?.value === "true";
+
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
+  // ------------------
+
   const partyHash = params.hash;
   const party = await api.party.getByHash({ hash: partyHash });
 
@@ -47,7 +58,7 @@ export default async function HostPage({ params }: Props) {
     currentSongRemainingDuration: null,
     status: "OPEN",
     idleMessages: [],
-    themeSuggestions: [], // <-- ADDED
+    themeSuggestions: [],
   };
 
   try {

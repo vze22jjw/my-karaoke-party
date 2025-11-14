@@ -1,16 +1,15 @@
 "use client";
 
-import type { KaraokeParty } from "party";
 import { Lightbulb, Trophy, Flame, Loader2 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 
 type Props = {
-  playlist: KaraokeParty["playlist"];
+  // Removed playlist prop
   themeSuggestions: string[];
 };
 
-export function TabHistory({ playlist, themeSuggestions }: Props) {
+export function TabHistory({ themeSuggestions }: Props) {
   // Fetch global stats
   const { data: stats, isLoading } = api.playlist.getGlobalStats.useQuery(
     undefined,

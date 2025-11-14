@@ -18,12 +18,12 @@ import {
   Send,
   Plus,
   X,
-  Lightbulb, // <-- ADDED ICON
+  Lightbulb,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
 import { type VideoInPlaylist } from "party";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react"; // Removed useEffect
 import { toast } from "sonner";
 import { decode } from "html-entities";
 import { type IdleMessage } from "@prisma/client";
@@ -48,8 +48,8 @@ type Props = {
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
   onSyncIdleMessages: (messages: string[]) => void;
-  themeSuggestions: string[]; // <-- ADDED
-  onUpdateThemeSuggestions: (suggestions: string[]) => void; // <-- ADDED
+  themeSuggestions: string[];
+  onUpdateThemeSuggestions: (suggestions: string[]) => void;
 };
 
 const ToggleButton = ({
@@ -118,8 +118,8 @@ export function TabSettings({
   onAddIdleMessage,
   onDeleteIdleMessage,
   onSyncIdleMessages,
-  themeSuggestions, // <-- ADDED
-  onUpdateThemeSuggestions, // <-- ADDED
+  themeSuggestions,
+  onUpdateThemeSuggestions,
 }: Props) {
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
@@ -135,9 +135,7 @@ export function TabSettings({
   const [isSyncing, setIsSyncing] = useState(false);
   const messagesRemaining = 20 - hostIdleMessages.length;
 
-  // --- ADDED STATE ---
   const [newSuggestion, setNewSuggestion] = useState("");
-  // -------------------
 
   const handleAddMessage = () => {
     if (!newMessage.trim() || !hostName) return;
@@ -146,7 +144,7 @@ export function TabSettings({
       return;
     }
     onAddIdleMessage({ hostName, message: newMessage });
-    setNewMessage(""); // Clear input
+    setNewMessage(""); 
   };
 
   const handleDeleteMessage = (id: number) => {
@@ -165,7 +163,6 @@ export function TabSettings({
     setTimeout(() => setIsSyncing(false), 1000);
   };
 
-  // --- ADDED HANDLERS ---
   const handleAddSuggestion = () => {
     if (!newSuggestion.trim()) return;
     const updated = [...themeSuggestions, newSuggestion.trim()];
@@ -177,7 +174,6 @@ export function TabSettings({
     const updated = themeSuggestions.filter((_, i) => i !== index);
     onUpdateThemeSuggestions(updated);
   };
-  // -----------------------
 
   const parseSongInfo = (title: string, singer: string) => {
     if (!title) {
@@ -286,7 +282,7 @@ export function TabSettings({
         </div>
       )}
 
-      {/* --- NEW SECTION: Party Theme / Song Suggestions --- */}
+      {/* --- Party Theme / Song Suggestions --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-yellow-500" />
@@ -342,7 +338,6 @@ export function TabSettings({
           )}
         </div>
       </div>
-      {/* --- END NEW SECTION --- */}
       
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
