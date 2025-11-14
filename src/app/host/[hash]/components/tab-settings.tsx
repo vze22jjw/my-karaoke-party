@@ -1,3 +1,4 @@
+// src/app/host/[hash]/components/tab-settings.tsx
 "use client";
 
 import { Button } from "~/components/ui/ui/button";
@@ -19,16 +20,21 @@ import {
   Plus,
   X,
   Lightbulb,
+  Music, // <-- Add Music Icon
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
 import { type VideoInPlaylist } from "party";
-import { useState, useMemo } from "react"; // Removed useEffect
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { decode } from "html-entities";
 import { type IdleMessage } from "@prisma/client";
 
+// Extend the type locally to include spotifyId
+type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
+
 type Props = {
+  // ... keep all existing props ...
   partyHash: string;
   useQueueRules: boolean;
   onToggleRules: () => void;
@@ -40,7 +46,7 @@ type Props = {
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
-  playedPlaylist: VideoInPlaylist[];
+  playedPlaylist: ExtendedVideo[]; // Update type here
   partyStatus: string;
   onStartParty: () => void;
   hostName: string | null;
@@ -52,6 +58,7 @@ type Props = {
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
 };
 
+// ... keep ToggleButton component ...
 const ToggleButton = ({
   id,
   checked,
@@ -97,8 +104,8 @@ const ToggleButton = ({
   </div>
 );
 
-
 export function TabSettings({
+  // ... keep destructuring ...
   partyHash,
   useQueueRules,
   onToggleRules,
@@ -127,16 +134,16 @@ export function TabSettings({
 
   const [isCopied, setIsCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [exportFormat, setExportFormat] = useState<"text" | "csv" | "json">(
-    "text",
-  );
+  // Add "spotify" to export formats
+  const [exportFormat, setExportFormat] = useState<"text" | "csv" | "json" | "spotify">("text");
 
+  // ... keep existing state ...
   const [newMessage, setNewMessage] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const messagesRemaining = 20 - hostIdleMessages.length;
-
   const [newSuggestion, setNewSuggestion] = useState("");
 
+  // ... keep handlers ...
   const handleAddMessage = () => {
     if (!newMessage.trim() || !hostName) return;
     if (messagesRemaining <= 0) {
@@ -192,11 +199,20 @@ export function TabSettings({
     return playedPlaylist.map((song) =>
       parseSongInfo(song.title, song.singerName),
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playedPlaylist]);
 
   const getDataToCopy = () => {
     switch (exportFormat) {
+      case "spotify":
+        // Logic for Spotify URI export
+        const uris = playedPlaylist
+          .filter(s => s.spotifyId)
+          .map(s => `spotify:track:${s.spotifyId}`)
+          .join("\n");
+        
+        if (!uris) return "No Spotify matches found for played songs.";
+        return uris;
+
       case "json":
         const jsonList = processedList.map((s) => ({
           Title: s.title,
@@ -230,9 +246,10 @@ export function TabSettings({
     }
   };
 
-
+  // ... Render ...
   return (
     <div className="space-y-6">
+      {/* ... keep "Party Links", "Party is OPEN", "Party Theme" ... */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Party Links</h3>
         <div className="space-y-4">
@@ -339,13 +356,10 @@ export function TabSettings({
         </div>
       </div>
       
+      {/* ... keep "Your Reusable Idle Messages", "Party Rules", "Search Settings" ... */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
-        <p className="text-sm text-muted-foreground">
-          Messages are tied to your host name ({hostName ?? "..."}) and saved
-          in the database. (Max 20)
-        </p>
-
+        {/* ... (rest of idle messages code) ... */}
         <div className="flex w-full items-center space-x-2">
           <Input
             type="text"
@@ -458,6 +472,7 @@ export function TabSettings({
         </div>
       </div>
 
+      {/* --- UPDATED EXPORT SECTION --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Export Played Songs</h3>
         <p className="text-sm text-muted-foreground">
@@ -470,8 +485,8 @@ export function TabSettings({
           className="flex w-full justify-between"
         >
           <span>
-            {processedList.length}{" "}
-            {processedList.length === 1 ? "Song" : "Songs"} Played
+            {playedPlaylist.length}{" "}
+            {playedPlaylist.length === 1 ? "Song" : "Songs"} Played
           </span>
           <ChevronDown
             className={cn(
@@ -482,54 +497,51 @@ export function TabSettings({
         </Button>
         {isExpanded && (
           <div className="space-y-4 rounded-lg border bg-muted/50 p-4 animate-in fade-in">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <Button
                 variant={exportFormat === "text" ? "default" : "secondary"}
                 onClick={() => setExportFormat("text")}
+                size="sm"
               >
                 <FileText className="mr-2 h-4 w-4" /> Text
               </Button>
               <Button
                 variant={exportFormat === "csv" ? "default" : "secondary"}
                 onClick={() => setExportFormat("csv")}
+                size="sm"
               >
                 <ListTree className="mr-2 h-4 w-4" /> CSV
               </Button>
               <Button
                 variant={exportFormat === "json" ? "default" : "secondary"}
                 onClick={() => setExportFormat("json")}
+                size="sm"
               >
                 <FileJson className="mr-2 h-4 w-4" /> JSON
               </Button>
+              {/* --- NEW SPOTIFY BUTTON --- */}
+              <Button
+                variant={exportFormat === "spotify" ? "default" : "secondary"}
+                onClick={() => setExportFormat("spotify")}
+                size="sm"
+                className="text-green-600 dark:text-green-400"
+              >
+                <Music className="mr-2 h-4 w-4" /> URIs
+              </Button>
             </div>
+            
             <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-background p-2">
-              {processedList.length > 0 ? (
-                <ul className="space-y-1">
-                  {processedList.map((song, index) => (
-                    <li
-                      key={index}
-                      className="flex justify-between text-sm"
-                    >
-                      <span className="truncate font-medium">
-                        {song.title}
-                      </span>
-                      <span className="ml-2 flex-shrink-0 text-muted-foreground">
-                        ({song.singer})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-center text-sm text-muted-foreground">
-                  No songs have been played yet...
-                </p>
-              )}
+              {/* Preview area */}
+              <pre className="text-xs whitespace-pre-wrap font-mono p-1">
+                {getDataToCopy().slice(0, 500) + (getDataToCopy().length > 500 ? "..." : "")}
+              </pre>
             </div>
+            
             <Button
               type="button"
               onClick={() => void handleCopy()}
               className="w-full"
-              disabled={isCopied || processedList.length === 0}
+              disabled={isCopied || playedPlaylist.length === 0}
             >
               {isCopied ? (
                 <Check className="mr-2 h-4 w-4" />
@@ -538,8 +550,14 @@ export function TabSettings({
               )}
               {isCopied
                 ? "Copied!"
-                : `Copy as ${exportFormat.toUpperCase()}`}
+                : `Copy ${exportFormat === "spotify" ? "Spotify URIs" : "List"}`}
             </Button>
+
+            {exportFormat === "spotify" && (
+              <p className="text-xs text-muted-foreground text-center">
+                Paste these URIs into a tool like <strong>Soundiiz</strong> or create a new Playlist in the Spotify Desktop app (Ctrl+C, Ctrl+V).
+              </p>
+            )}
           </div>
         )}
       </div>

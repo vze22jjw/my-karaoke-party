@@ -73,6 +73,7 @@ model PlaylistItem {
     playedAt   DateTime?
     orderIndex Int       @default(0)
     randomBreaker Float?
+    spotifyId  String?   // Optional field to store the matched Spotify Track ID
     @@index([partyId])
     @@index([playedAt])
 }

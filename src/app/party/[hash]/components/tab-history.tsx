@@ -1,27 +1,73 @@
 "use client";
 
-import { Lightbulb, Trophy, Flame, Loader2 } from "lucide-react";
+import { Lightbulb, Trophy, Flame, Loader2, Music2 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
+import Image from "next/image";
 
 type Props = {
-  // Removed playlist prop
   themeSuggestions: string[];
 };
 
+type SpotifySong = {
+  title: string;
+  artist: string;
+  coverUrl: string;
+};
+
 export function TabHistory({ themeSuggestions }: Props) {
-  // Fetch global stats
-  const { data: stats, isLoading } = api.playlist.getGlobalStats.useQuery(
+  const { data: stats, isLoading: isLoadingStats } = api.playlist.getGlobalStats.useQuery(
     undefined,
-    {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    }
+    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 5 }
   );
+
+  const { data: spotifySongs } = api.spotify.getTopKaraokeSongs.useQuery(
+    undefined,
+    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 }
+  );
+
+  // Safe cast to ensure typescript knows this is an array
+  const songs = (spotifySongs ?? []) as SpotifySong[];
 
   return (
     <div className="space-y-4">
-      {/* --- Song Suggestions (Theme) --- */}
+      
+      {/* Trending on Spotify */}
+      {songs.length > 0 && (
+        <div className="bg-card rounded-lg p-4 border border-green-500/20">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
+            <Music2 className="h-5 w-5" />
+            Trending on Spotify
+          </h2>
+          <ul className="space-y-3">
+            {songs.map((song, index) => (
+              <li key={index} className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors">
+                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded">
+                  {song.coverUrl ? (
+                    <Image 
+                      src={song.coverUrl} 
+                      alt={song.title} 
+                      fill 
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-muted flex items-center justify-center text-xs">
+                      {index + 1}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{song.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Song Suggestions (Theme) */}
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
@@ -48,14 +94,14 @@ export function TabHistory({ themeSuggestions }: Props) {
         </div>
       )}
 
-      {/* --- Top Played (Global) --- */}
+      {/* Top Played (Global) */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Flame className="h-5 w-5 text-orange-500" />
           Top Played (All Time)
         </h2>
         
-        {isLoading ? (
+        {isLoadingStats ? (
           <div className="flex justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
@@ -85,14 +131,14 @@ export function TabHistory({ themeSuggestions }: Props) {
         )}
       </div>
 
-      {/* --- Singer History (Global Top Singers) --- */}
+      {/* Top Singers */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-500" />
           Top Singers (All Time)
         </h2>
 
-        {isLoading ? (
+        {isLoadingStats ? (
           <div className="flex justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
