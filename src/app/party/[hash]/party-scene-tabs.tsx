@@ -5,7 +5,7 @@ import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { readLocalStorageValue, useLocalStorage, useViewportSize } from "@mantine/hooks";
-import { Monitor, Music, Users, Lightbulb, Plus } from "lucide-react"; // <-- Changed History to Lightbulb
+import { Monitor, Music, Users, Lightbulb, Plus } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlayer } from "./components/tab-player";
@@ -177,12 +177,10 @@ export function PartySceneTabs({
             </span>
             <span className="hidden sm:inline">Add</span>
           </TabsTrigger>
-          {/* --- UPDATED TAB: HISTORY -> SUGGESTIONS --- */}
           <TabsTrigger value="history" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-yellow-500" /> {/* Updated Icon and added color */}
-            <span className="hidden sm:inline">Suggestions</span> {/* Updated Label */}
+            <Lightbulb className="h-4 w-4 text-yellow-500" />
+            <span className="hidden sm:inline">Suggestions</span>
           </TabsTrigger>
-          {/* --- END UPDATED TAB --- */}
           <TabsTrigger value="singers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Singers</span>
@@ -228,7 +226,7 @@ export function PartySceneTabs({
           className="flex-1 overflow-y-auto mt-0"
         >
           <TabHistory 
-            playlist={playedPlaylist} 
+            // Removed playlist={playedPlaylist}
             themeSuggestions={themeSuggestions}
           />
         </TabsContent>
