@@ -1,0 +1,67 @@
+name: Build and Push to ECR Public
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  # Optional: Also trigger on push to main if you want to deploy merges immediately
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    # Permissions needed to read repo and interact with AWS
+    permissions:
+      contents: read
+      id-token: write 
+
+    steps:
+      # 1. Checkout Code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for git rev-parse in your script
+
+      # 2. Set up QEMU (Required for multi-arch builds: linux/arm64,linux/amd64)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # 3. Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=moby/buildkit:latest
+
+      # 4. Configure AWS Credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # ECR Public requires us-east-1
+
+      # 5. Configure Dummy AWS Profile (Required because your script uses --profile)
+      - name: Setup AWS Profile for Script
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} --profile default
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile default
+          aws configure set region us-east-1 --profile default
+
+      # 6. Create .env-build file (Required by your script)
+      - name: Create Build Environment Config
+        run: |
+          mkdir -p docker-builds
+          cat <<EOF > docker-builds/.env-build
+          AWS_PROFILE=default
+          AWS_REGION=us-east-1
+          ECR_REGISTRY=${{ vars.ECR_REGISTRY }}
+          ECR_REPOSITORY=${{ vars.ECR_REPOSITORY }}
+          EOF
+
+      # 7. Run Your Build Script
+      - name: Build and Push
+        run: |
+          chmod +x docker-builds/docker-build.sh
+          bash docker-builds/docker-build.sh --build-type release --deploy
+
