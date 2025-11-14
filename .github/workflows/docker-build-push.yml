@@ -6,6 +6,9 @@ on:
     types: [ closed ]
   push:
     branches: [ "main" ]
+  workflow_dispatch:
+  schedule:
+    - cron: '12 9 3 * *' ## Monthly run at 9:12 AM UTC
 
 jobs:
   build-and-push:
