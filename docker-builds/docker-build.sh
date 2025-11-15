@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Help message
 show_help() {
     echo "Usage: $0 --build-type <type> [--deploy]"
@@ -51,23 +53,40 @@ else
     echo "Development build version: $VERSION"
 fi
 
-# --- ENV management: load values from docker-builds/.env-build but only place .env
-#     into the project for local dev builds. Ensure .env is NOT present in deploy builds.
+echo "Build type: $BUILD_TYPE"
+echo "Build version: $VERSION"
+
+# --- ENV management: load values from docker-builds/.env-build for deploy builds
+#     For dev builds, .env-build is optional and .env is used directly if it exists
 ENV_BUILD_FILE="./docker-builds/.env-build"
 PROJECT_ENV="./.env"
 CREATED_ENV_COPY=false
 BAKED_ENV=false
 
-if [ ! -f "$ENV_BUILD_FILE" ]; then
-    echo "Error: env build file not found: $ENV_BUILD_FILE"
-    exit 1
+# Only require .env-build for deploy builds
+if [ "$DEPLOY" == "deploy" ]; then
+    if [ ! -f "$ENV_BUILD_FILE" ]; then
+        echo "Error: $ENV_BUILD_FILE is required for deploy builds"
+        exit 1
+    fi
+    
+    # Export variables from ENV_BUILD_FILE into current shell for script use
+    set -o allexport
+    # shellcheck disable=SC1090
+    source "$ENV_BUILD_FILE"
+    set +o allexport
+else
+    # For dev builds, only load .env-build if it exists
+    if [ -f "$ENV_BUILD_FILE" ]; then
+        echo "Loading environment from $ENV_BUILD_FILE..."
+        set -o allexport
+        # shellcheck disable=SC1090
+        source "$ENV_BUILD_FILE"
+        set +o allexport
+    else
+        echo "Note: $ENV_BUILD_FILE not found, using existing .env if available"
+    fi
 fi
-
-# Export variables from ENV_BUILD_FILE into current shell for script use
-set -o allexport
-# shellcheck disable=SC1090
-source "$ENV_BUILD_FILE"
-set +o allexport
 
 # Ensure we clean up/restore .env on exit
 cleanup_env() {
@@ -113,7 +132,7 @@ BUILD_CMD="docker buildx build \
 if [ "$DEPLOY" == "deploy" ]; then
     echo "Preparing for deployment to ECR..."
 
-    # Ensure .env is NOT in project root when building for deploy.
+    # Ensure .env is NOT in project root when building for deploy
     if [ -f "$PROJECT_ENV" ]; then
         echo "Backing up existing $PROJECT_ENV to ${PROJECT_ENV}.bak"
         mv -f "$PROJECT_ENV" "${PROJECT_ENV}.bak"
@@ -123,43 +142,47 @@ if [ "$DEPLOY" == "deploy" ]; then
     # Login to AWS ECR
     aws ecr-public get-login-password --region $AWS_REGION --profile ${AWS_PROFILE} | \
         docker login --username AWS --password-stdin ${ECR_REGISTRY}
-    
+
     # Build and push to ECR
     $BUILD_CMD \
         --platform ${PLATFORMS} \
         --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG0} \
         --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG1} \
         --push .
-    
+
     echo "Successfully pushed images to ECR:"
     echo "- ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG0}"
     echo "- ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG1}"
 else
     echo "Building for local development..."
 
-    # For local builds, create project .env from the build env file so local image/run uses it.
+    # For local builds, use existing .env if available
     if [ -f "$PROJECT_ENV" ]; then
-        echo "$PROJECT_ENV already exists, leaving it in place for local build."
+        echo "Using existing $PROJECT_ENV for local build"
     else
-        echo "Creating project $PROJECT_ENV from $ENV_BUILD_FILE"
-        cp "$ENV_BUILD_FILE" "$PROJECT_ENV"
-        CREATED_ENV_COPY=true
+        echo "Warning: No $PROJECT_ENV found, build will use Dockerfile defaults"
     fi
 
     # Build and load locally
     $BUILD_CMD \
         --platform linux/arm64 \
         --tag ${LOCAL_IMAGE_NAME}:${TAG0} \
+        --tag ${LOCAL_IMAGE_NAME}:${TAG1} \
         --load .
-    
+
     echo "Successfully built local images:"
     echo "- ${LOCAL_IMAGE_NAME}:${TAG0}"
+    echo "- ${LOCAL_IMAGE_NAME}:${TAG1}"
 fi
 
-# Clean up builder only if we created it in this run
-if [ "$BUILDER_CREATED" = true ]; then
-    docker buildx rm "${BUILDER_NAME}"
+if [[ -n "${GITHUB_ACTIONS}" ]]; then
+    echo "Running in GitHub runner environment. No Cleanup required."
+    exit 0
+else # Clean up builder only if we created it in this run
+    echo "Cleaning up build cache..."
+    if [ "$BUILDER_CREATED" = true ]; then
+        docker buildx rm "${BUILDER_NAME}"
+    fi
+    docker builder prune --filter until=24h --force
+    echo "Build cache cleaned up successfully"
 fi
-
-docker builder prune --filter until=24h --force
-echo "Build cache cleaned up successfully"
