@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: '12 9 3 * *' ## Monthly run at 9:12 AM UTC
 
+env:
+  VERSION: "v0.0.2"  
+
 jobs:
   build-and-push:
     if: >
@@ -69,11 +72,8 @@ jobs:
           # We use 'tee' to show output in logs while capturing it
           OUTPUT=$(bash docker-builds/docker-build.sh --build-type release --deploy | tee /dev/tty)
           
-          # Extract version from script output (looking for "Release build version: v...")
-          VERSION=$(echo "$OUTPUT" | grep "Release build version:" | awk '{print $4}')
-          
           # Export variables for the summary step
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=${{ env.VERSION }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "REGISTRY=${{ vars.ECR_REGISTRY }}" >> $GITHUB_ENV
           echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
 

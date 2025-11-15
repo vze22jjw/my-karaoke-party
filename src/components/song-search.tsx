@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { useState } from "react";
-import { api, type RouterOutputs } from "~/trpc/react"; 
+import { useState, useEffect } from "react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
 import type { KaraokeParty } from "party";
 import { PreviewPlayer } from "./preview-player";
@@ -15,23 +15,38 @@ import { Button } from "./ui/ui/button";
 import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
 import { useLocalStorage } from "@mantine/hooks";
-import { cn } from "~/lib/utils"; 
+import { cn } from "~/lib/utils";
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
   playlist: KaraokeParty["playlist"];
   name: string; // <-- Know who the current user is
+  initialSearchQuery?: string;
+  onSearchQueryConsumed?: () => void;
 };
 
 type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 
-export function SongSearch({ onVideoAdded, playlist, name }: Props) { 
-  const [videoInputValue, setVideoInputValue] = useState("");
-  const [canFetch, setCanFetch] = useState(false);
-  
-  const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>([]);
+export function SongSearch({
+  onVideoAdded,
+  playlist,
+  name,
+  initialSearchQuery,
+  onSearchQueryConsumed,
+}: Props) {
+  // --- REVISED STATE ---
+  const [videoInputValue, setVideoInputValue] = useState(initialSearchQuery ?? "");
+  const [canFetch, setCanFetch] = useState((initialSearchQuery ?? "").length >= 3);
+  const [isSearchingFromSuggestion, setIsSearchingFromSuggestion] = useState(
+    !!initialSearchQuery,
+  );
+  // --- END REVISED STATE ---
+
+  const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>(
+    [],
+  );
   const [fadingOutVideoIds, setFadingOutVideoIds] = useState<string[]>([]);
 
   const [maxSearchResults] = useLocalStorage<number>({
@@ -39,21 +54,54 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
     defaultValue: 10,
   });
 
-  const { data: rawData, isError, refetch, isLoading, isFetched } =
-    api.youtube.search.useQuery(
-      {
-        keyword: `${videoInputValue} karaoke`,
-        maxResults: maxSearchResults, 
-      },
-      { refetchOnWindowFocus: false, enabled: false, retry: false },
-    );
-  
+  const {
+    data: rawData,
+    isError,
+    refetch,
+    isLoading,
+    isFetched,
+  } = api.youtube.search.useQuery(
+    {
+      keyword: `${videoInputValue} karaoke`,
+      maxResults: maxSearchResults,
+    },
+    { refetchOnWindowFocus: false, enabled: false, retry: false },
+  );
+
   const data = rawData as YoutubeSearchItem[] | undefined;
+
+  // --- NEW EFFECT 1 (React to prop) ---
+  useEffect(() => {
+    if (initialSearchQuery) {
+      setVideoInputValue(initialSearchQuery);
+      setCanFetch(true); // Allow the search
+      setIsSearchingFromSuggestion(true); // Set flag to trigger search
+    }
+  }, [initialSearchQuery]);
+  // --- END NEW EFFECT 1 ---
+
+  // --- NEW EFFECT 2 (React to flag) ---
+  useEffect(() => {
+    if (isSearchingFromSuggestion) {
+      void (async () => {
+        setRecentlyAddedVideoIds([]);
+        setFadingOutVideoIds([]);
+        await refetch();
+        setCanFetch(false); // Disable button after search
+        setIsSearchingFromSuggestion(false); // Reset flag
+        onSearchQueryConsumed?.();
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSearchingFromSuggestion, refetch]); // 'onSearchQueryConsumed' is stable
+  // --- END NEW EFFECT 2 ---
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
+        setIsSearchingFromSuggestion(false); // It's a manual search
+        onSearchQueryConsumed?.();
         setRecentlyAddedVideoIds([]);
         setFadingOutVideoIds([]);
         await refetch();
@@ -69,6 +117,10 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
             className="w-full pr-10"
             value={videoInputValue}
             onChange={(e) => {
+              // --- UPDATE HANDLER ---
+              setIsSearchingFromSuggestion(false);
+              onSearchQueryConsumed?.();
+              // --- END UPDATE ---
               setVideoInputValue(e.target.value);
               setCanFetch(e.target.value.length >= 3);
             }}
@@ -82,6 +134,10 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
               type="button"
               aria-label="Clear search"
               onClick={() => {
+                // --- UPDATE HANDLER ---
+                setIsSearchingFromSuggestion(false);
+                onSearchQueryConsumed?.();
+                // --- END UPDATE ---
                 setVideoInputValue("");
                 setCanFetch(false);
               }}
@@ -136,79 +192,90 @@ export function SongSearch({ onVideoAdded, playlist, name }: Props) {
         <div className="my-5 flex flex-col space-y-5 overflow-hidden">
           {data
             .filter((video) => {
-              const isRecentlyAdded = recentlyAddedVideoIds.includes(video.id.videoId);
+              const isRecentlyAdded = recentlyAddedVideoIds.includes(
+                video.id.videoId,
+              );
               return !isRecentlyAdded;
             })
             .map((video) => {
-            
-            const alreadyInQueue = !!playlist.find(
-              (v) =>
-                v.id === video.id.videoId &&
-                !v.playedAt &&
-                v.singerName === name,
-            );
-            
-            const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
+              const alreadyInQueue = !!playlist.find(
+                (v) =>
+                  v.id === video.id.videoId &&
+                  !v.playedAt &&
+                  v.singerName === name,
+              );
 
-            const title = decode(removeBracketedContent(video.snippet.title));
+              const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
-            return (
-              <div
-                key={video.id.videoId}
-                className={cn(
-                  "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50",
-                  isFadingOut && "animate-fade-out-slow"
-                )}
-              >
-                <PreviewPlayer
+              const title = decode(removeBracketedContent(video.snippet.title));
+
+              return (
+                <div
                   key={video.id.videoId}
-                  videoId={video.id.videoId}
-                  title={title}
-                  thumbnail={video.snippet.thumbnails.high.url}
-                />
-                <div className="absolute inset-0 z-10 rounded-lg bg-black opacity-50" />
+                  className={cn(
+                    "relative h-48 overflow-hidden rounded-lg animate-in fade-in border border-white/50",
+                    isFadingOut && "animate-fade-out-slow",
+                  )}
+                >
+                  <PreviewPlayer
+                    key={video.id.videoId}
+                    videoId={video.id.videoId}
+                    title={title}
+                    thumbnail={video.snippet.thumbnails.high.url}
+                  />
+                  <div className="absolute inset-0 z-10 rounded-lg bg-black opacity-50" />
 
-                <div className="absolute top-0 z-30 w-full rounded-lg opacity-100">
-                  <p className="bg-black bg-opacity-70 p-3 text-xl font-bold text-white">
-                    {title}
-                  </p>
-                </div>
-
-                <div className="absolute bottom-3 right-3 z-30 opacity-100 w-full flex justify-between">
-                  <div>
-                    <p className="bg-black bg-opacity-70 p-2 pl-5 text-sm text-white">
-                      {video.snippet.channelTitle}
+                  <div className="absolute top-0 z-30 w-full rounded-lg opacity-100">
+                    <p className="bg-black bg-opacity-70 p-3 text-xl font-bold text-white">
+                      {title}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant={"default"}
-                    size="icon"
-                    className="shadow-xl animate-in spin-in"
-                    disabled={alreadyInQueue || isFadingOut}
-                    onClick={() => {
-                      // --- THIS IS THE FIX ---
-                      // We no longer pass duration, as the server will fetch it.
-                      onVideoAdded(
-                        video.id.videoId,
-                        removeBracketedContent(video.snippet.title),
-                        video.snippet.thumbnails.high.url,
-                      );
-                      // --- END THE FIX ---
 
-                      setFadingOutVideoIds((prev) => [...prev, video.id.videoId]);
-                      
-                      setTimeout(() => {
-                        setRecentlyAddedVideoIds((prev) => [...prev, video.id.videoId]);
-                      }, 500); 
-                    }}
-                  >
-                    {alreadyInQueue || isFadingOut ? <Check stroke="pink" /> : <Plus />}
-                  </Button>
+                  <div className="absolute bottom-3 right-3 z-30 opacity-100 w-full flex justify-between">
+                    <div>
+                      <p className="bg-black bg-opacity-70 p-2 pl-5 text-sm text-white">
+                        {video.snippet.channelTitle}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={"default"}
+                      size="icon"
+                      className="shadow-xl animate-in spin-in"
+                      disabled={alreadyInQueue || isFadingOut}
+                      onClick={() => {
+                        // --- THIS IS THE FIX ---
+                        // We no longer pass duration, as the server will fetch it.
+                        onVideoAdded(
+                          video.id.videoId,
+                          removeBracketedContent(video.snippet.title),
+                          video.snippet.thumbnails.high.url,
+                        );
+                        // --- END THE FIX ---
+
+                        setFadingOutVideoIds((prev) => [
+                          ...prev,
+                          video.id.videoId,
+                        ]);
+
+                        setTimeout(() => {
+                          setRecentlyAddedVideoIds((prev) => [
+                            ...prev,
+                            video.id.videoId,
+                          ]);
+                        }, 500);
+                      }}
+                    >
+                      {alreadyInQueue || isFadingOut ? (
+                        <Check stroke="pink" />
+                      ) : (
+                        <Plus />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
     </form>

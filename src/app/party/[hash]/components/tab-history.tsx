@@ -1,9 +1,18 @@
 "use client";
 
-import { Lightbulb, Trophy, Flame, Loader2, Music2, Music } from "lucide-react"; // 1. Import Music icon
+import {
+  Lightbulb,
+  Trophy,
+  Flame,
+  Loader2,
+  Music2,
+  Music,
+  Plus,
+} from "lucide-react"; // 1. Import Music and Plus icons
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
+import { Button } from "~/components/ui/ui/button";
 
 type SpotifySong = {
   title: string;
@@ -14,24 +23,33 @@ type SpotifySong = {
 type Props = {
   themeSuggestions: string[];
   spotifyPlaylistId?: string | null;
+  // --- ADD THIS ---
+  onSuggestionClick: (title: string, artist: string) => void;
+  // --- END ADD ---
 };
 
-export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
-  const { data: stats, isLoading: isLoadingStats } = api.playlist.getGlobalStats.useQuery(
-    undefined,
-    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 5 }
-  );
+export function TabHistory({
+  themeSuggestions,
+  spotifyPlaylistId,
+  // --- ADD THIS ---
+  onSuggestionClick,
+  // --- END ADD ---
+}: Props) {
+  const { data: stats, isLoading: isLoadingStats } =
+    api.playlist.getGlobalStats.useQuery(undefined, {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5,
+    });
 
   const { data: spotifyData } = api.spotify.getTopKaraokeSongs.useQuery(
     { playlistId: spotifyPlaylistId }, // Pass the ID
-    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 } // Cache for 1 hour
+    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 }, // Cache for 1 hour
   );
 
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
 
   return (
     <div className="space-y-4">
-      
       {/* 1. Song Suggestions (User Defined) */}
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
@@ -68,27 +86,49 @@ export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
           </h2>
           <ul className="space-y-1">
             {spotifySongs.map((song, index) => (
-              <li key={index} className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors">
-                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md">
-                  {song.coverUrl ? (
-                    <Image 
-                      src={song.coverUrl} 
-                      alt={song.title} 
-                      fill 
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-muted flex items-center justify-center text-xs">
-                      {index + 1}
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{song.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
-                </div>
+              // --- MAKE CLICKABLE ---
+              <li
+                key={index}
+                className="flex items-center gap-3 pr-2 rounded hover:bg-muted transition-colors"
+              >
+                <button
+                  type="button"
+                  className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
+                  onClick={() => onSuggestionClick(decode(song.title), song.artist)}
+                >
+                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md">
+                    {song.coverUrl ? (
+                      <Image
+                        src={song.coverUrl}
+                        alt={song.title}
+                        fill
+                        className="object-cover"
+                        sizes="40px"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-muted flex items-center justify-center text-xs">
+                        {index + 1}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{decode(song.title)}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {song.artist}
+                    </p>
+                  </div>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  aria-label={`Search for ${song.title}`}
+                  onClick={() => onSuggestionClick(decode(song.title), song.artist)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </li>
+              // --- END CLICKABLE ---
             ))}
           </ul>
         </div>
@@ -100,7 +140,7 @@ export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
           <Flame className="h-5 w-5 text-orange-500" />
           Top Played (All Time)
         </h2>
-        
+
         {isLoadingStats ? (
           <div className="flex justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -108,30 +148,53 @@ export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
         ) : stats?.topSongs && stats.topSongs.length > 0 ? (
           <ul className="space-y-1">
             {stats.topSongs.map((song, index) => (
+              // --- MAKE CLICKABLE ---
               <li
                 key={song.id}
-                className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors"
+                className="flex items-center gap-3 pr-2 rounded hover:bg-muted transition-colors"
               >
-                <div className="relative h-8 w-8 rounded-md bg-orange-500 text-white flex items-center justify-center font-semibold text-sm overflow-hidden">
-                  {song.coverUrl ? (
-                     <Image 
-                      src={song.coverUrl} 
-                      alt={song.title} 
-                      fill 
-                      className="object-cover"
-                      sizes="32px"
-                    />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{decode(song.title)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Played {song.count} time{song.count !== 1 ? "s" : ""}
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
+                  onClick={() =>
+                    onSuggestionClick(decode(song.title), song.artist ?? "")
+                  }
+                >
+                  <div className="relative h-8 w-8 rounded-md bg-orange-500 text-white flex items-center justify-center font-semibold text-sm overflow-hidden">
+                    {song.coverUrl ? (
+                      <Image
+                        src={song.coverUrl}
+                        alt={song.title}
+                        fill
+                        className="object-cover"
+                        sizes="32px"
+                      />
+                    ) : (
+                      <span>{index + 1}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {decode(song.title)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Played {song.count} time{song.count !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  aria-label={`Search for ${song.title}`}
+                  onClick={() =>
+                    onSuggestionClick(decode(song.title), song.artist ?? "")
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </li>
+              // --- END CLICKABLE ---
             ))}
           </ul>
         ) : (
@@ -154,7 +217,7 @@ export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
           </div>
         ) : stats?.topSingers && stats.topSingers.length > 0 ? (
           // --- 2. REMOVED space-y-1 FOR TIGHTER SPACING ---
-          <ul className=""> 
+          <ul className="">
             {stats.topSingers.map((singer, index) => (
               <li
                 key={singer.name}
@@ -164,7 +227,7 @@ export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-500 text-black flex items-center justify-center font-semibold text-sm">
                   {index + 1}
                 </div>
-                
+
                 {/* --- 4. NEW FLEX LAYOUT FOR NAME + COUNT --- */}
                 <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
                   <p className="font-medium text-sm truncate">{singer.name}</p>
