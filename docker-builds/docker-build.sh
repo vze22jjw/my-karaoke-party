@@ -44,9 +44,13 @@ fi
 
 # Version configuration
 if [ "$BUILD_TYPE" == "release" ]; then
-    VERSION="0.0.1-BETA"
+    export VERSION="v0.0.1-$(git rev-parse --short HEAD)"
+    export ECR_BUILD="true"
+    echo "Release build version: $VERSION"
 else
-    VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
+    export VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
+    export ECR_BUILD="false"
+    echo "Development build version: $VERSION"
 fi
 
 echo "Build type: $BUILD_TYPE"
@@ -98,10 +102,10 @@ cleanup_env() {
 trap cleanup_env EXIT
 
 # AWS Configuration
-AWS_PROFILE="vze22jjw"
-AWS_REGION="us-east-1"
-ECR_REGISTRY="public.ecr.aws"
-ECR_REPOSITORY="vze22jjw/my-karaoke-party"
+AWS_PROFILE="$AWS_PROFILE"
+AWS_REGION="$AWS_REGION"
+ECR_REGISTRY="$ECR_REGISTRY"
+ECR_REPOSITORY="$ECR_REPOSITORY"
 LOCAL_IMAGE_NAME="my-karaoke-party"
 TAG0="app-latest"
 TAG1="app-${VERSION}"
@@ -121,6 +125,7 @@ docker buildx use "${BUILDER_NAME}"
 
 # Build command base
 BUILD_CMD="docker buildx build \
+    --build-arg ECR_BUILD=${ECR_BUILD} \
     --build-arg VERSION=${VERSION} \
     --target runner"
 
