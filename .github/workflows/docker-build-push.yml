@@ -78,7 +78,7 @@ jobs:
           echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
 
       - name: Generate Build Summary
-        if: success()
+        if: always()
         run: |
           echo "## 🚀 Build Success!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
