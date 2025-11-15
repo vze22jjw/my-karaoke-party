@@ -1,7 +1,8 @@
-import axios from "axios";
+/* eslint-disable */
+import axios, { AxiosError } from "axios";
 import { env } from "~/env";
 import { cache } from "../cache";
-import { debugLog } from "~/utils/debug-logger"; // For new logging request
+import { debugLog } from "~/utils/debug-logger";
 
 // Internal Spotify API types
 type SpotifyTokenResponse = {
@@ -34,6 +35,7 @@ export type SpotifyRecommendation = {
 };
 
 const LOG_TAG = "[SpotifyService]";
+const DEFAULT_KARAOKE_PLAYLIST_ID = "1NXdf9sRWYkgfuHVU3LKUi"; // Need to use a playlist user other than Spotify to return data
 
 export const spotifyService = {
   async getAccessToken(): Promise<string | null> {
@@ -49,6 +51,7 @@ export const spotifyService = {
         `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
       ).toString("base64");
 
+      // --- FIX: Correct URL ---
       const res = await axios.post<SpotifyTokenResponse>(
         "https://accounts.spotify.com/api/token",
         "grant_type=client_credentials",
@@ -79,6 +82,7 @@ export const spotifyService = {
         .replace(/official video|lyrics|karaoke|instrumental/gi, "")
         .trim();
 
+      // --- FIX: Correct URL ---
       const res = await axios.get<{ tracks: { items: SpotifyTrack[] } }>(
         "https://api.spotify.com/v1/search",
         {
@@ -89,13 +93,11 @@ export const spotifyService = {
 
       const track = res.data.tracks.items[0];
 
-      // --- DEBUG LOGGING ---
       if (track) {
         debugLog(LOG_TAG, `Match found for query: "${cleanQuery}"`, track);
       } else {
         debugLog(LOG_TAG, `No match found for query: "${cleanQuery}"`);
       }
-      // ---------------------
 
       if (!track) return null;
 
@@ -112,11 +114,17 @@ export const spotifyService = {
     }
   },
 
-  async getTopKaraokeTracks(): Promise<SpotifyRecommendation[]> {
+  async getTopKaraokeTracks(playlistId?: string | null): Promise<SpotifyRecommendation[]> {
     const token = await this.getAccessToken();
     if (!token) return [];
 
-    const CACHE_KEY = "spotify:top_karaoke";
+    // --- FIX: Use || (logical OR) instead of ?? (nullish coalescing) ---
+    // This treats an empty string "" as falsy and uses the default ID.
+    const idToUse = playlistId || DEFAULT_KARAOKE_PLAYLIST_ID;
+    // -----------------------------------------------------------------
+    
+    const CACHE_KEY = `spotify:top_tracks:${idToUse}`;
+    
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const cached = await cache.get<SpotifyRecommendation[]>(CACHE_KEY);
     
@@ -125,20 +133,11 @@ export const spotifyService = {
     }
 
     try {
-      const query = "Karaoke Classics"; // Use a reliable query
-      const searchRes = await axios.get<{ playlists: { items: { id: string }[] } }>(
-        "https://api.spotify.com/v1/search",
-        {
-          params: { q: query, type: "playlist", limit: 1 },
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const playlistId = searchRes.data.playlists.items[0]?.id;
-      if (!playlistId) return [];
-
+      debugLog(LOG_TAG, `Fetching tracks from playlist: ${idToUse}`);
+      
+      // --- FIX: Correct URL with ${idToUse} ---
       const tracksRes = await axios.get<{ items: { track: SpotifyTrack }[] }>(
-        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        `https://api.spotify.com/v1/playlists/${idToUse}/tracks`,
         {
           params: { limit: 5 },
           headers: { Authorization: `Bearer ${token}` },
@@ -151,10 +150,19 @@ export const spotifyService = {
         coverUrl: item.track.album.images[0]?.url ?? "",
       }));
 
-      await cache.set(CACHE_KEY, tracks, 60 * 60 * 24);
+      await cache.set(CACHE_KEY, tracks, 60 * 60 * 24); // Cache for 24h
       return tracks;
     } catch (error) {
-      console.error("Spotify Trends Error:", error);
+      if (error instanceof AxiosError) {
+        console.error(`Spotify Trends Error (Playlist ID: ${idToUse}):`, error.response?.data ?? error.message);
+      } else {
+        console.error(`Spotify Trends Error (Playlist ID: ${idToUse}):`, error);
+      }
+
+      if (playlistId && playlistId !== DEFAULT_KARAOKE_PLAYLIST_ID) {
+        debugLog(LOG_TAG, `Custom playlist failed. Falling back to default.`);
+        return this.getTopKaraokeTracks(DEFAULT_KARAOKE_PLAYLIST_ID);
+      }
       return [];
     }
   }

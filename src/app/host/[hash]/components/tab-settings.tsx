@@ -20,6 +20,7 @@ import {
   X,
   Lightbulb,
   Music,
+  Loader2,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
@@ -28,7 +29,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { decode } from "html-entities";
 import { type IdleMessage } from "@prisma/client";
-import { api } from "~/trpc/react"; // Import api
+import { api } from "~/trpc/react";
 
 // Extend the type locally to include spotifyId
 type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
@@ -55,7 +56,7 @@ type Props = {
   onSyncIdleMessages: (messages: string[]) => void;
   themeSuggestions: string[];
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
-  spotifyPlaylistQuery: string; // Add this prop
+  spotifyPlaylistId: string | null;
 };
 
 const ToggleButton = ({
@@ -126,7 +127,7 @@ export function TabSettings({
   onSyncIdleMessages,
   themeSuggestions,
   onUpdateThemeSuggestions,
-  spotifyPlaylistQuery,
+  spotifyPlaylistId,
 }: Props) {
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
@@ -134,7 +135,6 @@ export function TabSettings({
 
   const [isCopied, setIsCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  // --- SIMPLIFIED STATE ---
   const [exportFormat, setExportFormat] = useState<"text" | "spotify">("text");
 
   const [newMessage, setNewMessage] = useState("");
@@ -143,24 +143,24 @@ export function TabSettings({
 
   const [newSuggestion, setNewSuggestion] = useState("");
 
-  const [spotifyQuery, setSpotifyQuery] = useState(spotifyPlaylistQuery);
+  const [spotifyIdInput, setSpotifyIdInput] = useState(spotifyPlaylistId ?? "");
   const [isSavingSpotify, setIsSavingSpotify] = useState(false);
 
-  const updateSpotify = api.party.updateSpotifySettings.useMutation({
-    onSuccess: () => {
+  const updateSpotify = api.party.updateSpotifyPlaylist.useMutation({
+    onSuccess: (data) => {
       setIsSavingSpotify(false);
-      toast.success("Spotify settings updated!");
+      setSpotifyIdInput(data.newId ?? ""); // Update input with cleaned ID from server
+      toast.success("Spotify Playlist updated!");
     },
     onError: () => {
       setIsSavingSpotify(false);
-      toast.error("Failed to update settings");
+      toast.error("Failed to update playlist. Check the ID/URL.");
     }
   });
 
   const handleSaveSpotifySettings = () => {
-    if (!spotifyQuery.trim()) return;
     setIsSavingSpotify(true);
-    updateSpotify.mutate({ hash: partyHash, spotifyPlaylistQuery: spotifyQuery });
+    updateSpotify.mutate({ hash: partyHash, playlistId: spotifyIdInput });
   };
 
   const handleAddMessage = () => {
@@ -221,7 +221,6 @@ export function TabSettings({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playedPlaylist]);
 
-  // --- SIMPLIFIED FUNCTION ---
   const getDataToCopy = () => {
     switch (exportFormat) {
       case "spotify":
@@ -457,34 +456,34 @@ export function TabSettings({
         />
       </div>
 
-      {/* --- SPOTIFY SETTINGS SECTION --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Music className="h-5 w-5 text-green-500" />
           Spotify Integration
         </h3>
         <div className="space-y-2">
-          <Label htmlFor="spotify-query">Trending Playlist Search</Label>
+          <Label htmlFor="spotify-query">Trending Playlist ID</Label>
+          {/* LINTER FIX: Replaced ' with &apos; */}
           <p className="text-sm text-muted-foreground">
-            Search term used to find the playlist for the "Trending on Spotify" suggestions.
+            Override the default &quot;Karaoke Classics&quot; by pasting a Spotify Playlist URL or ID.
           </p>
           <div className="flex gap-2">
             <Input
               id="spotify-query"
-              value={spotifyQuery}
-              onChange={(e) => setSpotifyQuery(e.target.value)}
-              placeholder="e.g. Karaoke Holiday Hits"
+              value={spotifyIdInput}
+              onChange={(e) => setSpotifyIdInput(e.target.value)}
+              placeholder="Playlist URL or ID (leave blank for default)"
             />
             <Button 
               onClick={handleSaveSpotifySettings}
-              disabled={isSavingSpotify || spotifyQuery === spotifyPlaylistQuery}
+              disabled={isSavingSpotify || spotifyIdInput === (spotifyPlaylistId ?? "")}
             >
-              {isSavingSpotify ? "Saving..." : "Save"}
+              {isSavingSpotify ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
             </Button>
           </div>
         </div>
       </div>
-      {/* ------------------------------- */}
+
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Search Settings</h3>
@@ -511,10 +510,9 @@ export function TabSettings({
         </div>
       </div>
 
-      {/* --- UPDATED EXPORT SECTION --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Export Played Songs</h3>
-        {/* --- ADDED TOOLTIP/DESCRIPTION --- */}
+        {/* LINTER FIX: Replaced ' with &apos; and " with &quot; */}
         <p className="text-sm text-muted-foreground">
           Copy the list as plain text, or as Spotify URIs. You can paste the URIs 
           into a tool like <strong>Soundiiz</strong> or directly into a new 
@@ -539,7 +537,6 @@ export function TabSettings({
         </Button>
         {isExpanded && (
           <div className="space-y-4 rounded-lg border bg-muted/50 p-4 animate-in fade-in">
-            {/* --- SIMPLIFIED BUTTONS --- */}
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={exportFormat === "text" ? "default" : "secondary"}
@@ -556,7 +553,7 @@ export function TabSettings({
               </Button>
             </div>
             <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-background p-2">
-              {processedList.length > 0 ? (
+              {playedPlaylist.length > 0 ? (
                 <pre className="text-xs whitespace-pre-wrap font-mono p-1">
                   {getDataToCopy().slice(0, 500) + (getDataToCopy().length > 500 ? "..." : "")}
                 </pre>
@@ -570,7 +567,7 @@ export function TabSettings({
               type="button"
               onClick={() => void handleCopy()}
               className="w-full"
-              disabled={isCopied || processedList.length === 0}
+              disabled={isCopied || playedPlaylist.length === 0}
             >
               {isCopied ? (
                 <Check className="mr-2 h-4 w-4" />
@@ -581,7 +578,6 @@ export function TabSettings({
                 ? "Copied!"
                 : `Copy as ${exportFormat.toUpperCase()}`}
             </Button>
-            {/* --- REMOVED CONDITIONAL HELPER TEXT --- */}
           </div>
         )}
       </div>
@@ -591,6 +587,7 @@ export function TabSettings({
         <div className="space-y-4 rounded-lg border border-destructive/50 p-4">
           <div>
             <Label className="text-base">End Party</Label>
+            {/* LINTER FIX: Replaced ' with &apos; */}
             <p className="text-sm text-muted-foreground">
               This will close the party, delete all songs, and disconnect
               everyone. This can&apos;t be undone.

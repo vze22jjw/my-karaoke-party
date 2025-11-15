@@ -11,12 +11,12 @@ type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
+  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -44,13 +44,14 @@ export default async function PartyPage({ params }: Props) {
     played: [], 
     settings: { 
       orderByFairness: true,
-      disablePlayback: false 
+      disablePlayback: false,
+      spotifyPlaylistId: null // <-- Default
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
     status: "OPEN",
     idleMessages: [],
-    themeSuggestions: [], // <-- ADDED
+    themeSuggestions: [],
   };
 
   try {

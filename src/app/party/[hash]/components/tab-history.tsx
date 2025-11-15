@@ -13,25 +13,29 @@ type SpotifySong = {
 
 type Props = {
   themeSuggestions: string[];
+  // --- ADD THIS PROP ---
+  spotifyPlaylistId?: string | null;
 };
 
-export function TabHistory({ themeSuggestions }: Props) {
+export function TabHistory({ themeSuggestions, spotifyPlaylistId }: Props) {
   const { data: stats, isLoading: isLoadingStats } = api.playlist.getGlobalStats.useQuery(
     undefined,
     { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 5 }
   );
 
+  // --- USE THE PROP HERE ---
   const { data: spotifyData } = api.spotify.getTopKaraokeSongs.useQuery(
-    undefined,
-    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 }
+    { playlistId: spotifyPlaylistId }, // Pass the ID
+    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 } // Cache for 1 hour
   );
 
+  // Safe cast to ensure typescript knows this is an array
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
 
   return (
     <div className="space-y-4">
       
-      {/* 1. Song Suggestions (Moved to Top) */}
+      {/* 1. Song Suggestions (User Defined) */}
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
@@ -58,12 +62,12 @@ export function TabHistory({ themeSuggestions }: Props) {
         </div>
       )}
 
-      {/* 2. Trending on Spotify (Moved Below) */}
+      {/* 2. Trending on Spotify */}
       {spotifySongs.length > 0 && (
         <div className="bg-card rounded-lg p-4 border border-green-500/20">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
             <Music2 className="h-5 w-5" />
-            Hot Karaoke on Spotify
+            Trending Karaoke {spotifyPlaylistId ? "from Custom Playlist" : "on Spotify"}
           </h2>
           <ul className="space-y-3">
             {spotifySongs.map((song, index) => (
@@ -111,8 +115,18 @@ export function TabHistory({ themeSuggestions }: Props) {
                 key={song.id}
                 className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors"
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-semibold text-sm">
-                  {index + 1}
+                <div className="relative h-8 w-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-semibold text-sm overflow-hidden">
+                  {song.coverUrl ? (
+                     <Image 
+                      src={song.coverUrl} 
+                      alt={song.title} 
+                      fill 
+                      className="object-cover"
+                      sizes="32px"
+                    />
+                  ) : (
+                    <span>{index + 1}</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{decode(song.title)}</p>

@@ -23,7 +23,7 @@ type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
+  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
@@ -100,7 +100,8 @@ export function PartySceneTabs({
     remainingTime,
     partyStatus,
     idleMessages,
-    themeSuggestions
+    themeSuggestions,
+    settings // <-- Get settings object from hook
   } = usePartySocket(
     party.hash!,
     initialData, 
@@ -200,7 +201,7 @@ export function PartySceneTabs({
 
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
-            playlist={unplayedPlaylist} 
+            playlist={[...unplayedPlaylist, ...(currentSong ? [currentSong] : [])]} // Pass full playlist
             name={name}
             onVideoAdded={addSong}
           />
@@ -226,8 +227,9 @@ export function PartySceneTabs({
           className="flex-1 overflow-y-auto mt-0"
         >
           <TabHistory 
-            // Removed playlist={playedPlaylist}
             themeSuggestions={themeSuggestions}
+            // --- PASS THE PROP ---
+            spotifyPlaylistId={settings.spotifyPlaylistId}
           />
         </TabsContent>
       </Tabs>

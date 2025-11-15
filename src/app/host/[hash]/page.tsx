@@ -2,8 +2,8 @@ import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "party";
 import { HostScene } from "./host-scene"; 
-import { cookies } from "next/headers"; // <-- Import cookies
-import { AdminLogin } from "~/components/admin-login"; // <-- Import Login Component
+import { cookies } from "next/headers";
+import { AdminLogin } from "~/components/admin-login";
 
 type Props = {
   params: { hash: string };
@@ -13,7 +13,7 @@ type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
+  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
@@ -53,7 +53,10 @@ export default async function HostPage({ params }: Props) {
     currentSong: null, 
     unplayed: [], 
     played: [], 
-    settings: { orderByFairness: true },
+    settings: { 
+      orderByFairness: true,
+      spotifyPlaylistId: null // <-- Default
+    },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
     status: "OPEN",

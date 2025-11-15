@@ -14,8 +14,8 @@ export const playlistRouter = createTRPCRouter({
         include: {
           playlistItems: {
             orderBy: [
-              { playedAt: "asc" },
-              { addedAt: "asc" },
+              { playedAt: "asc" }, // Played items first (nulls last in PostgreSQL)
+              { addedAt: "asc" },  // Then by when they were added
             ],
           },
         },
@@ -43,7 +43,7 @@ export const playlistRouter = createTRPCRouter({
       };
     }),
 
-  // ... (keep addVideo - we fixed the handlers that call it) ...
+  // Add a video to the playlist
   addVideo: publicProcedure
     .input(
       z.object({
@@ -58,21 +58,43 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      // This is the tRPC (legacy) addVideo. We'll add matching here too just in case.
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },
       });
-      if (!party) throw new Error("Party not found");
-      const existing = await ctx.db.playlistItem.findFirst({
-        where: { partyId: party.id, videoId: input.videoId, playedAt: null },
-      });
-      if (existing) return existing;
 
+      if (!party) {
+        throw new Error("Party not found");
+      }
+
+      // Check if video already exists in this party's playlist
+      const existing = await ctx.db.playlistItem.findFirst({
+        where: {
+          partyId: party.id,
+          videoId: input.videoId,
+          playedAt: null, // Only check unplayed videos
+        },
+      });
+
+      if (existing) {
+        log.warn("Video already in playlist", {
+          partyHash: input.partyHash,
+          videoId: input.videoId,
+        });
+        return existing;
+      }
+
+      // --- SPOTIFY MATCHING ---
       let spotifyId: string | undefined;
       try {
         const match = await spotifyService.searchTrack(input.title);
-        if (match) spotifyId = match.id;
-      } catch (e) {/* ignore */}
+        if (match) {
+          spotifyId = match.id;
+          log.info("Matched Spotify Track", { youtube: input.title, spotify: match.title });
+        }
+      } catch (e) {
+        // Ignore errors, don't block adding the song
+      }
+      // ------------------------------
 
       const playlistItem = await ctx.db.playlistItem.create({
         data: {
@@ -87,16 +109,83 @@ export const playlistRouter = createTRPCRouter({
           spotifyId: spotifyId, // <-- Save match
         },
       });
+
+      log.info("Video added to playlist", {
+        partyHash: input.partyHash,
+        videoId: input.videoId,
+        singerName: input.singerName,
+      });
+
       return playlistItem;
     }),
-  // ... (keep removeVideo, markAsPlayed) ...
-  removeVideo: publicProcedure
-    .input(z.object({ partyHash: z.string(), videoId: z.string() }))
-    .mutation(async ({ input, ctx }) => { /* ... */ }),
 
+  // Remove a video from the playlist
+  removeVideo: publicProcedure
+    .input(
+      z.object({
+        partyHash: z.string(),
+        videoId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const party = await ctx.db.party.findUnique({
+        where: { hash: input.partyHash },
+      });
+
+      if (!party) {
+        throw new Error("Party not found");
+      }
+
+      await ctx.db.playlistItem.deleteMany({
+        where: {
+          partyId: party.id,
+          videoId: input.videoId,
+        },
+      });
+
+      log.info("Video removed from playlist", {
+        partyHash: input.partyHash,
+        videoId: input.videoId,
+      });
+
+      return { success: true };
+    }),
+
+  // Mark a video as played
   markAsPlayed: publicProcedure
-    .input(z.object({ partyHash: z.string(), videoId: z.string() }))
-    .mutation(async ({ input, ctx }) => { /* ... */ }),
+    .input(
+      z.object({
+        partyHash: z.string(),
+        videoId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const party = await ctx.db.party.findUnique({
+        where: { hash: input.partyHash },
+      });
+
+      if (!party) {
+        throw new Error("Party not found");
+      }
+
+      const updated = await ctx.db.playlistItem.updateMany({
+        where: {
+          partyId: party.id,
+          videoId: input.videoId,
+          playedAt: null,
+        },
+        data: {
+          playedAt: new Date(),
+        },
+      });
+
+      log.info("Video marked as played", {
+        partyHash: input.partyHash,
+        videoId: input.videoId,
+      });
+
+      return { success: true, count: updated.count };
+    }),
 
   // --- UPDATED PROCEDURE ---
   getGlobalStats: publicProcedure.query(async ({ ctx }) => {
@@ -192,4 +281,5 @@ export const playlistRouter = createTRPCRouter({
       })),
     };
   }),
+  // -------------------------
 });

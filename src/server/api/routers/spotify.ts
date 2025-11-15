@@ -4,6 +4,7 @@ import { spotifyService } from "~/server/lib/spotify";
 
 export const spotifyRouter = createTRPCRouter({
   getTopKaraokeSongs: publicProcedure
+    .input(z.object({ playlistId: z.string().nullish() }))
     .output(
       z.array(
         z.object({
@@ -13,7 +14,7 @@ export const spotifyRouter = createTRPCRouter({
         })
       )
     )
-    .query(async () => {
-      return await spotifyService.getTopKaraokeTracks();
+    .query(async ({ input }) => {
+      return await spotifyService.getTopKaraokeTracks(input.playlistId);
     }),
 });
