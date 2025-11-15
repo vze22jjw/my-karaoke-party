@@ -2,19 +2,30 @@
 
 ![image](https://github.com/user-attachments/assets/45a1f009-d93a-487f-ada7-2b79b60dc416)
 
-YouTube-based karaoke party web app with remote searching and queuing from QR code.
-
-**[🇧🇷 Versão em Português](#versão-em-português)**
+A web app for hosting YouTube-based karaoke parties. Guests can join via a QR code or link to search for songs and add them to a real-time, shared queue.
 
 ## Features
 
-- 🎉 Host a karaoke party
-- 📱 Join existing party via link or QR code
-- 🔍 Search karaoke videos on YouTube
-- 📋 Add videos to the party queue
-- ⚖️ Queue sorted by "fairness" to avoid mic hogs
-- 🔄 Real-time updates via REST API polling
-- 💻 100% cross-platform compatible (Windows, Linux, macOS)
+- 🎉 **Host a Party**: Create a new karaoke party with a unique 4-character code.
+- 📱 **Join as a Guest**: Guests can join via a simple link or QR code, with no app install required.
+- 📺 **TV/Player Mode**: A dedicated player view (`/player/[hash]`) designed for a main screen or TV.
+- 🔐 **Host Controls**: A password-protected host page (`/host/[hash]`) to manage the party.
+- 🔍 **YouTube Search**: Search for any karaoke video on YouTube.
+- 📋 **Shared Queue**: Songs are added to a real-time queue, visible to all guests.
+- ⚖️ **Fairness Mode**: The queue automatically sorts by "fairness" to ensure everyone gets a turn and prevent singers from going back-to-back. (Can be toggled off by the host).
+- 🎶 **Song Suggestions**:
+    - **Host Themes**: The host can add custom theme suggestions (e.g., "80s Night").
+    - **Spotify Trends**: Guests see a list of "Hot Karaoke From Spotify" for inspiration (configurable by the host).
+    - **Top Played**: The queue shows the all-time most-played songs for the whole app.
+- 🆔 **Spotify Song Matching**:
+    - Automatically matches added YouTube videos to their Spotify track ID.
+    - Aggregates "Top Played" stats by song, not by individual video (e.g., "Bohemian Rhapsody - Official" and "Bohemian Rhapsody - Lyrics" count as one song).
+    - Allows hosts to export a list of Spotify URIs to instantly create a playlist.
+- 💬 **Idle Screen Messages**: Hosts can create a library of messages (quotes, lyrics, announcements) to display on the player screen when no music is playing.
+- ⏯️ **Playback Controls**: Host can play, pause, and skip the current song.
+- 🧹 **Auto-Cleanup**: Parties are automatically deleted after a period of inactivity to save resources.
+- 🐳 **Docker Ready**: Fully containerized for easy deployment.
+- 💻 **100% Cross-Platform**: Works on Windows, Linux, and macOS for development and hosting.
 
 ## Stack
 
@@ -25,7 +36,8 @@ Based on [T3 App](https://create.t3.gg/)
 - **Prisma ORM** - Database toolkit
 - **Tailwind CSS** - Styling
 - **tRPC** - Type-safe APIs
-- **REST API** - Playlist management with polling
+- **Socket.io** - Real-time queue and playback synchronization
+- **Spotify API** - For song matching and suggestions
 
 ## Development
 
@@ -37,70 +49,57 @@ Based on [T3 App](https://create.t3.gg/)
 
 ### Quick Start
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/flaviokosta79/my-karaoke-party.git
-   cd my-karaoke-party
-   ```
+1.  **Clone the repository**
+    ```bash
+    git clone [https://github.com/flaviokosta79/my-karaoke-party.git](https://github.com/flaviokosta79/my-karaoke-party.git)
+    cd my-karaoke-party
+    ```
 
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
+2.  **Install dependencies**
+    ```bash
+    pnpm install
+    ```
 
-3. **Setup environment variables**
-   ```bash
-   cp .env.example .env
-   ```
+3.  **Setup environment variables**
+    ```bash
+    cp .env.example .env
+    ```
 
-   Edit `.env` and fill in:
-   - `DATABASE_URL` - PostgreSQL connection string
-   - `YOUTUBE_API_KEY` - YouTube Data API v3 key
+    Edit `.env` and fill in:
+    - `DATABASE_URL` - PostgreSQL connection string
+    - `YOUTUBE_API_KEY` - YouTube Data API v3 key
+    - `ADMIN_TOKEN` - A password of your choice to protect host pages.
+    - `SPOTIFY_CLIENT_ID` (Optional) - For Spotify features
+    - `SPOTIFY_CLIENT_SECRET` (Optional) - For Spotify features
 
-4. **Start everything with one command** 🚀
+4.  **Start everything with one command** 🚀
 
-   **Windows (PowerShell):**
-   ```powershell
-   pnpm dev:full
-   ```
+    **Windows (PowerShell):**
+    ```powershell
+    pnpm dev:full
+    ```
 
-   **Linux/macOS:**
-   ```bash
-   pnpm dev:full:sh
-   ```
+    **Linux/macOS:**
+    ```bash
+    pnpm dev:full:sh
+    ```
 
-   This will automatically:
-   - ✅ Start PostgreSQL in Docker
-   - ✅ Sync database schema
-   - ✅ Start the development server
+    This will automatically:
+    - ✅ Start PostgreSQL in Docker
+    - ✅ Sync database schema
+    - ✅ Start the development server
 
-   **Or manually:**
-   ```bash
-   # Start PostgreSQL
-   docker run --name karaokeparty-postgres \
-     -e POSTGRES_PASSWORD=password \
-     -e POSTGRES_DB=mykaraoke_party \
-     -p 5432:5432 \
-     -d postgres:15
-
-   # Push database schema
-   pnpm db:push
-
-   # Start dev server
-   pnpm dev
-   ```
-
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
+5.  **Open your browser**
+    Navigate to `http://localhost:3000`
 
 > 📝 **Tip:** Check [SCRIPTS.md](SCRIPTS.md) for more details about the development scripts
 
 ### Important Notes
 
-- ✅ **No PartyKit required!** The app now uses REST API with polling for real-time updates
+- ✅ **Real-time with Sockets!** The app uses Socket.io for all real-time events.
 - ✅ **Works on Windows!** 100% cross-platform compatible
-- ⚡ Playlist updates every 3 seconds via polling
-- � **Docker ready!** Deploy with Traefik + Portainer
+- ⚡ Playlist, playback, and settings update instantly.
+- 🐳 **Docker ready!** Deploy with Traefik + Portainer
 - 🔒 **Auto SSL!** Let's Encrypt integration via Traefik
 
 ## Production Deployment
@@ -136,240 +135,3 @@ pnpm cleanup:all
 
 # Delete all parties (with confirmation)
 pnpm cleanup:all --confirm
-```
-
-📖 **[Complete Cleanup Guide](doc/CLEANUP-ALL.md)**
-
-Features:
-- 🔍 Preview mode (safe by default)
-- ✅ Interactive confirmation
-- 🔒 Admin token protection
-- 📊 Detailed statistics
-
-## Project Structure
-
-```
-my-karaoke-party/
-├── src/
-│   ├── app/                    # Next.js app directory
-│   │   ├── api/
-│   │   │   └── playlist/       # REST API endpoints
-│   │   ├── party/              # Party host interface
-│   │   └── player/             # Display/player interface
-│   ├── components/             # React components
-│   ├── server/
-│   │   ├── api/routers/        # tRPC routers
-│   │   └── db.ts               # Database client
-│   └── styles/                 # Global styles
-├── prisma/
-│   └── schema.prisma           # Database schema
-└── doc/                        # Additional documentation
-```
-
-## API Endpoints
-
-### REST API
-
-- `GET /api/playlist/[hash]` - Get party playlist
-- `POST /api/playlist/add` - Add video to playlist
-- `POST /api/playlist/remove` - Remove video from playlist
-- `POST /api/playlist/played` - Mark video as played
-
-## Contribution
-
-Contributions are welcome! Feel free to:
-
-- 🐛 Report bugs
-- 💡 Suggest new features
-- 🔧 Submit pull requests
-
-Live site: https://www.mykaraoke.party
-
----
-
-# Versão em Português
-
-## Funcionalidades
-
-- 🎉 Crie uma festa de karaokê
-- 📱 Entre em festas via link ou QR code
-- 🔍 Pesquise vídeos de karaokê no YouTube
-- 📋 Adicione vídeos à fila da festa
-- ⚖️ Fila organizada por "justiça" para evitar monopolização do microfone
-- 🔄 Atualizações em tempo real via polling REST API
-- 💻 100% compatível multi-plataforma (Windows, Linux, macOS)
-
-## Tecnologias
-
-Baseado no [T3 App](https://create.t3.gg/)
-
-- **Next.js 14** - Framework React
-- **PostgreSQL** - Banco de dados
-- **Prisma ORM** - Toolkit para banco de dados
-- **Tailwind CSS** - Estilização
-- **tRPC** - APIs type-safe
-- **REST API** - Gerenciamento de playlist com polling
-
-## Desenvolvimento
-
-### Pré-requisitos
-
-- Node.js 18+
-- pnpm (recomendado) ou npm
-- Docker (para PostgreSQL)
-
-### Início Rápido
-
-1. **Clone o repositório**
-   ```bash
-   git clone https://github.com/flaviokosta79/my-karaoke-party.git
-   cd my-karaoke-party
-   ```
-
-2. **Instale as dependências**
-   ```bash
-   pnpm install
-   ```
-
-3. **Configure as variáveis de ambiente**
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edite o `.env` e preencha:
-   - `DATABASE_URL` - String de conexão PostgreSQL
-   - `YOUTUBE_API_KEY` - Chave da API YouTube Data v3
-
-4. **Inicie tudo com um comando** 🚀
-
-   **Windows (PowerShell):**
-   ```powershell
-   pnpm dev:full
-   ```
-
-   **Linux/macOS:**
-   ```bash
-   pnpm dev:full:sh
-   ```
-
-   Isso irá automaticamente:
-   - ✅ Iniciar PostgreSQL no Docker
-   - ✅ Sincronizar schema do banco
-   - ✅ Iniciar o servidor de desenvolvimento
-
-   **Ou manualmente:**
-   ```bash
-   # Iniciar PostgreSQL
-   docker run --name karaokeparty-postgres \
-     -e POSTGRES_PASSWORD=password \
-     -e POSTGRES_DB=mykaraoke_party \
-     -p 5432:5432 \
-     -d postgres:15
-
-   # Sincronizar schema
-   pnpm db:push
-
-   # Iniciar servidor
-   pnpm dev
-   ```
-
-5. **Abra seu navegador**
-   Acesse `http://localhost:3000`
-
-> 📝 **Dica:** Veja [SCRIPTS.md](SCRIPTS.md) para mais detalhes sobre os scripts de desenvolvimento
-
-### Notas Importantes
-
-- ✅ **PartyKit não é necessário!** O app agora usa REST API com polling para atualizações em tempo real
-- ✅ **Funciona no Windows!** 100% compatível multi-plataforma
-- ⚡ Playlist atualiza a cada 3 segundos via polling
-- � **Pronto para Docker!** Deploy com Traefik + Portainer
-- 🔒 **SSL automático!** Integração Let's Encrypt via Traefik
-
-## Deploy em Produção
-
-### Deploy com Docker + Traefik + Portainer
-
-Para deploy em produção no seu próprio VPS com Traefik como reverse proxy:
-
-📖 **[Guia Completo Traefik + Portainer](doc/DEPLOY-TRAEFIK-PORTAINER.md)**
-
-Visão geral:
-- ✅ Reverse proxy Traefik com SSL automático
-- ✅ Portainer para gerenciamento de containers
-- ✅ Suporte multi-domínios
-- ✅ Cron job de limpeza automática
-- ✅ Atualizações sem downtime
-
-### Alternativa: Deploy sem Docker
-
-Para deploy nativo em VPS Ubuntu:
-
-📖 **[Guia de Deploy Ubuntu VPS](doc/DEPLOY-VPS-UBUNTU.md)**
-
-## Comandos de Administração
-
-### Limpar Todas as Parties
-
-Deletar todas as parties do sistema:
-
-```bash
-# Preview (mostra o que seria deletado)
-pnpm cleanup:all
-
-# Deletar todas as parties (com confirmação)
-pnpm cleanup:all --confirm
-```
-
-📖 **[Guia Completo de Limpeza](doc/CLEANUP-ALL.md)**
-
-Funcionalidades:
-- 🔍 Modo preview (seguro por padrão)
-- ✅ Confirmação interativa
-- 🔒 Proteção com token de admin
-- 📊 Estatísticas detalhadas
-
-## Estrutura do Projeto
-
-```
-my-karaoke-party/
-├── src/
-│   ├── app/                    # Diretório do Next.js
-│   │   ├── api/
-│   │   │   └── playlist/       # Endpoints REST API
-│   │   ├── party/              # Interface do host da festa
-│   │   └── player/             # Interface do display/player
-│   ├── components/             # Componentes React
-│   ├── server/
-│   │   ├── api/routers/        # Routers tRPC
-│   │   └── db.ts               # Cliente do banco de dados
-│   └── styles/                 # Estilos globais
-├── prisma/
-│   └── schema.prisma           # Schema do banco de dados
-└── doc/                        # Documentação adicional
-```
-
-## Endpoints da API
-
-### REST API
-
-- `GET /api/playlist/[hash]` - Obtém a playlist da festa
-- `POST /api/playlist/add` - Adiciona vídeo à playlist
-- `POST /api/playlist/remove` - Remove vídeo da playlist
-- `POST /api/playlist/played` - Marca vídeo como tocado
-
-## Contribuição
-
-Contribuições são bem-vindas! Sinta-se livre para:
-
-- 🐛 Reportar bugs
-- 💡 Sugerir novas funcionalidades
-- 🔧 Enviar pull requests
-
-Site ao vivo: https://www.mykaraoke.party
-
----
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
