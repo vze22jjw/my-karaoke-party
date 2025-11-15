@@ -4,8 +4,12 @@
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { readLocalStorageValue, useLocalStorage, useViewportSize } from "@mantine/hooks";
-import { Monitor, Music, Users, Lightbulb, Plus } from "lucide-react"; 
+import {
+  readLocalStorageValue,
+  useLocalStorage,
+  useViewportSize,
+} from "@mantine/hooks";
+import { Monitor, Music, Users, Lightbulb, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlayer } from "./components/tab-player";
@@ -15,6 +19,8 @@ import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import { PartyTourModal } from "./components/party-tour-modal";
 import Confetti from "react-canvas-confetti";
+import { toast } from "sonner";
+import { decode } from "html-entities";
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
@@ -45,12 +51,16 @@ export function PartySceneTabs({
     defaultValue: "player",
   });
 
+  // --- ADD THIS ---
+  const [searchQuery, setSearchQuery] = useState("");
+  // --- END ADD ---
+
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: GUEST_TOUR_KEY,
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false); 
+  const [isMounted, setIsMounted] = useState(false);
 
   // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
@@ -90,24 +100,20 @@ export function PartySceneTabs({
     }, 300);
   };
 
-  const { 
-    currentSong, 
-    unplayedPlaylist, 
-    playedPlaylist, 
+  const {
+    currentSong,
+    unplayedPlaylist,
+    playedPlaylist,
     socketActions,
-    participants, 
+    participants,
     isPlaying,
     remainingTime,
     partyStatus,
     idleMessages,
     themeSuggestions,
-    settings // <-- Get settings object from hook
-  } = usePartySocket(
-    party.hash!,
-    initialData, 
-    name 
-  );
-  
+    settings, // <-- Get settings object from hook
+  } = usePartySocket(party.hash!, initialData, name);
+
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
     if (!value) {
@@ -117,13 +123,37 @@ export function PartySceneTabs({
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     try {
-      socketActions.sendHeartbeat(); 
+      socketActions.sendHeartbeat();
       socketActions.addSong(videoId, title, coverUrl, name);
+
+      // --- ADD TOAST NOTIFICATION ---
+      toast.success("Song added to queue!", {
+        description: decode(title),
+      });
+      // --- END ADD ---
     } catch (error) {
       console.error("Error adding song:", error);
-      alert("Error adding song. Please try again.");
+      // --- IMPROVE TOAST ---
+      toast.error("Error adding song", {
+        description: "Please try again.",
+      });
+      // --- END IMPROVE ---
     }
   };
+
+  // --- ADD THIS ---
+  // This function is for *suggested* adds (from TabHistory)
+  const handleSuggestionClick = (title: string, artist: string) => {
+    const query = `${title} ${artist}`.trim();
+    setSearchQuery(query);
+    setActiveTab("add");
+    toast.info(`Searching for "${query}"...`);
+  };
+
+  const handleSearchConsumed = () => {
+    setSearchQuery("");
+  };
+  // --- END ADD ---
 
   const onLeaveParty = () => {
     router.push("/");
@@ -139,13 +169,13 @@ export function PartySceneTabs({
         width={width}
         height={height}
         style={{
-          position: 'fixed',
-          width: '100%',
-          height: '100%',
+          position: "fixed",
+          width: "100%",
+          height: "100%",
           zIndex: 200,
           top: 0,
           left: 0,
-          pointerEvents: 'none', // Crucial
+          pointerEvents: "none", // Crucial
         }}
       />
       {/* --- END CONFETTI COMPONENT --- */}
@@ -188,29 +218,30 @@ export function PartySceneTabs({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent
-          value="player"
-          className="flex-1 overflow-y-auto mt-0"
-        >
-          <TabPlayer 
-            currentSong={currentSong} 
-            playlist={unplayedPlaylist} 
+        <TabsContent value="player" className="flex-1 overflow-y-auto mt-0">
+          <TabPlayer
+            currentSong={currentSong}
+            playlist={unplayedPlaylist}
             playedPlaylist={playedPlaylist}
           />
         </TabsContent>
 
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
-            playlist={[...unplayedPlaylist, ...(currentSong ? [currentSong] : [])]} // Pass full playlist
+            playlist={[
+              ...unplayedPlaylist,
+              ...(currentSong ? [currentSong] : []),
+            ]} // Pass full playlist
             name={name}
             onVideoAdded={addSong}
+            // --- ADD THESE PROPS ---
+            initialSearchQuery={searchQuery}
+            onSearchQueryConsumed={handleSearchConsumed}
+            // --- END ADD ---
           />
         </TabsContent>
 
-        <TabsContent
-          value="singers"
-          className="flex-1 overflow-y-auto mt-0"
-        >
+        <TabsContent value="singers" className="flex-1 overflow-y-auto mt-0">
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
@@ -218,18 +249,18 @@ export function PartySceneTabs({
             participants={participants}
             name={name}
             onLeaveParty={onLeaveParty}
-            isPlaying={isPlaying} 
-            remainingTime={remainingTime} 
+            isPlaying={isPlaying}
+            remainingTime={remainingTime}
           />
         </TabsContent>
-        <TabsContent
-          value="history"
-          className="flex-1 overflow-y-auto mt-0"
-        >
-          <TabHistory 
+        <TabsContent value="history" className="flex-1 overflow-y-auto mt-0">
+          <TabHistory
             themeSuggestions={themeSuggestions}
             // --- PASS THE PROP ---
             spotifyPlaylistId={settings.spotifyPlaylistId}
+            // --- ADD THIS PROP ---
+            onSuggestionClick={handleSuggestionClick}
+            // --- END ADD ---
           />
         </TabsContent>
       </Tabs>
