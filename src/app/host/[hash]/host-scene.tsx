@@ -18,7 +18,7 @@ type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
+  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
@@ -102,7 +102,7 @@ export function HostScene({ party, initialData }: Props) {
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
-    settings, 
+    settings, // <-- This object contains the spotifyPlaylistId
     socketActions, 
     isConnected,
     isSkipping,
@@ -196,7 +196,6 @@ export function HostScene({ party, initialData }: Props) {
   }
 
   return (
-    // --- FIX: Added "bg-gradient" here explicitly ---
     <div className="flex min-h-screen w-full justify-center bg-gradient">
       {/* --- ADD CONFETTI COMPONENT --- */}
       <Confetti
@@ -255,6 +254,8 @@ export function HostScene({ party, initialData }: Props) {
           onSyncIdleMessages={socketActions.updateIdleMessages}
           themeSuggestions={themeSuggestions}
           onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
+          // --- PASS THE PROP ---
+          spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
         />
       </div>
     </div>

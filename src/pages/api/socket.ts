@@ -13,6 +13,8 @@ import { type PlaylistItem } from "@prisma/client";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import youtubeAPI from "~/utils/youtube-data-api";
 import { parseISO8601Duration } from "~/utils/string";
+// --- 1. IMPORT SPOTIFY SERVICE ---
+import { spotifyService } from "~/server/lib/spotify";
 
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: NetSocket & {
@@ -245,6 +247,19 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
             const duration = await youtubeAPI.getVideoDuration(data.videoId);
             debugLog(LOG_TAG, `Fetched duration for ${data.videoId}: ${duration ?? 'N/A'}`);
 
+            // --- 2. ADD SPOTIFY MATCHING LOGIC ---
+            let spotifyId: string | undefined;
+            try {
+              // This will log the result if debug is enabled
+              const match = await spotifyService.searchTrack(data.title);
+              if (match) {
+                spotifyId = match.id;
+              }
+            } catch (e) {
+              debugLog(LOG_TAG, "Spotify match failed", e);
+            }
+            // ------------------------------------
+
             await db.playlistItem.create({
               data: {
                 partyId: party.id,
@@ -256,6 +271,7 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
                 duration: duration ? duration : getRandomDurationISO(),
                 singerName: data.singerName,
                 randomBreaker: Math.random(),
+                spotifyId: spotifyId, // <-- 3. SAVE THE ID
               },
             });
           }

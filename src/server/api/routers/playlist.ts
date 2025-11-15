@@ -1,6 +1,8 @@
 import { log } from "next-axiom";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { spotifyService } from "~/server/lib/spotify";
+import { env } from "~/env"; // <-- IMPORT ENV
 
 export const playlistRouter = createTRPCRouter({
   // Get playlist for a party
@@ -33,6 +35,7 @@ export const playlistRouter = createTRPCRouter({
           duration: item.duration,
           singerName: item.singerName,
           playedAt: item.playedAt,
+          spotifyId: item.spotifyId, // <-- RETURN spotifyId
         })),
         settings: {
           orderByFairness: true,
@@ -80,6 +83,19 @@ export const playlistRouter = createTRPCRouter({
         return existing;
       }
 
+      // --- SPOTIFY MATCHING ---
+      let spotifyId: string | undefined;
+      try {
+        const match = await spotifyService.searchTrack(input.title);
+        if (match) {
+          spotifyId = match.id;
+          log.info("Matched Spotify Track", { youtube: input.title, spotify: match.title });
+        }
+      } catch (e) {
+        // Ignore errors, don't block adding the song
+      }
+      // ------------------------------
+
       const playlistItem = await ctx.db.playlistItem.create({
         data: {
           partyId: party.id,
@@ -90,6 +106,7 @@ export const playlistRouter = createTRPCRouter({
           coverUrl: input.coverUrl,
           duration: input.duration,
           singerName: input.singerName,
+          spotifyId: spotifyId, // <-- Save match
         },
       });
 
@@ -170,26 +187,76 @@ export const playlistRouter = createTRPCRouter({
       return { success: true, count: updated.count };
     }),
 
-  // --- NEW PROCEDURE ---
+  // --- UPDATED PROCEDURE ---
   getGlobalStats: publicProcedure.query(async ({ ctx }) => {
-    // Top 5 most played songs across all parties
-    const topSongs = await ctx.db.playlistItem.groupBy({
-      by: ["videoId", "title", "coverUrl"],
-      where: {
-        playedAt: { not: null },
-      },
-      _count: {
-        videoId: true,
-      },
-      orderBy: {
-        _count: {
-          videoId: "desc",
-        },
-      },
-      take: 5,
-    });
+    const hasSpotify = !!(env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET);
+    
+    let topSongs;
 
-    // Top 5 singers by number of songs sung across all parties
+    if (hasSpotify) {
+      // STRATEGY A: Smart Grouping (by Matched Song)
+      const topSpotifyTracks = await ctx.db.playlistItem.groupBy({
+        by: ["spotifyId"],
+        where: {
+          playedAt: { not: null },
+          spotifyId: { not: null },
+        },
+        _count: {
+          spotifyId: true,
+        },
+        orderBy: {
+          _count: {
+            spotifyId: "desc",
+          },
+        },
+        take: 5,
+      });
+
+      topSongs = await Promise.all(
+        topSpotifyTracks.map(async (group) => {
+          const details = await ctx.db.playlistItem.findFirst({
+            where: { spotifyId: group.spotifyId },
+            orderBy: { playedAt: "desc" },
+            select: { title: true, coverUrl: true, artist: true }
+          });
+
+          return {
+            id: group.spotifyId!,
+            title: details?.title ?? "Unknown",
+            coverUrl: details?.coverUrl ?? "",
+            count: group._count.spotifyId,
+            artist: details?.artist ?? null,
+          };
+        })
+      );
+    } else {
+      // STRATEGY B: Fallback Grouping (by YouTube Video)
+      const rawTopSongs = await ctx.db.playlistItem.groupBy({
+        by: ["videoId", "title", "coverUrl"],
+        where: {
+          playedAt: { not: null },
+        },
+        _count: {
+          videoId: true,
+        },
+        orderBy: {
+          _count: {
+            videoId: "desc",
+          },
+        },
+        take: 5,
+      });
+
+      topSongs = rawTopSongs.map(s => ({
+        id: s.videoId,
+        title: s.title,
+        coverUrl: s.coverUrl,
+        count: s._count.videoId,
+        artist: null,
+      }));
+    }
+
+    // Top Singers logic (Unchanged)
     const topSingers = await ctx.db.playlistItem.groupBy({
       by: ["singerName"],
       where: {
@@ -207,17 +274,12 @@ export const playlistRouter = createTRPCRouter({
     });
 
     return {
-      topSongs: topSongs.map((s) => ({
-        id: s.videoId,
-        title: s.title,
-        coverUrl: s.coverUrl,
-        count: s._count.videoId,
-      })),
+      topSongs,
       topSingers: topSingers.map((s) => ({
         name: s.singerName,
         count: s._count.singerName,
       })),
     };
   }),
-  // --- END NEW PROCEDURE ---
+  // -------------------------
 });

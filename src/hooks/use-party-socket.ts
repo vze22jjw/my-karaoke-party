@@ -19,7 +19,7 @@ interface SocketActions {
   startSkipTimer: () => void; 
   startParty: () => void;
   updateIdleMessages: (messages: string[]) => void;
-  updateThemeSuggestions: (suggestions: string[]) => void; // <-- ADDED
+  updateThemeSuggestions: (suggestions: string[]) => void;
 }
 
 type Participant = {
@@ -31,7 +31,7 @@ interface UsePartySocketReturn {
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
+  settings: KaraokeParty["settings"]; // This type now includes spotifyPlaylistId
   socketActions: SocketActions;
   isConnected: boolean;
   isPlaying: boolean;
@@ -41,19 +41,19 @@ interface UsePartySocketReturn {
   remainingTime: number; 
   partyStatus: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 }
 
 type PartySocketData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
+  settings: KaraokeParty["settings"]; // This type now includes spotifyPlaylistId
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[];
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 };
 
 const LOG_TAG = "[SocketClient]";
@@ -84,7 +84,7 @@ export function usePartySocket(
   const [isSkipping, setIsSkipping] = useState(false);
   const [partyStatus, setPartyStatus] = useState(initialData.status);
   const [idleMessages, setIdleMessages] = useState(initialData.idleMessages);
-  const [themeSuggestions, setThemeSuggestions] = useState(initialData.themeSuggestions); // <-- ADDED
+  const [themeSuggestions, setThemeSuggestions] = useState(initialData.themeSuggestions);
 
   const [remainingTime, setRemainingTime] = useState(() => {
     if (initialData.currentSongStartedAt) {
@@ -172,10 +172,10 @@ export function usePartySocket(
         setCurrentSong(partyData.currentSong);
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
-        setSettings(partyData.settings);
+        setSettings(partyData.settings); // <-- This update passes the new spotifyPlaylistId
         setPartyStatus(partyData.status);
         setIdleMessages(partyData.idleMessages);
-        setThemeSuggestions(partyData.themeSuggestions); // <-- ADDED
+        setThemeSuggestions(partyData.themeSuggestions);
 
         if (partyData.currentSongStartedAt) {
           setIsPlaying(true);
@@ -230,13 +230,10 @@ export function usePartySocket(
         setIdleMessages(messages);
       });
 
-      // --- ADDED ---
       newSocket.on("theme-suggestions-updated", (suggestions: string[]) => {
         debugLog(LOG_TAG, "Received 'theme-suggestions-updated'", suggestions);
         setThemeSuggestions(suggestions);
       });
-      // --- END ADDED ---
-
     };
 
     void socketInitializer();
@@ -266,7 +263,6 @@ export function usePartySocket(
   }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown]); 
 
   const socketActions: SocketActions = useMemo(() => ({
-    // ... (all other actions) ...
     addSong: (videoId, title, coverUrl, singerName) => {
       const data = { partyHash, videoId, title, coverUrl, singerName };
       debugLog(LOG_TAG, "Emitting 'add-song'", data);
@@ -328,13 +324,11 @@ export function usePartySocket(
       debugLog(LOG_TAG, "Emitting 'update-idle-messages'");
       socketRef.current?.emit("update-idle-messages", data);
     },
-    // --- ADDED ---
     updateThemeSuggestions: (suggestions: string[]) => {
       const data = { partyHash, suggestions };
       debugLog(LOG_TAG, "Emitting 'update-theme-suggestions'");
       socketRef.current?.emit("update-theme-suggestions", data);
     },
-    // --- END ADDED ---
 
   }), [partyHash, singerName]);
 
@@ -342,7 +336,7 @@ export function usePartySocket(
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
-    settings, 
+    settings, // This settings object now contains spotifyPlaylistId
     socketActions, 
     isConnected, 
     isPlaying, 
@@ -352,6 +346,6 @@ export function usePartySocket(
     remainingTime,
     partyStatus,
     idleMessages,
-    themeSuggestions, // <-- ADDED
+    themeSuggestions,
   };
 }

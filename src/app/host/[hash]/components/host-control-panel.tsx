@@ -42,11 +42,12 @@ type Props = {
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
   onSyncIdleMessages: (messages: string[]) => void;
-  themeSuggestions: string[]; // <-- ADDED
-  onUpdateThemeSuggestions: (suggestions: string[]) => void; // <-- ADDED
+  themeSuggestions: string[]; 
+  onUpdateThemeSuggestions: (suggestions: string[]) => void;
+  // --- ADD THIS PROP ---
+  spotifyPlaylistId: string | null;
 };
 
-// ... (useTimeOpen hook remains the same) ...
 function useTimeOpen(createdAt: Date) {
   const [timeOpen, setTimeOpen] = useState("");
   useEffect(() => {
@@ -107,8 +108,10 @@ export function HostControlPanel({
   onAddIdleMessage,
   onDeleteIdleMessage,
   onSyncIdleMessages,
-  themeSuggestions, // <-- ADDED
-  onUpdateThemeSuggestions, // <-- ADDED
+  themeSuggestions, 
+  onUpdateThemeSuggestions,
+  // --- DESTRUCTURE THIS PROP ---
+  spotifyPlaylistId,
 }: Props) {
 
   const timeOpen = useTimeOpen(party.createdAt);
@@ -214,8 +217,10 @@ export function HostControlPanel({
               onAddIdleMessage={onAddIdleMessage}
               onDeleteIdleMessage={onDeleteIdleMessage}
               onSyncIdleMessages={onSyncIdleMessages}
-              themeSuggestions={themeSuggestions} // <-- ADDED
-              onUpdateThemeSuggestions={onUpdateThemeSuggestions} // <-- ADDED
+              themeSuggestions={themeSuggestions}
+              onUpdateThemeSuggestions={onUpdateThemeSuggestions}
+              // --- PASS THE PROP HERE (THIS FIXES THE ERROR) ---
+              spotifyPlaylistId={spotifyPlaylistId}
             />
           </TabsContent>
         </Tabs>

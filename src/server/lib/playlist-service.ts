@@ -18,6 +18,7 @@ function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
     singerName: item.singerName,
     playedAt: item.playedAt,
     createdAt: item.addedAt,
+    spotifyId: item.spotifyId,
   };
 }
 
@@ -34,7 +35,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[]; 
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[];
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
@@ -57,7 +58,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
 
   const playedPlaylist = playedItems
     .sort((a, b) => (b.playedAt?.getTime() ?? 0) - (a.playedAt?.getTime() ?? 0))
-    .map(formatPlaylistItem);
+    .map(formatPlaylistItem); // This now includes spotifyId
 
   const lastPlayedSong =
     playedItems.length > 0
@@ -100,6 +101,13 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
   }
 
+  // Helper to build the settings object
+  const settings: KaraokeParty["settings"] = {
+    orderByFairness: useQueueRules,
+    disablePlayback: party.disablePlayback,
+    spotifyPlaylistId: party.spotifyPlaylistId, // <-- Ensure it's here
+  };
+
   if (party.status === "OPEN") {
     const allUnplayed = currentSongItem
       ? [formatPlaylistItem(currentSongItem), ...unplayedPlaylist]
@@ -109,15 +117,12 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSong: null,
       unplayed: allUnplayed,
       played: playedPlaylist,
-      settings: {
-        orderByFairness: useQueueRules,
-        disablePlayback: party.disablePlayback,
-      },
+      settings, // <-- Pass settings object
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
       status: party.status,
       idleMessages: party.idleMessages,
-      themeSuggestions: party.themeSuggestions, // <-- ADDED
+      themeSuggestions: party.themeSuggestions,
     };
   
   } else {
@@ -125,15 +130,12 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSong: formattedCurrentSong,
       unplayed: unplayedPlaylist,
       played: playedPlaylist,
-      settings: {
-        orderByFairness: useQueueRules,
-        disablePlayback: party.disablePlayback,
-      },
+      settings, // <-- Pass settings object
       currentSongStartedAt: party.currentSongStartedAt,
       currentSongRemainingDuration: remainingDuration,
       status: party.status,
       idleMessages: party.idleMessages,
-      themeSuggestions: party.themeSuggestions, // <-- ADDED
+      themeSuggestions: party.themeSuggestions,
     };
   }
 }

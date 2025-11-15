@@ -77,9 +77,9 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
               </div>
               <div>
                 {/* --- UPDATED TEXT --- */}
-                <h3 className="text-lg font-semibold">History & Suggestions</h3>
+                <h3 className="text-lg font-semibold">Suggestions</h3>
                 <p className="text-sm text-muted-foreground">
-                  See played songs and check the <strong>Song Suggestions</strong> for inspiration!
+                  Get ideas from the host&apos;s list, <strong>Hot on Spotify</strong>, or the party&apos;s all-time Top Played songs.
                 </p>
                 {/* --- END UPDATED TEXT --- */}
               </div>

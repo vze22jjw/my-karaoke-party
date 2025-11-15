@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import {
   Drawer,
@@ -8,96 +9,154 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "~/components/ui/ui/drawer";
-import { Check, MessageSquare, Play, Settings } from "lucide-react";
+import {
+  Check,
+  ListMusic,
+  Music, // <-- This was missing
+  Play,
+  Settings,
+} from "lucide-react";
+import { cn } from "~/lib/utils";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
 };
 
+// A small component for the step content layout
+const StepContent = ({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex items-start gap-4 rounded-lg border bg-muted/50 p-4">
+    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      {icon}
+    </div>
+    <div>
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="text-sm text-muted-foreground">{children}</p>
+    </div>
+  </div>
+);
+
+// A small component for the navigation dots
+const Dots = ({ total, current }: { total: number; current: number }) => (
+  <div className="flex items-center justify-center gap-2">
+    {Array.from({ length: total }).map((_, i) => (
+      <div
+        key={i}
+        className={cn(
+          "h-2 w-2 rounded-full transition-all",
+          i + 1 === current ? "bg-primary" : "bg-muted-foreground/50"
+        )}
+      />
+    ))}
+  </div>
+);
+
 export function HostTourModal({ isOpen, onClose }: Props) {
+  const [step, setStep] = useState(1);
+  const totalSteps = 2; // Reduced to 2 steps
+
+  const handleClose = () => {
+    onClose();
+    // Reset to step 1 for next time
+    setTimeout(() => setStep(1), 200);
+  };
+
   return (
-    <Drawer open={isOpen} onClose={onClose}>
-      {/* --- FIX START --- */}
-      {/* DrawerContent now uses flex-col and h-full to take full available height */}
-      {/* The 'snap-align-none' is crucial to prevent it from snapping to the center */}
-      <DrawerContent className="flex flex-col h-full snap-align-none">
-        {/* Inner div contains padding and controls overflow */}
-        {/* pt-8 for top padding, pb-32 for bottom safe area, overflow-y-auto for internal scroll */}
-        <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-32 flex-1 overflow-y-auto">
-          <DrawerHeader>
+    <Drawer open={isOpen} onClose={handleClose}>
+      {/* Use z-[100] to ensure content is on top of z-50 overlay */}
+      <DrawerContent className="flex flex-col h-full snap-align-none z-[100]">
+        
+        {/* Scrollable Content Area */}
+        <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">
+          <DrawerHeader className="pb-4">
             <DrawerTitle className="text-3xl font-bold">
-              Welcome to Your Party!
+              Host Controls
             </DrawerTitle>
             <DrawerDescription className="text-lg text-muted-foreground">
-              Here&apos;s a quick guide to get started.
+              A quick guide to managing your party.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="space-y-6 px-4">
-            {/* Step 1: Party is OPEN */}
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-green-500 text-white">
-                <Play className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">
-                  1. Your Party is &quot;OPEN&quot;
-                </h3>
-                <p className="text-muted-foreground">
-                  Right now, the player screen is idle. Singers can join and add
-                  songs. When you&apos;re ready, click the{" "}
-                  <strong>Start Party</strong> button in your settings.
-                </p>
-              </div>
-            </div>
 
-            {/* Step 2: Idle Messages */}
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
-                <MessageSquare className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">
-                  2. Set Up Your Idle Screen
-                </h3>
-                <p className="text-muted-foreground">
-                  While you wait, go to the{" "}
-                  <strong>&quot;Idle Messages&quot;</strong> section in your
-                  settings. Add song lyrics or welcome messages to your personal
-                  library and sync them to the player!
-                </p>
-              </div>
-            </div>
+          {/* Step Content */}
+          <div className="px-4 space-y-4">
+            {step === 1 && (
+              <>
+                <StepContent icon={<Play className="h-6 w-6" />} title="1. Start & Manage the Party">
+                  Your party is currently **&quot;OPEN&quot;**. Guests can join, but the 
+                  player is idle. Go to the **Settings** tab and click 
+                  **Start Party** when you&apos;re ready to load the first song.
+                </StepContent>
+                <StepContent icon={<ListMusic className="h-6 w-6" />} title="2. Control the Queue">
+                  The **Playlist** tab is your main control center. You can see 
+                  the full list of upcoming songs, remove any you don&apos;t want, 
+                  and use the playback controls to **Play, Pause, or Skip** the song that is currently on the player screen.
+                </StepContent>
+              </>
+            )}
 
-            {/* Step 3: Manage Your Show */}
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-500 text-white">
-                <Settings className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">3. Control Your Party</h3>
-                <p className="text-muted-foreground">
-                  Use the <strong>Playlist</strong> tab to manage the queue and
-                  the <strong>Settings</strong> tab to change party rules or
-                  export your song history later.
-                </p>
-              </div>
-            </div>
+            {step === 2 && (
+              <>
+                <StepContent icon={<Settings className="h-6 w-6" />} title="3. Customize Your Vibe">
+                  In **Settings**, you can add **Theme Suggestions** for your guests 
+                  or create a library of **Idle Messages** (like lyrics or 
+                  quotes) to show on the player screen when no music is playing.
+                </StepContent>
+                <StepContent icon={<Music className="h-6 w-6" />} title="4. Spotify Integration">
+                  Also in **Settings**, you can paste in a **Spotify Playlist ID** (or URL). 
+                  This will show the top songs from that *specific* playlist to your 
+                  guests on their Suggestions tab. If you leave it blank, it defaults 
+                  to a global &quot;Karaoke Classics&quot; playlist.
+                </StepContent>
+              </>
+            )}
+          </div>
+        </div>
 
-            {/* Close Button */}
-            <Button
-              type="button"
-              size="lg"
-              className="w-full bg-green-600 hover:bg-green-700"
-              onClick={onClose}
-            >
-              <Check className="mr-2 h-5 w-5" />
-              Got it, let&apos;s start!
-            </Button>
+        {/* Sticky Footer for Navigation */}
+        <div className="w-full max-w-2xl mx-auto p-4 border-t border-border bg-background">
+          <Dots total={totalSteps} current={step} />
+          
+          <div className="mt-4 flex gap-4">
+            {step > 1 ? (
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(step - 1)}
+                className="w-1/3"
+              >
+                Previous
+              </Button>
+            ) : (
+              <div className="w-1/3" />
+            )}
+
+            {step < totalSteps ? (
+              <Button 
+                onClick={() => setStep(step + 1)} 
+                className="w-2/3"
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="w-2/3 bg-green-600 hover:bg-green-700"
+                onClick={handleClose}
+              >
+                <Check className="mr-2 h-5 w-5" />
+                Got it, let&apos;s start!
+              </Button>
+            )}
           </div>
         </div>
       </DrawerContent>
-      {/* --- FIX END --- */}
     </Drawer>
   );
 }

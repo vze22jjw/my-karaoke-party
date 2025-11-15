@@ -53,6 +53,9 @@ services:
       CLEANUP_INTERVAL_DAYS: ${CLEANUP_INTERVAL_DAYS}
       EVENT_DEBUG: ${EVENT_DEBUG}
       NEXT_PUBLIC_EVENT_DEBUG: ${NEXT_PUBLIC_EVENT_DEBUG}
+      ## Spotify API Credentials Optional
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
     
     networks:
       - mykaraokenetwork

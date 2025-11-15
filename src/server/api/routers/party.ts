@@ -39,16 +39,13 @@ export const partyRouter = createTRPCRouter({
           data: { hash },
         });
 
-        // --- THIS IS THE FIX ---
-        // Register the creator as a participant with the "Host" role
         await ctx.db.partyParticipant.create({
           data: {
             partyId: party.id,
             name: input.singerName, 
-            role: "Host", // <-- Set the role to Host
+            role: "Host", 
           },
         });
-        // --- END THE FIX ---
 
         return updatedParty;
       } catch (error) {
@@ -72,5 +69,31 @@ export const partyRouter = createTRPCRouter({
         console.error(getErrorMessage(error));
         throw new Error(getErrorMessage(error));
       }
+    }),
+
+  updateSpotifyPlaylist: publicProcedure
+    .input(z.object({ 
+      hash: z.string(), 
+      playlistId: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      let finalId = input.playlistId?.trim() ?? null;
+      if (finalId) {
+        const match = finalId.match(/(?::|list\/)([a-zA-Z0-9]+)/);
+        // --- LINTER FIX: Use optional chain ---
+        if (match?.[1]) {
+          finalId = match[1];
+        }
+        // --------------------------------------
+      }
+
+      await ctx.db.party.update({
+        where: { hash: input.hash },
+        data: {
+          spotifyPlaylistId: finalId,
+          lastActivityAt: new Date(),
+        },
+      });
+      return { success: true, newId: finalId };
     }),
 });

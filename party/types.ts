@@ -4,6 +4,8 @@ export type VideoInPlaylist = Omit<Video, "duration"> & {
 	singerName: string;
 	playedAt: Date | null;
 	duration: string | undefined;
+    // --- ADD THIS LINE ---
+    spotifyId?: string | null;
 };
 
 export type KaraokeParty = {
@@ -11,6 +13,8 @@ export type KaraokeParty = {
 	settings: {
 		orderByFairness: boolean;
 		disablePlayback?: boolean;
+        // --- ADD THIS LINE ---
+        spotifyPlaylistId?: string | null;
 	};
 };
 
