@@ -4,9 +4,12 @@ import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { log } from "next-axiom";
 import youtubeAPI from "~/utils/youtube-data-api";
+// --- 1. IMPORT SPOTIFY SERVICE ---
+import { spotifyService } from "~/server/lib/spotify";
+import { debugLog } from "~/utils/debug-logger"; // For debug logging
 
-// --- THIS IS THE FIX (Part 1) ---
-// Define a type for the incoming request body
+const LOG_TAG = "[SpotifyService-REST]";
+
 type AddSongBody = {
   partyHash: string;
   videoId: string;
@@ -16,15 +19,11 @@ type AddSongBody = {
   coverUrl: string;
   singerName: string;
 };
-// --- END THE FIX (Part 1) ---
 
 export async function POST(request: Request) {
   try {
-    // --- THIS IS THE FIX (Part 2) ---
-    // Cast the body to the new type
     const body = (await request.json()) as AddSongBody;
     const { partyHash, videoId, title, artist, song, coverUrl, singerName } = body;
-    // --- END THE FIX (Part 2) ---
 
     if (!partyHash || !videoId || !title || !singerName) {
       return NextResponse.json(
@@ -64,21 +63,35 @@ export async function POST(request: Request) {
     const duration = await youtubeAPI.getVideoDuration(videoId);
     log.info(`Fetched duration for ${videoId}: ${duration ?? 'N/A'}`);
 
+    // --- 2. ADD SPOTIFY MATCHING LOGIC ---
+    let spotifyId: string | undefined;
+    try {
+      // This will log the result if debug is enabled
+      const match = await spotifyService.searchTrack(title);
+      if (match) {
+        spotifyId = match.id;
+        log.info("Matched Spotify Track", { youtube: title, spotify: match.title });
+        debugLog(LOG_TAG, "Matched Spotify Track", { youtube: title, spotify: match.title });
+      }
+    } catch (e) {
+      log.warn("Spotify match failed", { error: (e as Error).message });
+      debugLog(LOG_TAG, "Spotify match failed", e);
+    }
+    // ------------------------------------
+
     // Add to playlist
     const playlistItem = await db.playlistItem.create({
       data: {
         partyId: party.id,
         videoId,
         title,
-        // --- THIS IS THE FIX (Part 3) ---
-        // Use ?? (nullish coalescing) instead of ||
         artist: artist ?? "",
         song: song ?? "",
-        // --- END THE FIX (Part 3) ---
         coverUrl,
         duration: duration, 
         singerName,
         randomBreaker: Math.random(), 
+        spotifyId: spotifyId, // <-- 3. SAVE THE ID
       },
     });
 

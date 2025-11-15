@@ -18,6 +18,9 @@ function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
     singerName: item.singerName,
     playedAt: item.playedAt,
     createdAt: item.addedAt,
+    // --- ADD THIS LINE ---
+    spotifyId: item.spotifyId,
+    // ---------------------
   };
 }
 
@@ -34,7 +37,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   currentSongRemainingDuration: number | null;
   status: string;
   idleMessages: string[]; 
-  themeSuggestions: string[]; // <-- ADDED
+  themeSuggestions: string[]; 
 }> {
   const party = await db.party.findUnique({
     where: { hash: partyHash },
@@ -49,6 +52,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     throw new Error("Party not found");
   }
 
+  // ... (rest of the function is unchanged) ...
   const useQueueRules = party.orderByFairness;
   const allItems: PlaylistItem[] = party.playlistItems;
 
@@ -57,7 +61,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
 
   const playedPlaylist = playedItems
     .sort((a, b) => (b.playedAt?.getTime() ?? 0) - (a.playedAt?.getTime() ?? 0))
-    .map(formatPlaylistItem);
+    .map(formatPlaylistItem); // formatPlaylistItem now adds spotifyId
 
   const lastPlayedSong =
     playedItems.length > 0
@@ -86,9 +90,9 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   const remainingUnplayed = fairlySortedUnplayed.slice(1);
 
   const formattedCurrentSong = currentSongItem
-    ? formatPlaylistItem(currentSongItem)
+    ? formatPlaylistItem(currentSongItem) // formatPlaylistItem now adds spotifyId
     : null;
-  const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem);
+  const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem); // formatPlaylistItem now adds spotifyId
 
   let remainingDuration: number | null = null;
   
@@ -117,7 +121,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSongRemainingDuration: null,
       status: party.status,
       idleMessages: party.idleMessages,
-      themeSuggestions: party.themeSuggestions, // <-- ADDED
+      themeSuggestions: party.themeSuggestions, 
     };
   
   } else {
@@ -133,7 +137,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSongRemainingDuration: remainingDuration,
       status: party.status,
       idleMessages: party.idleMessages,
-      themeSuggestions: party.themeSuggestions, // <-- ADDED
+      themeSuggestions: party.themeSuggestions,
     };
   }
 }

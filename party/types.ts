@@ -4,6 +4,7 @@ export type VideoInPlaylist = Omit<Video, "duration"> & {
 	singerName: string;
 	playedAt: Date | null;
 	duration: string | undefined;
+	spotifyId?: string | null;
 };
 
 export type KaraokeParty = {

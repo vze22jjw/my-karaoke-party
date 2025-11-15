@@ -1,6 +1,7 @@
 import axios from "axios";
 import { env } from "~/env";
 import { cache } from "../cache";
+import { debugLog } from "~/utils/debug-logger"; // For new logging request
 
 // Internal Spotify API types
 type SpotifyTokenResponse = {
@@ -32,9 +33,10 @@ export type SpotifyRecommendation = {
   coverUrl: string;
 };
 
+const LOG_TAG = "[SpotifyService]";
+
 export const spotifyService = {
   async getAccessToken(): Promise<string | null> {
-    // 1. Check environment variables
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) return null;
 
     const CACHE_KEY = "spotify:access_token";
@@ -47,7 +49,6 @@ export const spotifyService = {
         `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
       ).toString("base64");
 
-      // 2. CORRECTED URL: Accounts Service
       const res = await axios.post<SpotifyTokenResponse>(
         "https://accounts.spotify.com/api/token",
         "grant_type=client_credentials",
@@ -78,7 +79,6 @@ export const spotifyService = {
         .replace(/official video|lyrics|karaoke|instrumental/gi, "")
         .trim();
 
-      // 3. CORRECTED URL: Search API
       const res = await axios.get<{ tracks: { items: SpotifyTrack[] } }>(
         "https://api.spotify.com/v1/search",
         {
@@ -88,6 +88,15 @@ export const spotifyService = {
       );
 
       const track = res.data.tracks.items[0];
+
+      // --- DEBUG LOGGING ---
+      if (track) {
+        debugLog(LOG_TAG, `Match found for query: "${cleanQuery}"`, track);
+      } else {
+        debugLog(LOG_TAG, `No match found for query: "${cleanQuery}"`);
+      }
+      // ---------------------
+
       if (!track) return null;
 
       return {
@@ -98,17 +107,16 @@ export const spotifyService = {
         url: track.external_urls.spotify,
       };
     } catch (error) {
+      debugLog(LOG_TAG, "Spotify Search Failed:", error);
       return null;
     }
   },
 
-  // 4. BETTER DEFAULT QUERY: "Karaoke Classics"
-  async getTopKaraokeTracks(query = "Karaoke Classics"): Promise<SpotifyRecommendation[]> {
+  async getTopKaraokeTracks(): Promise<SpotifyRecommendation[]> {
     const token = await this.getAccessToken();
     if (!token) return [];
 
-    const CACHE_KEY = `spotify:top:${query.toLowerCase().replace(/\s/g, '_')}`;
-    
+    const CACHE_KEY = "spotify:top_karaoke";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const cached = await cache.get<SpotifyRecommendation[]>(CACHE_KEY);
     
@@ -117,8 +125,8 @@ export const spotifyService = {
     }
 
     try {
-      // 5. CORRECTED URL: Search API
-      const searchRes = await axios.get<{ playlists: { items: { id: string; name: string }[] } }>(
+      const query = "Karaoke Classics"; // Use a reliable query
+      const searchRes = await axios.get<{ playlists: { items: { id: string }[] } }>(
         "https://api.spotify.com/v1/search",
         {
           params: { q: query, type: "playlist", limit: 1 },
@@ -126,17 +134,11 @@ export const spotifyService = {
         }
       );
 
-      const playlistItem = searchRes.data.playlists.items[0];
-      if (!playlistItem) {
-        console.warn(`Spotify: No playlist found for query "${query}"`);
-        return [];
-      }
+      const playlistId = searchRes.data.playlists.items[0]?.id;
+      if (!playlistId) return [];
 
-      console.log(`Spotify: Found playlist "${playlistItem.name}" (${playlistItem.id})`);
-
-      // 6. CORRECTED URL: Playlist Tracks API
       const tracksRes = await axios.get<{ items: { track: SpotifyTrack }[] }>(
-        `https://api.spotify.com/v1/playlists/${playlistItem.id}/tracks`,
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
         {
           params: { limit: 5 },
           headers: { Authorization: `Bearer ${token}` },

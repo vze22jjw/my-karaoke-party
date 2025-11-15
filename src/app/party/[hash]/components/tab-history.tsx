@@ -63,7 +63,7 @@ export function TabHistory({ themeSuggestions }: Props) {
         <div className="bg-card rounded-lg p-4 border border-green-500/20">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
             <Music2 className="h-5 w-5" />
-            Trending on Spotify
+            Hot Karaoke on Spotify
           </h2>
           <ul className="space-y-3">
             {spotifySongs.map((song, index) => (
