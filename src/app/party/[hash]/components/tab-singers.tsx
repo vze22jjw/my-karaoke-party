@@ -8,25 +8,37 @@ import { Users, MicVocal, ChevronDown, LogOut, Crown } from "lucide-react";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { SongCountdownTimer } from "~/components/song-countdown-timer"; 
+import { SongCountdownTimer } from "~/components/song-countdown-timer";
 
+// --- UPDATE PARTICIPANT TYPE ---
 type Participant = {
   name: string;
   role: string;
+  avatar: string | null;
 };
+// --- END UPDATE ---
 
 type Props = {
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
   participants: Participant[];
-  name: string; 
+  name: string;
   onLeaveParty: () => void;
-  isPlaying: boolean; 
+  isPlaying: boolean;
   remainingTime: number; // <-- ADD THIS PROP
 };
 
-const nextSingerMessages = ["Serve In", "Your In", "Sing In", "Up In", "Mic In", "Next In"];
+// --- THIS IS THE FIX (Req #1) ---
+const nextSingerMessages = [
+  "Serve In",
+  "Turn Up",
+  "Sing In",
+  "Mic In",
+  "Set In",
+  "Next In",
+];
+// --- END THE FIX ---
 
 export function TabSingers({
   currentSong,
@@ -35,7 +47,7 @@ export function TabSingers({
   participants,
   name,
   onLeaveParty,
-  isPlaying, 
+  isPlaying,
   remainingTime, // <-- GET THIS PROP
 }: Props) {
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>(
@@ -59,7 +71,9 @@ export function TabSingers({
   // This hook selects a random message and only changes it when the next singer changes.
   const nextSingerMessage = useMemo(() => {
     if (!nextSingerName) return "";
-    return nextSingerMessages[Math.floor(Math.random() * nextSingerMessages.length)];
+    return nextSingerMessages[
+      Math.floor(Math.random() * nextSingerMessages.length)
+    ];
   }, [nextSingerName]);
   // --- END THE FIX ---
 
@@ -88,13 +102,21 @@ export function TabSingers({
       ) : (
         <div className="space-y-3">
           {sortedParticipants.map((participant) => {
-            const playedSongs = playedPlaylist.filter((v) => v.singerName === participant.name);
-            const nextSongs = unplayedPlaylist.filter((v) => v.singerName === participant.name);
-            const currentSongForSinger = (currentSong?.singerName === participant.name) ? currentSong : null;
-            const totalSongs = playedSongs.length + nextSongs.length + (currentSongForSinger ? 1 : 0);
-            
+            const playedSongs = playedPlaylist.filter(
+              (v) => v.singerName === participant.name,
+            );
+            const nextSongs = unplayedPlaylist.filter(
+              (v) => v.singerName === participant.name,
+            );
+            const currentSongForSinger =
+              currentSong?.singerName === participant.name ? currentSong : null;
+            const totalSongs =
+              playedSongs.length +
+              nextSongs.length +
+              (currentSongForSinger ? 1 : 0);
+
             const showPlayed = !!showPlayedMap[participant.name];
-            const isYou = participant.name === name; 
+            const isYou = participant.name === name;
             const isHost = participant.role === "Host";
 
             const isCurrentSinger = participant.name === currentSingerName;
@@ -102,23 +124,27 @@ export function TabSingers({
 
             return (
               <div
-                key={participant.name} 
+                key={participant.name}
                 className="p-4 rounded-lg border bg-muted/50"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
+                    {/* --- THIS IS THE FIX --- */}
                     <div
                       className={cn(
                         "w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center",
                         isCurrentSinger && "animate-pulse",
                       )}
                     >
-                      {isHost ? (
-                        <Crown className="h-5 w-5" />
+                      {participant.avatar ? (
+                        <span className="text-2xl">{participant.avatar}</span>
+                      ) : isHost ? (
+                        <span className="text-2xl">👑</span>
                       ) : (
                         <MicVocal className="h-5 w-5" />
                       )}
                     </div>
+                    {/* --- END THE FIX --- */}
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{participant.name}</p>
@@ -127,7 +153,11 @@ export function TabSingers({
                         {isNextSinger && currentSong && (
                           <SongCountdownTimer
                             remainingTime={remainingTime}
-                            className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
+                            className={cn(
+                              isPlaying
+                                ? "text-primary"
+                                : "text-muted-foreground",
+                            )}
                             message={nextSingerMessage}
                           />
                         )}
@@ -146,7 +176,9 @@ export function TabSingers({
                       </span>
                     )}
 
-                    {(playedSongs.length > 0 || nextSongs.length > 0 || !!currentSongForSinger) && (
+                    {(playedSongs.length > 0 ||
+                      nextSongs.length > 0 ||
+                      !!currentSongForSinger) && (
                       <Button
                         type="button"
                         onClick={() => togglePlayed(participant.name)}
@@ -175,7 +207,10 @@ export function TabSingers({
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
                         <p className="text-xs font-medium text-muted-foreground mb-1">
-                          In Line: {currentSongForSinger ? nextSongs.length + 1 : nextSongs.length}
+                          In Line:{" "}
+                          {currentSongForSinger
+                            ? nextSongs.length + 1
+                            : nextSongs.length}
                         </p>
                         <ul className="space-y-1">
                           {currentSongForSinger && (
@@ -183,7 +218,8 @@ export function TabSingers({
                               key={currentSongForSinger.id}
                               className="text-xs truncate pl-2 font-bold text-primary"
                             >
-                              • {decode(currentSongForSinger.title)} (Playing Now)
+                              • {decode(currentSongForSinger.title)} (Playing
+                              Now)
                             </li>
                           )}
                           {nextSongs.map((song) => (
@@ -206,7 +242,7 @@ export function TabSingers({
                         <ul className="space-y-1">
                           {playedSongs.map((song) => (
                             <li
-                              key={song.id + (song.playedAt?.toString() ?? "")} 
+                              key={song.id + (song.playedAt?.toString() ?? "")}
                               className="text-xs truncate pl-2 text-muted-foreground"
                             >
                               • {decode(song.title)}
@@ -219,8 +255,12 @@ export function TabSingers({
                 ) : (
                   <div className="text-xs text-muted-foreground">
                     {(!!currentSongForSinger || nextSongs.length > 0) &&
-                      `${nextSongs.length + (currentSongForSinger ? 1 : 0)} in line`}
-                    {(!!currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}
+                      `${
+                        nextSongs.length + (currentSongForSinger ? 1 : 0)
+                      } in line`}
+                    {(!!currentSongForSinger || nextSongs.length > 0) &&
+                      playedSongs.length > 0 &&
+                      " • "}
                     {playedSongs.length > 0 && `${playedSongs.length} played`}
                   </div>
                 )}

@@ -18,9 +18,43 @@ import {
 } from "~/components/ui/ui/form";
 import { Input } from "~/components/ui/ui/input";
 import { Button } from "~/components/ui/ui/button"; // <-- Changed import
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Mic } from "lucide-react"; // <-- Added Mic
+import { cn } from "~/lib/utils";
+
+// --- START: NEW AVATAR COMPONENTS ---
+const AVATARS = [
+  "🎤", "🎧", "🥁", "🧑‍🎤", "👩‍🎤",
+  "🔥", "🍺", "😎", "🕺", "💃",
+];
+
+const AvatarPicker = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) => (
+  <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border bg-muted/50 p-3">
+    {AVATARS.map((avatar) => (
+      <button
+        key={avatar}
+        type="button"
+        onClick={() => onChange(avatar)}
+        className={cn(
+          "flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-all",
+          value === avatar
+            ? "bg-primary ring-2 ring-primary-foreground"
+            : "sm:hover:bg-muted-foreground/20",
+        )}
+      >
+        {avatar}
+      </button>
+    ))}
+  </div>
+);
+// --- END: NEW AVATAR COMPONENTS ---
 
 const formSchema = z.object({
   partyCode: z.string().min(4),
@@ -40,6 +74,13 @@ export default function JoinScene({
     defaultValue: "",
   });
 
+  // --- ADD LOCAL STORAGE FOR AVATAR ---
+  const [avatar, setAvatar] = useLocalStorage({
+    key: "avatar",
+    defaultValue: AVATARS[0]!, // Default to the first icon
+  });
+  // --- END ADD ---
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,7 +91,9 @@ export default function JoinScene({
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    // SetName and SetAvatar are already handled by useLocalStorage
     setName(values.name);
+    // Avatar is already set by the picker
 
     const codeToJoin = partyHash ?? values.partyCode;
     setTimeout(() => {
@@ -111,6 +154,15 @@ export default function JoinScene({
                 />
               )}
 
+              {/* --- ADD AVATAR PICKER --- */}
+              <FormItem>
+                <FormLabel>Choose Your Icon</FormLabel>
+                <FormControl>
+                  <AvatarPicker value={avatar} onChange={setAvatar} />
+                </FormControl>
+              </FormItem>
+              {/* --- END ADD --- */}
+
               <FormField
                 control={form.control}
                 name="name"
@@ -144,7 +196,9 @@ export default function JoinScene({
                 variant="secondary"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? "Joining..." : (
+                {form.formState.isSubmitting ? (
+                  "Joining..."
+                ) : (
                   <>
                     Join Party
                     <Mic className="ml-3 h-6 w-6 text-cyan-400" />
