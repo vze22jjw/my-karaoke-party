@@ -64,10 +64,7 @@ jobs:
         id: build_script
         run: |
           chmod +x docker-builds/docker-build.sh
-          
-          # Capture the output to find the version
-          # We use 'tee' to show output in logs while capturing it
-          OUTPUT=$(bash docker-builds/docker-build.sh --build-type release --deploy | tee /dev/tty)
+          bash docker-builds/docker-build.sh --build-type release --deploy
           
           # Export variables for the summary step
           echo "VERSION=${{ env.VERSION }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV

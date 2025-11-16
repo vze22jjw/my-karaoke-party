@@ -26,9 +26,7 @@ type Props = {
   remainingTime: number; // <-- ADD THIS PROP
 };
 
-// --- THIS IS THE FIX (Req #1) ---
-const nextSingerMessages = ["Serving In", "Your Turn In", "Singing In", "Coming Up In", "Get Ready In", "Up Next In"];
-// --- END THE FIX ---
+const nextSingerMessages = ["Serve In", "Your In", "Sing In", "Up In", "Mic In", "Next In"];
 
 export function TabSingers({
   currentSong,
