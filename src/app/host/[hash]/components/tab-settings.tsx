@@ -21,11 +21,15 @@ import {
   Lightbulb,
   Music,
   Loader2,
+  Info, // <-- THIS IS THE FIX
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
 import { type VideoInPlaylist } from "party";
+// --- THIS IS THE FIX ---
+// Import useState
 import { useState, useMemo } from "react";
+// --- END THE FIX ---
 import { toast } from "sonner";
 import { decode } from "html-entities";
 import { type IdleMessage } from "@prisma/client";
@@ -59,26 +63,29 @@ type Props = {
   spotifyPlaylistId: string | null;
 };
 
+// --- THIS IS THE FIX ---
+// Removed description from ToggleButton props
 const ToggleButton = ({
   id,
   checked,
   onCheckedChange,
   label,
-  description,
 }: {
   id: string;
   checked: boolean;
   onCheckedChange: () => void;
   label: string;
-  description: string;
 }) => (
-  <div className="flex items-center justify-between rounded-lg border p-4">
+  // Reduced padding from p-4 to p-3
+  <div className="flex items-center justify-between rounded-lg border p-3">
+    {/* --- END THE FIX --- */}
     <div className="flex-1 space-y-0.5 pr-4">
       <Label htmlFor={id} className="text-base">
         {label}
       </Label>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      {/* Removed <p> tag */}
     </div>
+    {/* --- END THE FIX --- */}
     <button
       id={id}
       type="button"
@@ -145,6 +152,17 @@ export function TabSettings({
 
   const [spotifyIdInput, setSpotifyIdInput] = useState(spotifyPlaylistId ?? "");
   const [isSavingSpotify, setIsSavingSpotify] = useState(false);
+
+  // --- THIS IS THE FIX ---
+  // Add state hooks for all info popups
+  const [showSuggestionsInfo, setShowSuggestionsInfo] = useState(false);
+  const [showIdleInfo, setShowIdleInfo] = useState(false);
+  const [showRulesInfo, setShowRulesInfo] = useState(false);
+  const [showSpotifyInfo, setShowSpotifyInfo] = useState(false);
+  const [showSearchInfo, setShowSearchInfo] = useState(false);
+  const [showExportInfo, setShowExportInfo] = useState(false);
+  const [showDangerInfo, setShowDangerInfo] = useState(false);
+  // --- END THE FIX ---
 
   const updateSpotify = api.party.updateSpotifyPlaylist.useMutation({
     onSuccess: (data) => {
@@ -255,7 +273,10 @@ export function TabSettings({
 
 
   return (
-    <div className="space-y-6">
+    // --- THIS IS THE FIX ---
+    // Reduced space-y-6 to space-y-4
+    <div className="space-y-4">
+    {/* --- END THE FIX --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Party Links</h3>
         <div className="space-y-4">
@@ -306,14 +327,34 @@ export function TabSettings({
       )}
 
       {/* --- Party Theme / Song Suggestions --- */}
-      <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-yellow-500" />
-          Party Theme / Song Suggestions
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Add numbered prompts to help your guests pick songs! These will appear at the top of the History tab.
-        </p>
+      {/* --- THIS IS THE FIX --- */}
+      {/* Reduced padding from p-4 to p-3 */}
+      <div className="space-y-3 rounded-lg border bg-card p-3">
+        {/* --- END THE FIX --- */}
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-yellow-500" />
+            Party Theme / Song Suggestions
+          </h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowSuggestionsInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {showSuggestionsInfo && (
+          <Alert className="mt-2">
+            <AlertDescription>
+              Add numbered prompts to help your guests pick songs! These will
+              appear at the top of the History tab.
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* --- END THE FIX --- */}
 
         <div className="flex w-full items-center space-x-2">
           <Input
@@ -363,11 +404,27 @@ export function TabSettings({
       </div>
       
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
-        <p className="text-sm text-muted-foreground">
-          Messages are tied to your host name ({hostName ?? "..."}) and saved
-          in the database. (Max 20)
-        </p>
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowIdleInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {showIdleInfo && (
+          <Alert className="mt-2">
+            <AlertDescription>
+              Messages are tied to your host name ({hostName ?? "..."}) and
+              saved in the database. (Max 20)
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* --- END THE FIX --- */}
 
         <div className="flex w-full items-center space-x-2">
           <Input
@@ -432,41 +489,84 @@ export function TabSettings({
         </Button>
       </div>
 
-      <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium">Party Rules</h3>
+      {/* --- THIS IS THE FIX --- */}
+      {/* Reduced padding from p-4 to p-3 */}
+      <div className="space-y-3 rounded-lg border bg-card p-3">
+        {/* --- END THE FIX --- */}
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Party Rules</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowRulesInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {showRulesInfo && (
+          <Alert className="mt-2 space-y-2">
+            <AlertDescription>
+              <strong>Queue Ordering:</strong> &quot;ON (Fairness)&quot; ensures
+              everyone gets a turn. &quot;OFF&quot; is first-come, first-served.
+            </AlertDescription>
+            <AlertDescription>
+              <strong>Play Videos in iFrame:</strong> &quot;ON&quot; plays most
+              videos inside the app. &quot;OFF&quot; requires clicking a link to
+              open YouTube.
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* --- END THE FIX --- */}
         <ToggleButton
           id="queue-rules"
           checked={useQueueRules}
           onCheckedChange={onToggleRules}
-          label="Queue Ordering"
-          description={
-            useQueueRules ? "ON (Fairness)" : "OFF (First Come, First Served)"
+          label={
+            useQueueRules ? "Queue: Fairness (ON)" : "Queue: FIFO (OFF)"
           }
         />
         <ToggleButton
           id="disable-playback"
           checked={!disablePlayback}
           onCheckedChange={onTogglePlayback}
-          label="Play Videos in iFrame"
-          description={
+          label={
             !disablePlayback
-              ? "Most Videos Play in App"
-              : "Click Link to Open Videos"
+              ? "Playback: In-App (ON)"
+              : "Playback: YouTube (OFF)"
           }
         />
       </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium flex items-center gap-2">
-          <Music className="h-5 w-5 text-green-500" />
-          Spotify Integration
-        </h3>
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Music className="h-5 w-5 text-green-500" />
+            Spotify Integration
+          </h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowSpotifyInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {showSpotifyInfo && (
+          <Alert className="mt-2">
+            <AlertDescription>
+              Override the default &quot;Karaoke Classics&quot; by pasting a
+              Spotify Playlist URL or ID. This will show songs from your playlist
+              on the guest&apos;s &quot;Suggestions&quot; tab.
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* --- END THE FIX --- */}
         <div className="space-y-2">
           <Label htmlFor="spotify-query">Trending Playlist ID</Label>
-          {/* LINTER FIX: Replaced ' with &apos; */}
-          <p className="text-sm text-muted-foreground">
-            Override the default &quot;Karaoke Classics&quot; by pasting a Spotify Playlist URL or ID.
-          </p>
           <div className="flex gap-2">
             <Input
               id="spotify-query"
@@ -485,18 +585,43 @@ export function TabSettings({
       </div>
 
 
-      <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium">Search Settings</h3>
-        <div className="space-y-2 rounded-lg border p-4">
+      {/* --- THIS IS THE FIX --- */}
+      {/* Reduced padding from p-4 to p-3 */}
+      <div className="space-y-3 rounded-lg border bg-card p-3">
+        {/* --- END THE FIX --- */}
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Search Settings</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowSearchInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {/* --- END THE FIX --- */}
+        {/* --- THIS IS THE FIX --- */}
+        {/* Reduced padding from p-4 to p-3 */}
+        <div className="space-y-2 rounded-lg border p-3">
+        {/* --- END THE FIX --- */}
           <div className="flex justify-between">
             <Label htmlFor="max-results" className="text-base">
               Max Search Results
             </Label>
             <span className="text-base font-bold">{maxSearchResults}</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Limit the number of results from YouTube.
-          </p>
+          {/* --- THIS IS THE FIX --- */}
+          {showSearchInfo && (
+            <Alert className="mt-2">
+              <AlertDescription>
+                Limit the number of results guests see when they search YouTube.
+                Fewer results can speed up loading.
+              </AlertDescription>
+            </Alert>
+          )}
+          {/* --- END THE FIX --- */}
           <Input
             id="max-results"
             type="range"
@@ -511,13 +636,28 @@ export function TabSettings({
       </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium">Export Played Songs</h3>
-        {/* LINTER FIX: Replaced ' with &apos; and " with &quot; */}
-        <p className="text-sm text-muted-foreground">
-          Copy the list as plain text, or as Spotify URIs. You can paste the URIs 
-          into a tool like <strong>Soundiiz</strong> or directly into a new 
-          playlist in the <strong>Spotify Desktop app</strong>.
-        </p>
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Export Played Songs</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowExportInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {showExportInfo && (
+          <Alert className="mt-2">
+            <AlertDescription>
+              Copy the list as plain text, or as Spotify URIs. You can paste the
+              URIs into a tool like <strong>Soundiiz</strong> or directly into a
+              new playlist in the <strong>Spotify Desktop app</strong>.
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* --- END THE FIX --- */}
         <Button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -583,16 +723,30 @@ export function TabSettings({
       </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
+        {/* --- THIS IS THE FIX --- */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={() => setShowDangerInfo((s) => !s)}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+        {/* --- END THE FIX --- */}
         <div className="space-y-4 rounded-lg border border-destructive/50 p-4">
-          <div>
-            <Label className="text-base">End Party</Label>
-            {/* LINTER FIX: Replaced ' with &apos; */}
-            <p className="text-sm text-muted-foreground">
-              This will close the party, delete all songs, and disconnect
-              everyone. This can&apos;t be undone.
-            </p>
-          </div>
+          {/* --- THIS IS THE FIX --- */}
+          {showDangerInfo && (
+            <Alert className="mt-2" variant="destructive">
+              <AlertDescription>
+                This will close the party, delete all songs, and disconnect
+                everyone. This can&apos;t be undone.
+              </AlertDescription>
+            </Alert>
+          )}
+          {/* --- END THE FIX --- */}
           {isConfirmingClose ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />

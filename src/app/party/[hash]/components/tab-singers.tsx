@@ -4,7 +4,18 @@ import type { VideoInPlaylist } from "party";
 // --- THIS IS THE FIX (Req #1) ---
 import { useState, useMemo } from "react";
 // --- END THE FIX ---
-import { Users, MicVocal, ChevronDown, LogOut, Crown } from "lucide-react";
+// --- THIS IS THE FIX ---
+// Added Music and Info icons
+import {
+  Users,
+  MicVocal,
+  ChevronDown,
+  LogOut,
+  Crown,
+  Music,
+  Info,
+} from "lucide-react";
+// --- END THE FIX ---
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
@@ -27,6 +38,7 @@ type Props = {
   onLeaveParty: () => void;
   isPlaying: boolean;
   remainingTime: number; // <-- ADD THIS PROP
+  onReplayTour: () => void; // <-- THIS IS THE FIX
 };
 
 // --- THIS IS THE FIX (Req #1) ---
@@ -49,6 +61,7 @@ export function TabSingers({
   onLeaveParty,
   isPlaying,
   remainingTime, // <-- GET THIS PROP
+  onReplayTour, // <-- THIS IS THE FIX
 }: Props) {
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>(
     {},
@@ -83,6 +96,16 @@ export function TabSingers({
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Users className="h-5 w-5" />
           Singers ({participants.length})
+          {/* --- THIS IS THE FIX --- */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground"
+            onClick={onReplayTour}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+          {/* --- END THE FIX --- */}
         </h2>
         <Button
           variant="ghost"
@@ -125,10 +148,18 @@ export function TabSingers({
             return (
               <div
                 key={participant.name}
-                className="p-4 rounded-lg border bg-muted/50"
+                // --- THIS IS THE FIX ---
+                // Reduced padding from p-4 to p-3
+                className="p-3 rounded-lg border bg-muted/50"
+                // --- END THE FIX ---
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+                <div
+                  // --- THIS IS THE FIX ---
+                  // Reduced margin-bottom from mb-2 to mb-1
+                  className="flex items-center justify-between mb-1"
+                  // --- END THE FIX ---
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     {/* --- THIS IS THE FIX --- */}
                     <div
                       className={cn(
@@ -145,11 +176,13 @@ export function TabSingers({
                       )}
                     </div>
                     {/* --- END THE FIX --- */}
-                    <div>
+                    {/* --- THIS IS THE FIX --- */}
+                    {/* This div now contains all text and handles layout */}
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold">{participant.name}</p>
-                        {/* --- THIS IS THE FIX (Req #1) --- */}
-                        {/* Pass the random message to the timer component */}
+                        <p className="font-semibold truncate">
+                          {participant.name}
+                        </p>
                         {isNextSinger && currentSong && (
                           <SongCountdownTimer
                             remainingTime={remainingTime}
@@ -161,15 +194,35 @@ export function TabSingers({
                             message={nextSingerMessage}
                           />
                         )}
-                        {/* --- END THE FIX --- */}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {totalSongs} song(s)
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Music className="h-3 w-3" />
+                          <span>{totalSongs}</span>
+                        </div>
+                        {/* This text now appears here when collapsed */}
+                        {!showPlayed && (
+                          <div className="flex items-center gap-1 truncate">
+                            <span className="opacity-50">•</span>
+                            <span className="truncate">
+                              {(!!currentSongForSinger || nextSongs.length > 0) &&
+                                `${
+                                  nextSongs.length + (currentSongForSinger ? 1 : 0)
+                                } in line`}
+                              {(!!currentSongForSinger || nextSongs.length > 0) &&
+                                playedSongs.length > 0 &&
+                                " • "}
+                              {playedSongs.length > 0 &&
+                                `${playedSongs.length} played`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    {/* --- END THE FIX --- */}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {isYou && (
                       <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
                         You
@@ -202,7 +255,9 @@ export function TabSingers({
                   </div>
                 </div>
 
-                {showPlayed ? (
+                {/* --- THIS IS THE FIX --- */}
+                {/* The logic for the "closed" state text was removed from here */}
+                {showPlayed && (
                   <div className="mt-2 space-y-3">
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
@@ -252,18 +307,8 @@ export function TabSingers({
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="text-xs text-muted-foreground">
-                    {(!!currentSongForSinger || nextSongs.length > 0) &&
-                      `${
-                        nextSongs.length + (currentSongForSinger ? 1 : 0)
-                      } in line`}
-                    {(!!currentSongForSinger || nextSongs.length > 0) &&
-                      playedSongs.length > 0 &&
-                      " • "}
-                    {playedSongs.length > 0 && `${playedSongs.length} played`}
-                  </div>
                 )}
+                {/* --- END THE FIX --- */}
               </div>
             );
           })}

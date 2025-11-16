@@ -111,7 +111,9 @@ export default function JoinScene({
 
   return (
     <main className="flex min-h-screen flex-col items-center text-white">
-      <div className="container flex flex-1 flex-col items-center gap-4 px-4 py-4">
+      {/* --- THIS IS THE FIX --- */}
+      {/* Reduced gap, added bottom padding (pb-12), and reduced logo max-w */}
+      <div className="container flex flex-1 flex-col items-center gap-2 px-4 pt-4 pb-12">
         <Image
           src={logo}
           width={666}
@@ -119,8 +121,9 @@ export default function JoinScene({
           alt="My Karaoke Party logo"
           priority={true}
           placeholder="blur"
-          className="h-auto w-full max-w-sm flex-shrink-0 sm:max-w-[666px]"
+          className="h-auto w-full max-w-[266px] flex-shrink-0"
         />
+        {/* --- END THE FIX --- */}
         <div className="flex w-full max-w-xs flex-1 flex-col items-center justify-center px-5">
           {partyName && (
             <div className="mb-4 w-full text-center">

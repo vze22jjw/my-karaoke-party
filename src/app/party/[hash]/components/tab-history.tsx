@@ -61,7 +61,10 @@ export function TabHistory({
             {themeSuggestions.map((suggestion, index) => (
               <li
                 key={index}
-                className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
+                // --- THIS IS THE FIX ---
+                // Removed hover:bg-muted
+                className="flex items-start gap-3 p-2 rounded transition-colors"
+                // --- END THE FIX ---
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
                   {index + 1}
@@ -89,7 +92,10 @@ export function TabHistory({
               // --- MAKE CLICKABLE ---
               <li
                 key={index}
-                className="flex items-center gap-3 pr-2 rounded hover:bg-muted transition-colors"
+                // --- THIS IS THE FIX ---
+                // Removed hover:bg-muted
+                className="flex items-center gap-3 pr-2 rounded transition-colors"
+                // --- END THE FIX ---
               >
                 <button
                   type="button"
@@ -151,7 +157,10 @@ export function TabHistory({
               // --- MAKE CLICKABLE ---
               <li
                 key={song.id}
-                className="flex items-center gap-3 pr-2 rounded hover:bg-muted transition-colors"
+                // --- THIS IS THE FIX ---
+                // Removed hover:bg-muted
+                className="flex items-center gap-3 pr-2 rounded transition-colors"
+                // --- END THE FIX ---
               >
                 <button
                   type="button"
@@ -222,7 +231,10 @@ export function TabHistory({
               <li
                 key={singer.name}
                 // --- 3. REDUCED PADDING (py-1.5) ---
-                className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted transition-colors"
+                // --- THIS IS THE FIX ---
+                // Removed hover:bg-muted
+                className="flex items-center gap-3 py-1.5 px-2 rounded transition-colors"
+                // --- END THE FIX ---
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-500 text-black flex items-center justify-center font-semibold text-sm">
                   {index + 1}

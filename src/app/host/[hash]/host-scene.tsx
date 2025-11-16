@@ -44,10 +44,13 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: "playlist",
   });
   
+  // --- THIS IS THE FIX ---
+  // Changed defaultValue from 10 to 12
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
-    defaultValue: 10,
+    defaultValue: 12,
   });
+  // --- END THE FIX ---
 
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: HOST_TOUR_KEY,
@@ -94,6 +97,13 @@ export function HostScene({ party, initialData }: Props) {
     }, 300);
   };
 
+  // --- THIS IS THE FIX ---
+  // Function to re-open the tour
+  const handleReplayTour = () => {
+    setIsTourOpen(true);
+  };
+  // --- END THE FIX ---
+  
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
   }
@@ -256,6 +266,9 @@ export function HostScene({ party, initialData }: Props) {
           onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
           // --- PASS THE PROP ---
           spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
+          // --- THIS IS THE FIX ---
+          onReplayTour={handleReplayTour}
+          // --- END THE FIX ---
         />
       </div>
     </div>
