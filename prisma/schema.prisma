@@ -38,11 +38,7 @@ model Party {
     status         String         @default("OPEN") // OPEN, STARTED, CLOSED
     idleMessages   String[]       @default([]) 
     themeSuggestions String[]     @default([]) 
-
-    // --- ADD THIS FIELD ---
-    // Stores an optional, user-provided Spotify Playlist ID
     spotifyPlaylistId String?
-    // ----------------------
 
     @@index([hash])
     @@index([lastActivityAt])
@@ -56,6 +52,10 @@ model PartyParticipant {
     name      String
     joinedAt  DateTime @default(now())
     role      String   @default("Guest") 
+    
+    // --- ADD THIS FIELD ---
+    avatar    String?  // Will store an emoji or icon identifier
+    // ----------------------
 
     @@unique([partyId, name])
     @@index([partyId])
@@ -76,7 +76,7 @@ model PlaylistItem {
     playedAt   DateTime?
     orderIndex Int       @default(0)
     randomBreaker Float?
-    spotifyId  String?   
+    spotifyId  String?
 
     @@index([partyId])
     @@index([playedAt])

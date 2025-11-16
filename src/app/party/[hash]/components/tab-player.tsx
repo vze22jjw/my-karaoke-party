@@ -79,7 +79,10 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
             {songsToShowNext.map((video, index) => (
               <li
                 key={video.id}
-                className="flex items-start gap-3 p-2 rounded hover:bg-muted transition-colors"
+                // --- THIS IS THE FIX ---
+                // Removed hover:bg-muted
+                className="flex items-start gap-3 p-2 rounded transition-colors"
+                // --- END THE FIX ---
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
                   {index + 2} {/* +2 because +1 is playing */}

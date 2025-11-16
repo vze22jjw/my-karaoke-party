@@ -100,6 +100,13 @@ export function PartySceneTabs({
     }, 300);
   };
 
+  // --- THIS IS THE FIX ---
+  // Function to re-open the tour
+  const handleReplayTour = () => {
+    setIsTourOpen(true);
+  };
+  // --- END THE FIX ---
+
   const {
     currentSong,
     unplayedPlaylist,
@@ -251,6 +258,9 @@ export function PartySceneTabs({
             onLeaveParty={onLeaveParty}
             isPlaying={isPlaying}
             remainingTime={remainingTime}
+            // --- THIS IS THE FIX ---
+            onReplayTour={handleReplayTour}
+            // --- END THE FIX ---
           />
         </TabsContent>
         <TabsContent value="history" className="flex-1 overflow-y-auto mt-0">

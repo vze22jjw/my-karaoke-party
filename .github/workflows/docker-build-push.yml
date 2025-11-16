@@ -4,8 +4,6 @@ on:
   pull_request:
     branches: [ "main" ]
     types: [ closed ]
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
   schedule:
     - cron: '12 9 3 * *' ## Monthly run at 9:12 AM UTC
@@ -18,8 +16,7 @@ jobs:
     if: >
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     
     permissions:
@@ -67,10 +64,7 @@ jobs:
         id: build_script
         run: |
           chmod +x docker-builds/docker-build.sh
-          
-          # Capture the output to find the version
-          # We use 'tee' to show output in logs while capturing it
-          OUTPUT=$(bash docker-builds/docker-build.sh --build-type release --deploy | tee /dev/tty)
+          bash docker-builds/docker-build.sh --build-type release --deploy
           
           # Export variables for the summary step
           echo "VERSION=${{ env.VERSION }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV

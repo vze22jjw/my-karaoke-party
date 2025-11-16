@@ -1,12 +1,19 @@
 "use client";
 
 import type { Party, IdleMessage } from "@prisma/client";
-import { ListMusic, Settings, Users, Clock, Music } from "lucide-react";
+// --- THIS IS THE FIX ---
+// Import Info icon
+import { ListMusic, Settings, Users, Clock, Music, Info } from "lucide-react";
+// --- END THE FIX ---
 import type { KaraokeParty, VideoInPlaylist } from "party";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
 import { useState, useEffect } from "react"; 
+// --- THIS IS THE FIX ---
+// Import Button
+import { Button } from "~/components/ui/ui/button";
+// --- END THE FIX ---
 
 type Props = {
   party: Party;
@@ -46,6 +53,7 @@ type Props = {
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
   // --- ADD THIS PROP ---
   spotifyPlaylistId: string | null;
+  onReplayTour: () => void; // <-- THIS IS THE FIX
 };
 
 function useTimeOpen(createdAt: Date) {
@@ -112,6 +120,7 @@ export function HostControlPanel({
   onUpdateThemeSuggestions,
   // --- DESTRUCTURE THIS PROP ---
   spotifyPlaylistId,
+  onReplayTour, // <-- THIS IS THE FIX
 }: Props) {
 
   const timeOpen = useTimeOpen(party.createdAt);
@@ -123,27 +132,44 @@ export function HostControlPanel({
       <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         
         {/* Party Title & Info Panel */}
-        <div className="flex-shrink-0">
-          <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight mb-4 truncate w-full text-center uppercase">
+        {/* --- THIS IS THE FIX --- */}
+        {/* Reduced mb-4 to mb-2 */}
+        <div className="flex-shrink-0 mb-2">
+          <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight truncate w-full text-center uppercase">
             {party.name}
           </h1>
         </div>
-        <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-xs text-muted-foreground mb-4 space-y-2">
+        {/* Reduced p-3 to p-2, space-y-2 to space-y-1, mb-4 to mb-2 */}
+        <div className="flex-shrink-0 rounded-lg border bg-card p-2 text-xs text-muted-foreground mb-2 space-y-1">
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
               <span className="font-mono text-lg font-bold text-foreground">
                 CODE: {party.hash}
               </span>
-              <span className="font-medium text-foreground">
-                Host: {hostName ?? "..."}
-              </span>
+              {/* Added flex items-center and Info button */}
+              <div className="flex items-center gap-1">
+                <span className="font-medium text-foreground">
+                  Host: {hostName ?? "..."}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-muted-foreground"
+                  onClick={onReplayTour}
+                >
+                  <Info className="h-4 w-4" />
+                </Button>
+              </div>
+              {/* --- END THE FIX --- */}
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
               <span>{timeOpen}</span>
             </div>
           </div>
-          <div className="flex justify-between items-center border-t pt-2">
+          {/* Reduced pt-2 to pt-1 */}
+          <div className="flex justify-between items-center border-t pt-1">
+            {/* --- END THE FIX --- */}
             <div className="flex items-center gap-1.5">
               <Users className="h-4 w-4" />
               <span className="font-medium text-foreground">{singerCount}</span>
@@ -163,9 +189,15 @@ export function HostControlPanel({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="flex-1 flex flex-col overflow-hidden" 
+          // --- THIS IS THE FIX ---
+          // Reduced mb-4 to mb-2
+          className="flex-1 flex flex-col overflow-hidden mt-2" 
+          // --- END THE FIX ---
         >
-          <TabsList className="grid w-full grid-cols-2 mb-4 flex-shrink-0">
+          {/* --- THIS IS THE FIX --- */}
+          {/* Reduced mb-4 to mb-2 */}
+          <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0">
+          {/* --- END THE FIX --- */}
             <TabsTrigger value="playlist" className="flex items-center gap-2">
               <ListMusic className="h-4 w-4" />
               <span className="inline">Playlist</span>
