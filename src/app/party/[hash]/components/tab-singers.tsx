@@ -183,6 +183,12 @@ export function TabSingers({
                         <p className="font-semibold truncate">
                           {participant.name}
                         </p>
+                        {/* --- THIS IS THE FIX: Moved "You" badge here --- */}
+                        {isYou && (
+                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded flex-shrink-0">
+                            You
+                          </span>
+                        )}
                         {isNextSinger && currentSong && (
                           <SongCountdownTimer
                             remainingTime={remainingTime}
@@ -208,12 +214,12 @@ export function TabSingers({
                               {(!!currentSongForSinger || nextSongs.length > 0) &&
                                 `${
                                   nextSongs.length + (currentSongForSinger ? 1 : 0)
-                                } in line`}
+                                } next`}
                               {(!!currentSongForSinger || nextSongs.length > 0) &&
                                 playedSongs.length > 0 &&
                                 " • "}
                               {playedSongs.length > 0 &&
-                                `${playedSongs.length} played`}
+                                `${playedSongs.length} sang`}
                             </span>
                           </div>
                         )}
@@ -223,12 +229,7 @@ export function TabSingers({
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {isYou && (
-                      <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                        You
-                      </span>
-                    )}
-
+                    {/* --- "You" badge was moved from here --- */}
                     {(playedSongs.length > 0 ||
                       nextSongs.length > 0 ||
                       !!currentSongForSinger) && (

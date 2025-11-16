@@ -17,6 +17,7 @@ import { Button } from "~/components/ui/ui/button";
 
 type Props = {
   party: Party;
+  partyName: string; // <-- ADDED THIS PROP
   activeTab: string;
   setActiveTab: (value: string) => void;
   currentSong: VideoInPlaylist | null; 
@@ -84,6 +85,7 @@ function useTimeOpen(createdAt: Date) {
 
 export function HostControlPanel({
   party,
+  partyName, // <-- DESTRUCTURE THIS
   activeTab,
   setActiveTab,
   currentSong,
@@ -230,6 +232,7 @@ export function HostControlPanel({
             className="flex-1 overflow-y-auto mt-0 pb-6"
           >
             <TabSettings
+              partyName={partyName} 
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
               disablePlayback={disablePlayback} 
@@ -245,7 +248,7 @@ export function HostControlPanel({
               partyStatus={partyStatus}
               onStartParty={onStartParty}
               hostName={hostName}
-              hostIdleMessages={hostIdleMessages}
+              hostIdleMessages={hostIdleMessages ?? []}
               onAddIdleMessage={onAddIdleMessage}
               onDeleteIdleMessage={onDeleteIdleMessage}
               onSyncIdleMessages={onSyncIdleMessages}

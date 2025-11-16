@@ -32,6 +32,7 @@ import { useState, useMemo } from "react";
 // --- END THE FIX ---
 import { toast } from "sonner";
 import { decode } from "html-entities";
+import { removeBracketedContent } from "~/utils/string";
 import { type IdleMessage } from "@prisma/client";
 import { api } from "~/trpc/react";
 
@@ -40,6 +41,7 @@ type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
 
 type Props = {
   partyHash: string;
+  partyName: string; // <-- ADDED
   useQueueRules: boolean;
   onToggleRules: () => void;
   disablePlayback: boolean;
@@ -114,6 +116,7 @@ const ToggleButton = ({
 
 export function TabSettings({
   partyHash,
+  partyName, // <-- DESTRUCTURED
   useQueueRules,
   onToggleRules,
   disablePlayback,
@@ -219,25 +222,7 @@ export function TabSettings({
     onUpdateThemeSuggestions(updated);
   };
 
-  const parseSongInfo = (title: string, singer: string) => {
-    if (!title) {
-      return { title: "Untitled", singer };
-    }
-    let cleanTitle = decode(title);
-    const pipeParts = cleanTitle.split("|");
-    cleanTitle = (pipeParts[0] ?? "").trim();
-    return {
-      title: cleanTitle || "Untitled",
-      singer: singer,
-    };
-  };
-
-  const processedList = useMemo(() => {
-    return playedPlaylist.map((song) =>
-      parseSongInfo(song.title, song.singerName),
-    );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playedPlaylist]);
+  // --- REMOVED parseSongInfo and processedList ---
 
   const getDataToCopy = () => {
     switch (exportFormat) {
@@ -251,7 +236,11 @@ export function TabSettings({
         return uris;
       case "text":
       default:
-        return processedList.map((s) => s.title).join("\n");
+        return playedPlaylist.map((song) => {
+          const title = decode(removeBracketedContent(song.title));
+          const artist = song.artist ? decode(song.artist) : "Unknown Artist";
+          return `${artist} - ${title}`;
+        }).join("\n");
     }
   };
 
@@ -651,9 +640,11 @@ export function TabSettings({
         {showExportInfo && (
           <Alert className="mt-2">
             <AlertDescription>
-              Copy the list as plain text, or as Spotify URIs. You can paste the
-              URIs into a tool like <strong>Soundiiz</strong> or directly into a
-              new playlist in the <strong>Spotify Desktop app</strong>.
+              This copies the list of played songs.
+              The <strong>&quot;Copy for Spotify&quot;</strong> button formats this list as Spotify Track
+              URIs. You can paste these URIs <strong>directly into a new
+              playlist in the Spotify Desktop app</strong> (this won&rsquo;t work
+              on mobile or web).
             </AlertDescription>
           </Alert>
         )}
@@ -665,8 +656,8 @@ export function TabSettings({
           className="flex w-full justify-between"
         >
           <span>
-            {processedList.length}{" "}
-            {processedList.length === 1 ? "Song" : "Songs"} Played
+            {playedPlaylist.length}{" "}
+            {playedPlaylist.length === 1 ? "Song" : "Songs"} Played
           </span>
           <ChevronDown
             className={cn(
@@ -677,6 +668,30 @@ export function TabSettings({
         </Button>
         {isExpanded && (
           <div className="space-y-4 rounded-lg border bg-muted/50 p-4 animate-in fade-in">
+            {/* --- ADDED THIS INSTRUCTION BLOCK --- */}
+            <Alert>
+              <Music className="h-4 w-4" />
+              <AlertTitle>How to Create Your Playlist</AlertTitle>
+              <AlertDescription className="mt-2 space-y-1">
+                <p>
+                  1. Click the <strong>&quot;Copy for Spotify&quot;</strong> button below.
+                </p>
+                <p>
+                  2. Open the <strong>Spotify Desktop App</strong>.
+                </p>
+                <p>
+                  3. Create a new, empty playlist (try naming it:{" "}
+                  <strong>{partyName}</strong>).
+                </p>
+                <p>
+                  4. Click inside the empty playlist and press{" "}
+                  <strong>Ctrl+V</strong> (or <strong>Cmd+V</strong>) to paste all
+                  the songs.
+                </p>
+              </AlertDescription>
+            </Alert>
+            {/* --- END OF ADDED BLOCK --- */}
+
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={exportFormat === "text" ? "default" : "secondary"}
@@ -689,14 +704,24 @@ export function TabSettings({
                 onClick={() => setExportFormat("spotify")}
                 className="text-green-600 dark:text-green-400"
               >
-                <Music className="mr-2 h-4 w-4" /> Spotify URIs
+                <Music className="mr-2 h-4 w-4" /> Copy for Spotify
               </Button>
             </div>
             <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-background p-2">
               {playedPlaylist.length > 0 ? (
-                <pre className="text-xs whitespace-pre-wrap font-mono p-1">
-                  {getDataToCopy().slice(0, 500) + (getDataToCopy().length > 500 ? "..." : "")}
-                </pre>
+                <div className="text-xs font-mono p-1 space-y-1">
+                  {/* --- MODIFIED THIS BLOCK TO RENDER THE NEW FORMAT --- */}
+                  {exportFormat === "text" ? playedPlaylist.map((song) => (
+                    <div key={song.id} className="truncate">
+                      {song.artist ? `${decode(song.artist)} - ` : ""}{decode(removeBracketedContent(song.title))}
+                    </div>
+                  )) : (
+                    <pre className="whitespace-pre-wrap">
+                      {getDataToCopy().slice(0, 500) + (getDataToCopy().length > 500 ? "..." : "")}
+                    </pre>
+                  )}
+                  {/* --- END MODIFICATION --- */}
+                </div>
               ) : (
                 <p className="text-center text-sm text-muted-foreground">
                   No songs have been played yet...
@@ -716,7 +741,9 @@ export function TabSettings({
               )}
               {isCopied
                 ? "Copied!"
-                : `Copy as ${exportFormat.toUpperCase()}`}
+                : exportFormat === "spotify"
+                  ? "Copy for Spotify"
+                  : "Copy as Text"}
             </Button>
           </div>
         )}

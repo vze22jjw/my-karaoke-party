@@ -230,6 +230,7 @@ export function HostScene({ party, initialData }: Props) {
 
         <HostControlPanel
           party={party}
+          partyName={party.name} 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           currentSong={currentSong}
