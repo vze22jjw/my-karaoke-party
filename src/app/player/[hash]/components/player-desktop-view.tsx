@@ -51,7 +51,9 @@ export function PlayerDesktopView({
   idleMessages, 
 }: Props) {
   return (
-    <div className="hidden sm:block sm:w-full h-screen"> 
+    // --- START FIX: Removed "hidden sm:block" responsive classes ---
+    <div className="w-full h-screen"> 
+    {/* --- END FIX --- */}
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
           

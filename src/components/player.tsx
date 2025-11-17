@@ -125,7 +125,10 @@ export function Player({
     return (
       <div
         className={cn(
-          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 pb-1 text-center overflow-hidden",
+          // --- THIS IS THE FIX ---
+          // Changed p-4 and pb-1 to just p-6
+          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
+          // --- END THE FIX ---
           isFullscreen && "bg-gradient"
         )}
       >
@@ -200,6 +203,12 @@ export function Player({
   return (
     <div className="relative z-0 h-full">
       <YouTube
+        // --- THIS IS THE FIX ---
+        // Adding the key prop forces React to destroy the old
+        // component (and its iframe) and create a new one
+        // when the video.id changes.
+        key={video.id}
+        // --- END THE FIX ---
         loading="eager"
         className={`h-full w-full animate-in fade-in ${
           isReady ? "visible" : "invisible"

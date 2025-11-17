@@ -70,7 +70,14 @@ jobs:
           echo "VERSION=${{ env.VERSION }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "REGISTRY=${{ vars.ECR_REGISTRY }}" >> $GITHUB_ENV
           echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
-
+      
+      - name: Trigger Portainer Re-Deploy Webhook
+        if: success()
+        run: |
+          echo "Triggering Portainer redeploy..."
+          curl -s -X POST ${{ secrets.PORTAINER_WEBHOOK_URL }}
+          echo "Webhook trigger complete."
+      
       - name: Generate Build Summary
         if: always()
         run: |
