@@ -1,0 +1,91 @@
+name: 🧹 Prune AWS Public ECR Images
+
+on:
+  # Run every Sunday at 3:00 AM UTC
+  schedule:
+    - cron: '0 3 * * 0'
+  
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+env:
+  ECR_PUBLIC_REPO_NAME: "vze22jjw/my-karaoke-party"
+  AWS_REGION: "us-east-1"
+  IMAGES_TO_KEEP: 10
+
+jobs:
+  prune-images:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS Credentials (Static Keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Prune ECR Images
+        shell: bash
+        run: |
+          set -e
+          set -o pipefail
+          
+          echo "Fetching images from public repository: ${{ env.ECR_PUBLIC_REPO_NAME }}"
+          
+          # 1. Get all image details, sorted by push date (newest first)
+          # jq is pre-installed on GitHub runners
+          IMAGE_DETAILS=$(aws ecr-public describe-images \
+            --repository-name ${{ env.ECR_PUBLIC_REPO_NAME }} \
+            --region ${{ env.AWS_REGION }} | \
+            jq '.imageDetails | sort_by(.imagePushedAt) | reverse')
+          
+          echo "Found $(echo "$IMAGE_DETAILS" | jq 'length') total images."
+
+          # 2. Build the "Keep List"
+          
+          # Get the digest for the 'latest' tag
+          LATEST_DIGEST=$(echo "$IMAGE_DETAILS" | jq -r '.[] | select(.imageTags[]? == "latest") | .imageDigest')
+          
+          # Get the digests of the 10 most recent images
+          RECENT_DIGESTS=$(echo "$IMAGE_DETAILS" | jq -r ".[0:${{ env.IMAGES_TO_KEEP }}] | .[] | .imageDigest")
+
+          # Combine them, remove any 'null' values, and get a unique list
+          KEEP_LIST=$(printf "%s\n%s" "$LATEST_DIGEST" "$RECENT_DIGESTS" | grep -v 'null' | sort -u)
+          
+          echo "--- Keep List (${{ env.IMAGES_TO_KEEP }} recent + 'latest') ---"
+          echo "$KEEP_LIST"
+          echo "---------------------------"
+
+          # 3. Build the "Delete List"
+          
+          # Get *all* image digests
+          ALL_DIGESTS=$(echo "$IMAGE_DETAILS" | jq -r '.[].imageDigest' | sort -u)
+          
+          # Get the difference: (All Digests) - (Keep List) = Delete List
+          # 'comm -23' shows lines unique to the first file (ALL_DIGESTS)
+          DELETE_LIST=$(comm -23 <(echo "$ALL_DIGESTS") <(echo "$KEEP_LIST"))
+
+          if [ -z "$DELETE_LIST" ]; then
+            echo "✅ No images to prune. Exiting."
+            exit 0
+          fi
+
+          echo "--- Delete List ($(echo "$DELETE_LIST" | wc -l) images) ---"
+          echo "$DELETE_LIST"
+          echo "---------------------------"
+          
+          # 4. Format for batch-delete-image (needs 'imageDigest=sha256:...')
+          DELETE_IDS=$(echo "$DELETE_LIST" | sed 's/^/imageDigest=/')
+
+          # 5. Execute deletion in batches of 100 (the AWS limit)
+          echo "$DELETE_IDS" | xargs -n 100 aws ecr-public batch-delete-image \
+            --repository-name ${{ env.ECR_PUBLIC_REPO_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --image-ids
+            
+          echo "🎉 Pruning complete."
