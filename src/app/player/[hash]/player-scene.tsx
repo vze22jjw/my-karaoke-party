@@ -7,16 +7,14 @@ import type { KaraokeParty, VideoInPlaylist } from "party";
 import { useState, useEffect, useRef, useCallback } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
-import { Player } from "~/components/player";
-import { EmptyPlayer } from "~/components/empty-player";
+// Player component is no longer directly used here
+// EmptyPlayer is no longer directly used here
+// Button, Maximize, Minimize, cn are no longer used here
 import { usePartySocket } from "~/hooks/use-party-socket";
-import { Button } from "~/components/ui/ui/button";
-import { Maximize, Minimize } from "lucide-react";
 import type { RefCallback } from "react"; 
-import { PlayerDisabledView } from "~/components/player-disabled-view"; 
+// PlayerDisabledView is no longer directly used here
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
-import { cn } from "~/lib/utils";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -59,7 +57,7 @@ export default function PlayerScene({ party, initialData }: Props) {
   );
   
   const desktopScreen = useFullscreen();
-  const mobileScreen = useFullscreen();
+  // const mobileScreen = useFullscreen(); // --- FIX: REMOVED MOBILE FULLSCREEN ---
 
   const nextSong = unplayedPlaylist[0];
 
@@ -139,7 +137,7 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
-        {/* DESKTOP VIEW */}
+        {/* --- FIX: RENDER ONLY DESKTOP VIEW --- */}
         <PlayerDesktopView
           playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={desktopScreen.toggle}
@@ -150,54 +148,7 @@ export default function PlayerScene({ party, initialData }: Props) {
           idleMessages={idleMessages} 
           {...commonPlayerProps}
         />
-        
-        {/* MOBILE VIEW */}
-        <div 
-          className="relative h-full sm:hidden" 
-          ref={mobileScreen.ref as RefCallback<HTMLDivElement>}
-        >
-          {currentSong ? (
-            isPlaybackDisabled ? (
-              <PlayerDisabledView
-                video={currentSong}
-                nextSong={nextSong} 
-                joinPartyUrl={joinPartyUrl}
-                isFullscreen={mobileScreen.fullscreen}
-                onOpenYouTubeAndAutoSkip={handleOpenYouTubeAndAutoSkip}
-                onSkip={handleSkip} 
-                isSkipping={isSkipping} 
-                remainingTime={remainingTime} 
-              />
-            ) : ( 
-              <Player
-                video={currentSong}
-                isFullscreen={mobileScreen.fullscreen}
-                {...commonPlayerProps}
-              />
-            )
-          ) : (
-            <EmptyPlayer
-              joinPartyUrl={joinPartyUrl}
-              className={mobileScreen.fullscreen ? "bg-gradient" : ""}
-              idleMessages={idleMessages}
-            />
-          )}
-
-          <Button
-            onClick={mobileScreen.toggle}
-            variant="ghost"
-            size="icon"
-            // FIX: Changed to bottom-20 for safer touch area and to clear controls
-            className={cn(
-              "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
-              mobileScreen.fullscreen 
-                ? "fixed bottom-20 right-6" 
-                : "absolute bottom-20 right-3"
-            )}
-          >
-            {mobileScreen.fullscreen ? <Minimize /> : <Maximize />}
-          </Button>
-        </div>
+        {/* --- FIX: ENTIRE MOBILE VIEW DIV REMOVED --- */}
         
       </div>
     </div>

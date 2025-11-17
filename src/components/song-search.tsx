@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // --- IMPORT useCallback ---
 import { api, type RouterOutputs } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
 import type { KaraokeParty } from "party";
@@ -36,13 +36,12 @@ export function SongSearch({
   initialSearchQuery,
   onSearchQueryConsumed,
 }: Props) {
-  // --- REVISED STATE ---
+  // --- START FIX: REVISED STATE LOGIC ---
   const [videoInputValue, setVideoInputValue] = useState(initialSearchQuery ?? "");
-  const [canFetch, setCanFetch] = useState((initialSearchQuery ?? "").length >= 3);
   const [isSearchingFromSuggestion, setIsSearchingFromSuggestion] = useState(
     !!initialSearchQuery,
   );
-  // --- END REVISED STATE ---
+  // --- END FIX ---
 
   const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>(
     [],
@@ -70,31 +69,45 @@ export function SongSearch({
 
   const data = rawData as YoutubeSearchItem[] | undefined;
 
-  // --- NEW EFFECT 1 (React to prop) ---
+  // --- START FIX: Re-written useEffect logic ---
+
+  // Effect 1: Syncs the incoming prop to our local state
   useEffect(() => {
     if (initialSearchQuery) {
       setVideoInputValue(initialSearchQuery);
-      setCanFetch(true); // Allow the search
       setIsSearchingFromSuggestion(true); // Set flag to trigger search
+    } else {
+      // This is the crucial part that was missing.
+      // When the prop is cleared (onSearchQueryConsumed),
+      // we must also clear our local state.
+      setVideoInputValue("");
     }
   }, [initialSearchQuery]);
-  // --- END NEW EFFECT 1 ---
 
-  // --- NEW EFFECT 2 (React to flag) ---
+  // Make dependencies stable
+  const stableOnSearchQueryConsumed = useCallback(() => {
+    onSearchQueryConsumed?.();
+  }, [onSearchQueryConsumed]);
+
+  // Effect 2: Runs the search when the flag is set
   useEffect(() => {
-    if (isSearchingFromSuggestion) {
+    // Only run if the flag is true AND we actually have a query to search for
+    if (isSearchingFromSuggestion && initialSearchQuery) {
       void (async () => {
         setRecentlyAddedVideoIds([]);
         setFadingOutVideoIds([]);
         await refetch();
-        setCanFetch(false); // Disable button after search
         setIsSearchingFromSuggestion(false); // Reset flag
-        onSearchQueryConsumed?.();
+        stableOnSearchQueryConsumed();     // Clear parent prop
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSearchingFromSuggestion, refetch]); // 'onSearchQueryConsumed' is stable
-  // --- END NEW EFFECT 2 ---
+  }, [
+    isSearchingFromSuggestion,
+    initialSearchQuery,
+    refetch,
+    stableOnSearchQueryConsumed,
+  ]);
+  // --- END FIX ---
 
   return (
     <form
@@ -105,7 +118,6 @@ export function SongSearch({
         setRecentlyAddedVideoIds([]);
         setFadingOutVideoIds([]);
         await refetch();
-        setCanFetch(false);
       }}
     >
       <div className="flex w-full items-center space-x-2">
@@ -122,7 +134,6 @@ export function SongSearch({
               onSearchQueryConsumed?.();
               // --- END UPDATE ---
               setVideoInputValue(e.target.value);
-              setCanFetch(e.target.value.length >= 3);
             }}
             required
             minLength={3}
@@ -139,7 +150,6 @@ export function SongSearch({
                 onSearchQueryConsumed?.();
                 // --- END UPDATE ---
                 setVideoInputValue("");
-                setCanFetch(false);
               }}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
             >
@@ -148,7 +158,7 @@ export function SongSearch({
           )}
         </div>
 
-        <Button type="submit" disabled={isLoading || !canFetch}>
+        <Button type="submit" disabled={isLoading || videoInputValue.length < 3}>
           {isLoading ? (
             <Loader2 className="mx-1 h-6 w-6 animate-spin" />
           ) : (
@@ -244,14 +254,11 @@ export function SongSearch({
                       className="shadow-xl animate-in spin-in"
                       disabled={alreadyInQueue || isFadingOut}
                       onClick={() => {
-                        // --- THIS IS THE FIX ---
-                        // We no longer pass duration, as the server will fetch it.
                         onVideoAdded(
                           video.id.videoId,
                           removeBracketedContent(video.snippet.title),
                           video.snippet.thumbnails.high.url,
                         );
-                        // --- END THE FIX ---
 
                         setFadingOutVideoIds((prev) => [
                           ...prev,

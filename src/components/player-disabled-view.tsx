@@ -33,8 +33,10 @@ export function PlayerDisabledView({
   return (
     <div
       className={cn(
-        // FIX: Added overflow-hidden
-        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-4 text-center overflow-hidden",
+        // --- THIS IS THE FIX ---
+        // Changed p-4 to p-6 to match the EmptyPlayer padding
+        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
+        // --- END THE FIX ---
         isFullscreen && "bg-gradient",
       )}
     >
