@@ -9,7 +9,7 @@ import { env } from "~/env";
 
 export default async function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center">
+    <main className="flex min-h-screen flex-col items-center bg-gradient">
       <div className="container flex flex-1 flex-col items-center gap-8 px-4 py-8">
         <Image
           src={logo}
