@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import logo from "~/assets/my-karaoke-party-logo.png";
-import { ButtonHoverGradient } from "~/components/ui/ui/button-hover-gradient";
+import { Button } from "~/components/ui/ui/button";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen flex-col items-center text-white">
+    // FIX: Added bg-gradient to the main tag. This ensures the background 
+    // renders correctly, especially after a failed hash validation redirect.
+    <main className="flex min-h-screen flex-col items-center text-white bg-gradient">
       <div className="container flex flex-1 flex-col items-center justify-center gap-8 px-4 py-8 text-center">
         <Image
           src={logo}
@@ -24,10 +26,14 @@ export default function NotFound() {
           ended.
         </p>
         <div className="w-full max-w-[12rem]">
-          <Link href="/">
-            <ButtonHoverGradient type="button" className="w-full">
+          <Link href="/" passHref>
+            <Button 
+                type="button" 
+                variant="secondary"
+                className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
+            >
               Go Back Home
-            </ButtonHoverGradient>
+            </Button>
           </Link>
         </div>
       </div>

@@ -16,7 +16,7 @@ done
 
 # Run migrations
 echo "📦 Running migrations..."
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 
 # Start application
 echo "✅ Starting application..."

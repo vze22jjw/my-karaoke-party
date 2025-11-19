@@ -4,15 +4,26 @@
 import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import type { Party, IdleMessage } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
-import { api } from "~/trpc/react";
 import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
-import { HostTourModal } from "./components/host-tour-modal";
-import Confetti from "react-canvas-confetti";
+// import { HostTourModal } from "./components/host-tour-modal"; // Removed as part of lazy-load
+// import Confetti from "react-canvas-confetti"; // Removed as part of lazy-load
+// --- FIX: Import api from tRPC client ---
+import { api } from "~/trpc/react";
+// --- END OF FIX ---
+
+// 1. LAZY-LOAD THE MODAL (named export needs .then)
+const LazyHostTourModal = lazy(() => 
+  import("./components/host-tour-modal").then(module => ({ default: module.HostTourModal }))
+);
+
+// 2. LAZY-LOAD CONFETTI (default export is simpler)
+const LazyConfetti = lazy(() => import("react-canvas-confetti"));
+// --- END OF FIX ---
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -207,26 +218,33 @@ export function HostScene({ party, initialData }: Props) {
 
   return (
     <div className="flex min-h-screen w-full justify-center bg-gradient">
-      {/* --- ADD CONFETTI COMPONENT --- */}
-      <Confetti
-        refConfetti={onConfettiInit}
-        width={width}
-        height={height}
-        style={{
-          position: 'fixed',
-          width: '100%',
-          height: '100%',
-          zIndex: 200,
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
-        }}
-      />
-      {/* --- END CONFETTI COMPONENT --- */}
+      {/* --- START OF FIX: WRAPPING MODAL AND CONFETTI IN SUSPENSE --- */}
+      <Suspense fallback={null}>
+        <LazyConfetti
+          refConfetti={onConfettiInit}
+          width={width}
+          height={height}
+          style={{
+            position: 'fixed',
+            width: '100%',
+            height: '100%',
+            zIndex: 200,
+            top: 0,
+            left: 0,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
+        {isTourOpen && (
+          <LazyHostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+        )}
+      </Suspense>
+      {/* --- END OF FIX --- */}
 
       <div className="w-full sm:max-w-md">
         
-        <HostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+        {/* The modal is no longer here */}
 
         <HostControlPanel
           party={party}

@@ -3,7 +3,9 @@
 
 import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "party";
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+// --- START OF FIX ---
+import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
+// --- END OF FIX ---
 import {
   readLocalStorageValue,
   useLocalStorage,
@@ -17,10 +19,20 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
-import { PartyTourModal } from "./components/party-tour-modal";
-import Confetti from "react-canvas-confetti";
+// We no longer import PartyTourModal statically
+// We no longer import Confetti statically
 import { toast } from "sonner";
 import { decode } from "html-entities";
+
+// --- START OF FIX ---
+// 1. LAZY-LOAD THE MODAL (named export needs .then)
+const LazyPartyTourModal = lazy(() => 
+  import("./components/party-tour-modal").then(module => ({ default: module.PartyTourModal }))
+);
+
+// 2. LAZY-LOAD CONFETTI (default export is simpler)
+const LazyConfetti = lazy(() => import("react-canvas-confetti"));
+// --- END OF FIX ---
 
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
@@ -168,24 +180,30 @@ export function PartySceneTabs({
 
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
-      <PartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+      
+      {/* --- START OF FIX: WRAPPING MODAL AND CONFETTI IN SUSPENSE --- */}
+      <Suspense fallback={null}>
+        <LazyConfetti
+          refConfetti={onConfettiInit}
+          width={width}
+          height={height}
+          style={{
+            position: "fixed",
+            width: "100%",
+            height: "100%",
+            zIndex: 200,
+            top: 0,
+            left: 0,
+            pointerEvents: "none", // Crucial
+          }}
+        />
 
-      {/* --- ADD CONFETTI COMPONENT --- */}
-      <Confetti
-        refConfetti={onConfettiInit}
-        width={width}
-        height={height}
-        style={{
-          position: "fixed",
-          width: "100%",
-          height: "100%",
-          zIndex: 200,
-          top: 0,
-          left: 0,
-          pointerEvents: "none", // Crucial
-        }}
-      />
-      {/* --- END CONFETTI COMPONENT --- */}
+        {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
+        {isTourOpen && (
+          <LazyPartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+        )}
+      </Suspense>
+      {/* --- END OF FIX --- */}
 
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
