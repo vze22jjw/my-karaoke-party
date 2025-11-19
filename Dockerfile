@@ -67,10 +67,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
 ## clean up runner image
-RUN pnpm add prisma --prod && rm -rf /home/nextjs/.{cache,npm} /root/.cache /root/.local/share/pnpm
+RUN pnpm add prisma@5.22.0 --prod && rm -rf /home/nextjs/.{cache,npm} /root/.cache /root/.local/share/pnpm
 
 # Copy initialization script
 COPY --chmod=755 --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
+
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
