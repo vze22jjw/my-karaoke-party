@@ -39,10 +39,10 @@ export function TabAddSong({
         {/* --- ADD ALERT FOR MAX LIMIT --- */}
         {hasReachedQueueLimit && (
             <Alert variant="destructive" className="mb-4 bg-red-800/50 border-red-700 text-white">
-                <Music className="h-4 w-4" />
+                <Music className="h-4 w-4 text-white" />
                 <AlertTitle>Queue Full!</AlertTitle>
                 <AlertDescription>
-                    You have {maxQueuePerSinger} songs. Please sing one before adding more.
+                    Please a sing one before adding more.
                 </AlertDescription>
             </Alert>
         )}
