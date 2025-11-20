@@ -29,7 +29,6 @@ const LazyPartyTourModal = lazy(() =>
 
 const LazyConfetti = lazy(() => import("react-canvas-confetti"));
 
-
 export function PartySceneTabs({
   party,
   initialData,
@@ -245,7 +244,6 @@ export function PartySceneTabs({
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
             playlist={[
-              // FIX: Ensure currentSong is first (head of the queue)
               ...(currentSong ? [currentSong] : []),
               ...unplayedPlaylist,
             ]}

@@ -4,20 +4,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types"; // Added VideoInPlaylist import
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { SongSearch } from "~/components/song-search";
 import { Music } from "lucide-react";
 import { decode } from "html-entities";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 
 type Props = {
-  playlist: VideoInPlaylist[]; // Updated to match the array passed from parent
+  playlist: VideoInPlaylist[];
   name: string;
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
   initialSearchQuery: string;
   onSearchQueryConsumed: () => void;
-  hasReachedQueueLimit: boolean; // ADDED
-  maxQueuePerSinger: number; // ADDED
+  hasReachedQueueLimit: boolean;
+  maxQueuePerSinger: number;
 };
 
 export function TabAddSong({
@@ -26,12 +26,11 @@ export function TabAddSong({
   onVideoAdded,
   initialSearchQuery,
   onSearchQueryConsumed,
-  hasReachedQueueLimit = false, // DESTRUCTURE AND DEFAULT
-  maxQueuePerSinger, // USED
+  hasReachedQueueLimit = false,
+  maxQueuePerSinger,
 }: Props) {
-  // --- NEW LOGIC: Sort My Songs (Playing Now first) ---
 
-  // 1. Identify the playing song (it's at index 0 of the correctly structured playlist)
+  // Identify the playing song (it's at index 0 of the correctly structured playlist)
   const playingNow = playlist[0];
   const isMySongPlaying =
     !!playingNow && playingNow.singerName === name && !playingNow.playedAt;
@@ -39,13 +38,10 @@ export function TabAddSong({
     ? playingNow
     : null;
 
-  // 2. Filter the remaining songs in the queue that belong to the user.
-  // Start filtering from index 1 (to exclude the playing song)
   const myUpcomingSongs = playlist
     .slice(myPlayingSong ? 1 : 0)
     .filter((v) => v.singerName === name && !v.playedAt);
 
-  // 3. Construct the final array: [Playing Song (if mine), ...My Upcoming Songs]
   const mySongs: VideoInPlaylist[] = [];
 
   if (myPlayingSong) {
@@ -53,8 +49,6 @@ export function TabAddSong({
   }
 
   mySongs.push(...myUpcomingSongs);
-
-  // ---------------------------------------------------
 
   return (
     <div className="space-y-4">
@@ -64,7 +58,6 @@ export function TabAddSong({
           Add Songs
         </h2>
 
-        {/* --- ADD ALERT FOR MAX LIMIT --- */}
         {hasReachedQueueLimit && (
           <Alert
             variant="destructive"
@@ -84,7 +77,7 @@ export function TabAddSong({
           name={name}
           initialSearchQuery={initialSearchQuery}
           onSearchQueryConsumed={onSearchQueryConsumed}
-          hasReachedQueueLimit={hasReachedQueueLimit} // PASSED DOWN
+          hasReachedQueueLimit={hasReachedQueueLimit}
         />
       </div>
 
@@ -103,14 +96,12 @@ export function TabAddSong({
                   className="flex items-start gap-3 p-2 rounded transition-colors"
                 >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                    {/* FIX: Always display index + 1. If it's the playing song, index is 0, so it shows '1'. */}
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {decode(video.title)}
                     </p>
-                    {/* Keep the green 'Playing Now' label for the first item if it's the user's playing song */}
                     {index === 0 && myPlayingSong && (
                       <p className="text-xs font-bold text-green-400">
                         (Playing Now)
