@@ -8,7 +8,7 @@ import {
   Music2,
   Music,
   Plus,
-} from "lucide-react"; // 1. Import Music and Plus icons
+} from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
@@ -23,17 +23,13 @@ type SpotifySong = {
 type Props = {
   themeSuggestions: string[];
   spotifyPlaylistId?: string | null;
-  // --- ADD THIS ---
   onSuggestionClick: (title: string, artist: string) => void;
-  // --- END ADD ---
 };
 
 export function TabHistory({
   themeSuggestions,
   spotifyPlaylistId,
-  // --- ADD THIS ---
   onSuggestionClick,
-  // --- END ADD ---
 }: Props) {
   const { data: stats, isLoading: isLoadingStats } =
     api.playlist.getGlobalStats.useQuery(undefined, {
@@ -50,7 +46,6 @@ export function TabHistory({
 
   return (
     <div className="space-y-4">
-      {/* 1. Song Suggestions (User Defined) */}
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
@@ -61,10 +56,7 @@ export function TabHistory({
             {themeSuggestions.map((suggestion, index) => (
               <li
                 key={index}
-                // --- THIS IS THE FIX ---
-                // Removed hover:bg-muted
                 className="flex items-start gap-3 p-2 rounded transition-colors"
-                // --- END THE FIX ---
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
                   {index + 1}
@@ -80,7 +72,6 @@ export function TabHistory({
         </div>
       )}
 
-      {/* 2. Hot Karaoke From Spotify */}
       {spotifySongs.length > 0 && (
         <div className="bg-card rounded-lg p-4 border border-green-500/20">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
@@ -89,13 +80,9 @@ export function TabHistory({
           </h2>
           <ul className="space-y-1">
             {spotifySongs.map((song, index) => (
-              // --- MAKE CLICKABLE ---
               <li
                 key={index}
-                // --- THIS IS THE FIX ---
-                // Removed hover:bg-muted
                 className="flex items-center gap-3 pr-2 rounded transition-colors"
-                // --- END THE FIX ---
               >
                 <button
                   type="button"
@@ -134,13 +121,11 @@ export function TabHistory({
                   <Plus className="h-4 w-4" />
                 </Button>
               </li>
-              // --- END CLICKABLE ---
             ))}
           </ul>
         </div>
       )}
 
-      {/* 3. Top Played (Global) */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Flame className="h-5 w-5 text-orange-500" />
@@ -154,13 +139,9 @@ export function TabHistory({
         ) : stats?.topSongs && stats.topSongs.length > 0 ? (
           <ul className="space-y-1">
             {stats.topSongs.map((song, index) => (
-              // --- MAKE CLICKABLE ---
               <li
                 key={song.id}
-                // --- THIS IS THE FIX ---
-                // Removed hover:bg-muted
                 className="flex items-center gap-3 pr-2 rounded transition-colors"
-                // --- END THE FIX ---
               >
                 <button
                   type="button"
@@ -203,7 +184,6 @@ export function TabHistory({
                   <Plus className="h-4 w-4" />
                 </Button>
               </li>
-              // --- END CLICKABLE ---
             ))}
           </ul>
         ) : (
@@ -213,7 +193,6 @@ export function TabHistory({
         )}
       </div>
 
-      {/* 4. Top Singers */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-500" />
@@ -225,22 +204,16 @@ export function TabHistory({
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : stats?.topSingers && stats.topSingers.length > 0 ? (
-          // --- 2. REMOVED space-y-1 FOR TIGHTER SPACING ---
           <ul className="">
             {stats.topSingers.map((singer, index) => (
               <li
                 key={singer.name}
-                // --- 3. REDUCED PADDING (py-1.5) ---
-                // --- THIS IS THE FIX ---
-                // Removed hover:bg-muted
                 className="flex items-center gap-3 py-1.5 px-2 rounded transition-colors"
-                // --- END THE FIX ---
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-500 text-black flex items-center justify-center font-semibold text-sm">
                   {index + 1}
                 </div>
 
-                {/* --- 4. NEW FLEX LAYOUT FOR NAME + COUNT --- */}
                 <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
                   <p className="font-medium text-sm truncate">{singer.name}</p>
                   <div className="flex flex-shrink-0 items-center gap-1.5 text-xs text-muted-foreground">

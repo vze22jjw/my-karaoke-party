@@ -2,7 +2,6 @@
 
 import type { Party, IdleMessage } from "@prisma/client";
 import { ListMusic, Settings, Users, Clock, Music, Info } from "lucide-react";
-// FIX: Updated import path
 import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";

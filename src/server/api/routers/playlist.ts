@@ -2,7 +2,7 @@ import { log } from "next-axiom";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { spotifyService } from "~/server/lib/spotify";
-import { env } from "~/env"; // <-- IMPORT ENV
+import { env } from "~/env";
 
 export const playlistRouter = createTRPCRouter({
   // Get playlist for a party
@@ -14,8 +14,8 @@ export const playlistRouter = createTRPCRouter({
         include: {
           playlistItems: {
             orderBy: [
-              { playedAt: "asc" }, // Played items first (nulls last in PostgreSQL)
-              { addedAt: "asc" },  // Then by when they were added
+              { playedAt: "asc" },
+              { addedAt: "asc" },
             ],
           },
         },
@@ -35,7 +35,7 @@ export const playlistRouter = createTRPCRouter({
           duration: item.duration,
           singerName: item.singerName,
           playedAt: item.playedAt,
-          spotifyId: item.spotifyId, // <-- RETURN spotifyId
+          spotifyId: item.spotifyId,
         })),
         settings: {
           orderByFairness: true,
@@ -71,7 +71,7 @@ export const playlistRouter = createTRPCRouter({
         where: {
           partyId: party.id,
           videoId: input.videoId,
-          playedAt: null, // Only check unplayed videos
+          playedAt: null,
         },
       });
 
@@ -92,9 +92,7 @@ export const playlistRouter = createTRPCRouter({
           log.info("Matched Spotify Track", { youtube: input.title, spotify: match.title });
         }
       } catch (e) {
-        // Ignore errors, don't block adding the song
       }
-      // ------------------------------
 
       const playlistItem = await ctx.db.playlistItem.create({
         data: {

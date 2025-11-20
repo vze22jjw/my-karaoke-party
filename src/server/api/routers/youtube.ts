@@ -31,10 +31,10 @@ export const youtubeRouter = createTRPCRouter({
           keyword: input.keyword,
         });
 
-        // --- Use input.maxResults, default to 10 ---
+        // --- Use input.maxResults, default to 12 ---
         const videos = await ctx.youtube.searchVideo(
           input.keyword,
-          input.maxResults ?? 10,
+          input.maxResults ?? 12,
         );
 
         if (videos) {

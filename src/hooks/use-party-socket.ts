@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { debugLog } from "~/utils/debug-logger";
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
-import { useLocalStorage } from "@mantine/hooks"; // <-- IMPORT THIS
+import { useLocalStorage } from "@mantine/hooks";
 
 interface SocketActions {
   addSong: (
@@ -28,19 +28,17 @@ interface SocketActions {
   updateThemeSuggestions: (suggestions: string[]) => void;
 }
 
-// --- UPDATE PARTICIPANT TYPE ---
 type Participant = {
   name: string;
   role: string;
   avatar: string | null;
 };
-// --- END UPDATE ---
 
 interface UsePartySocketReturn {
   currentSong: VideoInPlaylist | null;
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This type now includes spotifyPlaylistId
+  settings: KaraokeParty["settings"];
   socketActions: SocketActions;
   isConnected: boolean;
   isPlaying: boolean;
@@ -57,7 +55,7 @@ type PartySocketData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This type now includes spotifyPlaylistId
+  settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
@@ -76,12 +74,10 @@ export function usePartySocket(
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // --- READ AVATAR FROM LOCAL STORAGE ---
   const [avatar] = useLocalStorage<string | null>({
     key: "avatar",
     defaultValue: "🎤",
   });
-  // --- END READ ---
 
   const [currentSong, setCurrentSong] = useState<VideoInPlaylist | null>(
     initialData.currentSong,
@@ -194,9 +190,7 @@ export function usePartySocket(
           LOG_TAG,
           `Emitting 'join-party' for room ${partyHash} as ${singerName}`,
         );
-        // --- SEND AVATAR ON JOIN ---
         newSocket.emit("join-party", { partyHash, singerName, avatar });
-        // --- END SEND ---
       });
 
       newSocket.on("disconnect", () => {
@@ -219,7 +213,7 @@ export function usePartySocket(
         setCurrentSong(partyData.currentSong);
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
-        setSettings(partyData.settings); // <-- This update passes the new spotifyPlaylistId
+        setSettings(partyData.settings);
         setPartyStatus(partyData.status);
         setIdleMessages(partyData.idleMessages);
         setThemeSuggestions(partyData.themeSuggestions);
@@ -311,9 +305,7 @@ export function usePartySocket(
     }
 
     const heartbeatInterval = setInterval(() => {
-      // --- SEND AVATAR ON HEARTBEAT ---
       socketRef.current?.emit("heartbeat", { partyHash, singerName, avatar });
-      // --- END SEND ---
     }, 60000);
 
     return () => {
@@ -326,7 +318,7 @@ export function usePartySocket(
       stopCountdown();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar]); // <-- ADD AVATAR TO DEPENDENCY ARRAY
+  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar]);
 
   const socketActions: SocketActions = useMemo(
     () => ({
@@ -361,11 +353,9 @@ export function usePartySocket(
         socketRef.current?.emit("close-party", data);
       },
       sendHeartbeat: () => {
-        // --- SEND AVATAR ON HEARTBEAT ---
         const data = { partyHash, singerName, avatar };
         debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
         socketRef.current?.emit("heartbeat", data);
-        // --- END SEND ---
       },
       playbackPlay: (currentTime?: number) => {
         const data = { partyHash, currentTime };
@@ -406,7 +396,7 @@ export function usePartySocket(
     currentSong,
     unplayedPlaylist,
     playedPlaylist,
-    settings, // This settings object now contains spotifyPlaylistId
+    settings,
     socketActions,
     isConnected,
     isPlaying,

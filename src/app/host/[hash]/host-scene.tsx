@@ -10,20 +10,13 @@ import { HostControlPanel } from "./components/host-control-panel";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
-// import { HostTourModal } from "./components/host-tour-modal"; // Removed as part of lazy-load
-// import Confetti from "react-canvas-confetti"; // Removed as part of lazy-load
-// --- FIX: Import api from tRPC client ---
 import { api } from "~/trpc/react";
-// --- END OF FIX ---
 
-// 1. LAZY-LOAD THE MODAL (named export needs .then)
 const LazyHostTourModal = lazy(() => 
   import("./components/host-tour-modal").then(module => ({ default: module.HostTourModal }))
 );
 
-// 2. LAZY-LOAD CONFETTI (default export is simpler)
 const LazyConfetti = lazy(() => import("react-canvas-confetti"));
-// --- END OF FIX ---
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -55,13 +48,10 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: "playlist",
   });
   
-  // --- THIS IS THE FIX ---
-  // Changed defaultValue from 10 to 12
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 12,
   });
-  // --- END THE FIX ---
 
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: HOST_TOUR_KEY,
@@ -70,7 +60,6 @@ export function HostScene({ party, initialData }: Props) {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
 
@@ -88,7 +77,6 @@ export function HostScene({ party, initialData }: Props) {
       });
     }
   }, []);
-  // --- END: CONFETTI LOGIC ---
 
   useEffect(() => {
     setIsMounted(true);
@@ -108,12 +96,9 @@ export function HostScene({ party, initialData }: Props) {
     }, 300);
   };
 
-  // --- THIS IS THE FIX ---
-  // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
-  // --- END THE FIX ---
   
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
@@ -123,7 +108,7 @@ export function HostScene({ party, initialData }: Props) {
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
-    settings, // <-- This object contains the spotifyPlaylistId
+    settings,
     socketActions, 
     isConnected,
     isSkipping,
@@ -234,7 +219,6 @@ export function HostScene({ party, initialData }: Props) {
             pointerEvents: 'none',
           }}
         />
-
         {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
         {isTourOpen && (
           <LazyHostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
@@ -243,9 +227,6 @@ export function HostScene({ party, initialData }: Props) {
       {/* --- END OF FIX --- */}
 
       <div className="w-full sm:max-w-md">
-        
-        {/* The modal is no longer here */}
-
         <HostControlPanel
           party={party}
           partyName={party.name} 
@@ -283,11 +264,8 @@ export function HostScene({ party, initialData }: Props) {
           onSyncIdleMessages={socketActions.updateIdleMessages}
           themeSuggestions={themeSuggestions}
           onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
-          // --- PASS THE PROP ---
           spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
-          // --- THIS IS THE FIX ---
           onReplayTour={handleReplayTour}
-          // --- END THE FIX ---
         />
       </div>
     </div>

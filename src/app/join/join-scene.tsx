@@ -17,13 +17,13 @@ import {
   FormLabel,
 } from "~/components/ui/ui/form";
 import { Input } from "~/components/ui/ui/input";
-import { Button } from "~/components/ui/ui/button"; // <-- Changed import
+import { Button } from "~/components/ui/ui/button";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Mic } from "lucide-react"; // <-- Added Mic
+import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
 
-// --- START: NEW AVATAR COMPONENTS ---
+// NEW AVATAR COMPONENTS ---
 const AVATARS = [
   "🎤", "🎧", "🥁", "🧑‍🎤", "👩‍🎤",
   "🔥", "🍺", "😎", "🕺", "💃",
@@ -54,7 +54,6 @@ const AvatarPicker = ({
     ))}
   </div>
 );
-// --- END: NEW AVATAR COMPONENTS ---
 
 const formSchema = z.object({
   partyCode: z.string().min(4),
@@ -74,12 +73,10 @@ export default function JoinScene({
     defaultValue: "",
   });
 
-  // --- ADD LOCAL STORAGE FOR AVATAR ---
   const [avatar, setAvatar] = useLocalStorage({
     key: "avatar",
-    defaultValue: AVATARS[0]!, // Default to the first icon
+    defaultValue: AVATARS[0]!,
   });
-  // --- END ADD ---
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -91,9 +88,7 @@ export default function JoinScene({
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    // SetName and SetAvatar are already handled by useLocalStorage
     setName(values.name);
-    // Avatar is already set by the picker
 
     const codeToJoin = partyHash ?? values.partyCode;
     setTimeout(() => {
@@ -111,8 +106,6 @@ export default function JoinScene({
 
   return (
     <main className="flex min-h-screen flex-col items-center text-white">
-      {/* --- THIS IS THE FIX --- */}
-      {/* Reduced gap, added bottom padding (pb-12), and reduced logo max-w */}
       <div className="container flex flex-1 flex-col items-center gap-2 px-4 pt-4 pb-12">
         <Image
           src={logo}
@@ -123,7 +116,6 @@ export default function JoinScene({
           placeholder="blur"
           className="h-auto w-full max-w-[266px] flex-shrink-0"
         />
-        {/* --- END THE FIX --- */}
         <div className="flex w-full max-w-xs flex-1 flex-col items-center justify-center px-5">
           {partyName && (
             <div className="mb-4 w-full text-center">
@@ -157,15 +149,12 @@ export default function JoinScene({
                 />
               )}
 
-              {/* --- ADD AVATAR PICKER --- */}
               <FormItem>
                 <FormLabel>Choose Your Icon</FormLabel>
                 <FormControl>
                   <AvatarPicker value={avatar} onChange={setAvatar} />
                 </FormControl>
               </FormItem>
-              {/* --- END ADD --- */}
-
               <FormField
                 control={form.control}
                 name="name"
@@ -192,7 +181,6 @@ export default function JoinScene({
                 )}
               />
 
-              {/* --- UPDATED BUTTON --- */}
               <Button
                 type="submit"
                 className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
@@ -208,7 +196,6 @@ export default function JoinScene({
                   </>
                 )}
               </Button>
-              {/* --------------------- */}
             </form>
           </Form>
 

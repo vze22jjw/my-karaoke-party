@@ -9,20 +9,16 @@ type Props = {
   playlist: KaraokeParty["playlist"];
   name: string;
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
-  // --- ADD THESE ---
   initialSearchQuery: string;
   onSearchQueryConsumed: () => void;
-  // --- END ADD ---
 };
 
 export function TabAddSong({
   playlist,
   name,
   onVideoAdded,
-  // --- ADD THESE ---
   initialSearchQuery,
   onSearchQueryConsumed,
-  // --- END ADD ---
 }: Props) {
   const nextVideos = playlist.filter((video) => !video.playedAt);
   const mySongs = nextVideos.filter((v) => v.singerName === name);
@@ -34,20 +30,15 @@ export function TabAddSong({
           <Music className="h-5 w-5" />
           Add Songs
         </h2>
-        {/* --- THIS IS THE FIX --- */}
         <SongSearch
           onVideoAdded={onVideoAdded}
           playlist={playlist}
           name={name}
-          // --- ADD THESE ---
           initialSearchQuery={initialSearchQuery}
           onSearchQueryConsumed={onSearchQueryConsumed}
-          // --- END ADD ---
         />
-        {/* --- END THE FIX --- */}
       </div>
 
-      {/* Minhas músicas na fila */}
       {name && (
         <div className="bg-card rounded-lg p-4 border">
           <h3 className="text-md font-semibold mb-3">My Queued Songs</h3>

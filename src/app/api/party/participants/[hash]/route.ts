@@ -40,7 +40,6 @@ export async function GET(
       ...new Set(party.playlistItems.map((item) => item.singerName)),
     ].filter(Boolean);
 
-    // Unir ambas as listas
     const allSingers = [
       ...new Set([...registeredSingers, ...singersWithSongs]),
     ];

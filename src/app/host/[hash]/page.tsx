@@ -13,7 +13,7 @@ type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
+  settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
@@ -33,14 +33,12 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function HostPage({ params }: Props) {
-  // --- AUTH CHECK ---
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get("admin_token_verified")?.value === "true";
 
   if (!isAuthenticated) {
     return <AdminLogin />;
   }
-  // ------------------
 
   const partyHash = params.hash;
   const party = await api.party.getByHash({ hash: partyHash });
@@ -55,7 +53,7 @@ export default async function HostPage({ params }: Props) {
     played: [], 
     settings: { 
       orderByFairness: true,
-      spotifyPlaylistId: null // <-- Default
+      spotifyPlaylistId: null
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,

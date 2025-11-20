@@ -109,17 +109,17 @@ export function registerSocketEvents(io: Server) {
         try {
           const party = await db.party.findUnique({
             where: { hash: data.partyHash },
-            include: { participants: { where: { name: data.singerName } } }, // Get participant to find avatar
+            include: { participants: { where: { name: data.singerName } } }, 
           });
           if (!party) return;
 
           const participant = party.participants[0];
-          const avatar = participant?.avatar ?? null; // Get avatar
+          const avatar = participant?.avatar ?? null;
 
           const { isNew } = await registerParticipant(
             party.id,
             data.singerName,
-            avatar, // Pass avatar
+            avatar,
           );
           if (isNew) {
             socket.broadcast
