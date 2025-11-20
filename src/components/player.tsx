@@ -125,10 +125,7 @@ export function Player({
     return (
       <div
         className={cn(
-          // --- THIS IS THE FIX ---
-          // Changed p-4 and pb-1 to just p-6
           "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
-          // --- END THE FIX ---
           isFullscreen && "bg-gradient"
         )}
       >
@@ -176,7 +173,7 @@ export function Player({
               variant={"secondary"}
               type="button"
               onClick={() => {
-                onSkip(); // This is the "Skip Song" button
+                onSkip();
               }}
             >
               <SkipForward className="mr-2 h-5 w-5" />
@@ -203,12 +200,7 @@ export function Player({
   return (
     <div className="relative z-0 h-full">
       <YouTube
-        // --- THIS IS THE FIX ---
-        // Adding the key prop forces React to destroy the old
-        // component (and its iframe) and create a new one
-        // when the video.id changes.
         key={video.id}
-        // --- END THE FIX ---
         loading="eager"
         className={`h-full w-full animate-in fade-in ${
           isReady ? "visible" : "invisible"
@@ -269,7 +261,6 @@ export function Player({
         </div>
       )}
 
-      {/* FIX: Changed bottom-12 to bottom-20 to clear YouTube player controls */}
       <div className="absolute bottom-20 left-0 z-10 flex w-full flex-row justify-between px-4 items-end">
         <div className="flex items-end">
           <QrCode url={joinPartyUrl} />
@@ -283,7 +274,6 @@ export function Player({
         </div>
 
         <div
-          // FIX: Maintained mr-16 to avoid overlap with the fullscreen button
           className={`self-end p-2 mr-16 ${
             internalIsPlaying && isFullscreen ? "hidden" : "block"
           }`}

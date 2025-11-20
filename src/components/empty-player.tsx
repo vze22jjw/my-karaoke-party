@@ -10,7 +10,6 @@ type Props = {
   idleMessages: string[];
 };
 
-// --- START: NEW SLIDESHOW COMPONENT ---
 function IdleSlideshow({ messages }: { messages: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -51,7 +50,6 @@ function IdleSlideshow({ messages }: { messages: string[] }) {
     </div>
   );
 }
-// --- END: NEW SLIDESHOW COMPONENT ---
 
 export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
   const hasMessages = idleMessages.length > 0;
@@ -59,13 +57,10 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
   return (
     <div
       className={cn(
-        // FIX: Added overflow-hidden to prevent scrolling
         "relative flex h-full w-full flex-col items-center p-6 overflow-hidden",
         className,
       )}
     >
-      {/* --- START: BACKGROUND LOGO --- */}
-      {/* This is the large, faded logo in the background */}
       <div className="absolute inset-0 top-1/4 flex h-1/2 w-full items-center justify-center opacity-50">
         <Image
           src={logo}
@@ -74,27 +69,20 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
           className="mx-auto object-contain"
         />
       </div>
-      {/* --- END: BACKGROUND LOGO --- */}
 
-      {/* --- START: FOREGROUND CONTENT --- */}
-      {/* This div is a container to ensure content is layered on top */}
       <div className="z-10 flex h-full w-full flex-col">
-        {/* Spacer to push content to middle - Added min-h-0 to allow shrinking */}
         <div className="flex w-full basis-1/4 items-start justify-center min-h-0" />
         
-        {/* Main Content Area - Added min-h-0 */}
         <div className="flex w-full basis-2/4 items-center justify-center px-4 min-h-0">
           {hasMessages ? (
             <IdleSlideshow messages={idleMessages} />
           ) : (
-            // Default text also gets the outline for consistency
             <p className="text-outline text-3xl text-center text-white">
               Waiting for the host to start the party...
             </p>
           )}
         </div>
         
-        {/* QR Code Footer - Added min-h-0 */}
         <div className="relative flex w-full basis-1/4 items-end text-center min-h-0">
           <QrCode url={joinPartyUrl} />
           <a
@@ -106,7 +94,6 @@ export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
           </a>
         </div>
       </div>
-      {/* --- END: FOREGROUND CONTENT --- */}
     </div>
   );
 }

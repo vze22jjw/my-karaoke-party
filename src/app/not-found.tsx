@@ -5,8 +5,6 @@ import { Button } from "~/components/ui/ui/button";
 
 export default function NotFound() {
   return (
-    // FIX: Added bg-gradient to the main tag. This ensures the background 
-    // renders correctly, especially after a failed hash validation redirect.
     <main className="flex min-h-screen flex-col items-center text-white bg-gradient">
       <div className="container flex flex-1 flex-col items-center justify-center gap-8 px-4 py-8 text-center">
         <Image

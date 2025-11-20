@@ -1,14 +1,11 @@
 import "~/styles/globals.css";
-
 import { TRPCReactProvider } from "~/trpc/react";
-
 import { Roboto_Slab, Roboto_Mono } from "next/font/google";
 import { type Metadata, type Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AxiomWebVitals } from "next-axiom";
 import { Toaster } from "~/components/ui/ui/sonner";
-// REMOVED: import { ConsoleWrapper } from "~/components/console-wrapper"; 
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -38,7 +35,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: APP_DEFAULT_TITLE,
-    // startUpImage: [],
   },
   formatDetection: {
     telephone: false,
@@ -172,13 +168,11 @@ export default function RootLayout({
         )}
       </head>
       <body className="bg-gradient min-h-screen">
-        {/* REMOVED: <ConsoleWrapper> */}
           <TRPCReactProvider>{children}</TRPCReactProvider>
           <Analytics />
           <SpeedInsights />
           <AxiomWebVitals />
           <Toaster />
-        {/* REMOVED: </ConsoleWrapper> */}
       </body>
     </html>
   );

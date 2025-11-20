@@ -154,7 +154,6 @@ function JoinPartyDrawer() {
     >
       <DrawerTrigger asChild>
         <div className="w-full">
-          {/* --- UPDATED BUTTON --- */}
           <Button 
             type="button" 
             variant="secondary"
@@ -163,7 +162,6 @@ function JoinPartyDrawer() {
             Join Party
             <Mic className="ml-3 h-6 w-6 text-cyan-400" />
           </Button>
-          {/* --------------------- */}
         </div>
       </DrawerTrigger>
       <DrawerContent>
@@ -266,7 +264,6 @@ function JoinPartyDrawer() {
 export function JoinParty() {
   return (
     <Suspense fallback={
-      // Updated fallback to match new button style
       <Button 
         type="button" 
         variant="secondary"
