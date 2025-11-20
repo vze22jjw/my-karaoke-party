@@ -24,6 +24,7 @@ type Props = {
   name: string;
   initialSearchQuery?: string;
   onSearchQueryConsumed?: () => void;
+  hasReachedQueueLimit?: boolean; // ADDED
 };
 
 type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
@@ -36,6 +37,7 @@ export function SongSearch({
   name,
   initialSearchQuery,
   onSearchQueryConsumed,
+  hasReachedQueueLimit = false, // DESTRUCTURE AND DEFAULT
 }: Props) {
 
   const [videoInputValue, setVideoInputValue] = useState(initialSearchQuery ?? "");
@@ -190,6 +192,9 @@ export function SongSearch({
               const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
               const title = decode(removeBracketedContent(video.snippet.title));
+              
+              // --- CALCULATE DISABLED STATE ---
+              const isDisabled = alreadyInQueue || isFadingOut || hasReachedQueueLimit;
 
               return (
                 <div
@@ -224,7 +229,7 @@ export function SongSearch({
                       variant={"default"}
                       size="icon"
                       className="shadow-xl animate-in spin-in"
-                      disabled={alreadyInQueue || isFadingOut}
+                      disabled={isDisabled} // USE CALCULATED VALUE
                       onClick={() => {
                         onVideoAdded(
                           video.id.videoId,

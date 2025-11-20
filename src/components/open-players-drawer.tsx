@@ -122,7 +122,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
 
             {parties && parties.length > 0 && (
                 <div className="max-h-[300px] space-y-3 overflow-y-auto pt-4 border-t">
-                    <h3 className="font-semibold text-sm text-muted-foreground">Or Select an Open Player:</h3>
+                    <h3 className="font-semibold text-sm text-muted-foreground">Open Party Names:</h3>
                     {parties.map((party) => (
                         <div
                             key={party.hash}
@@ -198,7 +198,7 @@ function OpenPlayersDrawerComponent() {
                 <div className="mx-auto w-full max-w-2xl">
                     <DrawerHeader>
                         <DrawerTitle>Open Players</DrawerTitle>
-                        <DrawerDescription>Enter the Party Hash or select an open party below.</DrawerDescription>
+                        <DrawerDescription>Enter the Party Hash.</DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4 pb-0">
                         {loading && (

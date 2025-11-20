@@ -138,15 +138,20 @@ export function PartySceneTabs({
     }
   }, [router, party.hash]);
 
+  // Calculate the queue limit status
+  const myCurrentSongs = useMemo(() => {
+    return unplayedPlaylist.filter(v => v.singerName === name && !v.playedAt);
+  }, [unplayedPlaylist, name]);
+  
+  const hasReachedQueueLimit = useMemo(() => {
+    return myCurrentSongs.length >= MAX_QUEUE_PER_SINGER;
+  }, [myCurrentSongs.length]);
+
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
     
     // --- 1. CLIENT-SIDE LIMIT CHECK (Fast Feedback) ---
-    const myCurrentSongs = unplayedPlaylist.filter(v => v.singerName === name && !v.playedAt);
-
-    if (myCurrentSongs.length >= MAX_QUEUE_PER_SINGER) {
-        toast.error("Queue Limit Reached", {
-            description: `You can only have ${MAX_QUEUE_PER_SINGER} songs in your queue at a time.`,
-        });
+    if (hasReachedQueueLimit) {
+        // REMOVED toast.error()
         return; // BLOCK ADDITION
     }
     // --- END LIMIT CHECK ---
@@ -269,6 +274,8 @@ export function PartySceneTabs({
             onVideoAdded={addSong}
             initialSearchQuery={searchQuery}
             onSearchQueryConsumed={handleSearchConsumed}
+            hasReachedQueueLimit={hasReachedQueueLimit} // PASS THE NEW PROP
+            maxQueuePerSinger={MAX_QUEUE_PER_SINGER} // PASS THE CONSTANT
           />
         </TabsContent>
 
