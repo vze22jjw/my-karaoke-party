@@ -20,13 +20,18 @@ import { usePartySocket } from "~/hooks/use-party-socket";
 import { toast } from "sonner";
 import { decode } from "html-entities";
 
+// --- CLIENT-SIDE LIMIT CONSTANT ---
+const MAX_QUEUE_PER_SINGER = 10;
+// --- END CLIENT-SIDE LIMIT ---
+
+// 1. LAZY-LOAD THE MODAL (named export needs .then)
 const LazyPartyTourModal = lazy(() => 
   import("./components/party-tour-modal").then(module => ({ default: module.PartyTourModal }))
 );
 
+// 2. LAZY-LOAD CONFETTI (default export is simpler)
 const LazyConfetti = lazy(() => import("react-canvas-confetti"));
-const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
-const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
+
 
 export function PartySceneTabs({
   party,
@@ -38,18 +43,22 @@ export function PartySceneTabs({
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   const router = useRouter();
   const [activeTab, setActiveTab] = useLocalStorage({
-    key: ACTIVE_TAB_KEY,
+    key: "karaoke-party-active-tab",
     defaultValue: "player",
   });
 
+  // --- ADD THIS ---
   const [searchQuery, setSearchQuery] = useState("");
+  // --- END ADD ---
+
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
-    key: GUEST_TOUR_KEY,
+    key: "has_seen_guest_tour_v1",
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  // --- START: CONFETTI LOGIC (Updated with 100ms Retry) ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
 
@@ -58,15 +67,32 @@ export function PartySceneTabs({
   }, []);
 
   const fireConfetti = useCallback(() => {
-    if (confettiRef.current) {
-      confettiRef.current({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        zIndex: 200,
-      });
-    }
+    // FIX: Add retry loop for asynchronous ref initialization
+    const MAX_RETRIES = 10;
+    let attempts = 0;
+
+    const tryFire = () => {
+      if (confettiRef.current) {
+        confettiRef.current({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          zIndex: 200,
+        });
+        return true; // Success
+      } else if (attempts < MAX_RETRIES) {
+        attempts++;
+        // Retry in 100ms (Max 1 second total delay)
+        setTimeout(tryFire, 100); 
+        return false; // Still trying
+      }
+      return false; // Failed after max retries
+    };
+
+    // Start the attempt sequence
+    tryFire();
   }, []);
+  // --- END: CONFETTI LOGIC ---
 
   useEffect(() => {
     setIsMounted(true);
@@ -86,6 +112,7 @@ export function PartySceneTabs({
     }, 300);
   };
 
+  // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
@@ -101,7 +128,7 @@ export function PartySceneTabs({
     partyStatus,
     idleMessages,
     themeSuggestions,
-    settings,
+    settings, // <-- Get settings object from hook
   } = usePartySocket(party.hash!, initialData, name);
 
   useEffect(() => {
@@ -112,21 +139,38 @@ export function PartySceneTabs({
   }, [router, party.hash]);
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
+    
+    // --- 1. CLIENT-SIDE LIMIT CHECK (Fast Feedback) ---
+    const myCurrentSongs = unplayedPlaylist.filter(v => v.singerName === name && !v.playedAt);
+
+    if (myCurrentSongs.length >= MAX_QUEUE_PER_SINGER) {
+        toast.error("Queue Limit Reached", {
+            description: `You can only have ${MAX_QUEUE_PER_SINGER} songs in your queue at a time.`,
+        });
+        return; // BLOCK ADDITION
+    }
+    // --- END LIMIT CHECK ---
+
     try {
       socketActions.sendHeartbeat();
       socketActions.addSong(videoId, title, coverUrl, name);
 
+      // --- ADD TOAST NOTIFICATION ---
       toast.success("Song added to queue!", {
         description: decode(title),
       });
+      // --- END ADD ---
     } catch (error) {
       console.error("Error adding song:", error);
+      // --- IMPROVE TOAST ---
       toast.error("Error adding song", {
         description: "Please try again.",
       });
+      // --- END IMPROVE ---
     }
   };
 
+  // This function is for *suggested* adds (from TabHistory)
   const handleSuggestionClick = (title: string, artist: string) => {
     const query = `${title} ${artist}`.trim();
     setSearchQuery(query);
@@ -145,6 +189,7 @@ export function PartySceneTabs({
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
       
+      {/* --- START OF FIX: WRAPPING MODAL AND CONFETTI IN SUSPENSE --- */}
       <Suspense fallback={null}>
         <LazyConfetti
           refConfetti={onConfettiInit}
@@ -157,14 +202,16 @@ export function PartySceneTabs({
             zIndex: 200,
             top: 0,
             left: 0,
-            pointerEvents: "none",
+            pointerEvents: "none", // Crucial
           }}
         />
 
+        {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
         {isTourOpen && (
           <LazyPartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
         )}
       </Suspense>
+      {/* --- END OF FIX --- */}
 
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
@@ -217,7 +264,7 @@ export function PartySceneTabs({
             playlist={[
               ...unplayedPlaylist,
               ...(currentSong ? [currentSong] : []),
-            ]}
+            ]} // Pass full playlist
             name={name}
             onVideoAdded={addSong}
             initialSearchQuery={searchQuery}

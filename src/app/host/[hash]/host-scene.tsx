@@ -3,7 +3,7 @@
 
 import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import type { Party, IdleMessage } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
+import type { KaraokeParty, VideoInPlaylist, InitialPartyData } from "~/types/app-types";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
@@ -12,23 +12,19 @@ import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
 import { api } from "~/trpc/react";
 
+
+// 1. LAZY-LOAD THE MODAL (named export needs .then)
 const LazyHostTourModal = lazy(() => 
   import("./components/host-tour-modal").then(module => ({ default: module.HostTourModal }))
 );
 
+// 2. LAZY-LOAD CONFETTI (default export is simpler)
 const LazyConfetti = lazy(() => import("react-canvas-confetti"));
 
-type InitialPartyData = {
-  currentSong: VideoInPlaylist | null;
-  unplayed: VideoInPlaylist[];
-  played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
-  currentSongStartedAt: Date | null;
-  currentSongRemainingDuration: number | null;
-  status: string;
-  idleMessages: string[];
-  themeSuggestions: string[];
-};
+
+// FIX: Use InitialPartyData from ~/types/app-types.ts
+// The definition below is redundant if imported, but kept for clarity based on original file's structure:
+// type InitialPartyData = { ... };
 
 type Props = {
   party: Party;
@@ -48,6 +44,7 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: "playlist",
   });
   
+  // Changed defaultValue from 10 to 12
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 12,
@@ -60,6 +57,7 @@ export function HostScene({ party, initialData }: Props) {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  // --- START: CONFETTI LOGIC (Updated with 100ms Retry) ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
 
@@ -68,15 +66,32 @@ export function HostScene({ party, initialData }: Props) {
   }, []);
 
   const fireConfetti = useCallback(() => {
-    if (confettiRef.current) {
-      confettiRef.current({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        zIndex: 200,
-      });
-    }
+    // FIX: Increase MAX_RETRIES and delay for improved stability on lazy load
+    const MAX_RETRIES = 10;
+    let attempts = 0;
+
+    const tryFire = () => {
+      if (confettiRef.current) {
+        confettiRef.current({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          zIndex: 200,
+        });
+        return true; // Success
+      } else if (attempts < MAX_RETRIES) {
+        attempts++;
+        // Retry in 100ms (Max 1 second total delay)
+        setTimeout(tryFire, 100); 
+        return false; // Still trying
+      }
+      return false; // Failed after max retries
+    };
+
+    // Start the attempt sequence
+    tryFire();
   }, []);
+  // --- END: CONFETTI LOGIC ---
 
   useEffect(() => {
     setIsMounted(true);
@@ -92,10 +107,12 @@ export function HostScene({ party, initialData }: Props) {
     setIsTourOpen(false);
     setHasSeenTour(true);
     setTimeout(() => {
+      // The retry logic within fireConfetti handles the race condition
       fireConfetti();
     }, 300);
   };
 
+  // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
@@ -108,7 +125,7 @@ export function HostScene({ party, initialData }: Props) {
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
-    settings,
+    settings, // <-- This object contains the spotifyPlaylistId
     socketActions, 
     isConnected,
     isSkipping,
@@ -219,6 +236,7 @@ export function HostScene({ party, initialData }: Props) {
             pointerEvents: 'none',
           }}
         />
+
         {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
         {isTourOpen && (
           <LazyHostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
@@ -227,6 +245,9 @@ export function HostScene({ party, initialData }: Props) {
       {/* --- END OF FIX --- */}
 
       <div className="w-full sm:max-w-md">
+        
+        {/* The modal is no longer here */}
+
         <HostControlPanel
           party={party}
           partyName={party.name} 
@@ -264,8 +285,11 @@ export function HostScene({ party, initialData }: Props) {
           onSyncIdleMessages={socketActions.updateIdleMessages}
           themeSuggestions={themeSuggestions}
           onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
+          // --- PASS THE PROP ---
           spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
+          // --- THIS IS THE FIX ---
           onReplayTour={handleReplayTour}
+          // --- END THE FIX ---
         />
       </div>
     </div>
