@@ -245,8 +245,9 @@ export function PartySceneTabs({
         <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
           <TabAddSong
             playlist={[
-              ...unplayedPlaylist,
+              // FIX: Ensure currentSong is first (head of the queue)
               ...(currentSong ? [currentSong] : []),
+              ...unplayedPlaylist,
             ]}
             name={name}
             onVideoAdded={addSong}
