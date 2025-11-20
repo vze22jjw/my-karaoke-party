@@ -28,7 +28,7 @@ import { cn } from "~/lib/utils";
 import { type VideoInPlaylist } from "~/types/app-types";
 // --- THIS IS THE FIX ---
 // Import useState
-import { useState, useMemo } from "react";
+import { useState } from "react";
 // --- END THE FIX ---
 import { toast } from "sonner";
 import { decode } from "html-entities";

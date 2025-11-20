@@ -6,7 +6,7 @@ import { CreateParty } from "~/components/create-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
-import { Tv, PartyPopper } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 import { OpenPlayersButton } from "~/components/open-players-drawer"; // Import new component
 
 // Helper component for the selection menu

@@ -1,33 +1,26 @@
 "use client";
 
 import type { VideoInPlaylist } from "~/types/app-types";
-// --- THIS IS THE FIX (Req #1) ---
 import { useState, useMemo } from "react";
-// --- END THE FIX ---
-// --- THIS IS THE FIX ---
 // Added Music and Info icons
 import {
   Users,
   MicVocal,
   ChevronDown,
   LogOut,
-  Crown,
   Music,
   Info,
 } from "lucide-react";
-// --- END THE FIX ---
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
 
-// --- UPDATE PARTICIPANT TYPE ---
 type Participant = {
   name: string;
   role: string;
   avatar: string | null;
 };
-// --- END UPDATE ---
 
 type Props = {
   currentSong: VideoInPlaylist | null;
@@ -37,11 +30,10 @@ type Props = {
   name: string;
   onLeaveParty: () => void;
   isPlaying: boolean;
-  remainingTime: number; // <-- ADD THIS PROP
-  onReplayTour: () => void; // <-- THIS IS THE FIX
+  remainingTime: number;
+  onReplayTour: () => void;
 };
 
-// --- THIS IS THE FIX (Req #1) ---
 const nextSingerMessages = [
   "Serve In",
   "Turn Up",
@@ -50,7 +42,6 @@ const nextSingerMessages = [
   "Set In",
   "Next In",
 ];
-// --- END THE FIX ---
 
 export function TabSingers({
   currentSong,
