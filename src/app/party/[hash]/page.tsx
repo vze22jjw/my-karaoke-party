@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { type VideoInPlaylist, type KaraokeParty } from "party";
+import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
 import { api } from "~/trpc/server";
 
 import { PartySceneTabs } from "./party-scene-tabs";

@@ -1,7 +1,7 @@
 import { db } from "~/server/db";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import type { PlaylistItem } from "@prisma/client";
-import { type KaraokeParty, type VideoInPlaylist } from "party";
+import { type KaraokeParty, type VideoInPlaylist } from "~/types/app-types";
 import { parseISO8601Duration } from "~/utils/string";
 
 /**

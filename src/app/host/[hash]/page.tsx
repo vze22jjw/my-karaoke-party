@@ -1,6 +1,6 @@
 import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
-import { type VideoInPlaylist, type KaraokeParty } from "party";
+import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
 import { HostScene } from "./host-scene"; 
 import { cookies } from "next/headers";
 import { AdminLogin } from "~/components/admin-login";

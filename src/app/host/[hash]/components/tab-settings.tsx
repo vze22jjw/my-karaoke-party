@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
-import { type VideoInPlaylist } from "party";
+import { type VideoInPlaylist } from "~/types/app-types";
 // --- THIS IS THE FIX ---
 // Import useState
 import { useState, useMemo } from "react";

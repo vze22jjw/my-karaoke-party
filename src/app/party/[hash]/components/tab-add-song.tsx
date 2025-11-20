@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty } from "party";
+import type { KaraokeParty } from "~/types/app-types";
 import { SongSearch } from "~/components/song-search";
 import { Music } from "lucide-react";
 import { decode } from "html-entities";

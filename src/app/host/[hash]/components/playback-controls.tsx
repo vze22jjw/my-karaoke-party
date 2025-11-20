@@ -1,6 +1,6 @@
 "use client";
 
-import { type VideoInPlaylist } from "party";
+import { type VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { Play, Pause, SkipForward } from "lucide-react";
 import { decode } from "html-entities";

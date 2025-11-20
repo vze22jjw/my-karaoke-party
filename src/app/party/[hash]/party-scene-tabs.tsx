@@ -2,10 +2,8 @@
 "use client";
 
 import type { Party } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist } from "party";
-// --- START OF FIX ---
+import type { KaraokeParty, VideoInPlaylist, InitialPartyData } from "~/types/app-types";
 import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
-// --- END OF FIX ---
 import {
   readLocalStorageValue,
   useLocalStorage,
@@ -19,35 +17,16 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
-// We no longer import PartyTourModal statically
-// We no longer import Confetti statically
 import { toast } from "sonner";
 import { decode } from "html-entities";
 
-// --- START OF FIX ---
-// 1. LAZY-LOAD THE MODAL (named export needs .then)
 const LazyPartyTourModal = lazy(() => 
   import("./components/party-tour-modal").then(module => ({ default: module.PartyTourModal }))
 );
 
-// 2. LAZY-LOAD CONFETTI (default export is simpler)
 const LazyConfetti = lazy(() => import("react-canvas-confetti"));
-// --- END OF FIX ---
-
 const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
 const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
-
-type InitialPartyData = {
-  currentSong: VideoInPlaylist | null;
-  unplayed: VideoInPlaylist[];
-  played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
-  currentSongStartedAt: Date | null;
-  currentSongRemainingDuration: number | null;
-  status: string;
-  idleMessages: string[];
-  themeSuggestions: string[];
-};
 
 export function PartySceneTabs({
   party,
@@ -63,10 +42,7 @@ export function PartySceneTabs({
     defaultValue: "player",
   });
 
-  // --- ADD THIS ---
   const [searchQuery, setSearchQuery] = useState("");
-  // --- END ADD ---
-
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: GUEST_TOUR_KEY,
     defaultValue: false,
@@ -74,7 +50,6 @@ export function PartySceneTabs({
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
 
@@ -92,7 +67,6 @@ export function PartySceneTabs({
       });
     }
   }, []);
-  // --- END: CONFETTI LOGIC ---
 
   useEffect(() => {
     setIsMounted(true);
@@ -112,12 +86,9 @@ export function PartySceneTabs({
     }, 300);
   };
 
-  // --- THIS IS THE FIX ---
-  // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
-  // --- END THE FIX ---
 
   const {
     currentSong,
@@ -130,7 +101,7 @@ export function PartySceneTabs({
     partyStatus,
     idleMessages,
     themeSuggestions,
-    settings, // <-- Get settings object from hook
+    settings,
   } = usePartySocket(party.hash!, initialData, name);
 
   useEffect(() => {
@@ -145,23 +116,17 @@ export function PartySceneTabs({
       socketActions.sendHeartbeat();
       socketActions.addSong(videoId, title, coverUrl, name);
 
-      // --- ADD TOAST NOTIFICATION ---
       toast.success("Song added to queue!", {
         description: decode(title),
       });
-      // --- END ADD ---
     } catch (error) {
       console.error("Error adding song:", error);
-      // --- IMPROVE TOAST ---
       toast.error("Error adding song", {
         description: "Please try again.",
       });
-      // --- END IMPROVE ---
     }
   };
 
-  // --- ADD THIS ---
-  // This function is for *suggested* adds (from TabHistory)
   const handleSuggestionClick = (title: string, artist: string) => {
     const query = `${title} ${artist}`.trim();
     setSearchQuery(query);
@@ -172,7 +137,6 @@ export function PartySceneTabs({
   const handleSearchConsumed = () => {
     setSearchQuery("");
   };
-  // --- END ADD ---
 
   const onLeaveParty = () => {
     router.push("/");
@@ -181,7 +145,6 @@ export function PartySceneTabs({
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
       
-      {/* --- START OF FIX: WRAPPING MODAL AND CONFETTI IN SUSPENSE --- */}
       <Suspense fallback={null}>
         <LazyConfetti
           refConfetti={onConfettiInit}
@@ -194,16 +157,14 @@ export function PartySceneTabs({
             zIndex: 200,
             top: 0,
             left: 0,
-            pointerEvents: "none", // Crucial
+            pointerEvents: "none",
           }}
         />
 
-        {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
         {isTourOpen && (
           <LazyPartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
         )}
       </Suspense>
-      {/* --- END OF FIX --- */}
 
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
@@ -256,13 +217,11 @@ export function PartySceneTabs({
             playlist={[
               ...unplayedPlaylist,
               ...(currentSong ? [currentSong] : []),
-            ]} // Pass full playlist
+            ]}
             name={name}
             onVideoAdded={addSong}
-            // --- ADD THESE PROPS ---
             initialSearchQuery={searchQuery}
             onSearchQueryConsumed={handleSearchConsumed}
-            // --- END ADD ---
           />
         </TabsContent>
 
@@ -276,19 +235,14 @@ export function PartySceneTabs({
             onLeaveParty={onLeaveParty}
             isPlaying={isPlaying}
             remainingTime={remainingTime}
-            // --- THIS IS THE FIX ---
             onReplayTour={handleReplayTour}
-            // --- END THE FIX ---
           />
         </TabsContent>
         <TabsContent value="history" className="flex-1 overflow-y-auto mt-0">
           <TabHistory
             themeSuggestions={themeSuggestions}
-            // --- PASS THE PROP ---
             spotifyPlaylistId={settings.spotifyPlaylistId}
-            // --- ADD THIS PROP ---
             onSuggestionClick={handleSuggestionClick}
-            // --- END ADD ---
           />
         </TabsContent>
       </Tabs>

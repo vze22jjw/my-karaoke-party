@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { type KaraokeParty } from "party";
+import { type KaraokeParty } from "~/types/app-types";
 
 // Check both server-side and client-side env vars
 const IS_DEBUG_MODE =

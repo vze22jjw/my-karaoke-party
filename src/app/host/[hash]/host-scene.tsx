@@ -3,7 +3,7 @@
 
 import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import type { Party, IdleMessage } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 

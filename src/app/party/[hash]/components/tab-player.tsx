@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty, VideoInPlaylist } from "party"; // <-- Added VideoInPlaylist
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types"; // <-- Added VideoInPlaylist
 import { useState } from "react";
 import { PreviewPlayer } from "~/components/preview-player";
 import { decode } from "html-entities";

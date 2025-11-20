@@ -5,7 +5,7 @@
 import { useRef, useState, useEffect } from "react";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { QrCode } from "./qr-code";
-import { type VideoInPlaylist } from "party";
+import { type VideoInPlaylist } from "~/types/app-types";
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { Button } from "./ui/ui/button";

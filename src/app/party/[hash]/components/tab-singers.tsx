@@ -1,6 +1,6 @@
 "use client";
 
-import type { VideoInPlaylist } from "party";
+import type { VideoInPlaylist } from "~/types/app-types";
 // --- THIS IS THE FIX (Req #1) ---
 import { useState, useMemo } from "react";
 // --- END THE FIX ---

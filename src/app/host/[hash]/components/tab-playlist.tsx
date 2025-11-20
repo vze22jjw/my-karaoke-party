@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty, VideoInPlaylist } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";

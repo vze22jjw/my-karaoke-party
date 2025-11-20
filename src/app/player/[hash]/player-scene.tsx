@@ -3,7 +3,7 @@
 
 import { useFullscreen } from "@mantine/hooks";
 import type { Party } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { useState, useEffect, useRef, useCallback } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";

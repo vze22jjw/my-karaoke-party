@@ -6,7 +6,7 @@
 import { useState, useEffect } from "react";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
-import type { KaraokeParty } from "party";
+import type { KaraokeParty } from "~/types/app-types";
 import { PreviewPlayer } from "./preview-player";
 import { removeBracketedContent } from "~/utils/string";
 import { decode } from "html-entities";
