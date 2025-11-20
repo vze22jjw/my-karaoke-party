@@ -2,10 +2,7 @@ import Image from "next/image";
 import { JoinParty } from "../components/join-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import Link from "next/link";
-// --- THIS IS THE FIX (Part 1) ---
-// Import the environment variables
 import { env } from "~/env";
-// --- END THE FIX ---
 
 export default async function Home() {
   return (
@@ -21,7 +18,6 @@ export default async function Home() {
           className="h-auto w-full max-w-sm flex-shrink-0 sm:max-w-[666px]"
         />
 
-        {/* Remaining elements centered vertically */}
         <div className="flex flex-1 flex-col items-center justify-center gap-6">
           <div className="flex w-full max-w-xs flex-col gap-4">
             <JoinParty />
@@ -42,14 +38,11 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* --- THIS IS THE FIX (Part 2) --- */}
-      {/* Add the app version footer */}
       <footer className="fixed bottom-4 right-4 z-50">
         <span className="text-xs text-white/50">
           v{env.NEXT_PUBLIC_MKP_APP_VER}
         </span>
       </footer>
-      {/* --- END THE FIX --- */}
     </main>
   );
 }

@@ -2,10 +2,8 @@
 "use client";
 
 import type { Party } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist } from "party";
-// --- START OF FIX ---
+import type { KaraokeParty, VideoInPlaylist, InitialPartyData } from "~/types/app-types";
 import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
-// --- END OF FIX ---
 import {
   readLocalStorageValue,
   useLocalStorage,
@@ -19,12 +17,13 @@ import { TabAddSong } from "./components/tab-add-song";
 import { TabHistory } from "./components/tab-history";
 import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
-// We no longer import PartyTourModal statically
-// We no longer import Confetti statically
 import { toast } from "sonner";
 import { decode } from "html-entities";
 
-// --- START OF FIX ---
+// --- CLIENT-SIDE LIMIT CONSTANT ---
+const MAX_QUEUE_PER_SINGER = 10;
+// --- END CLIENT-SIDE LIMIT ---
+
 // 1. LAZY-LOAD THE MODAL (named export needs .then)
 const LazyPartyTourModal = lazy(() => 
   import("./components/party-tour-modal").then(module => ({ default: module.PartyTourModal }))
@@ -32,22 +31,7 @@ const LazyPartyTourModal = lazy(() =>
 
 // 2. LAZY-LOAD CONFETTI (default export is simpler)
 const LazyConfetti = lazy(() => import("react-canvas-confetti"));
-// --- END OF FIX ---
 
-const ACTIVE_TAB_KEY = "karaoke-party-active-tab";
-const GUEST_TOUR_KEY = "has_seen_guest_tour_v1";
-
-type InitialPartyData = {
-  currentSong: VideoInPlaylist | null;
-  unplayed: VideoInPlaylist[];
-  played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
-  currentSongStartedAt: Date | null;
-  currentSongRemainingDuration: number | null;
-  status: string;
-  idleMessages: string[];
-  themeSuggestions: string[];
-};
 
 export function PartySceneTabs({
   party,
@@ -59,7 +43,7 @@ export function PartySceneTabs({
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   const router = useRouter();
   const [activeTab, setActiveTab] = useLocalStorage({
-    key: ACTIVE_TAB_KEY,
+    key: "karaoke-party-active-tab",
     defaultValue: "player",
   });
 
@@ -68,13 +52,13 @@ export function PartySceneTabs({
   // --- END ADD ---
 
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
-    key: GUEST_TOUR_KEY,
+    key: "has_seen_guest_tour_v1",
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // --- START: CONFETTI LOGIC ---
+  // --- START: CONFETTI LOGIC (Updated with 100ms Retry) ---
   const { width, height } = useViewportSize();
   const confettiRef = useRef<confetti.CreateTypes | null>(null);
 
@@ -83,14 +67,30 @@ export function PartySceneTabs({
   }, []);
 
   const fireConfetti = useCallback(() => {
-    if (confettiRef.current) {
-      confettiRef.current({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        zIndex: 200,
-      });
-    }
+    // FIX: Add retry loop for asynchronous ref initialization
+    const MAX_RETRIES = 10;
+    let attempts = 0;
+
+    const tryFire = () => {
+      if (confettiRef.current) {
+        confettiRef.current({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          zIndex: 200,
+        });
+        return true; // Success
+      } else if (attempts < MAX_RETRIES) {
+        attempts++;
+        // Retry in 100ms (Max 1 second total delay)
+        setTimeout(tryFire, 100); 
+        return false; // Still trying
+      }
+      return false; // Failed after max retries
+    };
+
+    // Start the attempt sequence
+    tryFire();
   }, []);
   // --- END: CONFETTI LOGIC ---
 
@@ -112,12 +112,10 @@ export function PartySceneTabs({
     }, 300);
   };
 
-  // --- THIS IS THE FIX ---
   // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
-  // --- END THE FIX ---
 
   const {
     currentSong,
@@ -140,7 +138,24 @@ export function PartySceneTabs({
     }
   }, [router, party.hash]);
 
+  // Calculate the queue limit status
+  const myCurrentSongs = useMemo(() => {
+    return unplayedPlaylist.filter(v => v.singerName === name && !v.playedAt);
+  }, [unplayedPlaylist, name]);
+  
+  const hasReachedQueueLimit = useMemo(() => {
+    return myCurrentSongs.length >= MAX_QUEUE_PER_SINGER;
+  }, [myCurrentSongs.length]);
+
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
+    
+    // --- 1. CLIENT-SIDE LIMIT CHECK (Fast Feedback) ---
+    if (hasReachedQueueLimit) {
+        // REMOVED toast.error()
+        return; // BLOCK ADDITION
+    }
+    // --- END LIMIT CHECK ---
+
     try {
       socketActions.sendHeartbeat();
       socketActions.addSong(videoId, title, coverUrl, name);
@@ -160,7 +175,6 @@ export function PartySceneTabs({
     }
   };
 
-  // --- ADD THIS ---
   // This function is for *suggested* adds (from TabHistory)
   const handleSuggestionClick = (title: string, artist: string) => {
     const query = `${title} ${artist}`.trim();
@@ -172,7 +186,6 @@ export function PartySceneTabs({
   const handleSearchConsumed = () => {
     setSearchQuery("");
   };
-  // --- END ADD ---
 
   const onLeaveParty = () => {
     router.push("/");
@@ -259,10 +272,10 @@ export function PartySceneTabs({
             ]} // Pass full playlist
             name={name}
             onVideoAdded={addSong}
-            // --- ADD THESE PROPS ---
             initialSearchQuery={searchQuery}
             onSearchQueryConsumed={handleSearchConsumed}
-            // --- END ADD ---
+            hasReachedQueueLimit={hasReachedQueueLimit} // PASS THE NEW PROP
+            maxQueuePerSinger={MAX_QUEUE_PER_SINGER} // PASS THE CONSTANT
           />
         </TabsContent>
 
@@ -276,19 +289,14 @@ export function PartySceneTabs({
             onLeaveParty={onLeaveParty}
             isPlaying={isPlaying}
             remainingTime={remainingTime}
-            // --- THIS IS THE FIX ---
             onReplayTour={handleReplayTour}
-            // --- END THE FIX ---
           />
         </TabsContent>
         <TabsContent value="history" className="flex-1 overflow-y-auto mt-0">
           <TabHistory
             themeSuggestions={themeSuggestions}
-            // --- PASS THE PROP ---
             spotifyPlaylistId={settings.spotifyPlaylistId}
-            // --- ADD THIS PROP ---
             onSuggestionClick={handleSuggestionClick}
-            // --- END ADD ---
           />
         </TabsContent>
       </Tabs>

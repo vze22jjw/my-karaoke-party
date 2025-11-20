@@ -12,8 +12,6 @@ import {
   Check,
   ChevronDown,
   FileText,
-  // ListTree, // Removed
-  // FileJson, // Removed
   Play,
   Send,
   Plus,
@@ -21,27 +19,23 @@ import {
   Lightbulb,
   Music,
   Loader2,
-  Info, // <-- THIS IS THE FIX
+  Info,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
-import { type VideoInPlaylist } from "party";
-// --- THIS IS THE FIX ---
-// Import useState
-import { useState, useMemo } from "react";
-// --- END THE FIX ---
+import { type VideoInPlaylist } from "~/types/app-types";
+import { useState } from "react";
 import { toast } from "sonner";
 import { decode } from "html-entities";
 import { removeBracketedContent } from "~/utils/string";
 import { type IdleMessage } from "@prisma/client";
 import { api } from "~/trpc/react";
 
-// Extend the type locally to include spotifyId
 type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
 
 type Props = {
   partyHash: string;
-  partyName: string; // <-- ADDED
+  partyName: string;
   useQueueRules: boolean;
   onToggleRules: () => void;
   disablePlayback: boolean;
@@ -65,8 +59,6 @@ type Props = {
   spotifyPlaylistId: string | null;
 };
 
-// --- THIS IS THE FIX ---
-// Removed description from ToggleButton props
 const ToggleButton = ({
   id,
   checked,
@@ -78,16 +70,12 @@ const ToggleButton = ({
   onCheckedChange: () => void;
   label: string;
 }) => (
-  // Reduced padding from p-4 to p-3
   <div className="flex items-center justify-between rounded-lg border p-3">
-    {/* --- END THE FIX --- */}
     <div className="flex-1 space-y-0.5 pr-4">
       <Label htmlFor={id} className="text-base">
         {label}
       </Label>
-      {/* Removed <p> tag */}
     </div>
-    {/* --- END THE FIX --- */}
     <button
       id={id}
       type="button"
@@ -116,7 +104,7 @@ const ToggleButton = ({
 
 export function TabSettings({
   partyHash,
-  partyName, // <-- DESTRUCTURED
+  partyName,
   useQueueRules,
   onToggleRules,
   disablePlayback,
@@ -156,8 +144,6 @@ export function TabSettings({
   const [spotifyIdInput, setSpotifyIdInput] = useState(spotifyPlaylistId ?? "");
   const [isSavingSpotify, setIsSavingSpotify] = useState(false);
 
-  // --- THIS IS THE FIX ---
-  // Add state hooks for all info popups
   const [showSuggestionsInfo, setShowSuggestionsInfo] = useState(false);
   const [showIdleInfo, setShowIdleInfo] = useState(false);
   const [showRulesInfo, setShowRulesInfo] = useState(false);
@@ -165,12 +151,11 @@ export function TabSettings({
   const [showSearchInfo, setShowSearchInfo] = useState(false);
   const [showExportInfo, setShowExportInfo] = useState(false);
   const [showDangerInfo, setShowDangerInfo] = useState(false);
-  // --- END THE FIX ---
 
   const updateSpotify = api.party.updateSpotifyPlaylist.useMutation({
     onSuccess: (data) => {
       setIsSavingSpotify(false);
-      setSpotifyIdInput(data.newId ?? ""); // Update input with cleaned ID from server
+      setSpotifyIdInput(data.newId ?? "");
       toast.success("Spotify Playlist updated!");
     },
     onError: () => {
@@ -222,8 +207,6 @@ export function TabSettings({
     onUpdateThemeSuggestions(updated);
   };
 
-  // --- REMOVED parseSongInfo and processedList ---
-
   const getDataToCopy = () => {
     switch (exportFormat) {
       case "spotify":
@@ -262,10 +245,7 @@ export function TabSettings({
 
 
   return (
-    // --- THIS IS THE FIX ---
-    // Reduced space-y-6 to space-y-4
     <div className="space-y-4">
-    {/* --- END THE FIX --- */}
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-lg font-medium">Party Links</h3>
         <div className="space-y-4">
@@ -315,12 +295,7 @@ export function TabSettings({
         </div>
       )}
 
-      {/* --- Party Theme / Song Suggestions --- */}
-      {/* --- THIS IS THE FIX --- */}
-      {/* Reduced padding from p-4 to p-3 */}
       <div className="space-y-3 rounded-lg border bg-card p-3">
-        {/* --- END THE FIX --- */}
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
@@ -343,7 +318,6 @@ export function TabSettings({
             </AlertDescription>
           </Alert>
         )}
-        {/* --- END THE FIX --- */}
 
         <div className="flex w-full items-center space-x-2">
           <Input
@@ -393,7 +367,6 @@ export function TabSettings({
       </div>
       
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
           <Button
@@ -413,7 +386,6 @@ export function TabSettings({
             </AlertDescription>
           </Alert>
         )}
-        {/* --- END THE FIX --- */}
 
         <div className="flex w-full items-center space-x-2">
           <Input
@@ -478,11 +450,7 @@ export function TabSettings({
         </Button>
       </div>
 
-      {/* --- THIS IS THE FIX --- */}
-      {/* Reduced padding from p-4 to p-3 */}
       <div className="space-y-3 rounded-lg border bg-card p-3">
-        {/* --- END THE FIX --- */}
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Party Rules</h3>
           <Button
@@ -507,7 +475,6 @@ export function TabSettings({
             </AlertDescription>
           </Alert>
         )}
-        {/* --- END THE FIX --- */}
         <ToggleButton
           id="queue-rules"
           checked={useQueueRules}
@@ -529,7 +496,6 @@ export function TabSettings({
       </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             <Music className="h-5 w-5 text-green-500" />
@@ -553,7 +519,6 @@ export function TabSettings({
             </AlertDescription>
           </Alert>
         )}
-        {/* --- END THE FIX --- */}
         <div className="space-y-2">
           <Label htmlFor="spotify-query">Trending Playlist ID</Label>
           <div className="flex gap-2">
@@ -573,12 +538,7 @@ export function TabSettings({
         </div>
       </div>
 
-
-      {/* --- THIS IS THE FIX --- */}
-      {/* Reduced padding from p-4 to p-3 */}
       <div className="space-y-3 rounded-lg border bg-card p-3">
-        {/* --- END THE FIX --- */}
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Search Settings</h3>
           <Button
@@ -590,18 +550,13 @@ export function TabSettings({
             <Info className="h-4 w-4" />
           </Button>
         </div>
-        {/* --- END THE FIX --- */}
-        {/* --- THIS IS THE FIX --- */}
-        {/* Reduced padding from p-4 to p-3 */}
         <div className="space-y-2 rounded-lg border p-3">
-        {/* --- END THE FIX --- */}
           <div className="flex justify-between">
             <Label htmlFor="max-results" className="text-base">
               Max Search Results
             </Label>
             <span className="text-base font-bold">{maxSearchResults}</span>
           </div>
-          {/* --- THIS IS THE FIX --- */}
           {showSearchInfo && (
             <Alert className="mt-2">
               <AlertDescription>
@@ -610,7 +565,6 @@ export function TabSettings({
               </AlertDescription>
             </Alert>
           )}
-          {/* --- END THE FIX --- */}
           <Input
             id="max-results"
             type="range"
@@ -625,7 +579,6 @@ export function TabSettings({
       </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Export Played Songs</h3>
           <Button
@@ -648,7 +601,6 @@ export function TabSettings({
             </AlertDescription>
           </Alert>
         )}
-        {/* --- END THE FIX --- */}
         <Button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -668,7 +620,6 @@ export function TabSettings({
         </Button>
         {isExpanded && (
           <div className="space-y-4 rounded-lg border bg-muted/50 p-4 animate-in fade-in">
-            {/* --- ADDED THIS INSTRUCTION BLOCK --- */}
             <Alert>
               <Music className="h-4 w-4" />
               <AlertTitle>How to Create Your Playlist</AlertTitle>
@@ -690,7 +641,6 @@ export function TabSettings({
                 </p>
               </AlertDescription>
             </Alert>
-            {/* --- END OF ADDED BLOCK --- */}
 
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -710,7 +660,6 @@ export function TabSettings({
             <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-background p-2">
               {playedPlaylist.length > 0 ? (
                 <div className="text-xs font-mono p-1 space-y-1">
-                  {/* --- MODIFIED THIS BLOCK TO RENDER THE NEW FORMAT --- */}
                   {exportFormat === "text" ? playedPlaylist.map((song) => (
                     <div key={song.id} className="truncate">
                       {song.artist ? `${decode(song.artist)} - ` : ""}{decode(removeBracketedContent(song.title))}
@@ -720,7 +669,6 @@ export function TabSettings({
                       {getDataToCopy().slice(0, 500) + (getDataToCopy().length > 500 ? "..." : "")}
                     </pre>
                   )}
-                  {/* --- END MODIFICATION --- */}
                 </div>
               ) : (
                 <p className="text-center text-sm text-muted-foreground">
@@ -750,7 +698,6 @@ export function TabSettings({
       </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
-        {/* --- THIS IS THE FIX --- */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
           <Button
@@ -762,9 +709,7 @@ export function TabSettings({
             <Info className="h-4 w-4" />
           </Button>
         </div>
-        {/* --- END THE FIX --- */}
         <div className="space-y-4 rounded-lg border border-destructive/50 p-4">
-          {/* --- THIS IS THE FIX --- */}
           {showDangerInfo && (
             <Alert className="mt-2" variant="destructive">
               <AlertDescription>
@@ -773,7 +718,6 @@ export function TabSettings({
               </AlertDescription>
             </Alert>
           )}
-          {/* --- END THE FIX --- */}
           {isConfirmingClose ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />

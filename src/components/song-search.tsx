@@ -3,10 +3,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { useState, useEffect } from "react";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
-import type { KaraokeParty } from "party";
+import type { KaraokeParty } from "~/types/app-types";
 import { PreviewPlayer } from "./preview-player";
 import { removeBracketedContent } from "~/utils/string";
 import { decode } from "html-entities";
@@ -20,9 +21,10 @@ import { cn } from "~/lib/utils";
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
   playlist: KaraokeParty["playlist"];
-  name: string; // <-- Know who the current user is
+  name: string;
   initialSearchQuery?: string;
   onSearchQueryConsumed?: () => void;
+  hasReachedQueueLimit?: boolean; // ADDED
 };
 
 type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
@@ -35,14 +37,11 @@ export function SongSearch({
   name,
   initialSearchQuery,
   onSearchQueryConsumed,
+  hasReachedQueueLimit = false, // DESTRUCTURE AND DEFAULT
 }: Props) {
-  // --- REVISED STATE ---
+
   const [videoInputValue, setVideoInputValue] = useState(initialSearchQuery ?? "");
   const [canFetch, setCanFetch] = useState((initialSearchQuery ?? "").length >= 3);
-  const [isSearchingFromSuggestion, setIsSearchingFromSuggestion] = useState(
-    !!initialSearchQuery,
-  );
-  // --- END REVISED STATE ---
 
   const [recentlyAddedVideoIds, setRecentlyAddedVideoIds] = useState<string[]>(
     [],
@@ -51,7 +50,7 @@ export function SongSearch({
 
   const [maxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
-    defaultValue: 10,
+    defaultValue: 12,
   });
 
   const {
@@ -70,37 +69,28 @@ export function SongSearch({
 
   const data = rawData as YoutubeSearchItem[] | undefined;
 
-  // --- NEW EFFECT 1 (React to prop) ---
   useEffect(() => {
     if (initialSearchQuery) {
       setVideoInputValue(initialSearchQuery);
-      setCanFetch(true); // Allow the search
-      setIsSearchingFromSuggestion(true); // Set flag to trigger search
-    }
-  }, [initialSearchQuery]);
-  // --- END NEW EFFECT 1 ---
+      setCanFetch(true);
+      const timer = setTimeout(() => {
+        void (async () => {
+          setRecentlyAddedVideoIds([]);
+          setFadingOutVideoIds([]);
+          await refetch();
+          setCanFetch(false);
+          onSearchQueryConsumed?.();
+        })();
+      }, 100); // Small 100ms delay
 
-  // --- NEW EFFECT 2 (React to flag) ---
-  useEffect(() => {
-    if (isSearchingFromSuggestion) {
-      void (async () => {
-        setRecentlyAddedVideoIds([]);
-        setFadingOutVideoIds([]);
-        await refetch();
-        setCanFetch(false); // Disable button after search
-        setIsSearchingFromSuggestion(false); // Reset flag
-        onSearchQueryConsumed?.();
-      })();
+      return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSearchingFromSuggestion, refetch]); // 'onSearchQueryConsumed' is stable
-  // --- END NEW EFFECT 2 ---
+  }, [initialSearchQuery, refetch, onSearchQueryConsumed]); 
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        setIsSearchingFromSuggestion(false); // It's a manual search
         onSearchQueryConsumed?.();
         setRecentlyAddedVideoIds([]);
         setFadingOutVideoIds([]);
@@ -117,10 +107,7 @@ export function SongSearch({
             className="w-full pr-10"
             value={videoInputValue}
             onChange={(e) => {
-              // --- UPDATE HANDLER ---
-              setIsSearchingFromSuggestion(false);
               onSearchQueryConsumed?.();
-              // --- END UPDATE ---
               setVideoInputValue(e.target.value);
               setCanFetch(e.target.value.length >= 3);
             }}
@@ -134,10 +121,7 @@ export function SongSearch({
               type="button"
               aria-label="Clear search"
               onClick={() => {
-                // --- UPDATE HANDLER ---
-                setIsSearchingFromSuggestion(false);
                 onSearchQueryConsumed?.();
-                // --- END UPDATE ---
                 setVideoInputValue("");
                 setCanFetch(false);
               }}
@@ -208,6 +192,9 @@ export function SongSearch({
               const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
               const title = decode(removeBracketedContent(video.snippet.title));
+              
+              // --- CALCULATE DISABLED STATE ---
+              const isDisabled = alreadyInQueue || isFadingOut || hasReachedQueueLimit;
 
               return (
                 <div
@@ -242,16 +229,13 @@ export function SongSearch({
                       variant={"default"}
                       size="icon"
                       className="shadow-xl animate-in spin-in"
-                      disabled={alreadyInQueue || isFadingOut}
+                      disabled={isDisabled} // USE CALCULATED VALUE
                       onClick={() => {
-                        // --- THIS IS THE FIX ---
-                        // We no longer pass duration, as the server will fetch it.
                         onVideoAdded(
                           video.id.videoId,
                           removeBracketedContent(video.snippet.title),
                           video.snippet.thumbnails.high.url,
                         );
-                        // --- END THE FIX ---
 
                         setFadingOutVideoIds((prev) => [
                           ...prev,

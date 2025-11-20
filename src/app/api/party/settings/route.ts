@@ -1,4 +1,3 @@
-// src/app/api/party/settings/route.ts
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { z } from "zod";
@@ -10,10 +9,7 @@ const settingsSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    // --- START: FIX ---
-    // Explicitly type the body as 'unknown' to satisfy the linter
     const body: unknown = await request.json();
-    // --- END: FIX ---
 
     const { hash, orderByFairness } = settingsSchema.parse(body);
 

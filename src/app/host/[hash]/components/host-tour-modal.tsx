@@ -12,7 +12,7 @@ import {
 import {
   Check,
   ListMusic,
-  Music, // <-- This was missing
+  Music,
   Play,
   Settings,
 } from "lucide-react";
@@ -23,7 +23,6 @@ type Props = {
   onClose: () => void;
 };
 
-// A small component for the step content layout
 const StepContent = ({
   icon,
   title,
@@ -44,7 +43,6 @@ const StepContent = ({
   </div>
 );
 
-// A small component for the navigation dots
 const Dots = ({ total, current }: { total: number; current: number }) => (
   <div className="flex items-center justify-center gap-2">
     {Array.from({ length: total }).map((_, i) => (
@@ -65,7 +63,6 @@ export function HostTourModal({ isOpen, onClose }: Props) {
 
   const handleClose = () => {
     onClose();
-    // Reset to step 1 for next time
     setTimeout(() => setStep(1), 200);
   };
 

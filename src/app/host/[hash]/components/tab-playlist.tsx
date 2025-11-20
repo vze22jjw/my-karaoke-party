@@ -1,6 +1,6 @@
 "use client";
 
-import type { KaraokeParty, VideoInPlaylist } from "party";
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
@@ -41,13 +41,9 @@ export function TabPlaylist({
     );
   }
 
-  // --- THIS IS THE FIX ---
-  // The root div is just a simple flex column.
-  // The scrolling is handled by the parent TabsContent.
   return (
     <div className="flex flex-col">
       {currentSong && (
-        // Player controls are locked to the top (of this component)
         <div className="flex-shrink-0">
           <PlaybackControls
             currentSong={currentSong}
@@ -124,5 +120,4 @@ export function TabPlaylist({
       </div>
     </div>
   );
-  // --- END THE FIX ---
 }

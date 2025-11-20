@@ -14,7 +14,7 @@ import {
   Monitor,
   Music,
   Plus,
-  Lightbulb, // Using Lightbulb for Suggestions tab
+  Lightbulb,
   Users,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
@@ -24,7 +24,6 @@ type Props = {
   onClose: () => void;
 };
 
-// A small component for the step content layout (copied from HostTourModal)
 const StepContent = ({
   icon,
   title,
@@ -45,7 +44,6 @@ const StepContent = ({
   </div>
 );
 
-// A small component for the navigation dots (copied from HostTourModal)
 const Dots = ({ total, current }: { total: number; current: number }) => (
   <div className="flex items-center justify-center gap-2">
     {Array.from({ length: total }).map((_, i) => (
@@ -66,7 +64,6 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
 
   const handleClose = () => {
     onClose();
-    // Reset to step 1 for next time
     setTimeout(() => setStep(1), 200);
   };
 
@@ -74,8 +71,6 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
     <Drawer open={isOpen} onClose={handleClose}>
       <DrawerContent className="flex flex-col h-full snap-align-none z-[100]">
         
-        {/* Scrollable Content Area */}
-        {/* pb-4 is used here instead of pb-32 because the footer is sticky */}
         <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">
           <DrawerHeader className="pb-4">
             <DrawerTitle className="text-3xl font-bold">
@@ -86,10 +81,8 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
             </DrawerDescription>
           </DrawerHeader>
 
-          {/* Step Content */}
           <div className="px-4 space-y-4">
             
-            {/* --- STEP 1: Core Functionality (Playing & Adding) --- */}
             {step === 1 && (
               <>
                 <StepContent icon={<Monitor className="h-6 w-6" />} title="1. Playing">
@@ -109,7 +102,6 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
               </>
             )}
 
-            {/* --- STEP 2: Social & Discovery (Suggestions & Singers) --- */}
             {step === 2 && (
               <>
                 <StepContent icon={<Lightbulb className="h-6 w-6 text-yellow-500" />} title="3. Suggestions">
@@ -123,7 +115,6 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
           </div>
         </div>
 
-        {/* Sticky Footer for Navigation */}
         <div className="w-full max-w-2xl mx-auto p-4 border-t border-border bg-background flex-shrink-0">
           <Dots total={totalSteps} current={step} />
           

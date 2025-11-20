@@ -80,11 +80,9 @@ export const partyRouter = createTRPCRouter({
       let finalId = input.playlistId?.trim() ?? null;
       if (finalId) {
         const match = finalId.match(/(?::|list\/)([a-zA-Z0-9]+)/);
-        // --- LINTER FIX: Use optional chain ---
         if (match?.[1]) {
           finalId = match[1];
         }
-        // --------------------------------------
       }
 
       await ctx.db.party.update({

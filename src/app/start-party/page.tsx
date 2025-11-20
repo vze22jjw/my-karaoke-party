@@ -6,13 +6,11 @@ import { CreateParty } from "~/components/create-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
-import { Tv, PartyPopper } from "lucide-react";
-import { OpenPlayersButton } from "~/components/open-players-drawer"; // Import new component
+import { PartyPopper } from "lucide-react";
+import { OpenPlayersButton } from "~/components/open-players-drawer";
 
-// Helper component for the selection menu
 function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
     return (
-        // --- FIX: Added mx-auto to horizontally center the max-w-xs block ---
         <div className="flex w-full max-w-xs flex-col gap-4 mx-auto">
             <Button
                 type="button"
@@ -23,10 +21,8 @@ function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
                 Start New Party
                 <PartyPopper className="ml-3 h-6 w-6" />
             </Button>
-            {/* The OpenPlayersButton component contains its own DrawerTrigger button */}
             <OpenPlayersButton />
             
-            {/* Based on the image, the 'Back to Home' link is likely inside this component */}
             <Link
                 href="/"
                 className="text-center text-sm text-white/80 hover:text-white hover:underline pt-4"
@@ -69,9 +65,6 @@ export default function StartPartyPage() {
                             </div>
                         )}
                     </div>
-                    
-                    {/* The general "Back to Home" link is likely redundant now if included in FlowSelector, 
-                        but leaving the final link structure to the user's preference based on the full HTML context. */}
                 </div>
             </div>
         </main>

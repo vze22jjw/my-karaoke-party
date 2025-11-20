@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     
     response.cookies.set("admin_token_verified", "true", {
       httpOnly: true,
-      secure: isProduction && isHttps, // <--- CHANGED THIS
+      secure: isProduction && isHttps,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days

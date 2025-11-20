@@ -48,7 +48,6 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
 
     const form = useForm<z.infer<typeof hashSchema>>({
         resolver: zodResolver(hashSchema),
-        // FIX: Ensure default hash is always an empty string to remove any potential auto-fill
         defaultValues: { hash: "" }, 
     });
 
@@ -97,14 +96,11 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                                         className="w-full text-center font-mono uppercase"
                                         maxLength={10}
                                         {...field}
-                                        // --- FIX: Force UPPERCASE and filter for A-Z, 0-9 ---
                                         onChange={(e) => {
                                             const rawValue = e.target.value.toUpperCase();
-                                            // Keep only uppercase letters and numbers
                                             const filteredValue = rawValue.replace(/[^A-Z0-9]/g, "");
                                             field.onChange(filteredValue);
                                         }}
-                                        // --- END FIX ---
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -126,16 +122,14 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
 
             {parties && parties.length > 0 && (
                 <div className="max-h-[300px] space-y-3 overflow-y-auto pt-4 border-t">
-                    <h3 className="font-semibold text-sm text-muted-foreground">Or Select an Open Player:</h3>
+                    <h3 className="font-semibold text-sm text-muted-foreground">Open Party Names:</h3>
                     {parties.map((party) => (
                         <div
                             key={party.hash}
-                            // --- LAYOUT ADJUSTMENT: Removed justify-between as the button is gone ---
                             className="flex items-center rounded-lg border bg-card p-4"
                         >
                             <div className="space-y-1 pr-4 flex-1">
                                 <h3 className="font-semibold uppercase">
-                                    {/* --- FIX: Removed {party.hash} from display --- */}
                                     {party.name} 
                                 </h3>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -149,7 +143,6 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                                     </span>
                                 </div>
                             </div>
-                            {/* --- REMOVED AUTOFILLED BUTTON --- */}
                         </div>
                     ))}
                 </div>
@@ -168,7 +161,6 @@ function OpenPlayersDrawerComponent() {
         setLoading(true);
         setError(null);
         try {
-            // Fetch directly from REST API route
             const response = await fetch("/api/parties/list");
             if (!response.ok) throw new Error("Failed to fetch parties list");
             const data = await response.json() as Party[];
@@ -206,7 +198,7 @@ function OpenPlayersDrawerComponent() {
                 <div className="mx-auto w-full max-w-2xl">
                     <DrawerHeader>
                         <DrawerTitle>Open Players</DrawerTitle>
-                        <DrawerDescription>Enter the Party Hash or select an open party below.</DrawerDescription>
+                        <DrawerDescription>Enter the Party Hash.</DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4 pb-0">
                         {loading && (

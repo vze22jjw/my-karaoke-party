@@ -1,14 +1,11 @@
 import "~/styles/globals.css";
-
 import { TRPCReactProvider } from "~/trpc/react";
-
 import { Roboto_Slab, Roboto_Mono } from "next/font/google";
 import { type Metadata, type Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AxiomWebVitals } from "next-axiom";
 import { Toaster } from "~/components/ui/ui/sonner";
-import { ConsoleWrapper } from "~/components/console-wrapper";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -38,7 +35,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: APP_DEFAULT_TITLE,
-    // startUpImage: [],
   },
   formatDetection: {
     telephone: false,
@@ -122,7 +118,7 @@ export default function RootLayout({
                         'youtube.com',
                         'Image with src',
                         'has either width or height',
-                        'The target origin provided' // --- THIS IS THE FIX ---
+                        'The target origin provided' 
                       ];
 
                       return patterns.some(pattern => msg.includes(pattern));
@@ -158,7 +154,7 @@ export default function RootLayout({
                       e.message.includes('WebSocket') ||
                       e.message.includes('partykit') ||
                       e.message.includes('127.0.0.1:1999') ||
-                      e.message.includes('The target origin provided') // --- THIS IS THE FIX ---
+                      e.message.includes('The target origin provided') 
                     )) {
                       e.preventDefault();
                       e.stopPropagation();
@@ -172,13 +168,11 @@ export default function RootLayout({
         )}
       </head>
       <body className="bg-gradient min-h-screen">
-        <ConsoleWrapper>
           <TRPCReactProvider>{children}</TRPCReactProvider>
           <Analytics />
           <SpeedInsights />
           <AxiomWebVitals />
           <Toaster />
-        </ConsoleWrapper>
       </body>
     </html>
   );

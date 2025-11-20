@@ -1,6 +1,6 @@
 import JoinScene from "../join-scene";
-import { api } from "~/trpc/server"; // Import server-side api
-import { notFound } from "next/navigation"; // Import notFound
+import { api } from "~/trpc/server";
+import { notFound } from "next/navigation";
 
 export default async function JoinPartyHashPage({
   params,
@@ -9,10 +9,8 @@ export default async function JoinPartyHashPage({
 }) {
   const partyHash = params.hash;
 
-  // Fetch party details
   const party = await api.party.getByHash({ hash: partyHash });
 
-  // Handle party not found
   if (!party) {
     notFound();
   }

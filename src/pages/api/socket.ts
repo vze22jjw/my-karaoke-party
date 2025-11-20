@@ -47,7 +47,6 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
     },
   });
 
-  // Attach the main event handler
   registerSocketEvents(io);
 
   res.socket.server.io = io;

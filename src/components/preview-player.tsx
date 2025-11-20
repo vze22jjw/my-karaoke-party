@@ -24,7 +24,6 @@ export function PreviewPlayer({
   const player = useRef<MediaPlayerInstance>(null);
 
   useEffect(() => {
-    // Subscribe to state updates.
     return player.current!.subscribe(
       ({ paused: _paused, viewType: _viewType }) => {
         // console.log('is paused?', '->', state.paused);
@@ -37,20 +36,10 @@ export function PreviewPlayer({
     provider: MediaProviderAdapter | null,
     _nativeEvent: MediaProviderChangeEvent,
   ) {
-    // We can configure provider's here.
     if (isHLSProvider(provider)) {
       provider.config = {};
     }
   }
-
-  // We can listen for the `can-play` event to be notified when the player is ready.
-  // function onCanPlay(
-  //   detail: MediaCanPlayDetail,
-  //   nativeEvent: MediaCanPlayEvent,
-  // ) {
-  //   console.log("Can play: " + videoId);
-  //   canPlay(videoId);
-  // }
 
   return (
     <MediaPlayer
