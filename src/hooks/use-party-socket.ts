@@ -1,4 +1,4 @@
-import { type KaraokeParty, type VideoInPlaylist, type InitialPartyData } from "~/types/app-types";
+import { type KaraokeParty, type VideoInPlaylist } from "~/types/app-types";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";

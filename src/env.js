@@ -11,6 +11,7 @@ export const env = createEnv({
     // --- ADDED AS OPTIONAL ---
     SPOTIFY_CLIENT_ID: z.string().optional(),
     SPOTIFY_CLIENT_SECRET: z.string().optional(),
+    PORT: z.string().optional(), // FIX: Added PORT to server schema
     // -------------------------
   },
   client: {
@@ -30,6 +31,7 @@ export const env = createEnv({
     // --- MAP THE KEYS ---
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+    PORT: process.env.PORT, // FIX: Mapped PORT
     NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: process.env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL, // <-- MAPPED
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

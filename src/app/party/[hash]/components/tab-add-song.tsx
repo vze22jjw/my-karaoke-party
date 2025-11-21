@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
+import type { VideoInPlaylist } from "~/types/app-types";
 import { SongSearch } from "~/components/song-search";
 import { Music } from "lucide-react";
 import { decode } from "html-entities";

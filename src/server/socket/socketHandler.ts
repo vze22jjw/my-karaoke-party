@@ -11,8 +11,7 @@ import {
   registerParticipant,
   updateAndEmitPlaylist,
   updateAndEmitSingers,
-  type Participant,
-  LOG_TAG,
+  LOG_TAG, // FIX: Removed unused 'type Participant'
 } from "./socketUtils";
 import { debugLog } from "~/utils/debug-logger";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
