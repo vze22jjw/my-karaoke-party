@@ -66,7 +66,7 @@ services:
     ports:
       - ${PORT}:${PORT}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT}/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -87,7 +87,7 @@ services:
     command: >
       -c "while true; do
         sleep "${CLEANUP_INTERVAL_DAYS:-7}d";
-        curl -f http://mk-app:${PORT}/api/cron/cleanup-parties || echo 'Cleanup failed';
+        curl -f http://mk-app:3000/api/cron/cleanup-parties || echo 'Cleanup failed';
       done"
 
 volumes:
