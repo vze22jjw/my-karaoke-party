@@ -1,4 +1,3 @@
-// vze22jjw/my-karaoke-party/my-karaoke-party-02-ainger-applause/src/components/open-players-drawer.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -14,7 +13,7 @@ import {
   DrawerTrigger,
 } from "~/components/ui/ui/drawer";
 import { Button } from "~/components/ui/ui/button";
-import { Music, Users, Tv } from "lucide-react"; // FIX: Removed unused 'Code' import
+import { Music, Users, Tv } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
 import { Input } from "./ui/ui/input";
 import { useForm } from "react-hook-form";
@@ -57,7 +56,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
         { enabled: false, retry: false, refetchOnWindowFocus: false }
     );
 
-    async function onSubmit(_values: z.infer<typeof hashSchema>) { // FIX: Renamed 'values' to ignore unused parameter
+    async function onSubmit(_values: z.infer<typeof hashSchema>) {
         setStatusError(null);
         try {
             const result = await partyQuery.refetch();
