@@ -25,24 +25,29 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
   debugLog(LOG_TAG, "Starting Socket.io server...");
 
-// Build the list of allowed origins from environment variables
-  const allowedOrigins = [
-    "http://localhost:3000", // Always allow local development (internal container port)
-    "http://localhost:3120", // <-- FIX: ADD DOCKER MAPPED PORT FOR LOCAL TESTING
-  ];
+  const allowedOrigins: string[] = [];
 
-  // Add the production URL if it's set and different from the local default
-  if (env.NEXT_PUBLIC_APP_URL && env.NEXT_PUBLIC_APP_URL !== "http://localhost:3000") {
-    allowedOrigins.push(env.NEXT_PUBLIC_APP_URL);
+  // 1. Allow the configured public URL (e.g., http://localhost:3120)
+  if (env.NEXT_PUBLIC_APP_URL) {
+      allowedOrigins.push(env.NEXT_PUBLIC_APP_URL);
   }
 
-  debugLog(LOG_TAG, "Allowed CORS origins:", allowedOrigins);
+  // 2. Explicitly allow the host (0.0.0.0) access point using the runtime PORT variable, 
+  // which is useful for direct container access/Docker inspection tools.
+  const runtimePort = env.PORT ?? '3000';
+  allowedOrigins.push(`http://0.0.0.0:${runtimePort}`);
+
+
+  // Ensure unique origins and filter out duplicates
+  const uniqueAllowedOrigins = [...new Set(allowedOrigins.filter(Boolean))];
+
+  debugLog(LOG_TAG, "Allowed CORS origins:", uniqueAllowedOrigins);
 
   const io = new Server(res.socket.server, {
     path: "/api/socket",
     addTrailingSlash: false,
     cors: {
-      origin: allowedOrigins,
+      origin: uniqueAllowedOrigins,
       methods: ["GET", "POST"],
       credentials: true,
     },
