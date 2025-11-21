@@ -52,8 +52,9 @@ model PartyParticipant {
     name      String
     joinedAt  DateTime @default(now())
     role      String   @default("Guest") 
-    
+
     // --- ADD THIS FIELD ---
+    applauseCount Int    @default(0) // New field for applause tally
     avatar    String?  // Will store an emoji or icon identifier
     // ----------------------
 

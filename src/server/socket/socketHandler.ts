@@ -11,7 +11,6 @@ import {
   registerParticipant,
   updateAndEmitPlaylist,
   updateAndEmitSingers,
-  type Participant,
   LOG_TAG,
 } from "./socketUtils";
 import { debugLog } from "~/utils/debug-logger";

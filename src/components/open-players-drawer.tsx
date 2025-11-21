@@ -1,4 +1,3 @@
-// src/components/open-players-drawer.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -14,7 +13,7 @@ import {
   DrawerTrigger,
 } from "~/components/ui/ui/drawer";
 import { Button } from "~/components/ui/ui/button";
-import { Music, Users, Tv, Code } from "lucide-react";
+import { Music, Users, Tv } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
 import { Input } from "./ui/ui/input";
 import { useForm } from "react-hook-form";
@@ -57,7 +56,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
         { enabled: false, retry: false, refetchOnWindowFocus: false }
     );
 
-    async function onSubmit(values: z.infer<typeof hashSchema>) {
+    async function onSubmit(_values: z.infer<typeof hashSchema>) {
         setStatusError(null);
         try {
             const result = await partyQuery.refetch();
