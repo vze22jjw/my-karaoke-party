@@ -46,7 +46,11 @@ FROM base AS runner
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+# FIX: Define argument for dynamic NODE_ENV, default to 'development'
+ARG BUILD_NODE_ENV=development 
+
+# FIX: Use the argument to set NODE_ENV
+ENV NODE_ENV=$BUILD_NODE_ENV 
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user
