@@ -1,4 +1,3 @@
-// src/env.js
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
@@ -18,6 +17,7 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_EVENT_DEBUG: z.string().optional(),
     NEXT_PUBLIC_MKP_APP_VER: z.string().default("0.0.0-BETA"),
+    NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: z.string().url().optional(), // <-- ADDED
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -30,6 +30,7 @@ export const env = createEnv({
     // --- MAP THE KEYS ---
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+    NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: process.env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL, // <-- MAPPED
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

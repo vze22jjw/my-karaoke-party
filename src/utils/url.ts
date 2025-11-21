@@ -1,7 +1,3 @@
-// --- THIS IS THE FIX ---
-// import { env } from "~/env"; // <-- This line is removed
-// --- END THE FIX ---
-
 // This function now behaves like the tRPC getBaseUrl
 // It determines the URL at RUNTIME.
 function getBaseUrl() {

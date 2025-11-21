@@ -25,9 +25,10 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
   debugLog(LOG_TAG, "Starting Socket.io server...");
 
-  // Build the list of allowed origins from environment variables
+// Build the list of allowed origins from environment variables
   const allowedOrigins = [
-    "http://localhost:3000", // Always allow local development
+    "http://localhost:3000", // Always allow local development (internal container port)
+    "http://localhost:3120", // <-- FIX: ADD DOCKER MAPPED PORT FOR LOCAL TESTING
   ];
 
   // Add the production URL if it's set and different from the local default
