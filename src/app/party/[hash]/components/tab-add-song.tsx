@@ -27,7 +27,7 @@ export function TabAddSong({
   initialSearchQuery,
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
-  maxQueuePerSinger,
+  maxQueuePerSinger: _maxQueuePerSinger,
 }: Props) {
 
   // Identify the playing song (it's at index 0 of the correctly structured playlist)
