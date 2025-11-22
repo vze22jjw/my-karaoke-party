@@ -1,4 +1,4 @@
-import { JoinScene } from "~/app/join/join-scene";
+import JoinScene from "~/app/join/join-scene";
 import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
 
