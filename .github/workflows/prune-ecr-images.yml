@@ -11,7 +11,7 @@ on:
 env:
   ECR_PUBLIC_REPO_NAME: "vze22jjw/my-karaoke-party"
   AWS_REGION: "us-east-1"
-  IMAGES_TO_KEEP: 10
+  IMAGES_TO_KEEP: 50
 
 jobs:
   prune-images:
