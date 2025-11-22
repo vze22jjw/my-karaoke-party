@@ -58,13 +58,11 @@ services:
       ## Spotify API Credentials Optional
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
-      ## PORT
-      PORT: ${PORT}
 
     networks:
       - mykaraokenetwork
     ports:
-      - ${PORT}:${PORT}
+      - ${PORT}:3000
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
