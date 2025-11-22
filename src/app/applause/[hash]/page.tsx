@@ -21,7 +21,10 @@ export default async function ApplausePage({ params }: Props) {
   if (!party) notFound();
   
   let currentSong: VideoInPlaylist | null = null;
+  let unplayed: VideoInPlaylist[] = [];
+
   try {
+    // Use env var for public URL, fallback to localhost for internal container fetch
     const baseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
     
     const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, { 
@@ -30,14 +33,24 @@ export default async function ApplausePage({ params }: Props) {
     });
     
     if (playlistRes.ok) {
-        const data = (await playlistRes.json()) as { currentSong: VideoInPlaylist | null };
+        const data = (await playlistRes.json()) as { 
+          currentSong: VideoInPlaylist | null, 
+          unplayed: VideoInPlaylist[] 
+        };
         currentSong = data.currentSong ?? null;
+        unplayed = data.unplayed ?? [];
     } else {
-        console.error(`ApplausePage: Failed to fetch song. Status: ${playlistRes.status}`);
+        console.error(`ApplausePage: Failed to fetch song data. Status: ${playlistRes.status}`);
     }
   } catch (error) {
     console.warn("Failed to fetch current song for applause page", error);
   }
 
-  return <ApplauseScene partyHash={partyHash} currentSong={currentSong} />;
+  return (
+    <ApplauseScene 
+      partyHash={partyHash} 
+      initialCurrentSong={currentSong} 
+      initialUnplayed={unplayed} 
+    />
+  );
 }

@@ -59,10 +59,10 @@ export function TabSingers({
 
   return (
     <div className="bg-card rounded-lg p-4 border">
-      {/* HEADER LAYOUT FIX: Use Flexbox with a growing center to avoid overlaps */}
-      <div className="flex items-center justify-between mb-4 h-16">
+      {/* HEADER: Flexbox allows the center element to float in the available space */}
+      <div className="flex items-center justify-between mb-4 h-16 gap-1">
         
-        {/* Left Side: Title & Info */}
+        {/* Left Side: Title & Info (Locked together, no shrink) */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -73,8 +73,8 @@ export function TabSingers({
           </Button>
         </div>
         
-        {/* Center: Applause Button (Consumes available space and centers itself) */}
-        <div className="flex-1 flex justify-center items-center px-2 min-w-0">
+        {/* Center: Applause Button (Fills gap, centers itself) */}
+        <div className="flex-1 flex justify-center items-center min-w-0 px-2">
           {currentSong && currentSingerName && currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
                 <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold flex-shrink-0" aria-label="Send applause">
@@ -84,10 +84,11 @@ export function TabSingers({
           )}
         </div>
 
-        {/* Right Side: Leave Button */}
-        <div className="flex-shrink-0">
-          <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10" aria-label="Leave party">
-            <span className="text-lg font-semibold text-white mr-1.5 hidden sm:inline">Leave</span>
+        {/* Right Side: Leave Button (Always visible text) */}
+        <div className="flex items-center flex-shrink-0">
+          <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10 px-2" aria-label="Leave party">
+             {/* Text is always visible now */}
+            <span className="text-lg font-semibold text-white mr-1">Leave</span>
             <LogOut className="h-5 w-5" />
           </Button>
         </div>
