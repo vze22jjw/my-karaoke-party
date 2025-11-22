@@ -21,6 +21,7 @@ import { cn } from "~/lib/utils";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
+  onFireConfetti: () => void; // <-- New Prop
 };
 
 const StepContent = ({
@@ -57,18 +58,18 @@ const Dots = ({ total, current }: { total: number; current: number }) => (
   </div>
 );
 
-export function HostTourModal({ isOpen, onClose }: Props) {
+export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const [step, setStep] = useState(1);
   const totalSteps = 2; 
 
   const handleClose = () => {
+    onFireConfetti(); // <-- Fire immediately
     onClose();
     setTimeout(() => setStep(1), 200);
   };
 
   return (
     <Drawer open={isOpen} onClose={handleClose}>
-      {/* FIX: Increased z-index to 10000 */}
       <DrawerContent className="flex flex-col h-full snap-align-none z-[10000]">
         
         <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">

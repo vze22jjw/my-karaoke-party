@@ -22,6 +22,7 @@ import { cn } from "~/lib/utils";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
+  onFireConfetti: () => void; // <-- New Prop
 };
 
 const StepContent = ({
@@ -58,18 +59,18 @@ const Dots = ({ total, current }: { total: number; current: number }) => (
   </div>
 );
 
-export function PartyTourModal({ isOpen, onClose }: Props) {
+export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const [step, setStep] = useState(1);
   const totalSteps = 2; 
 
   const handleClose = () => {
+    onFireConfetti(); // <-- Fire immediately on click
     onClose();
     setTimeout(() => setStep(1), 200);
   };
 
   return (
     <Drawer open={isOpen} onClose={handleClose}>
-      {/* FIX: High z-index to appear above other overlays */}
       <DrawerContent className="flex flex-col h-full snap-align-none z-[10000]">
         
         <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">
@@ -108,10 +109,9 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
                 <StepContent icon={<Lightbulb className="h-6 w-6 text-yellow-500" />} title="3. Suggestions">
                   Get inspiration from the host&apos;s themes, **Hot on Spotify** trends, and the party&apos;s all-time Top Played songs.
                 </StepContent>
-                {/* UPDATED: Added mention of Applause feature and emoji */}
                 <StepContent icon={<Users className="h-6 w-6" />} title="4. Singers & Applause">
                   See everyone in the party and check their queue. 
-                  Tap the 👏🏼 button to send joy and love the singer&apos;s way!
+                  Tap the 👏 button to send applause and boost the singer&apos;s score!
                 </StepContent>
               </>
             )}

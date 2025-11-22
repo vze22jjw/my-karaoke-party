@@ -56,10 +56,9 @@ export function PartySceneTabs({
     confettiRef.current = instance;
   }, []);
 
-  // FIX: Robust retry logic to prioritize confetti firing
   const fireConfetti = useCallback(() => {
     let attempts = 0;
-    const maxAttempts = 20; // Retry for up to 2 seconds
+    const maxAttempts = 20; 
 
     const attemptFire = () => {
       if (confettiRef.current) {
@@ -71,7 +70,6 @@ export function PartySceneTabs({
         });
       } else if (attempts < maxAttempts) {
         attempts++;
-        // If instance isn't ready, try again in 100ms
         setTimeout(attemptFire, 100);
       }
     };
@@ -92,7 +90,7 @@ export function PartySceneTabs({
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
-    // Fire slightly after modal close starts to ensure visibility
+    // Fallback fire (in case button click missed it or user closed via backdrop)
     setTimeout(() => {
       fireConfetti();
     }, 300);
@@ -181,7 +179,11 @@ export function PartySceneTabs({
       />
 
       {isTourOpen && (
-        <PartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+        <PartyTourModal 
+            isOpen={isTourOpen} 
+            onClose={handleCloseTour} 
+            onFireConfetti={fireConfetti} // <-- PASSED HERE
+        />
       )}
 
       <div className="flex-shrink-0">

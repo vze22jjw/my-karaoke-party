@@ -187,7 +187,11 @@ export function HostScene({ party, initialData }: Props) {
       />
 
       {isTourOpen && (
-        <HostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
+        <HostTourModal 
+            isOpen={isTourOpen} 
+            onClose={handleCloseTour} 
+            onFireConfetti={fireConfetti} // <-- PASSED HERE
+        />
       )}
 
       <div className="w-full sm:max-w-md">
