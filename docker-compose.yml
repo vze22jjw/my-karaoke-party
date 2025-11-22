@@ -58,6 +58,8 @@ services:
       ## Spotify API Credentials Optional
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      ## Optional links to extranl applause sounds
+      NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: ${NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL}
 
     networks:
       - mykaraokenetwork
