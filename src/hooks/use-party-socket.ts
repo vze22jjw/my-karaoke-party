@@ -2,18 +2,12 @@ import { type KaraokeParty, type VideoInPlaylist } from "~/types/app-types";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
-import { debugLog } from "~/utils/debug-logger";
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 import { useLocalStorage } from "@mantine/hooks";
 
 interface SocketActions {
-  addSong: (
-    videoId: string,
-    title: string,
-    coverUrl: string,
-    singerName: string,
-  ) => void;
+  addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
   removeSong: (videoId: string) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
@@ -26,12 +20,14 @@ interface SocketActions {
   startParty: () => void;
   updateIdleMessages: (messages: string[]) => void;
   updateThemeSuggestions: (suggestions: string[]) => void;
+  sendApplause: (singerName: string) => Promise<void>; 
 }
 
 type Participant = {
   name: string;
   role: string;
   avatar: string | null;
+  applauseCount: number; 
 };
 
 interface UsePartySocketReturn {
@@ -73,56 +69,30 @@ export function usePartySocket(
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [avatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "🎤" });
 
-  const [avatar] = useLocalStorage<string | null>({
-    key: "avatar",
-    defaultValue: "🎤",
-  });
-
-  const [currentSong, setCurrentSong] = useState<VideoInPlaylist | null>(
-    initialData.currentSong,
-  );
-  const [unplayedPlaylist, setUnplayedPlaylist] = useState<VideoInPlaylist[]>(
-    initialData.unplayed,
-  );
-  const [playedPlaylist, setPlayedPlaylist] = useState<VideoInPlaylist[]>(
-    initialData.played,
-  );
-  const [settings, setSettings] = useState<KaraokeParty["settings"]>(
-    initialData.settings,
-  );
+  const [currentSong, setCurrentSong] = useState<VideoInPlaylist | null>(initialData.currentSong);
+  const [unplayedPlaylist, setUnplayedPlaylist] = useState<VideoInPlaylist[]>(initialData.unplayed);
+  const [playedPlaylist, setPlayedPlaylist] = useState<VideoInPlaylist[]>(initialData.played);
+  const [settings, setSettings] = useState<KaraokeParty["settings"]>(initialData.settings);
   const [isPlaying, setIsPlaying] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
   const [partyStatus, setPartyStatus] = useState(initialData.status);
   const [idleMessages, setIdleMessages] = useState(initialData.idleMessages);
-  const [themeSuggestions, setThemeSuggestions] = useState(
-    initialData.themeSuggestions,
-  );
+  const [themeSuggestions, setThemeSuggestions] = useState(initialData.themeSuggestions);
 
   const [remainingTime, setRemainingTime] = useState(() => {
     if (initialData.currentSongStartedAt) {
-      const elapsedMs =
-        new Date().getTime() -
-        new Date(initialData.currentSongStartedAt).getTime();
+      const elapsedMs = new Date().getTime() - new Date(initialData.currentSongStartedAt).getTime();
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
-      return Math.max(
-        0,
-        (initialData.currentSongRemainingDuration ?? 0) - elapsedSeconds,
-      );
+      return Math.max(0, (initialData.currentSongRemainingDuration ?? 0) - elapsedSeconds);
     }
-    return (
-      initialData.currentSongRemainingDuration ??
-      Math.floor(
-        (parseISO8601Duration(initialData.currentSong?.duration) ?? 0) / 1000,
-      )
-    );
+    return initialData.currentSongRemainingDuration ?? Math.floor((parseISO8601Duration(initialData.currentSong?.duration) ?? 0) / 1000);
   });
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const prevSongIdRef = useRef<string | null>(
-    initialData.currentSong?.id ?? null,
-  );
+  const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
 
   const hostName = useMemo(() => {
     const host = participants.find((p) => p.role === "Host");
@@ -136,74 +106,69 @@ export function usePartySocket(
     }
   }, []);
 
-  const startSyncedCountdown = useCallback(
-    (startedAt: string, remainingDuration: number) => {
-      stopCountdown();
-      const startTime = new Date(startedAt).getTime();
-      const updateTimer = () => {
-        const elapsedMs = new Date().getTime() - startTime;
-        const elapsedSeconds = Math.floor(elapsedMs / 1000);
-        const newRemainingTime = Math.max(0, remainingDuration - elapsedSeconds);
-        setRemainingTime(newRemainingTime);
-        if (newRemainingTime <= 0) {
-          stopCountdown();
-        }
-      };
-      updateTimer();
-      timerIntervalRef.current = setInterval(updateTimer, 1000);
-    },
-    [stopCountdown],
-  );
+  const startSyncedCountdown = useCallback((startedAt: string, remainingDuration: number) => {
+    stopCountdown();
+    const startTime = new Date(startedAt).getTime();
+    const updateTimer = () => {
+      const elapsedMs = new Date().getTime() - startTime;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      const newRemainingTime = Math.max(0, remainingDuration - elapsedSeconds);
+      setRemainingTime(newRemainingTime);
+      if (newRemainingTime <= 0) stopCountdown();
+    };
+    updateTimer();
+    timerIntervalRef.current = setInterval(updateTimer, 1000);
+  }, [stopCountdown]);
 
-  const resetCountdown = useCallback(
-    (song: VideoInPlaylist | null) => {
-      stopCountdown();
-      const durationMs = parseISO8601Duration(song?.duration);
-      const durationInSeconds = durationMs ? Math.floor(durationMs / 1000) : 0;
-      debugLog(
-        LOG_TAG,
-        `Resetting countdown for ${song?.title ?? "No Song"}. Duration: ${
-          song?.duration ?? "N/A"
-        } (${durationInSeconds}s)`,
-      );
-      setRemainingTime(durationInSeconds);
-    },
-    [stopCountdown],
-  );
+  const resetCountdown = useCallback((song: VideoInPlaylist | null) => {
+    stopCountdown();
+    const durationMs = parseISO8601Duration(song?.duration);
+    setRemainingTime(durationMs ? Math.floor(durationMs / 1000) : 0);
+  }, [stopCountdown]);
 
   useEffect(() => {
     const socketInitializer = async () => {
-      debugLog(LOG_TAG, "Initializing socket connection...");
-      await fetch("/api/socket");
+      if (socketRef.current) return;
+      
+      console.log(`${LOG_TAG} Fetching /api/socket to wake server...`);
+      try { 
+        await fetch("/api/socket"); 
+      } catch (e) { 
+        console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); 
+      }
+
+      // Construct correct URL for logs/debugging
+      const socketUrl = typeof window !== "undefined" ? window.location.origin : "";
+      console.log(`${LOG_TAG} Connecting to socket at: ${socketUrl} with path: /socket.io`);
 
       const newSocket = io({
-        path: "/api/socket",
+        // FIX: Use default path /socket.io to separate from Next.js API routing
+        path: "/socket.io",
         addTrailingSlash: false,
+        reconnectionAttempts: 5,
+        transports: ["polling", "websocket"],
       });
 
       socketRef.current = newSocket;
 
       newSocket.on("connect", () => {
-        debugLog(LOG_TAG, `Socket connected: ${newSocket.id}`);
+        console.log(`${LOG_TAG} Connected. ID: ${newSocket.id}`);
         setIsConnected(true);
-        debugLog(
-          LOG_TAG,
-          `Emitting 'join-party' for room ${partyHash} as ${singerName}`,
-        );
         newSocket.emit("join-party", { partyHash, singerName, avatar });
       });
 
-      newSocket.on("disconnect", () => {
-        debugLog(LOG_TAG, "Socket disconnected");
+      newSocket.on("connect_error", (err) => {
+        console.error(`${LOG_TAG} Connection Error:`, err.message);
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.warn(`${LOG_TAG} Disconnected: ${reason}`);
         setIsConnected(false);
         stopCountdown();
       });
 
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
-        debugLog(LOG_TAG, "Received 'playlist-updated'", {
-          /* ... */
-        });
-
+        console.log(`${LOG_TAG} Received 'playlist-updated'`);
         if (prevSongIdRef.current !== partyData.currentSong?.id) {
           setIsSkipping(false);
           resetCountdown(partyData.currentSong);
@@ -220,192 +185,107 @@ export function usePartySocket(
 
         if (partyData.currentSongStartedAt) {
           setIsPlaying(true);
-          startSyncedCountdown(
-            partyData.currentSongStartedAt.toString(),
-            partyData.currentSongRemainingDuration ?? 0,
-          );
+          startSyncedCountdown(partyData.currentSongStartedAt.toString(), partyData.currentSongRemainingDuration ?? 0);
         } else {
           setIsPlaying(false);
           stopCountdown();
-          setRemainingTime(
-            partyData.currentSongRemainingDuration ??
-              Math.floor(
-                (parseISO8601Duration(partyData.currentSong?.duration) ?? 0) /
-                  1000,
-              ),
-          );
+          setRemainingTime(partyData.currentSongRemainingDuration ?? Math.floor((parseISO8601Duration(partyData.currentSong?.duration) ?? 0) / 1000));
         }
       });
 
-      newSocket.on(
-        "playback-started",
-        (data: { startedAt: string; remainingDuration: number }) => {
-          debugLog(LOG_TAG, "Received 'playback-started'", data);
-          setIsPlaying(true);
-          startSyncedCountdown(data.startedAt, data.remainingDuration);
-        },
-      );
-
-      newSocket.on(
-        "playback-paused",
-        (data: { remainingDuration: number }) => {
-          debugLog(LOG_TAG, "Received 'playback-paused'", data);
-          setIsPlaying(false);
-          stopCountdown();
-          setRemainingTime(data.remainingDuration);
-        },
-      );
-
-      newSocket.on("singers-updated", (participantList: Participant[]) => {
-        debugLog(LOG_TAG, "Received 'singers-updated'", participantList);
-        setParticipants(participantList);
+      newSocket.on("playback-started", (data: { startedAt: string; remainingDuration: number }) => {
+        setIsPlaying(true);
+        startSyncedCountdown(data.startedAt, data.remainingDuration);
       });
 
+      newSocket.on("playback-paused", (data: { remainingDuration: number }) => {
+        setIsPlaying(false);
+        stopCountdown();
+        setRemainingTime(data.remainingDuration);
+      });
+
+      newSocket.on("singers-updated", (list: Participant[]) => setParticipants(list));
+      
       newSocket.on("new-singer-joined", (name: string) => {
-        debugLog(LOG_TAG, `New singer joined: ${name}`);
-        if (name && name !== singerName) {
-          toast.info(`${name} has joined the party!`);
-        }
+        if (name && name !== singerName) toast.info(`${name} has joined the party!`);
       });
 
       newSocket.on("party-closed", () => {
-        debugLog(LOG_TAG, "Received 'party-closed'");
         stopCountdown();
-        alert("The party was ended by the host.");
         router.push("/");
       });
 
-      newSocket.on("skip-timer-started", () => {
-        debugLog(
-          LOG_TAG,
-          "Received 'skip-timer-started', disabling skip buttons.",
-        );
-        setIsSkipping(true);
-      });
-
-      newSocket.on("idle-messages-updated", (messages: string[]) => {
-        debugLog(LOG_TAG, "Received 'idle-messages-updated'", messages);
-        setIdleMessages(messages);
-      });
-
-      newSocket.on("theme-suggestions-updated", (suggestions: string[]) => {
-        debugLog(LOG_TAG, "Received 'theme-suggestions-updated'", suggestions);
-        setThemeSuggestions(suggestions);
-      });
+      newSocket.on("skip-timer-started", () => setIsSkipping(true));
+      newSocket.on("idle-messages-updated", (msgs: string[]) => setIdleMessages(msgs));
+      newSocket.on("theme-suggestions-updated", (suggs: string[]) => setThemeSuggestions(suggs));
     };
 
     void socketInitializer();
 
     if (initialData.currentSongStartedAt) {
       setIsPlaying(true);
-      startSyncedCountdown(
-        initialData.currentSongStartedAt.toString(),
-        initialData.currentSongRemainingDuration ?? 0,
-      );
+      startSyncedCountdown(initialData.currentSongStartedAt.toString(), initialData.currentSongRemainingDuration ?? 0);
     }
 
     const heartbeatInterval = setInterval(() => {
-      socketRef.current?.emit("heartbeat", { partyHash, singerName, avatar });
+      if (socketRef.current?.connected) socketRef.current.emit("heartbeat", { partyHash, singerName, avatar });
+      else socketRef.current?.emit("join-party", { partyHash, singerName, avatar });
     }, 60000);
 
     return () => {
       if (socketRef.current) {
-        debugLog(LOG_TAG, "Disconnecting socket");
+        console.log(`${LOG_TAG} Cleaning up/Disconnecting socket.`);
         socketRef.current.disconnect();
         socketRef.current = null;
       }
       clearInterval(heartbeatInterval);
       stopCountdown();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar]);
 
-  const socketActions: SocketActions = useMemo(
-    () => ({
-      addSong: (videoId, title, coverUrl, singerName) => {
-        const data = { partyHash, videoId, title, coverUrl, singerName };
-        debugLog(LOG_TAG, "Emitting 'add-song'", data);
-        socketRef.current?.emit("add-song", data);
-      },
-      removeSong: (videoId) => {
-        const data = { partyHash, videoId };
-        debugLog(LOG_TAG, "Emitting 'remove-song'", data);
-        socketRef.current?.emit("remove-song", data);
-      },
-      markAsPlayed: () => {
-        const data = { partyHash };
-        debugLog(LOG_TAG, "Emitting 'mark-as-played' (Skip Song)", data);
-        socketRef.current?.emit("mark-as-played", data);
-      },
-      toggleRules: (orderByFairness) => {
-        const data = { partyHash, orderByFairness };
-        debugLog(LOG_TAG, "Emitting 'toggle-rules'", data);
-        socketRef.current?.emit("toggle-rules", data);
-      },
-      togglePlayback: (disablePlayback) => {
-        const data = { partyHash, disablePlayback };
-        debugLog(LOG_TAG, "Emitting 'toggle-playback'", data);
-        socketRef.current?.emit("toggle-playback", data);
-      },
-      closeParty: () => {
-        const data = { partyHash };
-        debugLog(LOG_TAG, "Emitting 'close-party'", data);
-        socketRef.current?.emit("close-party", data);
-      },
-      sendHeartbeat: () => {
-        const data = { partyHash, singerName, avatar };
-        debugLog(LOG_TAG, "Emitting 'heartbeat'", data);
-        socketRef.current?.emit("heartbeat", data);
-      },
-      playbackPlay: (currentTime?: number) => {
-        const data = { partyHash, currentTime };
-        debugLog(LOG_TAG, "Emitting 'playback-play'", data);
-        socketRef.current?.emit("playback-play", data);
-      },
-      playbackPause: () => {
-        const data = { partyHash };
-        debugLog(LOG_TAG, "Emitting 'playback-pause'", data);
-        socketRef.current?.emit("playback-pause", data);
-      },
-      startSkipTimer: () => {
-        const data = { partyHash };
-        debugLog(LOG_TAG, "Emitting 'start-skip-timer'", data);
-        setIsSkipping(true);
-        socketRef.current?.emit("start-skip-timer", data);
-      },
-      startParty: () => {
-        const data = { partyHash };
-        debugLog(LOG_TAG, "Emitting 'start-party'", data);
-        socketRef.current?.emit("start-party", data);
-      },
-      updateIdleMessages: (messages: string[]) => {
-        const data = { partyHash, messages };
-        debugLog(LOG_TAG, "Emitting 'update-idle-messages'");
-        socketRef.current?.emit("update-idle-messages", data);
-      },
-      updateThemeSuggestions: (suggestions: string[]) => {
-        const data = { partyHash, suggestions };
-        debugLog(LOG_TAG, "Emitting 'update-theme-suggestions'");
-        socketRef.current?.emit("update-theme-suggestions", data);
-      },
-    }),
-    [partyHash, singerName, avatar], // <-- ADD AVATAR TO DEPENDENCY ARRAY
-  );
+  const sendApplauseHttp = useCallback(async (singer: string) => {
+    try {
+      const response = await fetch("/api/applause", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partyHash, singerName: singer }),
+      });
+
+      if (!response.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        const errorData: any = await response.json();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        const msg = errorData?.error ?? "Server error";
+        toast.error("Failed to register applause.", { description: msg as string });
+      } else {
+        console.log(`${LOG_TAG} Applause sent via REST successfully.`);
+      }
+    } catch (error) {
+      console.error(`${LOG_TAG} Applause REST Error:`, error);
+      toast.error("Network error while sending applause.");
+    }
+  }, [partyHash]);
+
+  const socketActions: SocketActions = useMemo(() => ({
+    addSong: (videoId, title, coverUrl, singerName) => socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName }),
+    removeSong: (videoId) => socketRef.current?.emit("remove-song", { partyHash, videoId }),
+    markAsPlayed: () => socketRef.current?.emit("mark-as-played", { partyHash }),
+    toggleRules: (orderByFairness) => socketRef.current?.emit("toggle-rules", { partyHash, orderByFairness }),
+    togglePlayback: (disablePlayback) => socketRef.current?.emit("toggle-playback", { partyHash, disablePlayback }),
+    closeParty: () => socketRef.current?.emit("close-party", { partyHash }),
+    sendHeartbeat: () => socketRef.current?.emit("heartbeat", { partyHash, singerName, avatar }),
+    playbackPlay: (currentTime) => socketRef.current?.emit("playback-play", { partyHash, currentTime }),
+    playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
+    startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
+    startParty: () => socketRef.current?.emit("start-party", { partyHash }),
+    updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
+    updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
+    sendApplause: sendApplauseHttp,
+  }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {
-    currentSong,
-    unplayedPlaylist,
-    playedPlaylist,
-    settings,
-    socketActions,
-    isConnected,
-    isPlaying,
-    participants,
-    hostName,
-    isSkipping,
-    remainingTime,
-    partyStatus,
-    idleMessages,
-    themeSuggestions,
+    currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions,
+    isConnected, isPlaying, participants, hostName, isSkipping, remainingTime,
+    partyStatus, idleMessages, themeSuggestions,
   };
 }

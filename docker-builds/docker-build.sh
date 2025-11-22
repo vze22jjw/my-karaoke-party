@@ -108,29 +108,28 @@ AWS_REGION="$AWS_REGION"
 ECR_REGISTRY="$ECR_REGISTRY"
 ECR_REPOSITORY="$ECR_REPOSITORY"
 LOCAL_IMAGE_NAME="my-karaoke-party"
+#TAG0="app-dev"
 TAG0="app-latest"
 TAG1="app-${VERSION}"
 PLATFORMS="linux/arm64,linux/amd64"
 
-# Set up buildx builder (only create if missing)
-BUILDER_NAME="multi-arch-builder"
-BUILDER_CREATED=false
-if ! docker buildx ls | grep -q "^${BUILDER_NAME}[[:space:]]"; then
-    echo "Creating new buildx builder..."
-    docker buildx create --name "${BUILDER_NAME}"
-    BUILDER_CREATED=true
-fi
-
-echo "Using buildx builder ${BUILDER_NAME}..."
-docker buildx use "${BUILDER_NAME}"
-
-# Build command base
-BUILD_CMD="docker buildx build \
-    --build-arg ECR_BUILD=${ECR_BUILD} \
-    --build-arg VERSION=${VERSION} \
-    --target runner"
+# --- SPLIT LOGIC: Use buildx ONLY for deployment, Standard Docker for local ---
 
 if [ "$DEPLOY" == "deploy" ]; then
+    # === DEPLOYMENT PATH (Buildx) ===
+    
+    # Set up buildx builder (only create if missing)
+    BUILDER_NAME="multi-arch-builder"
+    BUILDER_CREATED=false
+    if ! docker buildx ls | grep -q "^${BUILDER_NAME}[[:space:]]"; then
+        echo "Creating new buildx builder..."
+        docker buildx create --name "${BUILDER_NAME}"
+        BUILDER_CREATED=true
+    fi
+
+    echo "Using buildx builder ${BUILDER_NAME}..."
+    docker buildx use "${BUILDER_NAME}"
+
     echo "Preparing for deployment to ECR..."
 
     # Ensure .env is NOT in project root when building for deploy
@@ -144,8 +143,12 @@ if [ "$DEPLOY" == "deploy" ]; then
     aws ecr-public get-login-password --region $AWS_REGION --profile ${AWS_PROFILE} | \
         docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-    # Build and push to ECR
-    $BUILD_CMD \
+    # Build and push to ECR using Buildx
+    docker buildx build \
+        --build-arg ECR_BUILD=${ECR_BUILD} \
+        --build-arg VERSION=${VERSION} \
+        --build-arg NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL}" \
+        --target runner \
         --platform ${PLATFORMS} \
         --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG0} \
         --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG1} \
@@ -154,8 +157,16 @@ if [ "$DEPLOY" == "deploy" ]; then
     echo "Successfully pushed images to ECR:"
     echo "- ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG0}"
     echo "- ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG1}"
+
+    # Clean up builder if we created it
+    if [ "$BUILDER_CREATED" = true ]; then
+        echo "Cleaning up buildx builder..."
+        docker buildx rm "${BUILDER_NAME}"
+    fi
+
 else
-    echo "Building for local development..."
+    # === LOCAL DEVELOPMENT PATH (Standard Docker) ===
+    echo "Building for local development using standard Docker..."
 
     # For local builds, use existing .env if available
     if [ -f "$PROJECT_ENV" ]; then
@@ -164,12 +175,16 @@ else
         echo "Warning: No $PROJECT_ENV found, build will use Dockerfile defaults"
     fi
 
-    # Build and load locally
-    $BUILD_CMD \
-        --platform linux/arm64 \
-        --tag ${LOCAL_IMAGE_NAME}:${TAG0} \
-        --tag ${LOCAL_IMAGE_NAME}:${TAG1} \
-        --load .
+    # Standard Docker Build (Faster, uses host architecture)
+    # Note: Removed --platform linux/arm64 enforcement to allow native build speed
+    docker build \
+        --build-arg ECR_BUILD=${ECR_BUILD} \
+        --build-arg VERSION=${VERSION} \
+        --build-arg NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL}" \
+        --target runner \
+        -t ${LOCAL_IMAGE_NAME}:${TAG0} \
+        -t ${LOCAL_IMAGE_NAME}:${TAG1} \
+        .
 
     echo "Successfully built local images:"
     echo "- ${LOCAL_IMAGE_NAME}:${TAG0}"
@@ -179,11 +194,8 @@ fi
 if [[ -n "${GITHUB_ACTIONS}" ]]; then
     echo "Running in GitHub runner environment. No Cleanup required."
     exit 0
-else # Clean up builder only if we created it in this run
+else
     echo "Cleaning up build cache..."
-    if [ "$BUILDER_CREATED" = true ]; then
-        docker buildx rm "${BUILDER_NAME}"
-    fi
     docker builder prune --filter until=24h --force
     echo "Build cache cleaned up successfully"
 fi

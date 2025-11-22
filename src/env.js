@@ -7,14 +7,12 @@ export const env = createEnv({
     YOUTUBE_API_KEY: z.string(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     EVENT_DEBUG: z.string().optional(),
-    
-    // --- ADDED AS OPTIONAL ---
     SPOTIFY_CLIENT_ID: z.string().optional(),
     SPOTIFY_CLIENT_SECRET: z.string().optional(),
     PORT: z.string().optional(),
   },
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
     NEXT_PUBLIC_EVENT_DEBUG: z.string().optional(),
     NEXT_PUBLIC_MKP_APP_VER: z.string().default("0.0.0-BETA"),
     NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: z.string().url().optional(),
