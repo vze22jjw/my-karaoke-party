@@ -8,6 +8,9 @@ on:
   # Allow manual runs from the Actions tab
   workflow_dispatch:
 
+  # Allow this workflow to be called by other workflows
+  workflow_call:    
+
 env:
   ECR_PUBLIC_REPO_NAME: "vze22jjw/my-karaoke-party"
   AWS_REGION: "us-east-1"

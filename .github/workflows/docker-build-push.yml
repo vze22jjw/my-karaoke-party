@@ -96,3 +96,10 @@ jobs:
           echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+
+  # --- NEW JOB: CALL PRUNE WORKFLOW ---
+  trigger-prune:
+    needs: build-and-push
+    if: success() # Only prune if the build/push was successful
+    uses: ./.github/workflows/prune-ecr-images.yml
+    secrets: inherit
