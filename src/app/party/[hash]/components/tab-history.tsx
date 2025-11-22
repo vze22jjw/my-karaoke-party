@@ -5,7 +5,6 @@ import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
-// FIX: Import the new helper
 import { formatCompactNumber } from "~/utils/number";
 
 type SpotifySong = {
@@ -221,9 +220,9 @@ export function TabHistory({
                         <Music className="h-3 w-3" />
                         <span>{singer.count} songs</span>
                     </span>
-                    {/* --- FIX: Use formatCompactNumber here --- */}
+                    {/* --- FIX: Orange Skin Tone Emoji --- */}
                     <span className="flex items-center gap-1.5">
-                        👏🏼
+                        👏
                         <span>{formatCompactNumber(singer.applauseCount)} points</span>
                     </span>
                   </div>

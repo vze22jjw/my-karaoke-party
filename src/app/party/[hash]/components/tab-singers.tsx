@@ -8,7 +8,7 @@ import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import Link from "next/link";
-import { formatCompactNumber } from "~/utils/number"; 
+import { formatCompactNumber } from "~/utils/number";
 
 type Participant = {
   name: string;
@@ -59,30 +59,35 @@ export function TabSingers({
 
   return (
     <div className="bg-card rounded-lg p-4 border">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 h-16">
-        <div className="flex items-center justify-start">
+      {/* HEADER LAYOUT FIX: Use Flexbox with a growing center to avoid overlaps */}
+      <div className="flex items-center justify-between mb-4 h-16">
+        
+        {/* Left Side: Title & Info */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Singers ({participants.length})
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={onReplayTour}>
-              <Info className="h-4 w-4" />
-            </Button>
+            <span className="whitespace-nowrap">Singers ({participants.length})</span>
           </h2>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={onReplayTour}>
+            <Info className="h-4 w-4" />
+          </Button>
         </div>
         
-        <div className="flex justify-center">
+        {/* Center: Applause Button (Consumes available space and centers itself) */}
+        <div className="flex-1 flex justify-center items-center px-2 min-w-0">
           {currentSong && currentSingerName && currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
-                <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold" aria-label="Send applause">
-                    <a className="w-full h-full flex items-center justify-center pb-1">👏🏼</a>
+                <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold flex-shrink-0" aria-label="Send applause">
+                    <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
                 </Button>
             </Link>
           )}
         </div>
 
-        <div className="flex justify-end">
+        {/* Right Side: Leave Button */}
+        <div className="flex-shrink-0">
           <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10" aria-label="Leave party">
-            <span className="text-lg font-semibold text-white mr-1.5">Leave</span>
+            <span className="text-lg font-semibold text-white mr-1.5 hidden sm:inline">Leave</span>
             <LogOut className="h-5 w-5" />
           </Button>
         </div>
@@ -107,7 +112,7 @@ export function TabSingers({
               <div key={participant.name} className="p-3 rounded-lg border bg-muted/50">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className={cn("w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center", isCurrentSinger && "animate-pulse")}>
+                    <div className={cn("w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0", isCurrentSinger && "animate-pulse")}>
                       {participant.avatar ? <span className="text-2xl">{participant.avatar}</span> : isHost ? <span className="text-2xl">👑</span> : <MicVocal className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -138,7 +143,7 @@ export function TabSingers({
                 {showPlayed && (
                   <div className="mt-2 space-y-3">
                     <p className="text-xs font-medium text-muted-foreground">
-                        Applause Count: {formatCompactNumber(participant.applauseCount)} 👏🏼
+                        Applause Count: {formatCompactNumber(participant.applauseCount)} 👏
                     </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
