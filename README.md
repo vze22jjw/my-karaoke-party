@@ -4,6 +4,28 @@
 
 A web app for hosting YouTube-based karaoke parties. Guests can join via a QR code or link to search for songs and add them to a real-time, shared queue.
 
+## Project Screenshots
+
+### Joining a Party
+Guests can join by entering a unique 4-letter party code or by browsing a list of active parties.
+
+![Playlist and Now Playing Screen](docs/images/party4.png)
+*The streamlined Join Screen with options to enter a code manually or browse active sessions.*
+
+![Add Songs](docs/images/party3.png)
+*Add Songs Links to Sing To.*
+
+### Singers & Applause
+See who is singing next and interact with the performance in real-time.
+
+![Singers Tab](docs/images/party2.png.png)
+*The Singers tab displays the queue and current performer. Note the new "Applause" button centered in the header!*
+
+![Applause Page](docs/images/party1.png)
+*The dedicated Applause Page. Guests can tap this button repeatedly to send real-time applause and boost the singer's score!*
+
+---
+
 ## Features
 
 - 🎉 **Host a Party**: Create a new karaoke party with a unique 4-character code.

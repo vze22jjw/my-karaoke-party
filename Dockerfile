@@ -20,7 +20,10 @@ WORKDIR /app
 
 ARG VERSION
 ARG ECR_BUILD=false
+ARG NEXT_PUBLIC_APP_URL
+
 ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
 # Copy files needed for dependency installation first
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
@@ -46,10 +49,7 @@ FROM base AS runner
 
 WORKDIR /app
 
-# FIX: Define argument for dynamic NODE_ENV, default to 'development'
 ARG BUILD_NODE_ENV=development 
-
-# FIX: Use the argument to set NODE_ENV
 ENV NODE_ENV=$BUILD_NODE_ENV 
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -85,6 +85,10 @@ ENV PORT=$PORT
 ENV HOSTNAME="0.0.0.0"
 ARG VERSION
 ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
+
+# FIX: Pass the APP_URL to the runner environment so server-side fetches work
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]

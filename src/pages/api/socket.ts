@@ -2,9 +2,14 @@ import { type Server as HttpServer } from "http";
 import { type NextApiRequest, type NextApiResponse } from "next";
 import { type Socket as NetSocket } from "net";
 import { Server } from "socket.io";
-import { debugLog } from "~/utils/debug-logger";
-import { env } from "~/env";
 import { registerSocketEvents } from "~/server/socket/socketHandler";
+
+// Disable body parsing so we don't interfere with anything, though less critical now with path separation
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: NetSocket & {
@@ -17,45 +22,41 @@ type NextApiResponseWithSocket = NextApiResponse & {
 const LOG_TAG = "[SocketServer]";
 
 const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
+  // Debug log for the initialization request
+  const origin = req.headers.origin;
+  console.log(`${LOG_TAG} Init request to /api/socket from origin: '${origin ?? "undefined"}'`);
+
   if (res.socket.server.io) {
-    debugLog(LOG_TAG, "Socket is already running");
+    console.log(`${LOG_TAG} Socket is already running.`);
     res.end();
     return;
   }
 
-  debugLog(LOG_TAG, "Starting Socket.io server...");
-
-  const allowedOrigins: string[] = [];
-
-  // 1. Allow the configured public URL (e.g., http://localhost:3120)
-  if (env.NEXT_PUBLIC_APP_URL) {
-      allowedOrigins.push(env.NEXT_PUBLIC_APP_URL);
-  }
-
-  // 2. Explicitly allow the host (0.0.0.0) access point using the runtime PORT variable, 
-  // which is useful for direct container access/Docker inspection tools.
-  const runtimePort = env.PORT ?? '3000';
-  allowedOrigins.push(`http://0.0.0.0:${runtimePort}`);
-
-
-  // Ensure unique origins and filter out duplicates
-  const uniqueAllowedOrigins = [...new Set(allowedOrigins.filter(Boolean))];
-
-  debugLog(LOG_TAG, "Allowed CORS origins:", uniqueAllowedOrigins);
+  console.log(`${LOG_TAG} Initializing Socket.io server on path: /socket.io ...`);
 
   const io = new Server(res.socket.server, {
-    path: "/api/socket",
+    // FIX: Change path to "/socket.io" (default) to avoid Next.js API route collision
+    path: "/socket.io",
     addTrailingSlash: false,
     cors: {
-      origin: uniqueAllowedOrigins,
+      // Allow ALL origins dynamically
+      origin: (requestOrigin, callback) => {
+        callback(null, true);
+      },
       methods: ["GET", "POST"],
       credentials: true,
     },
+    transports: ["polling", "websocket"], 
+  });
+
+  io.engine.on("connection_error", (err) => {
+    console.error(`${LOG_TAG} Connection error:`, err);
   });
 
   registerSocketEvents(io);
 
   res.socket.server.io = io;
+  console.log(`${LOG_TAG} Socket.io initialized successfully.`);
   res.end();
 };
 

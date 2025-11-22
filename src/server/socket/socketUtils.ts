@@ -10,10 +10,6 @@ import { debugLog, formatPlaylistForLog } from "~/utils/debug-logger";
 
 export const LOG_TAG = "[SocketServer]";
 
-/**
- * Helper function to generate a random duration
- * Min: 3:27 (207s), Max: 4:20 (260s)
- */
 export function getRandomDurationISO(): string {
   const minSeconds = 207;
   const maxSeconds = 260;
@@ -24,9 +20,7 @@ export function getRandomDurationISO(): string {
   const seconds = randomSeconds % 60;
 
   const isoDuration = `PT${minutes}M${seconds}S`;
-
   debugLog(LOG_TAG, `Generated random fallback duration: ${isoDuration}`);
-
   return isoDuration;
 }
 
@@ -34,11 +28,9 @@ export type Participant = {
   name: string;
   role: string;
   avatar: string | null;
+  applauseCount: number; // ADDED
 };
 
-/**
- * Gets a formatted list of unique participants for a party.
- */
 export async function getSingers(partyId: number): Promise<Participant[]> {
   const participants = await db.partyParticipant.findMany({
     where: { partyId },
@@ -46,23 +38,21 @@ export async function getSingers(partyId: number): Promise<Participant[]> {
     select: {
       name: true,
       role: true,
-      avatar: true, // <-- Select avatar
+      avatar: true,
+      applauseCount: true, 
     },
   });
 
   const uniqueParticipants = new Map<string, Participant>();
   for (const p of participants) {
     if (!uniqueParticipants.has(p.name) || p.role === "Host") {
-      uniqueParticipants.set(p.name, p);
+      uniqueParticipants.set(p.name, p as Participant); 
     }
   }
 
   return Array.from(uniqueParticipants.values());
 }
 
-/**
- * Fetches the latest singer list and emits it to the room.
- */
 export async function updateAndEmitSingers(
   io: Server,
   partyId: number,
@@ -81,32 +71,21 @@ export async function updateAndEmitSingers(
   }
 }
 
-/**
- * Creates or updates a participant in the database.
- * Returns { isNew: true } if a new participant was created.
- */
 export async function registerParticipant(
   partyId: number,
   name: string,
   avatar: string | null,
 ): Promise<{ isNew: boolean }> {
-  // Ignore system/empty names
   if (!name || name.trim() === "" || name === "Host" || name === "Player") {
     return { isNew: false };
   }
 
   try {
     const existing = await db.partyParticipant.findUnique({
-      where: {
-        partyId_name: {
-          partyId,
-          name,
-        },
-      },
+      where: { partyId_name: { partyId, name } },
     });
 
     if (existing) {
-      // If they exist, just update their avatar if it's different
       if (existing.avatar !== avatar) {
         await db.partyParticipant.update({
           where: { id: existing.id },
@@ -117,20 +96,19 @@ export async function registerParticipant(
       return { isNew: false };
     }
 
-    // If they don't exist, create them
     await db.partyParticipant.create({
       data: {
         partyId,
         name,
         avatar: avatar,
         role: "Guest",
+        applauseCount: 0,
       },
     });
 
     return { isNew: true };
   } catch (error) {
     if ((error as any).code === "P2002") {
-      // Race condition, someone else created it, try to update avatar just in case
       try {
         await db.partyParticipant.update({
           where: { partyId_name: { partyId, name } },
@@ -146,9 +124,6 @@ export async function registerParticipant(
   }
 }
 
-/**
- * Fetches the fresh, sorted playlist state and emits it to the room.
- */
 export const updateAndEmitPlaylist = async (
   io: Server,
   partyHash: string,

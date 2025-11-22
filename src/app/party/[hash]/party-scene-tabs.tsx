@@ -2,8 +2,8 @@
 "use client";
 
 import type { Party } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist, InitialPartyData } from "~/types/app-types";
-import { useEffect, useState, useMemo, useCallback, useRef, lazy, Suspense } from "react";
+import type { InitialPartyData } from "~/types/app-types";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   readLocalStorageValue,
   useLocalStorage,
@@ -19,15 +19,10 @@ import { TabSingers } from "./components/tab-singers";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import { toast } from "sonner";
 import { decode } from "html-entities";
+import { PartyTourModal } from "./components/party-tour-modal";
+import Confetti from "react-canvas-confetti";
 
-// users can actually add 10 songs
 const MAX_QUEUE_PER_SINGER = 9;
-
-const LazyPartyTourModal = lazy(() => 
-  import("./components/party-tour-modal").then(module => ({ default: module.PartyTourModal }))
-);
-
-const LazyConfetti = lazy(() => import("react-canvas-confetti"));
 
 export function PartySceneTabs({
   party,
@@ -53,34 +48,33 @@ export function PartySceneTabs({
   const [isMounted, setIsMounted] = useState(false);
 
   const { width, height } = useViewportSize();
-  const confettiRef = useRef<confetti.CreateTypes | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const confettiRef = useRef<any>(null);
 
-  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onConfettiInit = useCallback((instance: any) => {
     confettiRef.current = instance;
   }, []);
 
   const fireConfetti = useCallback(() => {
-    const MAX_RETRIES = 10;
     let attempts = 0;
+    const maxAttempts = 20; 
 
-    const tryFire = () => {
+    const attemptFire = () => {
       if (confettiRef.current) {
         confettiRef.current({
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
-          zIndex: 200,
+          zIndex: 9999,
         });
-        return true;
-      } else if (attempts < MAX_RETRIES) {
+      } else if (attempts < maxAttempts) {
         attempts++;
-        setTimeout(tryFire, 100); 
-        return false;
+        setTimeout(attemptFire, 100);
       }
-      return false; // Failed after max retries
     };
 
-    tryFire();
+    attemptFire();
   }, []);
 
   useEffect(() => {
@@ -96,12 +90,12 @@ export function PartySceneTabs({
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
+    // Fallback fire (in case button click missed it or user closed via backdrop)
     setTimeout(() => {
       fireConfetti();
     }, 300);
   };
 
-  // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
@@ -136,15 +130,11 @@ export function PartySceneTabs({
   }, [myCurrentSongs.length]);
 
   const addSong = async (videoId: string, title: string, coverUrl: string) => {
-    
-    if (hasReachedQueueLimit) {
-        return;
-    }
+    if (hasReachedQueueLimit) return;
 
     try {
       socketActions.sendHeartbeat();
       socketActions.addSong(videoId, title, coverUrl, name);
-
       toast.success("Song added to queue!", {
         description: decode(title),
       });
@@ -160,7 +150,6 @@ export function PartySceneTabs({
     const query = `${title} ${artist}`.trim();
     setSearchQuery(query);
     setActiveTab("add");
-    toast.info(`Searching for "${query}"...`);
   };
 
   const handleSearchConsumed = () => {
@@ -174,26 +163,28 @@ export function PartySceneTabs({
   return (
     <div className="container mx-auto p-4 pb-4 h-screen flex flex-col">
       
-      <Suspense fallback={null}>
-        <LazyConfetti
-          refConfetti={onConfettiInit}
-          width={width}
-          height={height}
-          style={{
-            position: "fixed",
-            width: "100%",
-            height: "100%",
-            zIndex: 200,
-            top: 0,
-            left: 0,
-            pointerEvents: "none",
-          }}
-        />
+      <Confetti
+        refConfetti={onConfettiInit}
+        width={width}
+        height={height}
+        style={{
+          position: "fixed",
+          width: "100%",
+          height: "100%",
+          zIndex: 9999,
+          top: 0,
+          left: 0,
+          pointerEvents: "none",
+        }}
+      />
 
-        {isTourOpen && (
-          <LazyPartyTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
-        )}
-      </Suspense>
+      {isTourOpen && (
+        <PartyTourModal 
+            isOpen={isTourOpen} 
+            onClose={handleCloseTour} 
+            onFireConfetti={fireConfetti} // <-- PASSED HERE
+        />
+      )}
 
       <div className="flex-shrink-0">
         <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">

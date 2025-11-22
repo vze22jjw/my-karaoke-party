@@ -27,12 +27,9 @@ export function getUrl(path: string) {
 }
 
 export function extractYouTubeVideoId(input: string) {
-  // Regular expression for full YouTube URL
   const fullUrlPattern =
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/.*(?:v=|\/v\/|\/embed\/|\/watch\?v=|\/watch\?.+&v=)([^#\&\?]*).*/;
-  // Regular expression for shortened YouTube URL
   const shortUrlPattern = /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^#\&\?]*).*/;
-  // Regular expression for a plain video ID
   const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/;
 
   let videoId: string | null | undefined = null;

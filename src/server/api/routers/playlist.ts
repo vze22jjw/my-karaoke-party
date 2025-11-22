@@ -5,7 +5,6 @@ import { spotifyService } from "~/server/lib/spotify";
 import { env } from "~/env";
 
 export const playlistRouter = createTRPCRouter({
-  // Get playlist for a party
   getPlaylist: publicProcedure
     .input(z.object({ partyHash: z.string() }))
     .query(async ({ input, ctx }) => {
@@ -38,12 +37,13 @@ export const playlistRouter = createTRPCRouter({
           spotifyId: item.spotifyId,
         })),
         settings: {
-          orderByFairness: true,
+          orderByFairness: party.orderByFairness,
+          disablePlayback: party.disablePlayback,
+          spotifyPlaylistId: party.spotifyPlaylistId, 
         },
       };
     }),
 
-  // Add a video to the playlist
   addVideo: publicProcedure
     .input(
       z.object({
@@ -66,7 +66,6 @@ export const playlistRouter = createTRPCRouter({
         throw new Error("Party not found");
       }
 
-      // Check if video already exists in this party's playlist
       const existing = await ctx.db.playlistItem.findFirst({
         where: {
           partyId: party.id,
@@ -83,7 +82,6 @@ export const playlistRouter = createTRPCRouter({
         return existing;
       }
 
-      // --- SPOTIFY MATCHING ---
       let spotifyId: string | undefined;
       try {
         const match = await spotifyService.searchTrack(input.title);
@@ -104,7 +102,7 @@ export const playlistRouter = createTRPCRouter({
           coverUrl: input.coverUrl,
           duration: input.duration,
           singerName: input.singerName,
-          spotifyId: spotifyId, // <-- Save match
+          spotifyId: spotifyId, 
         },
       });
 
@@ -117,7 +115,6 @@ export const playlistRouter = createTRPCRouter({
       return playlistItem;
     }),
 
-  // Remove a video from the playlist
   removeVideo: publicProcedure
     .input(
       z.object({
@@ -149,7 +146,6 @@ export const playlistRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Mark a video as played
   markAsPlayed: publicProcedure
     .input(
       z.object({
@@ -185,14 +181,12 @@ export const playlistRouter = createTRPCRouter({
       return { success: true, count: updated.count };
     }),
 
-  // --- UPDATED PROCEDURE ---
   getGlobalStats: publicProcedure.query(async ({ ctx }) => {
     const hasSpotify = !!(env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET);
     
     let topSongs;
 
     if (hasSpotify) {
-      // STRATEGY A: Smart Grouping (by Matched Song)
       const topSpotifyTracks = await ctx.db.playlistItem.groupBy({
         by: ["spotifyId"],
         where: {
@@ -228,7 +222,6 @@ export const playlistRouter = createTRPCRouter({
         })
       );
     } else {
-      // STRATEGY B: Fallback Grouping (by YouTube Video)
       const rawTopSongs = await ctx.db.playlistItem.groupBy({
         by: ["videoId", "title", "coverUrl"],
         where: {
@@ -254,8 +247,8 @@ export const playlistRouter = createTRPCRouter({
       }));
     }
 
-    // Top Singers logic (Unchanged)
-    const topSingers = await ctx.db.playlistItem.groupBy({
+    // 1. Fetch raw songs sung count
+    const topSingersRaw = await ctx.db.playlistItem.groupBy({
       by: ["singerName"],
       where: {
         playedAt: { not: null },
@@ -263,21 +256,50 @@ export const playlistRouter = createTRPCRouter({
       _count: {
         singerName: true,
       },
-      orderBy: {
-        _count: {
-          singerName: "desc",
-        },
-      },
-      take: 5,
     });
+
+    const singerNames = topSingersRaw.map(s => s.singerName);
+
+    // 2. Fetch applause counts for these singers
+    const participants = await ctx.db.partyParticipant.findMany({
+      where: {
+        name: { in: singerNames }
+      },
+      select: {
+        name: true,
+        applauseCount: true, 
+      }
+    });
+
+    const applauseMap = new Map(participants.map(p => [p.name, p.applauseCount]));
+
+    const combinedStats = topSingersRaw.map(s => {
+      const songsSung = s._count.singerName;
+      const applause = applauseMap.get(s.singerName) ?? 0;
+      return {
+        name: s.singerName,
+        count: songsSung,
+        applauseCount: applause, 
+      };
+    });
+
+    // 3. Rank 1st by Songs Sung, 2nd by Applause
+    combinedStats.sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count; 
+      }
+      return b.applauseCount - a.applauseCount;
+    });
+
+    const topSingers = combinedStats.slice(0, 5);
 
     return {
       topSongs,
       topSingers: topSingers.map((s) => ({
-        name: s.singerName,
-        count: s._count.singerName,
+        name: s.name,
+        count: s.count,
+        applauseCount: s.applauseCount, // <-- Return this field
       })),
     };
   }),
-  // -------------------------
 });

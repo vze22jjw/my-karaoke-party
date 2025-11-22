@@ -1,24 +1,24 @@
 "use client";
 
-import {
-  Lightbulb,
-  Trophy,
-  Flame,
-  Loader2,
-  Music2,
-  Music,
-  Plus,
-} from "lucide-react";
+import { Lightbulb, Trophy, Flame, Loader2, Music2, Music, Plus } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
+// FIX: Import the new helper
+import { formatCompactNumber } from "~/utils/number";
 
 type SpotifySong = {
   title: string;
   artist: string;
   coverUrl: string;
 };
+
+type TopSinger = {
+  name: string;
+  count: number;
+  applauseCount: number;
+}
 
 type Props = {
   themeSuggestions: string[];
@@ -38,8 +38,8 @@ export function TabHistory({
     });
 
   const { data: spotifyData } = api.spotify.getTopKaraokeSongs.useQuery(
-    { playlistId: spotifyPlaylistId }, // Pass the ID
-    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 }, // Cache for 1 hour
+    { playlistId: spotifyPlaylistId }, 
+    { refetchOnWindowFocus: false, staleTime: 1000 * 60 * 60 }, 
   );
 
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
@@ -205,7 +205,7 @@ export function TabHistory({
           </div>
         ) : stats?.topSingers && stats.topSingers.length > 0 ? (
           <ul className="">
-            {stats.topSingers.map((singer, index) => (
+            {stats.topSingers.map((singer, index) => ( 
               <li
                 key={singer.name}
                 className="flex items-center gap-3 py-1.5 px-2 rounded transition-colors"
@@ -214,11 +214,18 @@ export function TabHistory({
                   {index + 1}
                 </div>
 
-                <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <p className="font-medium text-sm truncate">{singer.name}</p>
-                  <div className="flex flex-shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    <Music className="h-3 w-3" />
-                    <span>{singer.count}</span>
+                  <div className="flex flex-shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                        <Music className="h-3 w-3" />
+                        <span>{singer.count} songs</span>
+                    </span>
+                    {/* --- FIX: Use formatCompactNumber here --- */}
+                    <span className="flex items-center gap-1.5">
+                        👏🏼
+                        <span>{formatCompactNumber(singer.applauseCount)} points</span>
+                    </span>
                   </div>
                 </div>
               </li>

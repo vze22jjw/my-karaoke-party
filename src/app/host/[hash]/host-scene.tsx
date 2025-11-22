@@ -2,29 +2,17 @@
 "use client";
 
 import { useLocalStorage, useViewportSize } from "@mantine/hooks";
-import type { Party, IdleMessage } from "@prisma/client";
-import type { KaraokeParty, VideoInPlaylist, InitialPartyData } from "~/types/app-types";
-import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
+import type { Party } from "@prisma/client";
+import type { InitialPartyData } from "~/types/app-types";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { HostControlPanel } from "./components/host-control-panel"; 
 import { usePartySocket } from "~/hooks/use-party-socket";
 import LoaderFull from "~/components/loader-full";
 import { toast } from "sonner";
 import { api } from "~/trpc/react";
-
-
-// 1. LAZY-LOAD THE MODAL (named export needs .then)
-const LazyHostTourModal = lazy(() => 
-  import("./components/host-tour-modal").then(module => ({ default: module.HostTourModal }))
-);
-
-// 2. LAZY-LOAD CONFETTI (default export is simpler)
-const LazyConfetti = lazy(() => import("react-canvas-confetti"));
-
-
-// FIX: Use InitialPartyData from ~/types/app-types.ts
-// The definition below is redundant if imported, but kept for clarity based on original file's structure:
-// type InitialPartyData = { ... };
+import { HostTourModal } from "./components/host-tour-modal";
+import Confetti from "react-canvas-confetti";
 
 type Props = {
   party: Party;
@@ -44,7 +32,6 @@ export function HostScene({ party, initialData }: Props) {
     defaultValue: "playlist",
   });
   
-  // Changed defaultValue from 10 to 12
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
     defaultValue: 12,
@@ -57,39 +44,36 @@ export function HostScene({ party, initialData }: Props) {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // --- START: CONFETTI LOGIC (Updated with 100ms Retry) ---
+  // --- START: CONFETTI LOGIC ---
   const { width, height } = useViewportSize();
-  const confettiRef = useRef<confetti.CreateTypes | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const confettiRef = useRef<any>(null);
 
-  const onConfettiInit = useCallback((instance: confetti.CreateTypes | null) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onConfettiInit = useCallback((instance: any) => {
     confettiRef.current = instance;
   }, []);
 
+  // FIX: Robust retry logic
   const fireConfetti = useCallback(() => {
-    // FIX: Increase MAX_RETRIES and delay for improved stability on lazy load
-    const MAX_RETRIES = 10;
     let attempts = 0;
+    const maxAttempts = 20;
 
-    const tryFire = () => {
+    const attemptFire = () => {
       if (confettiRef.current) {
         confettiRef.current({
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
-          zIndex: 200,
+          zIndex: 9999,
         });
-        return true; // Success
-      } else if (attempts < MAX_RETRIES) {
+      } else if (attempts < maxAttempts) {
         attempts++;
-        // Retry in 100ms (Max 1 second total delay)
-        setTimeout(tryFire, 100); 
-        return false; // Still trying
+        setTimeout(attemptFire, 100);
       }
-      return false; // Failed after max retries
     };
 
-    // Start the attempt sequence
-    tryFire();
+    attemptFire();
   }, []);
   // --- END: CONFETTI LOGIC ---
 
@@ -107,12 +91,10 @@ export function HostScene({ party, initialData }: Props) {
     setIsTourOpen(false);
     setHasSeenTour(true);
     setTimeout(() => {
-      // The retry logic within fireConfetti handles the race condition
       fireConfetti();
     }, 300);
   };
 
-  // Function to re-open the tour
   const handleReplayTour = () => {
     setIsTourOpen(true);
   };
@@ -125,7 +107,7 @@ export function HostScene({ party, initialData }: Props) {
     currentSong, 
     unplayedPlaylist, 
     playedPlaylist, 
-    settings, // <-- This object contains the spotifyPlaylistId
+    settings,
     socketActions, 
     isConnected,
     isSkipping,
@@ -152,25 +134,13 @@ export function HostScene({ party, initialData }: Props) {
   );
 
   const addIdleMessage = api.idleMessage.add.useMutation({
-    onSuccess: () => {
-      void refetchIdleMessages();
-    },
-    onError: (error) => {
-      toast.error("Failed to add message", {
-        description: error.message,
-      });
-    },
+    onSuccess: () => { void refetchIdleMessages(); },
+    onError: (error) => { toast.error("Failed to add message", { description: error.message }); },
   });
 
   const deleteIdleMessage = api.idleMessage.delete.useMutation({
-    onSuccess: () => {
-      void refetchIdleMessages();
-    },
-    onError: (error) => {
-      toast.error("Failed to delete message", {
-        description: error.message,
-      });
-    },
+    onSuccess: () => { void refetchIdleMessages(); },
+    onError: (error) => { toast.error("Failed to delete message", { description: error.message }); },
   });
   
   const singerCount = participants.length;
@@ -180,19 +150,9 @@ export function HostScene({ party, initialData }: Props) {
   const useQueueRules = settings.orderByFairness;
   const disablePlayback = settings.disablePlayback ?? false; 
   
-  const handleToggleRules = async () => {
-    const newRulesState = !useQueueRules;
-    socketActions.toggleRules(newRulesState);
-  };
-
-  const handleTogglePlayback = async () => { 
-    const newPlaybackState = !disablePlayback;
-    socketActions.togglePlayback(newPlaybackState);
-  };
-
-  const removeSong = async (videoId: string) => {
-    socketActions.removeSong(videoId);
-  };
+  const handleToggleRules = async () => { socketActions.toggleRules(!useQueueRules); };
+  const handleTogglePlayback = async () => { socketActions.togglePlayback(!disablePlayback); };
+  const removeSong = async (videoId: string) => { socketActions.removeSong(videoId); };
 
   const handleSkip = async () => {
     if (isSkipping) return; 
@@ -201,18 +161,9 @@ export function HostScene({ party, initialData }: Props) {
     socketActions.playbackPause();
   };
   
-  const handleCloseParty = () => {
-    setIsConfirmingClose(true);
-  };
-
-  const confirmCloseParty = async () => {
-    socketActions.closeParty();
-    setIsConfirmingClose(false);
-  };
-
-  const cancelCloseParty = () => {
-    setIsConfirmingClose(false);
-  };
+  const handleCloseParty = () => { setIsConfirmingClose(true); };
+  const confirmCloseParty = async () => { socketActions.closeParty(); setIsConfirmingClose(false); };
+  const cancelCloseParty = () => { setIsConfirmingClose(false); };
   
   if (isLoadingMessages && activeTab === "settings") {
     return <LoaderFull />;
@@ -220,34 +171,30 @@ export function HostScene({ party, initialData }: Props) {
 
   return (
     <div className="flex min-h-screen w-full justify-center bg-gradient">
-      {/* --- START OF FIX: WRAPPING MODAL AND CONFETTI IN SUSPENSE --- */}
-      <Suspense fallback={null}>
-        <LazyConfetti
-          refConfetti={onConfettiInit}
-          width={width}
-          height={height}
-          style={{
-            position: 'fixed',
-            width: '100%',
-            height: '100%',
-            zIndex: 200,
-            top: 0,
-            left: 0,
-            pointerEvents: 'none',
-          }}
-        />
+      <Confetti
+        refConfetti={onConfettiInit}
+        width={width}
+        height={height}
+        style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          zIndex: 9999,
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+        }}
+      />
 
-        {/* 3. CONDITIONAL RENDER: Only include in DOM if the state is open */}
-        {isTourOpen && (
-          <LazyHostTourModal isOpen={isTourOpen} onClose={handleCloseTour} />
-        )}
-      </Suspense>
-      {/* --- END OF FIX --- */}
+      {isTourOpen && (
+        <HostTourModal 
+            isOpen={isTourOpen} 
+            onClose={handleCloseTour} 
+            onFireConfetti={fireConfetti} // <-- PASSED HERE
+        />
+      )}
 
       <div className="w-full sm:max-w-md">
-        
-        {/* The modal is no longer here */}
-
         <HostControlPanel
           party={party}
           partyName={party.name} 
@@ -285,11 +232,8 @@ export function HostScene({ party, initialData }: Props) {
           onSyncIdleMessages={socketActions.updateIdleMessages}
           themeSuggestions={themeSuggestions}
           onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
-          // --- PASS THE PROP ---
           spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
-          // --- THIS IS THE FIX ---
           onReplayTour={handleReplayTour}
-          // --- END THE FIX ---
         />
       </div>
     </div>

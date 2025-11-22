@@ -8,7 +8,6 @@ import type { VideoInPlaylist } from "~/types/app-types";
 import { SongSearch } from "~/components/song-search";
 import { Music } from "lucide-react";
 import { decode } from "html-entities";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 
 type Props = {
   playlist: VideoInPlaylist[];
@@ -27,10 +26,9 @@ export function TabAddSong({
   initialSearchQuery,
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
-  maxQueuePerSinger,
+  maxQueuePerSinger: _maxQueuePerSinger,
 }: Props) {
 
-  // Identify the playing song (it's at index 0 of the correctly structured playlist)
   const playingNow = playlist[0];
   const isMySongPlaying =
     !!playingNow && playingNow.singerName === name && !playingNow.playedAt;
@@ -59,16 +57,9 @@ export function TabAddSong({
         </h2>
 
         {hasReachedQueueLimit && (
-          <Alert
-            variant="destructive"
-            className="mb-4 bg-red-800/50 border-red-700 text-white"
-          >
-            <Music className="h-4 w-4 text-white" />
-            <AlertTitle>Queue Full!</AlertTitle>
-            <AlertDescription>
-              Please sing one before adding more.
-            </AlertDescription>
-          </Alert>
+          <div className="mb-4 rounded-md bg-red-900/50 border border-red-700 p-2 text-center text-sm text-white font-medium">
+            Queue Full! Please sing one before adding more.
+          </div>
         )}
 
         <SongSearch
