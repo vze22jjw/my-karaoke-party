@@ -66,10 +66,7 @@ type Props = {
   partyName?: string;
 };
 
-export function JoinScene({ partyHash, partyName }: Props) {
-  // If partyHash is provided (e.g. /join/ABCD), we show the specific form.
-  // Otherwise, we show the generic JoinParty component which has the drawer.
-  
+export function JoinScene({ partyHash, partyName }: Props) {  
   if (!partyHash) {
       return (
         <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient p-4">
@@ -86,7 +83,6 @@ export function JoinScene({ partyHash, partyName }: Props) {
       );
   }
 
-  // Specific Party Join Flow (Name & Avatar Selection)
   const router = useRouter();
   const [lsName, setLsName] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   const [lsAvatar, setLsAvatar] = useLocalStorage<string>({ key: "avatar", defaultValue: "🎤" });

@@ -47,7 +47,6 @@ export function TabHistory({
 
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
 
-  // Determine which list to show based on toggle state
   const currentTopSingers = sortBy === "songs" 
     ? stats?.topSingersBySongs 
     : stats?.topSingersByApplause;
@@ -208,7 +207,6 @@ export function TabHistory({
             Top Singers
           </h2>
           
-          {/* TOGGLE BUTTONS */}
           <div className="flex items-center bg-muted rounded-md p-1">
             <button
               onClick={() => setSortBy("songs")}
