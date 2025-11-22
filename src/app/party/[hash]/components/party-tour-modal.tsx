@@ -39,7 +39,7 @@ const StepContent = ({
     </div>
     <div>
       <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="text-sm text-muted-foreground">{children}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{children}</p>
     </div>
   </div>
 );
@@ -69,7 +69,7 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
 
   return (
     <Drawer open={isOpen} onClose={handleClose}>
-      {/* FIX: Increased z-index to 10000 to be above Toast notifications (usually z-50 or z-100) */}
+      {/* FIX: High z-index to appear above other overlays */}
       <DrawerContent className="flex flex-col h-full snap-align-none z-[10000]">
         
         <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">
@@ -108,8 +108,10 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
                 <StepContent icon={<Lightbulb className="h-6 w-6 text-yellow-500" />} title="3. Suggestions">
                   Get inspiration from the host&apos;s themes, **Hot on Spotify** trends, and the party&apos;s all-time Top Played songs.
                 </StepContent>
-                <StepContent icon={<Users className="h-6 w-6" />} title="4. Singers">
-                  See everyone in the party, their chosen icon, and check out their song lists in the queue and history.
+                {/* UPDATED: Added mention of Applause feature and emoji */}
+                <StepContent icon={<Users className="h-6 w-6" />} title="4. Singers & Applause">
+                  See everyone in the party and check their queue. 
+                  Tap the 👏🏼 button to send joy and love the singer&apos;s way!
                 </StepContent>
               </>
             )}

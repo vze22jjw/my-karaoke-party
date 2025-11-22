@@ -223,7 +223,7 @@ export function TabHistory({
                     </span>
                     {/* --- FIX: Use formatCompactNumber here --- */}
                     <span className="flex items-center gap-1.5">
-                        👏
+                        👏🏼
                         <span>{formatCompactNumber(singer.applauseCount)} points</span>
                     </span>
                   </div>

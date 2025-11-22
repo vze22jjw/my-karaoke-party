@@ -8,7 +8,6 @@ import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import Link from "next/link";
-// FIX: Import the new helper
 import { formatCompactNumber } from "~/utils/number"; 
 
 type Participant = {
@@ -75,7 +74,7 @@ export function TabSingers({
           {currentSong && currentSingerName && currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
                 <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold" aria-label="Send applause">
-                    <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
+                    <a className="w-full h-full flex items-center justify-center pb-1">👏🏼</a>
                 </Button>
             </Link>
           )}
@@ -138,9 +137,8 @@ export function TabSingers({
                 </div>
                 {showPlayed && (
                   <div className="mt-2 space-y-3">
-                    {/* FIX: Use formatCompactNumber here */}
                     <p className="text-xs font-medium text-muted-foreground">
-                        Applause Count: {formatCompactNumber(participant.applauseCount)} 👏
+                        Applause Count: {formatCompactNumber(participant.applauseCount)} 👏🏼
                     </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
