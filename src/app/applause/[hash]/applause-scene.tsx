@@ -10,7 +10,7 @@ import { decode } from "html-entities";
 import { useLocalStorage } from "@mantine/hooks";
 import { env } from "~/env"; 
 
-const DEFAULT_SOUND_URL = "/sounds/crowd-applause-113728.mp3";
+const DEFAULT_SOUND_URL = "/sounds/applause.mp3";
 const APPLAUSE_SOUND_URL = env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL ?? DEFAULT_SOUND_URL; 
 const APPLAUSE_EMOJI = "\ud83d\udc4f\ud83c\udffe"; 
 
