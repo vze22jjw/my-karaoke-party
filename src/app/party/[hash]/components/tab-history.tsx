@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Lightbulb, Trophy, Flame, Loader2, Music2, Music, Plus } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
 import { formatCompactNumber } from "~/utils/number";
+import { cn } from "~/lib/utils";
 
 type SpotifySong = {
   title: string;
@@ -30,6 +32,8 @@ export function TabHistory({
   spotifyPlaylistId,
   onSuggestionClick,
 }: Props) {
+  const [sortBy, setSortBy] = useState<"songs" | "applause">("songs");
+
   const { data: stats, isLoading: isLoadingStats } =
     api.playlist.getGlobalStats.useQuery(undefined, {
       refetchOnWindowFocus: false,
@@ -42,6 +46,11 @@ export function TabHistory({
   );
 
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
+
+  // Determine which list to show based on toggle state
+  const currentTopSingers = sortBy === "songs" 
+    ? stats?.topSingersBySongs 
+    : stats?.topSingersByApplause;
 
   return (
     <div className="space-y-4">
@@ -193,18 +202,46 @@ export function TabHistory({
       </div>
 
       <div className="bg-card rounded-lg p-4 border">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
-          Top Singers (All Time)
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Top Singers
+          </h2>
+          
+          {/* TOGGLE BUTTONS */}
+          <div className="flex items-center bg-muted rounded-md p-1">
+            <button
+              onClick={() => setSortBy("songs")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded-sm transition-all",
+                sortBy === "songs" 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Songs
+            </button>
+            <button
+              onClick={() => setSortBy("applause")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded-sm transition-all",
+                sortBy === "applause" 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Claps
+            </button>
+          </div>
+        </div>
 
         {isLoadingStats ? (
           <div className="flex justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : stats?.topSingers && stats.topSingers.length > 0 ? (
+        ) : currentTopSingers && currentTopSingers.length > 0 ? (
           <ul className="">
-            {stats.topSingers.map((singer, index) => ( 
+            {(currentTopSingers as TopSinger[]).map((singer, index) => ( 
               <li
                 key={singer.name}
                 className="flex items-center gap-3 py-1.5 px-2 rounded transition-colors"
@@ -216,14 +253,19 @@ export function TabHistory({
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <p className="font-medium text-sm truncate">{singer.name}</p>
                   <div className="flex flex-shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
+                    <span className={cn(
+                        "flex items-center gap-1.5 transition-opacity",
+                        sortBy === "songs" ? "opacity-100 font-medium text-primary" : "opacity-70"
+                    )}>
                         <Music className="h-3 w-3" />
                         <span>{singer.count} songs</span>
                     </span>
-                    {/* --- FIX: Orange Skin Tone Emoji --- */}
-                    <span className="flex items-center gap-1.5">
+                    <span className={cn(
+                        "flex items-center gap-1.5 transition-opacity",
+                        sortBy === "applause" ? "opacity-100 font-medium text-primary" : "opacity-70"
+                    )}>
                         👏
-                        <span>{formatCompactNumber(singer.applauseCount)} points</span>
+                        <span>{formatCompactNumber(singer.applauseCount)} hands</span>
                     </span>
                   </div>
                 </div>

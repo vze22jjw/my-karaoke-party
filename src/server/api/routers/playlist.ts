@@ -273,7 +273,7 @@ export const playlistRouter = createTRPCRouter({
 
     const applauseMap = new Map(participants.map(p => [p.name, p.applauseCount]));
 
-    const combinedStats = topSingersRaw.map(s => {
+    const allSingers = topSingersRaw.map(s => {
       const songsSung = s._count.singerName;
       const applause = applauseMap.get(s.singerName) ?? 0;
       return {
@@ -283,23 +283,28 @@ export const playlistRouter = createTRPCRouter({
       };
     });
 
-    // 3. Rank 1st by Songs Sung, 2nd by Applause
-    combinedStats.sort((a, b) => {
+    // List 1: Top Singers by Songs Sung (Tie-break with Applause)
+    const topSingersBySongs = [...allSingers].sort((a, b) => {
       if (b.count !== a.count) {
         return b.count - a.count; 
       }
       return b.applauseCount - a.applauseCount;
-    });
+    }).slice(0, 5);
 
-    const topSingers = combinedStats.slice(0, 5);
+    // List 2: Top Singers by Applause (Tie-break with Songs)
+    const topSingersByApplause = [...allSingers].sort((a, b) => {
+      if (b.applauseCount !== a.applauseCount) {
+        return b.applauseCount - a.applauseCount; 
+      }
+      return b.count - a.count;
+    }).slice(0, 5);
 
     return {
       topSongs,
-      topSingers: topSingers.map((s) => ({
-        name: s.name,
-        count: s.count,
-        applauseCount: s.applauseCount, // <-- Return this field
-      })),
+      topSingersBySongs,
+      topSingersByApplause,
+      // Keep legacy prop for safety until client updates fully propagate, though we won't use it
+      topSingers: topSingersBySongs, 
     };
   }),
 });

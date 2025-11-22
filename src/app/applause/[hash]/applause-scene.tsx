@@ -13,7 +13,6 @@ import { useEffect, useRef } from "react";
 
 const APPLAUSE_EMOJI = "\ud83d\udc4f\ud83c\udffe"; 
 
-// --- Sound Configuration ---
 const getSoundUrls = () => {
     const envVar = env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL;
     if (envVar && envVar.trim().length > 0) {
@@ -46,7 +45,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   const router = useRouter();
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   
-  // Sound rotation logic
   const playFuncsRef = useRef<Array<() => void>>([]);
   const playIndexRef = useRef(0); 
 
@@ -74,7 +72,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   const currentSingerName = activeSong?.singerName;
 
   const handleApplause = () => {
-    // 1. Play Sound
     const funcs = playFuncsRef.current;
     if (funcs.length > 0) {
         const idx = playIndexRef.current % funcs.length;
@@ -83,7 +80,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
         playIndexRef.current = idx + 1; 
     }
 
-    // 2. Send Score
     if (currentSingerName) {
       void socketActions.sendApplause(currentSingerName);
     }
@@ -93,7 +89,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   
   const mainContent = activeSong ? (
     <>
-      {/* CHANGED: Swapped order. Singer is now first and bigger. */}
       <h2 className="text-outline text-4xl font-bold tracking-tight text-primary sm:text-5xl flex items-center justify-center gap-3">
         <MicVocal className="text-primary" size={36} />
         {currentSingerName}
@@ -111,7 +106,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient">
-        {/* Pre-load sounds */}
         {SOUND_URLS.map((url, i) => (
             <SoundAgent key={url} url={url} index={i} onRegister={registerSound} />
         ))}
@@ -131,7 +125,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
         </Button>
         
         <p className="text-lg text-white/80 max-w-xs">
-          Click repeatedly! Each clap is added to the singer&apos;s score.
+          Click repeatedly! Each one adds friendship to the singer&apos;s aura.
         </p>
 
         <Button

@@ -59,10 +59,8 @@ export function TabSingers({
 
   return (
     <div className="bg-card rounded-lg p-4 border">
-      {/* HEADER: Flexbox allows the center element to float in the available space */}
       <div className="flex items-center justify-between mb-4 h-16 gap-1">
         
-        {/* Left Side: Title & Info (Locked together, no shrink) */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -73,7 +71,6 @@ export function TabSingers({
           </Button>
         </div>
         
-        {/* Center: Applause Button (Fills gap, centers itself) */}
         <div className="flex-1 flex justify-center items-center min-w-0 px-2">
           {currentSong && currentSingerName && currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
@@ -84,10 +81,8 @@ export function TabSingers({
           )}
         </div>
 
-        {/* Right Side: Leave Button (Always visible text) */}
         <div className="flex items-center flex-shrink-0">
           <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10 px-2" aria-label="Leave party">
-             {/* Text is always visible now */}
             <span className="text-lg font-semibold text-white mr-1">Leave</span>
             <LogOut className="h-5 w-5" />
           </Button>
@@ -144,7 +139,7 @@ export function TabSingers({
                 {showPlayed && (
                   <div className="mt-2 space-y-3">
                     <p className="text-xs font-medium text-muted-foreground">
-                        Applause Count: {formatCompactNumber(participant.applauseCount)} 👏
+                        Claps: {formatCompactNumber(participant.applauseCount)} 👏
                     </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
@@ -157,7 +152,7 @@ export function TabSingers({
                     )}
                     {playedSongs.length > 0 && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Already sang: {playedSongs.length}</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Sang: {playedSongs.length}</p>
                         <ul className="space-y-1">
                           {playedSongs.map((song) => <li key={song.id + (song.playedAt?.toString() ?? "")} className="text-xs truncate pl-2 text-muted-foreground">• {decode(song.title)}</li>)}
                         </ul>
