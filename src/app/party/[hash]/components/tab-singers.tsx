@@ -8,6 +8,8 @@ import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import Link from "next/link";
+// FIX: Import the new helper
+import { formatCompactNumber } from "~/utils/number"; 
 
 type Participant = {
   name: string;
@@ -58,10 +60,7 @@ export function TabSingers({
 
   return (
     <div className="bg-card rounded-lg p-4 border">
-      {/* CHANGED: Use Grid for perfect centering of the middle element */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 h-16">
-        
-        {/* Left Side: Title & Info */}
         <div className="flex items-center justify-start">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -72,7 +71,6 @@ export function TabSingers({
           </h2>
         </div>
         
-        {/* Center: Applause Button */}
         <div className="flex justify-center">
           {currentSong && currentSingerName && currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
@@ -83,7 +81,6 @@ export function TabSingers({
           )}
         </div>
 
-        {/* Right Side: Leave Button */}
         <div className="flex justify-end">
           <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10" aria-label="Leave party">
             <span className="text-lg font-semibold text-white mr-1.5">Leave</span>
@@ -141,7 +138,10 @@ export function TabSingers({
                 </div>
                 {showPlayed && (
                   <div className="mt-2 space-y-3">
-                    <p className="text-xs font-medium text-muted-foreground">Applause Count: {participant.applauseCount} 👏</p>
+                    {/* FIX: Use formatCompactNumber here */}
+                    <p className="text-xs font-medium text-muted-foreground">
+                        Applause Count: {formatCompactNumber(participant.applauseCount)} 👏
+                    </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
                         <p className="text-xs font-medium text-muted-foreground mb-1">In Line: {currentSongForSinger ? nextSongs.length + 1 : nextSongs.length}</p>

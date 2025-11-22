@@ -5,6 +5,8 @@ import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
+// FIX: Import the new helper
+import { formatCompactNumber } from "~/utils/number";
 
 type SpotifySong = {
   title: string;
@@ -15,7 +17,7 @@ type SpotifySong = {
 type TopSinger = {
   name: string;
   count: number;
-  applauseCount: number; // <-- Added
+  applauseCount: number;
 }
 
 type Props = {
@@ -203,7 +205,7 @@ export function TabHistory({
           </div>
         ) : stats?.topSingers && stats.topSingers.length > 0 ? (
           <ul className="">
-            {(stats.topSingers as TopSinger[]).map((singer, index) => ( 
+            {stats.topSingers.map((singer, index) => ( 
               <li
                 key={singer.name}
                 className="flex items-center gap-3 py-1.5 px-2 rounded transition-colors"
@@ -219,10 +221,10 @@ export function TabHistory({
                         <Music className="h-3 w-3" />
                         <span>{singer.count} songs</span>
                     </span>
-                    {/* --- Display Applause Count --- */}
+                    {/* --- FIX: Use formatCompactNumber here --- */}
                     <span className="flex items-center gap-1.5">
                         👏
-                        <span>{singer.applauseCount} hands</span>
+                        <span>{formatCompactNumber(singer.applauseCount)} points</span>
                     </span>
                   </div>
                 </div>
