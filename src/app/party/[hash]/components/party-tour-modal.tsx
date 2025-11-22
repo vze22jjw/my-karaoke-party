@@ -60,7 +60,7 @@ const Dots = ({ total, current }: { total: number; current: number }) => (
 
 export function PartyTourModal({ isOpen, onClose }: Props) {
   const [step, setStep] = useState(1);
-  const totalSteps = 2; // Two pages
+  const totalSteps = 2; 
 
   const handleClose = () => {
     onClose();
@@ -69,7 +69,8 @@ export function PartyTourModal({ isOpen, onClose }: Props) {
 
   return (
     <Drawer open={isOpen} onClose={handleClose}>
-      <DrawerContent className="flex flex-col h-full snap-align-none z-[100]">
+      {/* FIX: Increased z-index to 10000 to be above Toast notifications (usually z-50 or z-100) */}
+      <DrawerContent className="flex flex-col h-full snap-align-none z-[10000]">
         
         <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">
           <DrawerHeader className="pb-4">

@@ -10,8 +10,8 @@ import { decode } from "html-entities";
 import { useLocalStorage } from "@mantine/hooks";
 import { env } from "~/env"; 
 
-const BUZZER_SOUND_URL = "/sounds/buzzer.mp3";
-const APPLAUSE_SOUND_URL = env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL ?? BUZZER_SOUND_URL; 
+const DEFAULT_SOUND_URL = "/sounds/crowd-applause-113728.mp3";
+const APPLAUSE_SOUND_URL = env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL ?? DEFAULT_SOUND_URL; 
 const APPLAUSE_EMOJI = "\ud83d\udc4f\ud83c\udffe"; 
 
 type Props = {
@@ -44,7 +44,7 @@ export default function ApplauseScene({ partyHash, currentSong }: Props) {
 
   const handleApplause = () => {
     if (currentSingerName) {
-      void socketActions.sendApplause(currentSingerName); // Uses HTTP
+      void socketActions.sendApplause(currentSingerName);
       playApplause();
     } else {
       playApplause();
@@ -55,16 +55,16 @@ export default function ApplauseScene({ partyHash, currentSong }: Props) {
   
   const mainContent = currentSong ? (
     <>
-      <h1 className="text-outline text-3xl font-extrabold tracking-tight text-white sm:text-4xl uppercase">
+      <h1 className="text-outline text-xl font-extrabold tracking-tight text-white sm:text-2xl uppercase">
         {decode(currentSong.title)}
       </h1>
-      <h2 className="text-outline text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-        <MicVocal className="mr-2 inline text-primary" size={24} />
+      <h2 className="text-outline text-lg font-bold tracking-tight text-primary sm:text-xl">
+        <MicVocal className="mr-2 inline text-primary" size={20} />
         {currentSingerName}
       </h2>
     </>
   ) : (
-    <h1 className="text-outline text-3xl font-extrabold tracking-tight text-white">
+    <h1 className="text-outline text-xl font-extrabold tracking-tight text-white">
       No Song Playing
     </h1>
   );
@@ -77,8 +77,8 @@ export default function ApplauseScene({ partyHash, currentSong }: Props) {
           type="button"
           onClick={handleApplause}
           disabled={!currentSong}
-          className="w-full text-[200px] p-0 border-none bg-transparent hover:bg-transparent text-white shadow-none transition-all duration-100 active:scale-[0.90] focus:ring-4 focus:ring-yellow-300"
-          style={{ height: 'auto', minHeight: '250px', maxWidth: '250px' }}
+          className="w-full text-[250px] p-0 border-none bg-transparent hover:bg-transparent text-white shadow-none transition-all duration-100 active:scale-[0.90] focus:ring-4 focus:ring-yellow-300"
+          style={{ height: 'auto', minHeight: '300px', maxWidth: '300px' }}
           aria-label={buttonText}
         >
           {APPLAUSE_EMOJI}

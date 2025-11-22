@@ -189,6 +189,10 @@ else
     echo "Successfully built local images:"
     echo "- ${LOCAL_IMAGE_NAME}:${TAG0}"
     echo "- ${LOCAL_IMAGE_NAME}:${TAG1}"
+
+    # Run dev docker-compose
+    echo "Running dev docker-compose..."
+    bash ./dev-docker-compose.sh
 fi
 
 if [[ -n "${GITHUB_ACTIONS}" ]]; then

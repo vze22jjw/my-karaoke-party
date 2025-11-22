@@ -1,4 +1,4 @@
-import JoinScene from "./join-scene";
+import { JoinScene } from "~/app/join/join-scene";
 
 export default function JoinPage({}) {
   return <JoinScene />;

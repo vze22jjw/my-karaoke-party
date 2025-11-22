@@ -58,8 +58,11 @@ export function TabSingers({
 
   return (
     <div className="bg-card rounded-lg p-4 border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
+      {/* CHANGED: Use Grid for perfect centering of the middle element */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 h-16">
+        
+        {/* Left Side: Title & Info */}
+        <div className="flex items-center justify-start">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
             Singers ({participants.length})
@@ -69,14 +72,19 @@ export function TabSingers({
           </h2>
         </div>
         
-        <div className="flex items-center gap-3">
+        {/* Center: Applause Button */}
+        <div className="flex justify-center">
           {currentSong && currentSingerName && currentPartyHash && (
-            <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
-                <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-10 w-10 text-xl font-bold" aria-label="Send applause">
-                    <a className="w-full h-full flex items-center justify-center">👏</a>
+             <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
+                <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold" aria-label="Send applause">
+                    <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
                 </Button>
             </Link>
           )}
+        </div>
+
+        {/* Right Side: Leave Button */}
+        <div className="flex justify-end">
           <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10" aria-label="Leave party">
             <span className="text-lg font-semibold text-white mr-1.5">Leave</span>
             <LogOut className="h-5 w-5" />
