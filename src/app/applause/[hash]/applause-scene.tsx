@@ -54,7 +54,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
       playFuncsRef.current[index] = playFn;
   };
 
-  // Hook handles real-time updates
   const { socketActions, currentSong, unplayedPlaylist } = usePartySocket(
     partyHash,
     {
@@ -71,7 +70,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
     name 
   );
 
-  // Use currentSong if playing, otherwise fallback to the first up in queue
   const activeSong = currentSong ?? unplayedPlaylist[0];
   const currentSingerName = activeSong?.singerName;
 
@@ -85,7 +83,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
         playIndexRef.current = idx + 1; 
     }
 
-    // 2. Send Score (if there is a singer)
+    // 2. Send Score
     if (currentSingerName) {
       void socketActions.sendApplause(currentSingerName);
     }
@@ -95,13 +93,15 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   
   const mainContent = activeSong ? (
     <>
-      <h1 className="text-outline text-xl font-extrabold tracking-tight text-white sm:text-2xl uppercase">
-        {decode(activeSong.title)}
-      </h1>
-      <h2 className="text-outline text-lg font-bold tracking-tight text-primary sm:text-xl">
-        <MicVocal className="mr-2 inline text-primary" size={20} />
+      {/* CHANGED: Swapped order. Singer is now first and bigger. */}
+      <h2 className="text-outline text-4xl font-bold tracking-tight text-primary sm:text-5xl flex items-center justify-center gap-3">
+        <MicVocal className="text-primary" size={36} />
         {currentSingerName}
       </h2>
+      
+      <h1 className="text-outline text-2xl font-extrabold tracking-tight text-white sm:text-3xl uppercase mt-2">
+        {decode(activeSong.title)}
+      </h1>
     </>
   ) : (
     <h1 className="text-outline text-xl font-extrabold tracking-tight text-white">
