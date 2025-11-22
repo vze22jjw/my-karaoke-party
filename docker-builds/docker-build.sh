@@ -192,7 +192,7 @@ else
 
     # Run dev docker-compose
     echo "Running dev docker-compose..."
-    bash ./dev-docker-compose.sh
+    bash docker-builds/dev-docker-compose.sh
 fi
 
 if [[ -n "${GITHUB_ACTIONS}" ]]; then
