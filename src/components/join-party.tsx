@@ -13,9 +13,9 @@ import {
   DrawerTrigger,
 } from "~/components/ui/ui/drawer";
 import { Button } from "~/components/ui/ui/button";
-import { Music, Clock, Users, Mic } from "lucide-react"; // <-- Added Mic
+import { Music, Clock, Users, Mic } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
-import { io, type Socket } from "socket.io-client";
+// Removed socket imports
 
 type Party = {
   hash: string;
@@ -29,8 +29,7 @@ function JoinPartyDrawer() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const socketRef = useRef<Socket | null>(null);
-
+  
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,47 +41,6 @@ function JoinPartyDrawer() {
   }, [isOpen]);
 
   useEffect(() => {
-    const socketInitializer = async () => {
-      await fetch("/api/socket");
-
-      socketRef.current = io({
-        path: "/api/socket",
-        addTrailingSlash: false,
-      });
-
-      socketRef.current.on("connect", () => {
-        console.log("[JoinPartySocket] Socket connected");
-        
-        if (isOpenRef.current) {
-          setLoading(true);
-          setError(null);
-          console.log("[JoinPartySocket] Socket connected, fetching parties...");
-          socketRef.current?.emit("request-open-parties");
-        }
-      });
-
-      socketRef.current.on("open-parties-list", (data: { parties?: Party[], error?: string }) => {
-        console.log("[JoinPartySocket] Received 'open-parties-list'", data);
-        if (data.error) {
-          setError("Error loading parties. Please try again.");
-          console.error(data.error);
-        } else if (data.parties) {
-          setParties(data.parties);
-        }
-        setLoading(false);
-      });
-    };
-
-    void socketInitializer();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     const openParam = searchParams?.get("openParties");
     if (openParam === "true") {
       setIsOpen(true);
@@ -92,16 +50,30 @@ function JoinPartyDrawer() {
     }
   }, [searchParams, pathname, router]);
 
-  const fetchParties = () => {
+  const fetchParties = async () => {
     setLoading(true);
     setError(null);
     
-    if (socketRef.current?.connected) {
-      console.log("[JoinPartySocket] Drawer opened, fetching parties...");
-      socketRef.current?.emit("request-open-parties");
-    } else {
-      console.log("[JoinPartySocket] Drawer opened, waiting for socket connect to fetch parties.");
-      setLoading(true);
+    try {
+      const res = await fetch("/api/parties/list", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch parties");
+      }
+
+      const data = await res.json() as Party[];
+      setParties(data);
+    } catch (err) {
+      console.error("[JoinParty] Error fetching parties:", err);
+      setError("Error loading parties. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
