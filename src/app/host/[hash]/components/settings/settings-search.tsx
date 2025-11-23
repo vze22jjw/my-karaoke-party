@@ -9,6 +9,9 @@ import { Info, Search } from "lucide-react";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
+// Define the specific allowed values for the slider
+const ALLOWED_VALUES = [5, 9, 12, 15, 20, 25];
+
 type Props = {
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
@@ -16,6 +19,25 @@ type Props = {
 
 export function SettingsSearch({ maxSearchResults, onSetMaxResults }: Props) {
   const [showSearchInfo, setShowSearchInfo] = useState(false);
+
+  // Determine the slider index based on the current maxSearchResults
+  // This snaps the slider to the nearest allowed value if the current value isn't exact
+  const currentSliderIndex = (() => {
+    const exactIndex = ALLOWED_VALUES.indexOf(maxSearchResults);
+    if (exactIndex !== -1) return exactIndex;
+
+    // Find closest match if value is not in array (e.g. legacy value)
+    let minDiff = Infinity;
+    let closestIdx = 0;
+    ALLOWED_VALUES.forEach((val, idx) => {
+      const diff = Math.abs(val - maxSearchResults);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = idx;
+      }
+    });
+    return closestIdx;
+  })();
 
   return (
     <div className="space-y-3 rounded-lg border bg-card p-3">
@@ -51,14 +73,18 @@ export function SettingsSearch({ maxSearchResults, onSetMaxResults }: Props) {
         <Input
           id="max-results"
           type="range"
-          min={5}
-          max={25}
+          min={0}
+          max={ALLOWED_VALUES.length - 1}
           step={1}
-          value={maxSearchResults}
+          value={currentSliderIndex}
           onChange={(e) => {
-            const val = Number(e.target.value) ?? 10;
-            if (IS_DEBUG) console.log("[SettingsSearch] Setting max results:", val);
-            onSetMaxResults(val);
+            const index = Number(e.target.value);
+            const val = ALLOWED_VALUES[index];
+            
+            if (val !== undefined) {
+              if (IS_DEBUG) console.log("[SettingsSearch] Setting max results:", val);
+              onSetMaxResults(val);
+            }
           }}
           className="w-full"
         />
