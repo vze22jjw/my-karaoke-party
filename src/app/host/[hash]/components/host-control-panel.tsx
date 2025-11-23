@@ -41,6 +41,7 @@ type Props = {
   unplayedSongCount: number;
   partyStatus: string;
   onStartParty: () => void;
+  onToggleIntermission: () => void;
   hostIdleMessages: IdleMessage[];
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
@@ -108,6 +109,7 @@ export function HostControlPanel({
   unplayedSongCount,
   partyStatus,
   onStartParty,
+  onToggleIntermission,
   hostIdleMessages,
   onAddIdleMessage,
   onDeleteIdleMessage,
@@ -225,6 +227,7 @@ export function HostControlPanel({
               playedPlaylist={playedPlaylist}
               partyStatus={partyStatus}
               onStartParty={onStartParty}
+              onToggleIntermission={onToggleIntermission}
               hostName={hostName}
               hostIdleMessages={hostIdleMessages ?? []}
               onAddIdleMessage={onAddIdleMessage}

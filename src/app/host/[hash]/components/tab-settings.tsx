@@ -20,6 +20,8 @@ import {
   Music,
   Loader2,
   Info,
+  Coffee,
+  // PauseCircle removed
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
@@ -49,6 +51,7 @@ type Props = {
   playedPlaylist: ExtendedVideo[];
   partyStatus: string;
   onStartParty: () => void;
+  onToggleIntermission: () => void;
   hostName: string | null;
   hostIdleMessages: IdleMessage[];
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
@@ -118,6 +121,7 @@ export function TabSettings({
   playedPlaylist,
   partyStatus,
   onStartParty,
+  onToggleIntermission,
   hostName,
   hostIdleMessages,
   onAddIdleMessage,
@@ -243,6 +247,9 @@ export function TabSettings({
     }
   };
 
+  // Logic to determine if this is an intermission or a fresh start
+  const isIntermission = partyStatus === "OPEN" && playedPlaylist.length > 0;
+  const isFreshStart = partyStatus === "OPEN" && playedPlaylist.length === 0;
 
   return (
     <div className="space-y-4">
@@ -275,15 +282,39 @@ export function TabSettings({
         </div>
       </div>
 
-      {partyStatus === "OPEN" && (
-        <div className="space-y-3 rounded-lg border-2 border-green-500 bg-card p-4 shadow-lg">
-          <h3 className="text-lg font-medium text-green-400">
-            Party is OPEN
-          </h3>
+      {/* --- STATUS CONTROL BOX --- */}
+      <div className={cn(
+        "space-y-3 rounded-lg border-2 bg-card p-4 shadow-lg transition-all",
+        partyStatus === "STARTED" ? "border-blue-500" : "border-green-500"
+      )}>
+        <h3 className={cn(
+          "text-lg font-medium",
+          partyStatus === "STARTED" ? "text-blue-400" : "text-green-400"
+        )}>
+          {partyStatus === "STARTED" ? "Party in Progress" : isIntermission ? "Intermission (Paused)" : "Party is OPEN"}
+        </h3>
+        
+        {isFreshStart && (
           <p className="text-sm text-muted-foreground">
             Singers can add songs. When you&apos;re ready, start the party to load
-            the first song and enable the player controls.
+            the first song.
           </p>
+        )}
+
+        {isIntermission && (
+           <p className="text-sm text-muted-foreground">
+             The player is showing the intermission slideshow. Click Resume to continue.
+           </p>
+        )}
+
+        {partyStatus === "STARTED" && (
+           <p className="text-sm text-muted-foreground">
+             Need a break? Click Intermission to pause the party and show the lyrics slideshow.
+           </p>
+        )}
+
+        {/* Fresh Start Button */}
+        {isFreshStart && (
           <Button
             type="button"
             className="w-full bg-green-600 hover:bg-green-700"
@@ -292,8 +323,33 @@ export function TabSettings({
             <Play className="mr-2 h-4 w-4" />
             Start Party
           </Button>
-        </div>
-      )}
+        )}
+
+        {/* Intermission Toggle Button */}
+        {!isFreshStart && (
+           <Button
+             type="button"
+             variant={partyStatus === "STARTED" ? "outline" : "default"}
+             className={cn(
+               "w-full",
+               partyStatus === "OPEN" && "bg-green-600 hover:bg-green-700"
+             )}
+             onClick={onToggleIntermission}
+           >
+             {partyStatus === "STARTED" ? (
+               <>
+                 <Coffee className="mr-2 h-4 w-4" />
+                 Start Intermission (Pause)
+               </>
+             ) : (
+               <>
+                 <Play className="mr-2 h-4 w-4" />
+                 Resume Party
+               </>
+             )}
+           </Button>
+        )}
+      </div>
 
       <div className="space-y-3 rounded-lg border bg-card p-3">
         <div className="flex items-center justify-between">

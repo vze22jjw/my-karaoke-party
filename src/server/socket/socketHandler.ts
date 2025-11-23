@@ -143,6 +143,11 @@ export function registerSocketEvents(io: Server) {
       } catch (error) { console.error("Error starting party:", error); }
     });
 
+    // --- NEW: Generic refresh event ---
+    socket.on("refresh-party", async (data: { partyHash: string }) => {
+       await updateAndEmitPlaylist(io, data.partyHash, "refresh-party");
+    });
+
     socket.on("playback-play", async (data: { partyHash: string; currentTime?: number }) => {
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
@@ -179,7 +184,8 @@ export function registerSocketEvents(io: Server) {
     socket.on("playback-pause", async (data: { partyHash: string }) => {
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
-        if (!party || party.status === "OPEN" || !party.currentSongStartedAt || party.currentSongRemainingDuration === null) return;
+        // Fix: Use optional chaining for cleaner syntax
+        if (!party?.currentSongStartedAt || party.currentSongRemainingDuration === null) return;
 
         const elapsed = Math.floor((new Date().getTime() - party.currentSongStartedAt.getTime()) / 1000);
         const newRemaining = Math.max(0, party.currentSongRemainingDuration - elapsed);

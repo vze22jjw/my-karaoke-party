@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { QrCode } from "./qr-code";
+import { PlayerQrCode } from "./player-qr-code"; // Import the new component
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -7,18 +7,18 @@ import { useEffect, useState } from "react";
 type Props = {
   joinPartyUrl: string;
   className?: string;
-  idleMessages: string[];
+  messages: string[]; 
 };
 
-function IdleSlideshow({ messages }: { messages: string[] }) {
+function Slideshow({ messages }: { messages: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (messages.length <= 1) return; // No need to cycle
+    if (messages.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length);
-    }, 7000); // 7-second slide duration
+    }, 7000); 
 
     return () => clearInterval(interval);
   }, [messages.length]);
@@ -26,74 +26,63 @@ function IdleSlideshow({ messages }: { messages: string[] }) {
   if (messages.length === 0) return null;
 
   const currentMessage = messages[currentIndex] ?? "";
-  const parts = currentMessage.split(" -- ");
+  const parts = currentMessage.includes(" -- ") ? currentMessage.split(" -- ") : [currentMessage, ""];
   const quote = parts[0] ?? "";
   const author = parts[1] ?? "";
 
   return (
-    <div
-      key={currentIndex} // Key change triggers animation
-      className="flex w-full flex-col items-center justify-center text-center animate-in fade-in-0 duration-1000"
-    >
-      <blockquote
-        className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl"
-      >
-        &ldquo;{quote}&rdquo;
-      </blockquote>
-      {author && (
-        <cite
-          className="text-outline mt-4 scroll-m-20 text-3xl font-extrabold tracking-tight text-white lg:text-4xl not-italic"
+    <div className="flex w-full flex-col items-center justify-center text-center animate-in fade-in-0 duration-1000">
+      <div key={currentIndex} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <blockquote
+          className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight text-white lg:text-6xl italic leading-tight drop-shadow-xl max-w-4xl"
         >
-          - {author}
-        </cite>
-      )}
+          &ldquo;{quote}&rdquo;
+        </blockquote>
+        {author && (
+          <cite
+            className="text-outline mt-8 block text-xl font-semibold tracking-widest text-primary lg:text-3xl not-italic uppercase"
+          >
+            — {author}
+          </cite>
+        )}
+      </div>
     </div>
   );
 }
 
-export function EmptyPlayer({ joinPartyUrl, className, idleMessages }: Props) {
-  const hasMessages = idleMessages.length > 0;
+export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
+  const showSlideshow = messages.length > 0;
 
   return (
     <div
       className={cn(
-        "relative flex h-full w-full flex-col items-center p-6 overflow-hidden",
+        "relative flex h-full w-full flex-col items-center justify-center p-6 overflow-hidden transition-colors duration-1000",
         className,
       )}
     >
-      <div className="absolute inset-0 top-1/4 flex h-1/2 w-full items-center justify-center opacity-50">
+      {/* Background Logo */}
+      <div className="absolute inset-0 flex h-full w-full items-center justify-center opacity-20 pointer-events-none select-none">
         <Image
           src={logo}
           alt="My Karaoke Party"
           priority
-          className="mx-auto object-contain"
+          className="w-[60%] object-contain opacity-50 blur-sm"
         />
       </div>
 
-      <div className="z-10 flex h-full w-full flex-col">
-        <div className="flex w-full basis-1/4 items-start justify-center min-h-0" />
-        
-        <div className="flex w-full basis-2/4 items-center justify-center px-4 min-h-0">
-          {hasMessages ? (
-            <IdleSlideshow messages={idleMessages} />
+      {/* Main Center Content */}
+      <div className="z-10 flex h-full w-full flex-col items-center justify-center pb-20">
+          {showSlideshow ? (
+            <Slideshow messages={messages} /> 
           ) : (
-            <p className="text-outline text-3xl text-center text-white">
+            <p className="text-outline text-4xl font-bold text-center text-white">
               Waiting for the host to start the party...
             </p>
           )}
-        </div>
-        
-        <div className="relative flex w-full basis-1/4 items-end text-center min-h-0">
-          <QrCode url={joinPartyUrl} />
-          <a
-            href={joinPartyUrl}
-            target="_blank"
-            className="font-mono text-xl text-white pl-4 text-outline"
-          >
-            {joinPartyUrl.split("//")[1]}
-          </a>
-        </div>
       </div>
+      
+      {/* Bottom Left QR Code Section - Uses the new common component */}
+      <PlayerQrCode joinPartyUrl={joinPartyUrl} className="bottom-20" />
     </div>
   );
 }

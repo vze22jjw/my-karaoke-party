@@ -1,131 +1,123 @@
 "use client";
 
 import { type VideoInPlaylist } from "~/types/app-types";
-import { Button } from "~/components/ui/ui/button";
-import { MicVocal, SkipForward, Youtube } from "lucide-react"; 
 import { decode } from "html-entities";
-import { cn } from "~/lib/utils";
-import { QrCode } from "./qr-code";
+import { removeBracketedContent } from "~/utils/string";
+import { ExternalLink, MicVocal, SkipForward, Music } from "lucide-react";
+import Image from "next/image";
+import { PlayerQrCode } from "./player-qr-code"; 
+import { Button } from "./ui/ui/button";
+import logo from "~/assets/my-karaoke-party-logo.png";
 import { SongCountdownTimer } from "./song-countdown-timer";
 
 type Props = {
   video: VideoInPlaylist;
-  nextSong?: VideoInPlaylist; 
+  nextSong: VideoInPlaylist | undefined;
   joinPartyUrl: string;
   isFullscreen: boolean;
-  onOpenYouTubeAndAutoSkip: () => void; 
-  onSkip: () => void; 
-  isSkipping: boolean; 
-  remainingTime: number; 
+  onOpenYouTubeAndAutoSkip: () => void;
+  onSkip: () => void;
+  isSkipping: boolean;
+  remainingTime: number;
+  message?: string; // Added optional message prop
 };
 
 export function PlayerDisabledView({
   video,
-  nextSong, 
+  nextSong,
   joinPartyUrl,
-  isFullscreen,
-  onOpenYouTubeAndAutoSkip, 
+  onOpenYouTubeAndAutoSkip,
   onSkip,
-  isSkipping,
-  remainingTime, 
+  remainingTime,
+  message = "Playback is disabled for this party.", // Default message
 }: Props) {
-
   return (
-    <div
-      className={cn(
-        "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
-        isFullscreen && "bg-gradient",
-      )}
-    >
-      <div>
-        <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          {decode(video.title)}
-        </h1>
-        <h2 className="text-outline scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl">
-          <MicVocal className="mr-2 inline text-primary" size={32} />
-          {video.singerName}
-          <MicVocal
-            className="ml-2 inline scale-x-[-1] transform text-primary"
-            size={32}
-          />
-        </h2>
-      </div>
+    <div className="relative flex h-full w-full flex-col items-center justify-start bg-gradient text-white overflow-hidden p-6">
       
-      <div className="space-y-4">
-        <div className="rounded-lg border border-yellow-500/50 bg-yellow-900/30 p-4 mb-4">
-          <h3 className="text-xl font-bold text-yellow-400 mb-2">
-            🚫 Playback Disabled 🚫
-          </h3>
-          <p className="text-sm text-gray-300 mb-2">
-            The host has disabled video playback in this window.
-          </p>
+      {/* Background Logo (Watermark) */}
+      <div className="absolute inset-0 flex h-full w-full items-center justify-center opacity-20 pointer-events-none select-none">
+        <Image
+          src={logo}
+          alt="My Karaoke Party"
+          priority
+          className="w-[60%] object-contain opacity-50 blur-sm"
+        />
+      </div>
+
+      {/* Up Next Indicator - Top Right (Safe Area) */}
+      {nextSong && (
+        <div className="absolute top-8 right-8 z-20 animate-in fade-in slide-in-from-top-4 duration-700 pointer-events-none">
+          <div className="rounded-xl bg-black/20 border border-white/10 p-4 backdrop-blur-md shadow-xl min-w-[200px]">
+             <div className="text-right">
+                <div className="text-xs font-bold text-white/90 mb-1">
+                  <span className="text-primary mr-1">{nextSong.singerName}</span>
+                  <span className="opacity-70 uppercase tracking-wider">Up Next In:</span>
+                  <span className="ml-1 font-mono">
+                    <SongCountdownTimer remainingTime={remainingTime} />
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-white leading-tight truncate max-w-[250px] ml-auto">
+                  {decode(removeBracketedContent(nextSong.title))}
+                </p>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="z-10 flex flex-col items-center space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-5xl w-full mt-2">
+        
+        {/* Album Art - Rectangular (Aspect Video) */}
+        <div className="relative w-full max-w-[21rem] aspect-video rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+           <Image
+             src={video.coverUrl}
+             alt={video.title}
+             fill
+             className="object-cover"
+           />
         </div>
         
-        {isSkipping ? (
-          <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
-            <h3 className="text-xl font-semibold text-white">
-              {nextSong ? (
-                <>
-                  Next Singer: {nextSong.singerName} up in{" "}
-                  <SongCountdownTimer
-                    remainingTime={remainingTime}
-                    className="text-white"
-                  />
-                </>
-              ) : (
-                "Queue is empty... go add a song!"
-              )}
-            </h3>
-            <Button
-              type="button"
-              size="lg"
-              className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700 mt-4"
-              onClick={onOpenYouTubeAndAutoSkip} 
-            >
-              <Youtube className="mr-2" size={24} />
-              Re-open & Restart Timer
-            </Button>
+        {/* Song Info */}
+        <div className="space-y-2 w-full">
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg text-outline leading-tight">
+            {decode(removeBracketedContent(video.title))}
+          </h2>
+          <div className="flex items-center justify-center gap-2 text-primary text-xl md:text-2xl font-medium text-shadow-sm">
+            <MicVocal className="h-6 w-6" />
+            <span>{video.singerName}</span>
           </div>
-        ) : (
-          <>
-            <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
-              Click the button to open on YouTube
-            </h3>
-            
-            <Button
-              type="button"
-              size="lg"
-              className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-              onClick={onOpenYouTubeAndAutoSkip} 
-            >
-              <Youtube className="mr-2" size={24} />
-              Open & Auto-Skip
-            </Button>
-          </>
-        )}
-        
-        <div className="mt-4">
-          <Button
-            className="animate-in fade-in zoom-in"
-            variant={"secondary"}
-            type="button"
-            onClick={onSkip} 
+        </div>
+
+        {/* Action Area */}
+        <div className="flex flex-col items-center gap-6 w-full">
+          <p className="text-lg text-white/90 font-medium drop-shadow-md">
+            {message}
+          </p>
+
+          <button
+            onClick={onOpenYouTubeAndAutoSkip}
+            className="group relative flex items-center gap-3 rounded-full bg-red-600 px-8 py-4 text-xl font-bold text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all hover:scale-105 hover:bg-red-700 hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-95"
           >
-            <SkipForward className="mr-2 h-5 w-5" />
-            Skip Song
-          </Button>
+            <ExternalLink className="h-6 w-6" />
+            <span>Open on YouTube</span>
+          </button>
         </div>
       </div>
 
-      <div className="relative flex w-full basis-1/4 items-end text-center">
-        <QrCode url={joinPartyUrl} />
-        <a
-          href={joinPartyUrl}
-          target="_blank"
-          className="font-mono text-xl text-white pl-4 text-outline"
-        >
-          {joinPartyUrl.split("//")[1]}
-        </a>
+      {/* Bottom Left: QR Code */}
+      <PlayerQrCode joinPartyUrl={joinPartyUrl} className="bottom-20" />
+
+      {/* Bottom Right: Skip Button */}
+      <div className="absolute bottom-20 right-24 z-30">
+          <Button
+            variant={"secondary"}
+            size="default"
+            className="shadow-xl border border-white/10 gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white"
+            onClick={onSkip}
+          >
+            <SkipForward className="h-4 w-4" />
+            Skip
+          </Button>
       </div>
     </div>
   );
