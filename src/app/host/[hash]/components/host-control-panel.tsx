@@ -8,6 +8,7 @@ import { TabPlaylist } from "./tab-playlist";
 import { TabSettings } from "./tab-settings";
 import { useState, useEffect } from "react"; 
 import { Button } from "~/components/ui/ui/button";
+import { FitText } from "~/components/fit-text";
 
 type Props = {
   party: Party;
@@ -125,9 +126,9 @@ export function HostControlPanel({
     <div className="w-full overflow-hidden h-[100dvh]">
       <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         <div className="flex-shrink-0 mb-2">
-          <h1 className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight truncate w-full text-center uppercase">
+          <FitText className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight w-full text-center uppercase">
             {party.name}
-          </h1>
+          </FitText>
         </div>
         <div className="flex-shrink-0 rounded-lg border bg-card p-2 text-xs text-muted-foreground mb-2 space-y-1">
           <div className="flex justify-between items-center">

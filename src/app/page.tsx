@@ -39,9 +39,13 @@ export default async function Home() {
       </div>
 
       <footer className="fixed bottom-4 right-4 z-50">
-        <span className="text-xs text-white/50">
+        <Link 
+          href="/about" 
+          className="text-xs text-white/50 hover:text-white hover:underline transition-colors"
+          aria-label="View App Information"
+        >
           v{env.NEXT_PUBLIC_MKP_APP_VER}
-        </span>
+        </Link>
       </footer>
     </main>
   );
