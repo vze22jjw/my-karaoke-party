@@ -71,8 +71,10 @@ export function TabSingers({
           </Button>
         </div>
         
-        <div className="flex-1 flex justify-center items-center min-w-0 px-2">
-          {currentSong && currentSingerName && currentPartyHash && (
+        {/* Center: Applause Button */}
+        <div className="flex-1 flex justify-center items-center px-2 min-w-0">
+          {/* FIX: Removed 'currentSong && currentSingerName' check so button is always visible */}
+          {currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
                 <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold flex-shrink-0" aria-label="Send applause">
                     <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
