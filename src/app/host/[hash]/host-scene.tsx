@@ -24,8 +24,6 @@ type Props = {
 };
 
 export function HostScene({ party, initialData }: Props) {
-  // Removed unused router
-
   const {
     currentSong,
     unplayedPlaylist,
@@ -36,13 +34,11 @@ export function HostScene({ party, initialData }: Props) {
     isPlaying,
     remainingTime,
     settings,
-    // Removed unused idleMessages
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, "Host");
 
   const { 
     data: hostIdleMessages, 
-    // Removed unused isLoadingMessages
     refetch: refetchIdleMessages 
   } = api.idleMessage.getByHost.useQuery(
     { hostName: participants.find(p => p.role === "Host")?.name ?? "Host" },
@@ -102,16 +98,14 @@ export function HostScene({ party, initialData }: Props) {
     },
   });
 
+  // This handles the "Party Pause" / Intermission functionality
   const statusMutation = api.party.toggleStatus.useMutation({
     onSuccess: (data, variables) => {
         if (variables.status === "OPEN") {
-             socketActions.playbackPause(); // Good to stop any playback
-             socketActions.refreshParty(); // <-- NEW: Force refresh to broadcast status change
+             socketActions.playbackPause();
+             socketActions.refreshParty();
              toast.info("Intermission Started");
         } else {
-             // socketActions.startParty() sets status to STARTED internally, but we already did that via API.
-             // Calling it again is fine as it just re-confirms and broadcasts.
-             // Alternatively, we can just use refreshParty().
              socketActions.startParty(); 
              toast.success("Party Resumed!");
         }
@@ -119,7 +113,6 @@ export function HostScene({ party, initialData }: Props) {
     onError: () => toast.error("Failed to update status")
   });
 
-  const settingsMutation = api.party.settings.useMutation();
   const idleMessageMutation = api.idleMessage.add.useMutation({
     onSuccess: () => { void refetchIdleMessages(); }
   });
@@ -170,18 +163,14 @@ export function HostScene({ party, initialData }: Props) {
           }
         }}
         useQueueRules={settings.orderByFairness}
+        // CHANGED: Use socketActions instead of mutation for real-time updates
         onToggleRules={() => {
-          settingsMutation.mutate({
-            hash: party.hash!,
-            useQueueRules: !settings.orderByFairness,
-          });
+          socketActions.toggleRules(!settings.orderByFairness);
         }}
         disablePlayback={settings.disablePlayback ?? false}
+        // CHANGED: Use socketActions instead of mutation for real-time updates
         onTogglePlayback={() => {
-          settingsMutation.mutate({
-            hash: party.hash!,
-            disablePlayback: !settings.disablePlayback,
-          });
+          socketActions.togglePlayback(!settings.disablePlayback);
         }}
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
