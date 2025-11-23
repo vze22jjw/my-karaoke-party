@@ -58,7 +58,7 @@ export function TabAddSong({
 
         {hasReachedQueueLimit && (
           <div className="mb-4 rounded-md bg-red-900/50 border border-red-700 p-2 text-center text-sm text-white font-medium">
-            Queue Full! Please sing one before adding more.
+            Queue Full! Sing one, then add more.
           </div>
         )}
 

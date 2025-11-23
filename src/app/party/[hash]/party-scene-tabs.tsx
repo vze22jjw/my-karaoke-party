@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { decode } from "html-entities";
 import { PartyTourModal } from "./components/party-tour-modal";
 import Confetti from "react-canvas-confetti";
+import { FitText } from "~/components/fit-text";
 
 const MAX_QUEUE_PER_SINGER = 9;
 
@@ -186,9 +187,9 @@ export function PartySceneTabs({
       )}
 
       <div className="flex-shrink-0">
-        <h1 className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
+        <FitText className="text-outline scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl text-center uppercase">
           {party.name}
-        </h1>
+        </FitText>
         {partyStatus === "OPEN" && (
           <p className="text-center text-green-400 font-medium animate-pulse">
             Party is OPEN (Waiting for host to start)

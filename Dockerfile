@@ -10,6 +10,9 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 ARG VERSION
+# New Build Arguments
+ARG BUILD_DATE
+ARG GIT_COMMIT_SHA
 
 # ========================================
 # Stage 1: Build the application
@@ -21,9 +24,15 @@ WORKDIR /app
 ARG VERSION
 ARG ECR_BUILD=false
 ARG NEXT_PUBLIC_APP_URL
+# Pass ARGs to Builder Stage
+ARG BUILD_DATE
+ARG GIT_COMMIT_SHA
 
 ENV NEXT_PUBLIC_MKP_APP_VER=$VERSION
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+# Set ENVs for Next.js build
+ENV NEXT_PUBLIC_BUILD_DATE=$BUILD_DATE
+ENV NEXT_PUBLIC_GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 
 # Copy files needed for dependency installation first
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"

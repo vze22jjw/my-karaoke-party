@@ -42,20 +42,26 @@ if [ -z "$BUILD_TYPE" ] || [[ ! "$BUILD_TYPE" =~ ^(dev|release)$ ]]; then
     show_help
 fi
 
+# Capture Build Metadata
+GIT_SHA=$(git rev-parse HEAD)
+GIT_SHORT_SHA=$(git rev-parse --short HEAD)
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
 # Version configuration
 if [ "$BUILD_TYPE" == "release" ]; then
-    export VERSION="v0.0.2-$(git rev-parse --short HEAD)"
+    export VERSION="v0.0.2-${GIT_SHORT_SHA}"
     export ECR_BUILD="true"
     export BUILD_NODE_ENV="production"
     echo "Release build version: $VERSION"
 else
-    export VERSION="$(git rev-parse --short HEAD)-$(date "+%y%m%d%S")"
+    export VERSION="${GIT_SHORT_SHA}-$(date "+%y%m%d%S")"
     export ECR_BUILD="false"
     echo "Development build version: $VERSION"
 fi
 
 echo "Build type: $BUILD_TYPE"
 echo "Build version: $VERSION"
+echo "Build date: $BUILD_DATE"
 
 # --- ENV management: load values from docker-builds/.env-build for deploy builds
 #     For dev builds, .env-build is optional and .env is used directly if it exists
@@ -148,6 +154,8 @@ if [ "$DEPLOY" == "deploy" ]; then
         --build-arg ECR_BUILD=${ECR_BUILD} \
         --build-arg VERSION=${VERSION} \
         --build-arg NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL}" \
+        --build-arg BUILD_DATE="${BUILD_DATE}" \
+        --build-arg GIT_COMMIT_SHA="${GIT_SHA}" \
         --target runner \
         --platform ${PLATFORMS} \
         --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG0} \
@@ -181,6 +189,8 @@ else
         --build-arg ECR_BUILD=${ECR_BUILD} \
         --build-arg VERSION=${VERSION} \
         --build-arg NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL}" \
+        --build-arg BUILD_DATE="${BUILD_DATE}" \
+        --build-arg GIT_COMMIT_SHA="${GIT_SHA}" \
         --target runner \
         -t ${LOCAL_IMAGE_NAME}:${TAG0} \
         -t ${LOCAL_IMAGE_NAME}:${TAG1} \
