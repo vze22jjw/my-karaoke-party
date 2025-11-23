@@ -46,18 +46,14 @@ model Party {
 }
 
 model PartyParticipant {
-    id        Int      @id @default(autoincrement())
+    id        Int           @id @default(autoincrement())
     partyId   Int
-    party     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+    party     Party         @relation(fields: [partyId], references: [id], onDelete: Cascade)
     name      String
-    joinedAt  DateTime @default(now())
-    role      String   @default("Guest") 
-
-    // --- ADD THIS FIELD ---
-    applauseCount Int    @default(0) // New field for applause tally
-    avatar    String?  // Will store an emoji or icon identifier
-    // ----------------------
-
+    joinedAt  DateTime      @default(now())
+    role      String        @default("Guest") 
+    applauseCount Int       @default(0)
+    avatar    String?       // Will store an emoji or icon identifier
     @@unique([partyId, name])
     @@index([partyId])
 }
@@ -88,6 +84,5 @@ model IdleMessage {
   hostName  String
   message   String
   createdAt DateTime @default(now())
-
   @@index([hostName])
 }

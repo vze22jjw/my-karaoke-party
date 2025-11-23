@@ -90,7 +90,6 @@ export function PartySceneTabs({
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
-    // Fallback fire (in case button click missed it or user closed via backdrop)
     setTimeout(() => {
       fireConfetti();
     }, 300);
@@ -182,7 +181,7 @@ export function PartySceneTabs({
         <PartyTourModal 
             isOpen={isTourOpen} 
             onClose={handleCloseTour} 
-            onFireConfetti={fireConfetti} // <-- PASSED HERE
+            onFireConfetti={fireConfetti}
         />
       )}
 

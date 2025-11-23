@@ -22,7 +22,7 @@ import { cn } from "~/lib/utils";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onFireConfetti: () => void; // <-- New Prop
+  onFireConfetti: () => void;
 };
 
 const StepContent = ({
@@ -64,7 +64,7 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const totalSteps = 2; 
 
   const handleClose = () => {
-    onFireConfetti(); // <-- Fire immediately on click
+    onFireConfetti();
     onClose();
     setTimeout(() => setStep(1), 200);
   };

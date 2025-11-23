@@ -12,7 +12,7 @@ type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
   played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"]; // This now includes spotifyPlaylistId
+  settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
   status: string;
@@ -45,7 +45,7 @@ export default async function PartyHashPage({ params }: Props) {
     played: [], 
     settings: { 
         orderByFairness: true,
-        spotifyPlaylistId: null // <-- Default
+        spotifyPlaylistId: null
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,

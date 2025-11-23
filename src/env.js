@@ -15,7 +15,7 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
     NEXT_PUBLIC_EVENT_DEBUG: z.string().optional(),
     NEXT_PUBLIC_MKP_APP_VER: z.string().default("0.0.0-BETA"),
-    NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: z.string().url().optional(),
+    NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: z.string().optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
