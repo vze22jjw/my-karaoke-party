@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, AlertCircle, Trash2 } from "lucide-react";
+import { Info, AlertCircle, Trash2, Flame } from "lucide-react";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
@@ -25,7 +25,10 @@ export function SettingsDangerZone({
   return (
     <div className="space-y-3 rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
+        <h3 className="text-lg font-medium text-destructive flex items-center gap-2">
+          <Flame className="h-5 w-5" />
+          Danger Zone
+        </h3>
         <Button
           variant="ghost"
           size="icon"

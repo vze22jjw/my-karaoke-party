@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Input } from "~/components/ui/ui/input";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Plus, X, Check, Send } from "lucide-react";
+import { Info, Plus, X, Check, Send, MessageSquareQuote } from "lucide-react";
 import type { IdleMessage } from "@prisma/client";
 import { toast } from "sonner";
 
@@ -64,7 +64,10 @@ export function SettingsIdleMessages({
   return (
     <div className="space-y-3 rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Your Reusable Idle Messages</h3>
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <MessageSquareQuote className="h-5 w-5 text-indigo-500" />
+          Your Reusable Idle Messages
+        </h3>
         <Button
           variant="ghost"
           size="icon"

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Copy, Check, ChevronDown, FileText, Music } from "lucide-react";
+import { Info, Copy, Check, ChevronDown, FileText, Music, Download } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { toast } from "sonner";
 import { decode } from "html-entities";
@@ -66,7 +66,10 @@ export function SettingsExport({ partyName, playedPlaylist }: Props) {
   return (
     <div className="space-y-3 rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Export Played Songs</h3>
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Download className="h-5 w-5 text-purple-500" />
+          Export Played Songs
+        </h3>
         <Button
           variant="ghost"
           size="icon"

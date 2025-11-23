@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Label } from "~/components/ui/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Loader2 } from "lucide-react";
+import { Info, Loader2, Scale } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
@@ -100,7 +100,10 @@ export function SettingsRules({
   return (
     <div className="space-y-3 rounded-lg border bg-card p-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Party Rules</h3>
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Scale className="h-5 w-5 text-cyan-500" />
+          Party Rules
+        </h3>
         <Button
           variant="ghost"
           size="icon"

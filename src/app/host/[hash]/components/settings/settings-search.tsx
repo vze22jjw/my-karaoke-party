@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/ui/button";
 import { Label } from "~/components/ui/ui/label";
 import { Input } from "~/components/ui/ui/input";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info } from "lucide-react";
+import { Info, Search } from "lucide-react";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
@@ -20,7 +20,10 @@ export function SettingsSearch({ maxSearchResults, onSetMaxResults }: Props) {
   return (
     <div className="space-y-3 rounded-lg border bg-card p-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Search Settings</h3>
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Search className="h-5 w-5 text-orange-500" />
+          Search Settings
+        </h3>
         <Button
           variant="ghost"
           size="icon"

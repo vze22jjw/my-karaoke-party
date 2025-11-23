@@ -210,6 +210,6 @@ if [[ -n "${GITHUB_ACTIONS}" ]]; then
     exit 0
 else
     echo "Cleaning up build cache..."
-    docker builder prune --filter until=24h --force
+    docker builder prune --filter until=1h --force
     echo "Build cache cleaned up successfully"
 fi

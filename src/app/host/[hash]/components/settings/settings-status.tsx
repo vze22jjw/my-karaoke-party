@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
-import { Play, Coffee } from "lucide-react";
+import { Alert, AlertDescription } from "~/components/ui/ui/alert";
+import { Play, Coffee, Activity, Info } from "lucide-react";
 import { cn } from "~/lib/utils";
 import type { VideoInPlaylist } from "~/types/app-types";
 
@@ -24,6 +26,8 @@ export function SettingsStatus({
 }: Props) {
   if (IS_DEBUG) console.log("[SettingsStatus] Status:", partyStatus, "Played Count:", playedPlaylist.length);
 
+  const [showInfo, setShowInfo] = useState(false);
+
   // Logic to determine if this is an intermission or a fresh start
   const isIntermission = partyStatus === "OPEN" && playedPlaylist.length > 0;
   const isFreshStart = partyStatus === "OPEN" && playedPlaylist.length === 0;
@@ -33,12 +37,33 @@ export function SettingsStatus({
       "space-y-3 rounded-lg border-2 bg-card p-4 shadow-lg transition-all",
       partyStatus === "STARTED" ? "border-blue-500" : "border-green-500"
     )}>
-      <h3 className={cn(
-        "text-lg font-medium",
-        partyStatus === "STARTED" ? "text-blue-400" : "text-green-400"
-      )}>
-        {partyStatus === "STARTED" ? "Party in Progress" : isIntermission ? "Intermission (Paused)" : "Party is OPEN"}
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className={cn(
+          "text-lg font-medium flex items-center gap-2",
+          partyStatus === "STARTED" ? "text-blue-400" : "text-green-400"
+        )}>
+          <Activity className="h-5 w-5" />
+          {partyStatus === "STARTED" ? "Party in Progress" : isIntermission ? "Intermission (Paused)" : "Party is OPEN"}
+        </h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground"
+          onClick={() => setShowInfo(!showInfo)}
+        >
+          <Info className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {showInfo && (
+        <Alert className="mt-2">
+          <AlertDescription>
+            Use this to manage the flow of your event. <strong>Start</strong> to begin playing music. 
+            Use <strong>Intermission</strong> to pause the queue and show a slideshow of your idle messages 
+            while guests take a break.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {isFreshStart && (
         <p className="text-sm text-muted-foreground">
@@ -78,10 +103,14 @@ export function SettingsStatus({
       {!isFreshStart && (
          <Button
            type="button"
-           variant={partyStatus === "STARTED" ? "outline" : "default"}
+           // Use default variant (Solid) to match Sync button style
+           variant="default"
            className={cn(
              "w-full",
-             partyStatus === "OPEN" && "bg-green-600 hover:bg-green-700"
+             // Keep specific green styling for Resume state
+             partyStatus === "OPEN" && "bg-green-600 hover:bg-green-700",
+             // For STARTED state: use primary background (default) and override hover to remove effect
+             partyStatus === "STARTED" && "hover:bg-primary"
            )}
            onClick={() => {
              if (IS_DEBUG) console.log("[SettingsStatus] Toggling intermission");
