@@ -37,8 +37,21 @@ export function SettingsIdleMessages({
       toast.error("You have reached the 20 message limit.");
       return;
     }
-    if (IS_DEBUG) console.log("[SettingsIdleMessages] Adding message");
-    onAddIdleMessage({ hostName, message: newMessage });
+    
+    const messageToAdd = newMessage.trim();
+    if (IS_DEBUG) console.log("[SettingsIdleMessages] Adding message:", messageToAdd);
+    
+    // 1. Add to Database
+    onAddIdleMessage({ hostName, message: messageToAdd });
+
+    // 2. Auto-Sync to Player
+    // We construct the new list locally to sync immediately without waiting for refetch
+    const currentMessages = hostIdleMessages.map(m => m.message);
+    const updatedList = [...currentMessages, messageToAdd].slice(0, 10);
+    
+    onSyncIdleMessages(updatedList);
+    if (IS_DEBUG) console.log("[SettingsIdleMessages] Auto-synced to player:", updatedList);
+
     setNewMessage(""); 
   };
 
@@ -46,13 +59,20 @@ export function SettingsIdleMessages({
     if (confirm("Are you sure you want to delete this message?")) {
       if (IS_DEBUG) console.log("[SettingsIdleMessages] Deleting message ID:", id);
       onDeleteIdleMessage({ id });
+
+      // Also Auto-Sync on delete to keep player fresh
+      const updatedList = hostIdleMessages
+        .filter(m => m.id !== id)
+        .map(m => m.message)
+        .slice(0, 10);
+      onSyncIdleMessages(updatedList);
     }
   };
 
   const handleSyncToParty = () => {
     setIsSyncing(true);
     const messagesToSync = hostIdleMessages.map((m) => m.message).slice(0, 10);
-    if (IS_DEBUG) console.log("[SettingsIdleMessages] Syncing messages:", messagesToSync);
+    if (IS_DEBUG) console.log("[SettingsIdleMessages] Manual syncing messages:", messagesToSync);
     
     onSyncIdleMessages(messagesToSync);
     toast.success(
@@ -89,7 +109,8 @@ export function SettingsIdleMessages({
       <div className="flex w-full items-center space-x-2">
         <Input
           type="text"
-          placeholder="Add a new message (e.g., Lyric -- Author)"
+          // CHANGED: Updated placeholder to show @ format
+          placeholder="Add a new message (e.g., Lyric @ Author)"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           disabled={messagesRemaining <= 0}

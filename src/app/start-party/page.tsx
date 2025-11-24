@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { PartyPopper } from "lucide-react";
 import { OpenPlayersButton } from "~/components/open-players-drawer";
+import { ConnectToHostButton } from "~/components/connect-to-host-drawer"; // <-- Import new component
 
 function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
     return (
@@ -21,7 +22,11 @@ function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
                 Start New Party
                 <PartyPopper className="ml-3 h-6 w-6" />
             </Button>
+            
             <OpenPlayersButton />
+            
+            {/* New Button Added Here */}
+            <ConnectToHostButton />
             
             <Link
                 href="/"
@@ -32,6 +37,7 @@ function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
         </div>
     );
 }
+
 
 export default function StartPartyPage() {
     const [selectedFlow, setSelectedFlow] = useState<"selector" | "create">("selector");

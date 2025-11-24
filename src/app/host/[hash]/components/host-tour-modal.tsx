@@ -90,8 +90,8 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
             {step === 1 && (
               <>
                 <StepContent icon={<Link className="h-6 w-6" />} title="1. Party Links">
-                  Share the **Join Link** with singers or display the **QR Code** on a big screen. 
-                  Open the **Player Link** on your TV to show the lyrics and queue.
+                  Share the **Join Link** with singers. Open the **Player Link** on your TV. 
+                  *Note: If connecting manually via the Start page, enter the 4-digit code BACKWARDS (e.g. DCBA for ABCD) for security.*
                 </StepContent>
                 <StepContent icon={<Activity className="h-6 w-6" />} title="2. Manage Status">
                   Use **Start Party** to begin the music. Need a break? 
@@ -140,6 +140,7 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
           </div>
         </div>
 
+        {/* Added pb-20 to lift buttons above toast messages */}
         <div className="w-full max-w-2xl mx-auto p-4 pb-20 border-t border-border bg-background">
           <Dots total={totalSteps} current={step} />
           

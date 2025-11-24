@@ -1,5 +1,7 @@
+"use client";
+
 import Image from "next/image";
-import { PlayerQrCode } from "./player-qr-code";
+import { PlayerQrCode } from "./player-qr-code"; // Import the new component
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -26,9 +28,13 @@ function Slideshow({ messages }: { messages: string[] }) {
   if (messages.length === 0) return null;
 
   const currentMessage = messages[currentIndex] ?? "";
-  const parts = currentMessage.includes(" -- ") ? currentMessage.split(" -- ") : [currentMessage, ""];
-  const quote = parts[0] ?? "";
-  const author = parts[1] ?? "";
+  
+  // CHANGED: Use "@" as separator instead of " -- "
+  const parts = currentMessage.includes("@") ? currentMessage.split("@") : [currentMessage, ""];
+  
+  // Added trim() to clean up any surrounding spaces user might have typed
+  const quote = parts[0]?.trim() ?? "";
+  const author = parts[1]?.trim() ?? "";
 
   return (
     <div className="flex w-full flex-col items-center justify-center text-center animate-in fade-in-0 duration-1000">
@@ -56,10 +62,11 @@ export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
   return (
     <div
       className={cn(
-        "relative flex h-full w-full flex-col items-center justify-center p-6 overflow-hidden transition-colors duration-1000",
+        "relative flex h-full w-full flex-col items-center justify-center p-6 overflow-hidden transition-colors duration-1000 bg-gradient",
         className,
       )}
     >
+      {/* Background Logo */}
       <div className="absolute inset-0 flex h-full w-full items-center justify-center opacity-20 pointer-events-none select-none">
         <Image
           src={logo}
@@ -69,6 +76,7 @@ export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
         />
       </div>
 
+      {/* Main Center Content */}
       <div className="z-10 flex h-full w-full flex-col items-center justify-center pb-20">
           {showSlideshow ? (
             <Slideshow messages={messages} /> 
@@ -79,6 +87,7 @@ export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
           )}
       </div>
       
+      {/* Bottom Left QR Code Section - Uses the new common component */}
       <PlayerQrCode joinPartyUrl={joinPartyUrl} className="bottom-20" />
     </div>
   );

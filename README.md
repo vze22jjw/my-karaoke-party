@@ -30,7 +30,8 @@ See who is singing next and interact with the performance in real-time.
 
 - 🎉 **Host a Party**: Create a new karaoke party with a unique 4-character code.
 - 📱 **Join as a Guest**: Guests can join via a simple link or QR code, with no app install required.
-- 📺 **TV/Player Mode**: A dedicated player view (`/player/[hash]`) designed for a main screen or TV.
+- 📺 **TV/Player Mode**: A dedicated player view (`/player/[hash]`) designed for a main screen or TV. 
+    - *Security Note:* When connecting manually to the player from the start page, the host must enter the 4-digit party code **backwards** (e.g., enter `DCBA` for party `ABCD`).
 - 🔐 **Host Controls**: A password-protected host page (`/host/[hash]`) to manage the party.
 - 🔍 **YouTube Search**: Search for any karaoke video on YouTube.
 - 📋 **Shared Queue**: Songs are added to a real-time queue, visible to all guests.
