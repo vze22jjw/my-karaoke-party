@@ -68,6 +68,13 @@ export function CreateParty() {
     onSuccess: (data) => {
       if (data.hash) {
         setName(form.getValues("yourName"));
+        
+        // --- NEW: Redirect host to Settings tab on creation ---
+        // We write directly to localStorage so the HostScene picks it up on mount
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
+        }
+
         toast.success(`Party "${data.name}" created!`);
         setTimeout(() => {
           router.push(`/host/${data.hash}`);

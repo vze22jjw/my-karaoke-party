@@ -66,17 +66,27 @@ export function TabSingers({
             <Users className="h-5 w-5" />
             <span className="whitespace-nowrap">Singers ({participants.length})</span>
           </h2>
-          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={onReplayTour}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6 text-muted-foreground hover:bg-transparent hover:text-muted-foreground" 
+            onClick={onReplayTour}
+          >
             <Info className="h-4 w-4" />
           </Button>
         </div>
         
         {/* Center: Applause Button */}
         <div className="flex-1 flex justify-center items-center px-2 min-w-0">
-          {/* FIX: Removed 'currentSong && currentSingerName' check so button is always visible */}
           {currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
-                <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold flex-shrink-0" aria-label="Send applause">
+                <Button 
+                    asChild 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-white h-16 w-16 text-4xl font-bold flex-shrink-0 hover:bg-transparent" 
+                    aria-label="Send applause"
+                >
                     <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
                 </Button>
             </Link>
@@ -84,7 +94,12 @@ export function TabSingers({
         </div>
 
         <div className="flex items-center flex-shrink-0">
-          <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10 px-2" aria-label="Leave party">
+          <Button 
+            variant="ghost" 
+            onClick={onLeaveParty} 
+            className="text-foreground/80 px-2 hover:bg-transparent hover:text-foreground/80" 
+            aria-label="Leave party"
+          >
             <span className="text-lg font-semibold text-white mr-1">Leave</span>
             <LogOut className="h-5 w-5" />
           </Button>

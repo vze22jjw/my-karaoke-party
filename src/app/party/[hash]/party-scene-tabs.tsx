@@ -91,6 +91,8 @@ export function PartySceneTabs({
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
+    // --- NEW: Redirect to Singers tab after tour ---
+    setActiveTab("singers");
     setTimeout(() => {
       fireConfetti();
     }, 300);
