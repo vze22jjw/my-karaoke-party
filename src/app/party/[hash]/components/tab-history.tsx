@@ -119,13 +119,14 @@ export function TabHistory({
                   </div>
                 </button>
                 <Button
-                  variant="ghost"
+                  // CHANGED: Scaled down to 50% size (h-6 w-6) with smaller icon (h-3 w-3)
+                  variant="default"
                   size="icon"
-                  className="h-9 w-9"
+                  className="h-6 w-6 shadow-xl flex-shrink-0"
                   aria-label={`Search for ${song.title}`}
                   onClick={() => onSuggestionClick(decode(song.title), song.artist)}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3 w-3" />
                 </Button>
               </li>
             ))}
@@ -180,15 +181,16 @@ export function TabHistory({
                   </div>
                 </button>
                 <Button
-                  variant="ghost"
+                  // CHANGED: Scaled down to 50% size (h-6 w-6) with smaller icon (h-3 w-3)
+                  variant="default"
                   size="icon"
-                  className="h-9 w-9"
+                  className="h-6 w-6 shadow-xl flex-shrink-0"
                   aria-label={`Search for ${song.title}`}
                   onClick={() =>
                     onSuggestionClick(decode(song.title), song.artist ?? "")
                   }
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3 w-3" />
                 </Button>
               </li>
             ))}
