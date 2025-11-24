@@ -129,38 +129,55 @@ export function TabSingers({
                       {participant.avatar ? <span className="text-2xl">{participant.avatar}</span> : isHost ? <span className="text-2xl">👑</span> : <MicVocal className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold truncate">{participant.name}</p>
-                        {isYou && <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded flex-shrink-0">You</span>}
-                        {isNextSinger && currentSong && <SongCountdownTimer remainingTime={remainingTime} className={cn(isPlaying ? "text-primary" : "text-muted-foreground")} message={nextSingerMessage} />}
+                      {/* Row 1: Name and Badge */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold leading-tight break-words">{participant.name}</p>
+                        {isYou && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded flex-shrink-0">You</span>}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1 flex-shrink-0"><Music className="h-3 w-3" /><span>{totalSongs}</span></div>
-                        {!showPlayed && (
-                          <div className="flex items-center gap-1 truncate">
-                            <span className="opacity-50">•</span>
-                            <span className="truncate">{(!!currentSongForSinger || nextSongs.length > 0) && `${nextSongs.length + (currentSongForSinger ? 1 : 0)} next`}{(!!currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}{playedSongs.length > 0 && `${playedSongs.length} sang`}</span>
+                      
+                      {/* Row 2: Stats and Timer */}
+                      <div className="flex items-center justify-between mt-1 pr-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Music className="h-3 w-3" />
+                            <span>{totalSongs}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Timer moved to right side of second row */}
+                        {isNextSinger && currentSong && (
+                          <div className="text-xs font-mono">
+                            <SongCountdownTimer 
+                              remainingTime={remainingTime} 
+                              className={cn("font-bold", isPlaying ? "text-primary" : "text-muted-foreground")} 
+                              message={nextSingerMessage} 
+                            />
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 self-start pt-1">
                     {(playedSongs.length > 0 || nextSongs.length > 0 || !!currentSongForSinger) && (
-                      <Button type="button" onClick={() => togglePlayed(participant.name)} variant="ghost" size="icon" className="h-8 w-8 text-white">
+                      <Button type="button" onClick={() => togglePlayed(participant.name)} variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-transparent">
                         <ChevronDown className={cn("h-5 w-5 transition-transform", showPlayed ? "rotate-180" : "")} />
                       </Button>
                     )}
                   </div>
                 </div>
                 {showPlayed && (
-                  <div className="mt-2 space-y-3">
+                  <div className="mt-2 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     <p className="text-xs font-medium text-muted-foreground">
                         Claps: {formatCompactNumber(participant.applauseCount)} 👏
+                        {/* Re-added the detailed breakdown here inside the expanded view */}
+                        <span className="mx-2">•</span>
+                        <span>{playedSongs.length} sang</span>
+                        <span className="mx-2">•</span>
+                        <span>{nextSongs.length + (currentSongForSinger ? 1 : 0)} next</span>
                     </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">In Line: {currentSongForSinger ? nextSongs.length + 1 : nextSongs.length}</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">In Line:</p>
                         <ul className="space-y-1">
                           {currentSongForSinger && <li className="text-xs truncate pl-2 font-bold text-primary">• {decode(currentSongForSinger.title)} (Playing Now)</li>}
                           {nextSongs.map((song) => <li key={song.id} className="text-xs truncate pl-2">• {decode(song.title)}</li>)}
@@ -169,7 +186,7 @@ export function TabSingers({
                     )}
                     {playedSongs.length > 0 && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Sang: {playedSongs.length}</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">History:</p>
                         <ul className="space-y-1">
                           {playedSongs.map((song) => <li key={song.id + (song.playedAt?.toString() ?? "")} className="text-xs truncate pl-2 text-muted-foreground">• {decode(song.title)}</li>)}
                         </ul>
