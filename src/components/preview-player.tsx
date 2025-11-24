@@ -51,7 +51,7 @@ export function PreviewPlayer({
       onProviderChange={onProviderChange}
       ref={player}
       load="custom"
-      posterLoad="eager"
+      posterLoad="visible"
     >
       <MediaProvider>
         <Poster

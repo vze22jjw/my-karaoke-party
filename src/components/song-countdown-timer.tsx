@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "~/lib/utils";
+import { memo } from "react"; // <--- 1. ADD IMPORT
 
 type Props = {
   remainingTime: number; // Time in seconds
@@ -8,7 +9,8 @@ type Props = {
   message?: string;
 };
 
-export function SongCountdownTimer({ remainingTime, className, message }: Props) {
+// 2. WRAP FUNCTION IN memo(...)
+export const SongCountdownTimer = memo(function SongCountdownTimer({ remainingTime, className, message }: Props) {
   const formatTime = (totalSeconds: number) => {
     if (totalSeconds <= 0) return "0:00";
     const displayMinutes = Math.floor(totalSeconds / 60);
@@ -21,4 +23,4 @@ export function SongCountdownTimer({ remainingTime, className, message }: Props)
       {message ? `${message} ${formatTime(remainingTime)}` : formatTime(remainingTime)}
     </span>
   );
-}
+});

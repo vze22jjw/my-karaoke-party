@@ -230,7 +230,7 @@ export function usePartySocket(
     const heartbeatInterval = setInterval(() => {
       if (socketRef.current?.connected) socketRef.current.emit("heartbeat", { partyHash, singerName, avatar });
       else socketRef.current?.emit("join-party", { partyHash, singerName, avatar });
-    }, 60000);
+    }, 300000); // 300000 (5 mins)
 
     return () => {
       if (socketRef.current) {
