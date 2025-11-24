@@ -13,7 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/ui/card"; // Used Card instead of Drawer
+} from "~/components/ui/ui/card";
 import { Input } from "./ui/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from "./ui/ui/form";
 import { toast } from "sonner";
-import { Loader2, PartyPopper } from "lucide-react"; // Added PartyPopper
+import { Loader2, PartyPopper } from "lucide-react";
 
 const formSchema = z.object({
   partyName: z
@@ -69,8 +69,6 @@ export function CreateParty() {
       if (data.hash) {
         setName(form.getValues("yourName"));
         
-        // --- NEW: Redirect host to Settings tab on creation ---
-        // We write directly to localStorage so the HostScene picks it up on mount
         if (typeof window !== "undefined") {
             window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
         }

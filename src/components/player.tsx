@@ -12,7 +12,7 @@ import { MicVocal, SkipForward } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
 import { SongCountdownTimer } from "./song-countdown-timer";
 import { PlayerQrCode } from "./player-qr-code"; 
-import { PlayerDisabledView } from "./player-disabled-view"; // Import re-used view
+import { PlayerDisabledView } from "./player-disabled-view";
 
 type Props = {
   joinPartyUrl: string;
@@ -116,7 +116,6 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
-  // --- VIEW 1: PLAYBACK ERROR (Now reuses PlayerDisabledView) ---
   if (showOpenInYouTubeButton) {
     return (
       <PlayerDisabledView
@@ -133,7 +132,6 @@ export function Player({
     );
   }
 
-  // --- VIEW 2: ACTIVE PLAYER ---
   return (
     <div className="relative z-0 h-full bg-black">
       <YouTube
@@ -154,7 +152,6 @@ export function Player({
         }}
       />
       
-      {/* Overlay: Song Info (Only shows when NOT ready/buffering) */}
       <div
         className={cn(
           "absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none",
@@ -178,7 +175,6 @@ export function Player({
         )}
       </div>
 
-      {/* Overlay: Next Singer */}
       {isReady && !isPlaying && nextSong && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
           <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md">
@@ -192,14 +188,12 @@ export function Player({
         </div>
       )}
 
-      {/* Overlay: Controls */}
       <div className={cn(
          "transition-opacity duration-500",
          internalIsPlaying && isFullscreen ? "opacity-0 hover:opacity-100" : "opacity-100"
       )}>
          <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
 
-         {/* Skip Button */}
          <div className="absolute bottom-20 right-24 z-20">
             <Button
               variant={"secondary"}

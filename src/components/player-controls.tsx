@@ -31,12 +31,10 @@ export function PlayerControls({
   return (
     <div className={cn("flex w-full items-center justify-between gap-4", className)}>
       
-      {/* Left Side: Timer */}
       <div className="flex items-center gap-4 min-w-[80px]">
         <SongCountdownTimer remainingTime={remainingTime} />
       </div>
 
-      {/* Center: Playback Controls */}
       <div className="flex flex-1 items-center justify-center gap-4">
         {showPlaybackControls && (
           <Button
@@ -54,7 +52,6 @@ export function PlayerControls({
         )}
       </div>
 
-      {/* Right Side: Skip Button */}
       <div className="flex items-center justify-end min-w-[80px]">
         <Button
           variant="secondary"

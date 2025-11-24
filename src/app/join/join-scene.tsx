@@ -22,7 +22,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
-import { FitText } from "~/components/fit-text"; // <-- IMPORT ADDED
+import { FitText } from "~/components/fit-text";
 
 // NEW AVATAR COMPONENTS ---
 const AVATARS = [
@@ -121,7 +121,6 @@ export default function JoinScene({
           {partyName && (
             <div className="mb-4 w-full text-center">
               <p className="text-sm text-white/80">Joining:</p>
-              {/* CHANGED: Replaced h1 with FitText to ensure single-line scaling */}
               <FitText className="text-outline scroll-m-20 text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
                 {partyName}
               </FitText>

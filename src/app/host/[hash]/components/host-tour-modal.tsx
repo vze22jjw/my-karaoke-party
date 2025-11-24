@@ -140,7 +140,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
           </div>
         </div>
 
-        {/* Added pb-20 to lift buttons above toast messages */}
         <div className="w-full max-w-2xl mx-auto p-4 pb-20 border-t border-border bg-background">
           <Dots total={totalSteps} current={step} />
           

@@ -1,15 +1,14 @@
 "use client";
-
-import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types"; // <-- Added VideoInPlaylist
+import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { useState } from "react";
 import { PreviewPlayer } from "~/components/preview-player";
 import { decode } from "html-entities";
 import { Monitor } from "lucide-react";
 
 type Props = {
-  currentSong: VideoInPlaylist | null; // <-- ADDED
+  currentSong: VideoInPlaylist | null; 
   playlist: KaraokeParty["playlist"]; // This is the upcoming queue
-  playedPlaylist: KaraokeParty["playlist"]; // <-- ADDED
+  playedPlaylist: KaraokeParty["playlist"];
 };
 
 export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
@@ -29,7 +28,6 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Preview do que está tocando */}
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Monitor className="h-5 w-5" />
@@ -56,7 +54,6 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
         )}
       </div>
 
-      {/* Próximas músicas */}
       {nextVideos.length > 0 && ( 
         <div className="bg-card rounded-lg p-4 border">
           <div className="flex items-center justify-between mb-3">
@@ -79,10 +76,7 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
             {songsToShowNext.map((video, index) => (
               <li
                 key={video.id}
-                // --- THIS IS THE FIX ---
-                // Removed hover:bg-muted
                 className="flex items-start gap-3 p-2 rounded transition-colors"
-                // --- END THE FIX ---
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
                   {index + 2} {/* +2 because +1 is playing */}
@@ -106,7 +100,6 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
         </div>
       )}
 
-      {/* Músicas já tocadas */}
       {playedVideos.length > 0 && (
         <div className="bg-card rounded-lg p-4 border opacity-75">
           <div className="flex items-center justify-between mb-3">
@@ -126,7 +119,6 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
             )}
           </div>
           <ul className="space-y-1">
-            {/* --- THIS IS THE FIX --- */}
             {songsToShowPlayed.map((video) => (
               <li
                 key={video.id + (video.playedAt?.toString() ?? "")}
@@ -136,7 +128,6 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist }: Props) {
                 <span className="text-xs opacity-70">({video.singerName})</span>
               </li>
             ))}
-            {/* --- END THE FIX --- */}
           </ul>
           {!showAllPlayedSongs && playedVideos.length > 5 && (
             <p className="text-sm text-muted-foreground mt-3 text-center">

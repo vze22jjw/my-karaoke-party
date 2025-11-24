@@ -119,7 +119,6 @@ export function TabHistory({
                   </div>
                 </button>
                 <Button
-                  // CHANGED: Scaled down to 50% size (h-6 w-6) with smaller icon (h-3 w-3)
                   variant="default"
                   size="icon"
                   className="h-6 w-6 shadow-xl flex-shrink-0"
@@ -181,7 +180,6 @@ export function TabHistory({
                   </div>
                 </button>
                 <Button
-                  // CHANGED: Scaled down to 50% size (h-6 w-6) with smaller icon (h-3 w-3)
                   variant="default"
                   size="icon"
                   className="h-6 w-6 shadow-xl flex-shrink-0"

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       where: { hash },
       data: {
         orderByFairness: orderByFairness,
-        lastActivityAt: new Date(), // Also update activity
+        lastActivityAt: new Date(),
       },
     });
 

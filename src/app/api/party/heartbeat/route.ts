@@ -14,7 +14,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update lastActivityAt
     const party = await db.party.update({
       where: { hash },
       data: {

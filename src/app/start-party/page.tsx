@@ -33,7 +33,6 @@ function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
     );
 }
 
-
 export default function StartPartyPage() {
     const [selectedFlow, setSelectedFlow] = useState<"selector" | "create">("selector");
 

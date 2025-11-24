@@ -10,7 +10,6 @@ export async function GET(
   try {
     const { hash } = params;
 
-    // Buscar a party
     const party = await db.party.findUnique({
       where: { hash },
       include: {
@@ -34,7 +33,6 @@ export async function GET(
       );
     }
 
-    // Combinar participantes registrados com quem tem músicas
     const registeredSingers = party.participants.map((p) => p.name);
     const singersWithSongs = [
       ...new Set(party.playlistItems.map((item) => item.singerName)),

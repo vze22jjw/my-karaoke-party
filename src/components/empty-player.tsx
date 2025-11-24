@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { PlayerQrCode } from "./player-qr-code"; // Import the new component
+import { PlayerQrCode } from "./player-qr-code";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -60,7 +60,6 @@ export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
         className,
       )}
     >
-      {/* Background Logo */}
       <div className="absolute inset-0 flex h-full w-full items-center justify-center opacity-20 pointer-events-none select-none">
         <Image
           src={logo}
@@ -70,7 +69,6 @@ export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
         />
       </div>
 
-      {/* Main Center Content */}
       <div className="z-10 flex h-full w-full flex-col items-center justify-center pb-20">
           {showSlideshow ? (
             <Slideshow messages={messages} /> 
@@ -81,7 +79,6 @@ export function EmptyPlayer({ joinPartyUrl, className, messages }: Props) {
           )}
       </div>
       
-      {/* Bottom Left QR Code Section - Uses the new common component */}
       <PlayerQrCode joinPartyUrl={joinPartyUrl} className="bottom-20" />
     </div>
   );

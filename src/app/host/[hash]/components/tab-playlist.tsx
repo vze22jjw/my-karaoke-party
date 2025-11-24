@@ -56,19 +56,15 @@ export function TabPlaylist({
         </div>
       )}
 
-      {/* The list wrapper is now just a simple div */}
       <div className="space-y-2 pt-2">
-        {nextVideos.map((video, index) => {
-          
-          // Only hide the first item if there is a currentSong playing
+        {nextVideos.map((video, index) => {       
           const isNowPlaying = index === 0 && !!currentSong;
-
           return (
             <div
               key={video.id}
               className={cn(
                 "flex items-stretch justify-between gap-2",
-                isNowPlaying && "hidden" // Hide the first item (Now Playing)
+                isNowPlaying && "hidden"
               )}
             >
               <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center">

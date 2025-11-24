@@ -15,7 +15,6 @@ import {
 import { Button } from "~/components/ui/ui/button";
 import { Music, Clock, Users, Mic } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
-// Removed socket imports
 
 type Party = {
   hash: string;

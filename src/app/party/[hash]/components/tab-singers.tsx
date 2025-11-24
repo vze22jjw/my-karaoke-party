@@ -129,13 +129,11 @@ export function TabSingers({
                       {participant.avatar ? <span className="text-2xl">{participant.avatar}</span> : isHost ? <span className="text-2xl">👑</span> : <MicVocal className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      {/* Row 1: Name and Badge */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold leading-tight break-words">{participant.name}</p>
                         {isYou && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded flex-shrink-0">You</span>}
                       </div>
                       
-                      {/* Row 2: Stats and Timer */}
                       <div className="flex items-center justify-between mt-1 pr-2">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1 flex-shrink-0">
@@ -144,7 +142,6 @@ export function TabSingers({
                           </div>
                         </div>
                         
-                        {/* Timer moved to right side of second row */}
                         {isNextSinger && currentSong && (
                           <div className="text-xs font-mono">
                             <SongCountdownTimer 
@@ -169,7 +166,6 @@ export function TabSingers({
                   <div className="mt-2 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     <p className="text-xs font-medium text-muted-foreground">
                         Claps: {formatCompactNumber(participant.applauseCount)} 👏
-                        {/* Re-added the detailed breakdown here inside the expanded view */}
                         <span className="mx-2">•</span>
                         <span>{playedSongs.length} sang</span>
                         <span className="mx-2">•</span>

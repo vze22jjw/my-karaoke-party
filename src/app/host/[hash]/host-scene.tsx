@@ -98,7 +98,6 @@ export function HostScene({ party, initialData }: Props) {
     },
   });
 
-  // This handles the "Party Pause" / Intermission functionality
   const statusMutation = api.party.toggleStatus.useMutation({
     onSuccess: (data, variables) => {
         if (variables.status === "OPEN") {
@@ -163,12 +162,10 @@ export function HostScene({ party, initialData }: Props) {
           }
         }}
         useQueueRules={settings.orderByFairness}
-        // CHANGED: Use socketActions instead of mutation for real-time updates
         onToggleRules={() => {
           socketActions.toggleRules(!settings.orderByFairness);
         }}
         disablePlayback={settings.disablePlayback ?? false}
-        // CHANGED: Use socketActions instead of mutation for real-time updates
         onTogglePlayback={() => {
           socketActions.togglePlayback(!settings.disablePlayback);
         }}

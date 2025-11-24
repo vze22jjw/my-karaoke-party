@@ -61,19 +61,15 @@ export default function PlayerScene({ party, initialData }: Props) {
   // Intermission Logic: If status is OPEN but we have played songs, we are in intermission.
   const isIntermissionMode = partyStatus === "OPEN" && playedPlaylist.length > 0;
 
-  // State Detection & Message Logic
   let defaultMessage = "";
 
   if (partyStatus === "OPEN") {
     if (playedPlaylist.length === 0) {
-        // 1. Before Party
         defaultMessage = "The Party Will Start In A Moment...";
     } else {
-        // 2. Intermission
         defaultMessage = "Your Host Is Taking a Break...";
     }
   } else {
-    // 3. Party is STARTED but queue is empty
     defaultMessage = "Got a Song? Let's Sing!";
   }
 
@@ -129,7 +125,6 @@ export default function PlayerScene({ party, initialData }: Props) {
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
   const isPlaybackDisabled = settings.disablePlayback ?? false;
 
-  // Force EmptyPlayer if we are in "Intermission" mode (OPEN status)
   const displayedVideo = isIntermissionMode ? undefined : (currentSong ?? undefined);
 
   const commonPlayerProps = {
@@ -156,11 +151,8 @@ export default function PlayerScene({ party, initialData }: Props) {
           isFullscreen={desktopScreen.fullscreen}
           currentVideo={displayedVideo}
           isPlaybackDisabled={isPlaybackDisabled}
-          isSkipping={isSkipping}
-          
-          // Pass the calculated messages
+          isSkipping={isSkipping}          
           idleMessages={displayMessages} 
-          
           {...commonPlayerProps}
         />
         

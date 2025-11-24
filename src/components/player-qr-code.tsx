@@ -12,7 +12,6 @@ export function PlayerQrCode({ joinPartyUrl, className }: Props) {
   return (
     <div 
       className={cn(
-        // Changed bottom-8 to bottom-28 to sit above YouTube controls
         "absolute bottom-28 left-8 z-20 flex items-end", 
         className
       )}
