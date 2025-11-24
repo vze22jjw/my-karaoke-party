@@ -118,7 +118,8 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
           </div>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto p-4 border-t border-border bg-background flex-shrink-0">
+        {/* Added pb-20 to lift buttons above toast messages */}
+        <div className="w-full max-w-2xl mx-auto p-4 pb-20 border-t border-border bg-background flex-shrink-0">
           <Dots total={totalSteps} current={step} />
           
           <div className="mt-4 flex gap-4">

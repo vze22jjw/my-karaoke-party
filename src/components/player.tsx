@@ -127,8 +127,8 @@ export function Player({
         onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
         onSkip={onSkip}
         remainingTime={remainingTime}
-        isSkipping={false} // 'Player' doesn't track skipping state locally for this view
-        message="This video cannot be played inside the app."
+        isSkipping={false}
+        message="This Video Cannot Be Played Inside The App."
       />
     );
   }

@@ -5,7 +5,6 @@ import { Label } from "~/components/ui/ui/label";
 import { Input } from "~/components/ui/ui/input";
 import { QrCode } from "~/components/qr-code";
 import { getUrl } from "~/utils/url";
-import { env } from "~/env";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
 import { Info, Link as LinkIcon } from "lucide-react";

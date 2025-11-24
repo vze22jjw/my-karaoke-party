@@ -3,7 +3,7 @@
 import { type VideoInPlaylist } from "~/types/app-types";
 import { decode } from "html-entities";
 import { removeBracketedContent } from "~/utils/string";
-import { ExternalLink, MicVocal, SkipForward, Music } from "lucide-react";
+import { ExternalLink, MicVocal, SkipForward } from "lucide-react";
 import Image from "next/image";
 import { PlayerQrCode } from "./player-qr-code"; 
 import { Button } from "./ui/ui/button";
@@ -29,7 +29,7 @@ export function PlayerDisabledView({
   onOpenYouTubeAndAutoSkip,
   onSkip,
   remainingTime,
-  message = "Playback is disabled for this party.", // Default message
+  message = "Playback Is Disabled For This Party.",
 }: Props) {
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-start bg-gradient text-white overflow-hidden p-6">
@@ -82,7 +82,7 @@ export function PlayerDisabledView({
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg text-outline leading-tight">
             {decode(removeBracketedContent(video.title))}
           </h2>
-          <div className="flex items-center justify-center gap-2 text-primary text-xl md:text-2xl font-medium text-shadow-sm">
+          <div className="flex items-center justify-center gap-2 text-white/90 text-xl md:text-2xl font-medium text-shadow-sm">
             <MicVocal className="h-6 w-6" />
             <span>{video.singerName}</span>
           </div>
