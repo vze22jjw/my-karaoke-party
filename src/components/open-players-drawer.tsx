@@ -27,7 +27,6 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/ui/form";
-import { api } from "~/trpc/react";
 
 type Party = {
   hash: string;
@@ -50,28 +49,36 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
         defaultValues: { hash: "" }, 
     });
 
-    const partyQuery = api.party.getByHash.useQuery(
-        { hash: form.watch("hash") },
-        { enabled: false, retry: false, refetchOnWindowFocus: false }
-    );
-
-    async function onSubmit(_values: z.infer<typeof hashSchema>) {
+    async function onSubmit(values: z.infer<typeof hashSchema>) {
         setStatusError(null);
         try {
-            const result = await partyQuery.refetch();
-            const party = result.data;
+            // SECURITY CHECK: User must enter hash backwards
+            // e.g. If party is ABCD, user enters DCBA. We reverse it back to ABCD here.
+            const realHash = values.hash.split("").reverse().join("");
 
-            if (!party || party.status === 'CLOSED') {
-                setStatusError("Party not found or has ended.");
-                router.push("/404");
+            // Fallback: Use the fetch API which we know exists at /api/playlist/[hash] (returns 404 if not found)
+            const res = await fetch(`/api/playlist/${realHash}`);
+            
+            if (!res.ok) {
+                 setStatusError("Party not found or invalid code.");
+                 return;
+            }
+
+            // FIX: Type assertion to satisfy linter
+            const data = (await res.json()) as { status: string };
+
+            // Verify status if needed (the playlist endpoint returns party data)
+            if (data.status === 'CLOSED') {
+                setStatusError("Party has ended.");
                 return;
             }
-            router.push(`/player/${party.hash}`);
+
+            // Redirect to player page using the REAL hash
+            router.push(`/player/${realHash}`);
 
         } catch (e) {
             setStatusError("An unexpected error occurred.");
-            router.push("/404");
-            return;
+            console.error(e);
         }
     }
 
@@ -87,7 +94,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                                 <FormLabel className="text-white">Enter Party Hash</FormLabel>
                                 <FormControl>
                                     <Input
-                                        placeholder="e.g., ABC123"
+                                        placeholder="e.g., DCBA"
                                         className="w-full text-center font-mono uppercase"
                                         maxLength={10}
                                         {...field}
@@ -108,9 +115,9 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                     <Button
                         type="submit"
                         className="w-full h-12 text-lg font-bold"
-                        disabled={form.formState.isSubmitting || partyQuery.isFetching}
+                        disabled={form.formState.isSubmitting}
                     >
-                        {form.formState.isSubmitting || partyQuery.isFetching ? "Connecting..." : "Connect to Player"}
+                        {form.formState.isSubmitting ? "Connecting..." : "Connect to Player"}
                     </Button>
                 </form>
             </Form>
