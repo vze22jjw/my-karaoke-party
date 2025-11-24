@@ -4,14 +4,15 @@
 
 import { useRef, useState, useEffect } from "react";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
-import { QrCode } from "./qr-code";
 import { type VideoInPlaylist } from "~/types/app-types";
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
 import { Button } from "./ui/ui/button";
-import { MicVocal, SkipForward, Youtube } from "lucide-react";
+import { MicVocal, SkipForward } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
-import { SongCountdownTimer } from "./song-countdown-timer"; 
+import { SongCountdownTimer } from "./song-countdown-timer";
+import { PlayerQrCode } from "./player-qr-code"; 
+import { PlayerDisabledView } from "./player-disabled-view";
 
 type Props = {
   joinPartyUrl: string;
@@ -98,7 +99,7 @@ export function Player({
     setInternalIsPlaying(true);
     if (!isPlaying) { 
       const currentTime = event.target.getCurrentTime() as number;
-      onPlay(Math.floor(currentTime)); // Pass the new current time
+      onPlay(Math.floor(currentTime)); 
     }
   };
 
@@ -115,90 +116,24 @@ export function Player({
     setShowOpenInYouTubeButton(true);
   };
 
-  const openYouTubeTab = () => {
-    if (onOpenYouTubeAndAutoSkip) {
-      onOpenYouTubeAndAutoSkip();
-    }
-  };
-
   if (showOpenInYouTubeButton) {
     return (
-      <div
-        className={cn(
-          "mx-auto flex h-full w-full flex-col items-center justify-between space-y-6 p-6 text-center overflow-hidden",
-          isFullscreen && "bg-gradient"
-        )}
-      >
-        <div>
-          <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {decode(video.title)}
-          </h1>
-          <h2 className="text-outline scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl">
-            <MicVocal className="mr-2 inline text-primary" size={32} />
-            {video.singerName}
-            <MicVocal
-              className="ml-2 inline scale-x-[-1] transform text-primary"
-              size={32}
-            />
-          </h2>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-4">
-            <h3 className="text-xl font-bold text-red-400 mb-2">
-              🚫 Video Playback Error
-            </h3>
-            <p className="text-sm text-gray-300 mb-2">
-              This video can&apos;t be played here (it may be private or deleted).
-            </p>
-          </div>
-          
-          <h3 className="text-2xl font-semibold tracking-tight animate-in fade-in zoom-in">
-            Click the button to open on YouTube
-          </h3>
-          
-          <Button
-            type="button"
-            size="lg"
-            className="w-fit self-center animate-in fade-in zoom-in bg-red-600 hover:bg-red-700"
-            onClick={() => openYouTubeTab()}
-          >
-            <Youtube className="mr-2" size={24} />
-            Open on YouTube
-          </Button>
-          
-          <div className="mt-4">
-            <Button
-              className="animate-in fade-in zoom-in"
-              variant={"secondary"}
-              type="button"
-              onClick={() => {
-                onSkip();
-              }}
-            >
-              <SkipForward className="mr-2 h-5 w-5" />
-              Skip Song
-            </Button>
-          </div>
-        </div>
-
-        <div className="relative flex w-full basis-1/4 items-end text-center">
-          <QrCode url={joinPartyUrl} />
-          <a
-            href={joinPartyUrl}
-            target="_blank"
-            className="font-mono text-xl text-white pl-4 text-outline"
-          >
-            {joinPartyUrl.split("//")[1]}
-          </a>
-        </div>
-      </div>
+      <PlayerDisabledView
+        video={video}
+        nextSong={nextSong}
+        joinPartyUrl={joinPartyUrl}
+        isFullscreen={isFullscreen}
+        onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
+        onSkip={onSkip}
+        remainingTime={remainingTime}
+        isSkipping={false}
+        message="This Video Cannot Be Played Inside The App."
+      />
     );
   }
 
-  // Default player view
   return (
-    <div className="relative z-0 h-full">
+    <div className="relative z-0 h-full bg-black">
       <YouTube
         key={video.id}
         loading="eager"
@@ -216,79 +151,60 @@ export function Player({
           onPlayerEnd();
         }}
       />
+      
       <div
         className={cn(
-          "absolute top-0 w-full text-center animate-in fade-in zoom-in",
+          "absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none",
           isReady ? "hidden" : "block"
         )}
       >
-        <div
-          className={`flex w-full flex-col items-center justify-center bg-black p-4 ${
-            isReady ? "bg-opacity-80" : "bg-opacity-0"
-          }`}
-        >
-          <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+        <div className="flex w-full flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
+          <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl text-white">
             {decode(video.title)}
           </h1>
-          <h2 className="text-outline scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl">
-            <MicVocal className="mr-2 inline text-primary" size={32} />
+          <h2 className="text-outline mt-2 scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl text-white flex items-center gap-3">
+            <MicVocal className="text-primary" size={32} />
             {video.singerName}
-            <MicVocal
-              className="ml-2 inline scale-x-[-1] transform text-primary"
-              size={32}
-            />
           </h2>
         </div>
 
         {!isReady && (
-          <div>
+          <div className="mt-20">
             <Spinner size={"large"} />
           </div>
         )}
       </div>
 
       {isReady && !isPlaying && nextSong && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-          <div className="animate-in fade-in zoom-in rounded-lg border border-primary/50 bg-black/80 p-4 text-center shadow-lg">
-            <h3 className="text-xl font-semibold text-white">
-              Next Singer: {nextSong.singerName} up in{" "}
-              <SongCountdownTimer
-                remainingTime={remainingTime}
-                className="text-white"
-              />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md">
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Next Up: <span className="text-primary">{nextSong.singerName}</span>
             </h3>
+            <div className="text-white/70 text-sm font-mono">
+               Starting in <SongCountdownTimer remainingTime={remainingTime} className="text-white font-bold text-lg" />
+            </div>
           </div>
         </div>
       )}
 
-      <div className="absolute bottom-20 left-0 z-10 flex w-full flex-row justify-between px-4 items-end">
-        <div className="flex items-end">
-          <QrCode url={joinPartyUrl} />
-          <a
-            href={joinPartyUrl}
-            target="_blank"
-            className="font-mono text-xl text-white pl-4 text-outline hidden sm:block"
-          >
-            {joinPartyUrl.split("//")[1]}
-          </a>
-        </div>
+      <div className={cn(
+         "transition-opacity duration-500",
+         internalIsPlaying && isFullscreen ? "opacity-0 hover:opacity-100" : "opacity-100"
+      )}>
+         <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
 
-        <div
-          className={`self-end p-2 mr-16 ${
-            internalIsPlaying && isFullscreen ? "hidden" : "block"
-          }`}
-        >
-          <Button
-            variant={"secondary"}
-            type="button"
-            onClick={() => {
-              onSkip();
-            }}
-          >
-            <SkipForward className="mr-2 h-5 w-5" />
-            Skip
-          </Button>
-        </div>
+         <div className="absolute bottom-20 right-24 z-20">
+            <Button
+              variant={"secondary"}
+              size="default" 
+              className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white"
+              onClick={() => onSkip()}
+            >
+              <SkipForward className="h-4 w-4" />
+              Skip
+            </Button>
+         </div>
       </div>
     </div>
   );

@@ -4,8 +4,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Fetch ALL parties that are currently OPEN or STARTED
-    // We no longer filter by time; we rely on the status (and auto-cleanup for inactive ones)
     const parties = await db.party.findMany({
       where: {
         status: {
@@ -28,7 +26,6 @@ export async function GET() {
       },
     });
 
-    // Format the response
     const formattedParties = parties.map((party) => ({
       hash: party.hash,
       name: party.name,

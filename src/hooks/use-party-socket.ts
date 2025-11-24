@@ -18,9 +18,11 @@ interface SocketActions {
   playbackPause: () => void;
   startSkipTimer: () => void;
   startParty: () => void;
+  refreshParty: () => void;
   updateIdleMessages: (messages: string[]) => void;
   updateThemeSuggestions: (suggestions: string[]) => void;
   sendApplause: (singerName: string) => Promise<void>; 
+  songEnded: (id: string) => Promise<void>;
 }
 
 type Participant = {
@@ -137,12 +139,10 @@ export function usePartySocket(
         console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); 
       }
 
-      // Construct correct URL for logs/debugging
       const socketUrl = typeof window !== "undefined" ? window.location.origin : "";
       console.log(`${LOG_TAG} Connecting to socket at: ${socketUrl} with path: /socket.io`);
 
       const newSocket = io({
-        // FIX: Use default path /socket.io to separate from Next.js API routing
         path: "/socket.io",
         addTrailingSlash: false,
         reconnectionAttempts: 5,
@@ -230,7 +230,7 @@ export function usePartySocket(
     const heartbeatInterval = setInterval(() => {
       if (socketRef.current?.connected) socketRef.current.emit("heartbeat", { partyHash, singerName, avatar });
       else socketRef.current?.emit("join-party", { partyHash, singerName, avatar });
-    }, 60000);
+    }, 300000); // 300000 (5 mins)
 
     return () => {
       if (socketRef.current) {
@@ -241,7 +241,7 @@ export function usePartySocket(
       clearInterval(heartbeatInterval);
       stopCountdown();
     };
-  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar]);
+  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar, initialData.currentSongStartedAt, initialData.currentSongRemainingDuration]);
 
   const sendApplauseHttp = useCallback(async (singer: string) => {
     try {
@@ -278,9 +278,14 @@ export function usePartySocket(
     playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
     startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
+    refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }),
     updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
     updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
     sendApplause: sendApplauseHttp,
+    songEnded: async (id: string) => { 
+      console.log("Song ended: " + id); 
+      socketRef.current?.emit("mark-as-played", { partyHash }); 
+    },
   }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {

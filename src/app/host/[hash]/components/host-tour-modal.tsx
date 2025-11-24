@@ -13,15 +13,19 @@ import {
   Check,
   ListMusic,
   Music,
-  Play,
   Settings,
+  Link,
+  Activity,
+  MessageSquareQuote,
+  Scale,
+  Download,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onFireConfetti: () => void; // <-- New Prop
+  onFireConfetti: () => void;
 };
 
 const StepContent = ({
@@ -60,10 +64,10 @@ const Dots = ({ total, current }: { total: number; current: number }) => (
 
 export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const [step, setStep] = useState(1);
-  const totalSteps = 2; 
+  const totalSteps = 4; 
 
   const handleClose = () => {
-    onFireConfetti(); // <-- Fire immediately
+    onFireConfetti();
     onClose();
     setTimeout(() => setStep(1), 200);
   };
@@ -85,38 +89,58 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
           <div className="px-4 space-y-4">
             {step === 1 && (
               <>
-                <StepContent icon={<Play className="h-6 w-6" />} title="1. Start & Manage the Party">
-                  Your party is currently **&quot;OPEN&quot;**. Guests can join, but the 
-                  player is idle. Go to the **Settings** tab and click 
-                  **Start Party** when you&apos;re ready to load the first song.
+                <StepContent icon={<Link className="h-6 w-6" />} title="1. Party Links">
+                  Share the **Join Link** with singers or display the **QR Code** on a big screen. 
+                  Open the **Player Link** on your TV to show the lyrics and queue.
                 </StepContent>
-                <StepContent icon={<ListMusic className="h-6 w-6" />} title="2. Control the Queue">
-                  The **Playlist** tab is your main control center. You can see 
-                  the full list of upcoming songs, remove any you don&apos;t want, 
-                  and use the playback controls to **Play, Pause, or Skip** the song that is currently on the player screen.
+                <StepContent icon={<Activity className="h-6 w-6" />} title="2. Manage Status">
+                  Use **Start Party** to begin the music. Need a break? 
+                  Hit **Intermission** to pause the queue and show a slideshow of messages.
                 </StepContent>
               </>
             )}
 
             {step === 2 && (
               <>
-                <StepContent icon={<Settings className="h-6 w-6" />} title="3. Customize Your Vibe">
-                  In **Settings**, you can add **Theme Suggestions** for your guests 
-                  or create a library of **Idle Messages** (like lyrics or 
-                  quotes) to show on the player screen when no music is playing.
+                <StepContent icon={<ListMusic className="h-6 w-6" />} title="3. Control the Queue">
+                  The **Playlist** tab is your main control center. 
+                  Play, pause, skip songs, or remove them from the list.
                 </StepContent>
-                <StepContent icon={<Music className="h-6 w-6" />} title="4. Spotify Integration">
-                  Also in **Settings**, you can paste in a **Spotify Playlist ID** (or URL). 
-                  This will show the top songs from that *specific* playlist to your 
-                  guests on their Suggestions tab. If you leave it blank, it defaults 
-                  to a global &quot;Karaoke Classics&quot; playlist.
+                <StepContent icon={<Scale className="h-6 w-6" />} title="4. Party Rules">
+                  Toggle **Fairness Mode** to prevent queue hogging, or switch **Playback** modes 
+                  if you need to open videos directly on YouTube.
+                </StepContent>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <StepContent icon={<Settings className="h-6 w-6" />} title="5. Engage Guests">
+                  Add **Theme Suggestions** to inspire song choices.
+                </StepContent>
+                <StepContent icon={<MessageSquareQuote className="h-6 w-6" />} title="6. Idle Messages">
+                  Create a library of custom messages (like announcements or lyrics) 
+                  to display on the TV when no song is playing.
+                </StepContent>
+              </>
+            )}
+
+            {step === 4 && (
+              <>
+                <StepContent icon={<Music className="h-6 w-6" />} title="7. Spotify & Search">
+                  Link a **Spotify Playlist** to show trending tracks to your guests. 
+                  You can also limit **Search Results** to keep things fast.
+                </StepContent>
+                <StepContent icon={<Download className="h-6 w-6" />} title="8. Export History">
+                  At the end of the night, **Export** the list of played songs 
+                  to save your party&apos;s soundtrack to Spotify or a text file.
                 </StepContent>
               </>
             )}
           </div>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto p-4 border-t border-border bg-background">
+        <div className="w-full max-w-2xl mx-auto p-4 pb-20 border-t border-border bg-background">
           <Dots total={totalSteps} current={step} />
           
           <div className="mt-4 flex gap-4">

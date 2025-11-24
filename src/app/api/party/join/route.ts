@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-
-    // Verificar se a party existe
     const party = await db.party.findUnique({
       where: { hash },
     });
@@ -26,7 +24,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Registrar o participante (upsert para evitar duplicatas)
     await db.partyParticipant.upsert({
       where: {
         partyId_name: {
@@ -39,7 +36,6 @@ export async function POST(request: NextRequest) {
         name: name,
       },
       update: {
-        // Não precisa atualizar nada, apenas garantir que existe
       },
     });
 

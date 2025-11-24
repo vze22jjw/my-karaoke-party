@@ -45,10 +45,7 @@ export function orderByFairness<T>(
   return returnArray;
 }
 
-// Interface defining all required fields for sorting AND for the API final mapping
-// This must be an EXACT structural match for the Prisma PlaylistItem type.
 export interface FairnessPlaylistItem {
-  // All fields from Prisma PlaylistItem model:
   id: number;
   partyId: number;
   videoId: string;

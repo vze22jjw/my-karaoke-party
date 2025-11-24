@@ -13,7 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/ui/card"; // Used Card instead of Drawer
+} from "~/components/ui/ui/card";
 import { Input } from "./ui/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from "./ui/ui/form";
 import { toast } from "sonner";
-import { Loader2, PartyPopper } from "lucide-react"; // Added PartyPopper
+import { Loader2, PartyPopper } from "lucide-react";
 
 const formSchema = z.object({
   partyName: z
@@ -68,6 +68,11 @@ export function CreateParty() {
     onSuccess: (data) => {
       if (data.hash) {
         setName(form.getValues("yourName"));
+        
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
+        }
+
         toast.success(`Party "${data.name}" created!`);
         setTimeout(() => {
           router.push(`/host/${data.hash}`);

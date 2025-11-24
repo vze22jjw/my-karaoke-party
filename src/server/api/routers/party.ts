@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
 import { sqids } from "~/server/utils/sqids";
 import { TRPCError } from "@trpc/server"; 
@@ -28,6 +28,7 @@ export const partyRouter = createTRPCRouter({
         const party = await ctx.db.party.create({
           data: {
             name: input.name,
+            status: "OPEN",
             hash: "temp", // Temporary hash
           },
         });
@@ -94,4 +95,47 @@ export const partyRouter = createTRPCRouter({
       });
       return { success: true, newId: finalId };
     }),
+
+  // --- Toggle Status Mutation (Secured) ---
+  toggleStatus: protectedProcedure
+    .input(z.object({ 
+      hash: z.string(), 
+      status: z.string() // Accepts OPEN, STARTED, CLOSED
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const party = await ctx.db.party.update({
+        where: { hash: input.hash },
+        data: { 
+          status: input.status,
+          lastActivityAt: new Date(),
+          // If entering OPEN (Intermission), clear the start time so the timer stops
+          ...(input.status === "OPEN" ? {
+             currentSongStartedAt: null,
+             currentSongRemainingDuration: null
+          } : {})
+        },
+      });
+      
+      return party;
+    }),
+    
+  settings: protectedProcedure
+    .input(z.object({
+        hash: z.string(),
+        useQueueRules: z.boolean().optional(),
+        disablePlayback: z.boolean().optional(),
+        maxSearchResults: z.number().optional(),
+        themeSuggestions: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+        await ctx.db.party.update({
+            where: { hash: input.hash },
+            data: {
+                orderByFairness: input.useQueueRules,
+                disablePlayback: input.disablePlayback,
+                themeSuggestions: input.themeSuggestions
+            }
+        });
+        return { success: true };
+    })
 });

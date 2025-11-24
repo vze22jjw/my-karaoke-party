@@ -66,17 +66,27 @@ export function TabSingers({
             <Users className="h-5 w-5" />
             <span className="whitespace-nowrap">Singers ({participants.length})</span>
           </h2>
-          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={onReplayTour}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6 text-muted-foreground hover:bg-transparent hover:text-muted-foreground" 
+            onClick={onReplayTour}
+          >
             <Info className="h-4 w-4" />
           </Button>
         </div>
         
         {/* Center: Applause Button */}
         <div className="flex-1 flex justify-center items-center px-2 min-w-0">
-          {/* FIX: Removed 'currentSong && currentSingerName' check so button is always visible */}
           {currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
-                <Button asChild variant="ghost" size="icon" className="text-white hover:text-yellow-500 hover:bg-yellow-500/10 h-16 w-16 text-4xl font-bold flex-shrink-0" aria-label="Send applause">
+                <Button 
+                    asChild 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-white h-16 w-16 text-4xl font-bold flex-shrink-0 hover:bg-transparent" 
+                    aria-label="Send applause"
+                >
                     <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
                 </Button>
             </Link>
@@ -84,7 +94,12 @@ export function TabSingers({
         </div>
 
         <div className="flex items-center flex-shrink-0">
-          <Button variant="ghost" onClick={onLeaveParty} className="text-foreground/80 sm:hover:text-red-500 sm:hover:bg-red-500/10 px-2" aria-label="Leave party">
+          <Button 
+            variant="ghost" 
+            onClick={onLeaveParty} 
+            className="text-foreground/80 px-2 hover:bg-transparent hover:text-foreground/80" 
+            aria-label="Leave party"
+          >
             <span className="text-lg font-semibold text-white mr-1">Leave</span>
             <LogOut className="h-5 w-5" />
           </Button>
@@ -114,38 +129,51 @@ export function TabSingers({
                       {participant.avatar ? <span className="text-2xl">{participant.avatar}</span> : isHost ? <span className="text-2xl">👑</span> : <MicVocal className="h-5 w-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold truncate">{participant.name}</p>
-                        {isYou && <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded flex-shrink-0">You</span>}
-                        {isNextSinger && currentSong && <SongCountdownTimer remainingTime={remainingTime} className={cn(isPlaying ? "text-primary" : "text-muted-foreground")} message={nextSingerMessage} />}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold leading-tight break-words">{participant.name}</p>
+                        {isYou && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded flex-shrink-0">You</span>}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1 flex-shrink-0"><Music className="h-3 w-3" /><span>{totalSongs}</span></div>
-                        {!showPlayed && (
-                          <div className="flex items-center gap-1 truncate">
-                            <span className="opacity-50">•</span>
-                            <span className="truncate">{(!!currentSongForSinger || nextSongs.length > 0) && `${nextSongs.length + (currentSongForSinger ? 1 : 0)} next`}{(!!currentSongForSinger || nextSongs.length > 0) && playedSongs.length > 0 && " • "}{playedSongs.length > 0 && `${playedSongs.length} sang`}</span>
+                      
+                      <div className="flex items-center justify-between mt-1 pr-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Music className="h-3 w-3" />
+                            <span>{totalSongs}</span>
+                          </div>
+                        </div>
+                        
+                        {isNextSinger && currentSong && (
+                          <div className="text-xs font-mono">
+                            <SongCountdownTimer 
+                              remainingTime={remainingTime} 
+                              className={cn("font-bold", isPlaying ? "text-primary" : "text-muted-foreground")} 
+                              message={nextSingerMessage} 
+                            />
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 self-start pt-1">
                     {(playedSongs.length > 0 || nextSongs.length > 0 || !!currentSongForSinger) && (
-                      <Button type="button" onClick={() => togglePlayed(participant.name)} variant="ghost" size="icon" className="h-8 w-8 text-white">
+                      <Button type="button" onClick={() => togglePlayed(participant.name)} variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-transparent">
                         <ChevronDown className={cn("h-5 w-5 transition-transform", showPlayed ? "rotate-180" : "")} />
                       </Button>
                     )}
                   </div>
                 </div>
                 {showPlayed && (
-                  <div className="mt-2 space-y-3">
+                  <div className="mt-2 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     <p className="text-xs font-medium text-muted-foreground">
                         Claps: {formatCompactNumber(participant.applauseCount)} 👏
+                        <span className="mx-2">•</span>
+                        <span>{playedSongs.length} sang</span>
+                        <span className="mx-2">•</span>
+                        <span>{nextSongs.length + (currentSongForSinger ? 1 : 0)} next</span>
                     </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">In Line: {currentSongForSinger ? nextSongs.length + 1 : nextSongs.length}</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">In Line:</p>
                         <ul className="space-y-1">
                           {currentSongForSinger && <li className="text-xs truncate pl-2 font-bold text-primary">• {decode(currentSongForSinger.title)} (Playing Now)</li>}
                           {nextSongs.map((song) => <li key={song.id} className="text-xs truncate pl-2">• {decode(song.title)}</li>)}
@@ -154,7 +182,7 @@ export function TabSingers({
                     )}
                     {playedSongs.length > 0 && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Sang: {playedSongs.length}</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">History:</p>
                         <ul className="space-y-1">
                           {playedSongs.map((song) => <li key={song.id + (song.playedAt?.toString() ?? "")} className="text-xs truncate pl-2 text-muted-foreground">• {decode(song.title)}</li>)}
                         </ul>

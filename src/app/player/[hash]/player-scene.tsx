@@ -7,14 +7,11 @@ import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { useState, useEffect, useRef, useCallback } from "react"; 
 import { getUrl } from "~/utils/url";
 import { useRouter } from "next/navigation";
-// Player component is no longer directly used here
-// EmptyPlayer is no longer directly used here
-// Button, Maximize, Minimize, cn are no longer used here
 import { usePartySocket } from "~/hooks/use-party-socket";
 import type { RefCallback } from "react"; 
-// PlayerDisabledView is no longer directly used here
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
+import LoaderFull from "~/components/loader-full"; 
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -44,12 +41,14 @@ export default function PlayerScene({ party, initialData }: Props) {
   const { 
     currentSong, 
     unplayedPlaylist, 
+    playedPlaylist, 
     socketActions, 
     isPlaying,
     settings, 
     isSkipping, 
     remainingTime, 
-    idleMessages 
+    idleMessages,
+    partyStatus
   } = usePartySocket(
     party.hash,
     initialData,
@@ -57,9 +56,24 @@ export default function PlayerScene({ party, initialData }: Props) {
   );
   
   const desktopScreen = useFullscreen();
-  // const mobileScreen = useFullscreen(); // --- FIX: REMOVED MOBILE FULLSCREEN ---
-
   const nextSong = unplayedPlaylist[0];
+
+  // Intermission Logic: If status is OPEN but we have played songs, we are in intermission.
+  const isIntermissionMode = partyStatus === "OPEN" && playedPlaylist.length > 0;
+
+  let defaultMessage = "";
+
+  if (partyStatus === "OPEN") {
+    if (playedPlaylist.length === 0) {
+        defaultMessage = "The Party Will Start In A Moment...";
+    } else {
+        defaultMessage = "Your Host Is Taking a Break...";
+    }
+  } else {
+    defaultMessage = "Got a Song? Let's Sing!";
+  }
+
+  const displayMessages = [defaultMessage, ...idleMessages];
 
   const doTheSkip = useCallback(() => {
     setForceAutoplay(false); 
@@ -88,24 +102,17 @@ export default function PlayerScene({ party, initialData }: Props) {
   
   const handleOpenYouTubeAndAutoSkip = () => {
     if (!currentSong) return; 
-
     socketActions.startSkipTimer(); 
-  
     const durationMs = parseISO8601Duration(currentSong.duration);
-  
     if (durationMs && durationMs > 0) {
       socketActions.playbackPlay(); 
-    } else {
-      console.log("Song has no duration, auto-skip timer will not start.");
     }
-  
     window.open(
       `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
       "_blank",
       "fullscreen=yes",
     );
   };
-
   
   const handlePlay = (currentTime?: number) => {
     socketActions.playbackPlay(currentTime); 
@@ -116,8 +123,9 @@ export default function PlayerScene({ party, initialData }: Props) {
   };
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);
-  
   const isPlaybackDisabled = settings.disablePlayback ?? false;
+
+  const displayedVideo = isIntermissionMode ? undefined : (currentSong ?? undefined);
 
   const commonPlayerProps = {
     joinPartyUrl: joinPartyUrl,
@@ -137,18 +145,16 @@ export default function PlayerScene({ party, initialData }: Props) {
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
         
-        {/* --- FIX: RENDER ONLY DESKTOP VIEW --- */}
         <PlayerDesktopView
           playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={desktopScreen.toggle}
           isFullscreen={desktopScreen.fullscreen}
-          currentVideo={currentSong ?? undefined}
+          currentVideo={displayedVideo}
           isPlaybackDisabled={isPlaybackDisabled}
-          isSkipping={isSkipping}
-          idleMessages={idleMessages} 
+          isSkipping={isSkipping}          
+          idleMessages={displayMessages} 
           {...commonPlayerProps}
         />
-        {/* --- FIX: ENTIRE MOBILE VIEW DIV REMOVED --- */}
         
       </div>
     </div>

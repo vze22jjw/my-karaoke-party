@@ -5,11 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Calculate 20 minutes ago
     const twentyMinutesAgo = new Date();
     twentyMinutesAgo.setMinutes(twentyMinutesAgo.getMinutes() - 20);
 
-    // Find and delete parties with no activity for 20+ minutes
     const deletedParties = await db.party.deleteMany({
       where: {
         lastActivityAt: {

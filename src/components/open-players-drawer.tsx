@@ -50,7 +50,6 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
         defaultValues: { hash: "" }, 
     });
 
-    // Use query to fetch and validate the party hash on submit
     const partyQuery = api.party.getByHash.useQuery(
         { hash: form.watch("hash") },
         { enabled: false, retry: false, refetchOnWindowFocus: false }
@@ -64,12 +63,9 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
 
             if (!party || party.status === 'CLOSED') {
                 setStatusError("Party not found or has ended.");
-                // Redirect to 404 page if party is not found/closed
                 router.push("/404");
                 return;
             }
-
-            // Redirect to player page
             router.push(`/player/${party.hash}`);
 
         } catch (e) {

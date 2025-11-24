@@ -94,7 +94,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
         {currentSingerName}
       </h2>
       
-      <h1 className="text-outline text-2xl font-extrabold tracking-tight text-white sm:text-3xl uppercase mt-2">
+      <h1 className="text-outline text-2xl font-extrabold tracking-tight text-white sm:text-3xl uppercase mt-2 line-clamp-2">
         {decode(activeSong.title)}
       </h1>
     </>

@@ -91,6 +91,7 @@ export function PartySceneTabs({
   const handleCloseTour = () => {
     setIsTourOpen(false);
     setHasSeenTour(true);
+    setActiveTab("singers");
     setTimeout(() => {
       fireConfetti();
     }, 300);

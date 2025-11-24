@@ -23,7 +23,6 @@ export function AdminLogin() {
         body: JSON.stringify({ password }),
       });
 
-      // Added type assertion here
       const data = (await res.json()) as { error?: string };
 
       if (!res.ok) {

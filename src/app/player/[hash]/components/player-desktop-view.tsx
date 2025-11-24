@@ -50,10 +50,9 @@ export function PlayerDesktopView({
   isSkipping,
   idleMessages, 
 }: Props) {
+  
   return (
-    // --- START FIX: Removed "hidden sm:block" responsive classes ---
     <div className="w-full h-screen"> 
-    {/* --- END FIX --- */}
       <div className="flex h-full flex-col">
         <div className="relative h-full" ref={playerRef}>
           
@@ -90,7 +89,7 @@ export function PlayerDesktopView({
             <EmptyPlayer
               joinPartyUrl={joinPartyUrl}
               className={isFullscreen ? "bg-gradient" : ""}
-              idleMessages={idleMessages} 
+              messages={idleMessages} 
             />
           )}
 
@@ -98,7 +97,6 @@ export function PlayerDesktopView({
             onClick={onToggleFullscreen}
             variant="ghost"
             size="icon"
-            // FIX: Increased bottom padding to bottom-20 to clear YouTube controls
             className={cn(
               "z-[100] bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all",
               isFullscreen 
