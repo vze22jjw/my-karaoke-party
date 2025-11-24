@@ -14,15 +14,14 @@ export function FitText({ children, className }: FitTextProps) {
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
+    let frameId: number;
+
     const calculateScale = () => {
       const container = containerRef.current;
       const text = textRef.current;
       if (!container || !text) return;
 
       const containerWidth = container.offsetWidth;
-      // We reset scale to 1 temporarily or rely on offsetWidth being unscaled layout width?
-      // offsetWidth usually reports layout width (ignoring transform).
-      // However, to be safe and handle updates correctly:
       const textWidth = text.offsetWidth;
 
       if (textWidth > containerWidth && textWidth > 0) {
@@ -33,14 +32,22 @@ export function FitText({ children, className }: FitTextProps) {
       }
     };
 
-    // Initial calc
-    requestAnimationFrame(calculateScale);
+    const onResize = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(calculateScale);
+    };
 
-    const observer = new ResizeObserver(calculateScale);
+    // Initial calc
+    onResize();
+
+    const observer = new ResizeObserver(onResize);
     if (containerRef.current) observer.observe(containerRef.current);
     if (textRef.current) observer.observe(textRef.current);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frameId);
+    };
   }, [children]);
 
   return (

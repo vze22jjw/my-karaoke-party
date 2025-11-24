@@ -18,10 +18,11 @@ import {
 } from "~/components/ui/ui/form";
 import { Input } from "~/components/ui/ui/input";
 import { Button } from "~/components/ui/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { FitText } from "~/components/fit-text"; // <-- IMPORT ADDED
 
 // NEW AVATAR COMPONENTS ---
 const AVATARS = [
@@ -120,9 +121,10 @@ export default function JoinScene({
           {partyName && (
             <div className="mb-4 w-full text-center">
               <p className="text-sm text-white/80">Joining:</p>
-              <h1 className="text-outline scroll-m-20 text-xl font-extrabold tracking-tight uppercase break-words sm:text-2xl">
+              {/* CHANGED: Replaced h1 with FitText to ensure single-line scaling */}
+              <FitText className="text-outline scroll-m-20 text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
                 {partyName}
-              </h1>
+              </FitText>
             </div>
           )}
           <Form {...form}>
