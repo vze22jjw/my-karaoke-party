@@ -58,7 +58,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
 
   const playedPlaylist = playedItems
     .sort((a, b) => (b.playedAt?.getTime() ?? 0) - (a.playedAt?.getTime() ?? 0))
-    .map(formatPlaylistItem); // This now includes spotifyId
+    .map(formatPlaylistItem);
 
   const lastPlayedSong =
     playedItems.length > 0
@@ -105,7 +105,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   const settings: KaraokeParty["settings"] = {
     orderByFairness: useQueueRules,
     disablePlayback: party.disablePlayback,
-    spotifyPlaylistId: party.spotifyPlaylistId, // <-- Ensure it's here
+    spotifyPlaylistId: party.spotifyPlaylistId,
+    isManualSortActive: party.isManualSortActive, // <-- NEW
   };
 
   if (party.status === "OPEN") {
@@ -117,7 +118,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSong: null,
       unplayed: allUnplayed,
       played: playedPlaylist,
-      settings, // <-- Pass settings object
+      settings, 
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
       status: party.status,
@@ -130,7 +131,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSong: formattedCurrentSong,
       unplayed: unplayedPlaylist,
       played: playedPlaylist,
-      settings, // <-- Pass settings object
+      settings,
       currentSongStartedAt: party.currentSongStartedAt,
       currentSongRemainingDuration: remainingDuration,
       status: party.status,

@@ -29,6 +29,9 @@ model Party {
     lastActivityAt DateTime       @default(now())
     orderByFairness Boolean        @default(true)
     disablePlayback Boolean        @default(false)
+    // --- NEW FIELD ---
+    isManualSortActive Boolean     @default(false)
+    
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
@@ -39,7 +42,7 @@ model Party {
     idleMessages   String[]       @default([]) 
     themeSuggestions String[]     @default([]) 
     spotifyPlaylistId String?
-
+    
     @@index([hash])
     @@index([lastActivityAt])
     @@index([status])
@@ -54,6 +57,7 @@ model PartyParticipant {
     role      String        @default("Guest") 
     applauseCount Int       @default(0)
     avatar    String?       // Will store an emoji or icon identifier
+    
     @@unique([partyId, name])
     @@index([partyId])
 }
@@ -74,7 +78,7 @@ model PlaylistItem {
     orderIndex Int       @default(0)
     randomBreaker Float?
     spotifyId  String?
-
+    
     @@index([partyId])
     @@index([playedAt])
 }

@@ -21,9 +21,7 @@ import { parseISO8601Duration } from "~/utils/string";
 
 export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
-    // --- DEBUG LOG ---
     console.log(`${LOG_TAG} New Socket Connection Accepted: ${socket.id}`);
-    // -----------------
 
     socket.on("request-open-parties", async () => {
       debugLog(LOG_TAG, `Received 'request-open-parties' from ${socket.id}`);
@@ -66,6 +64,14 @@ export function registerSocketEvents(io: Server) {
           include: { participants: { where: { name: data.singerName } } },
         });
         if (!party) return;
+
+        // --- LOCK CHECK ---
+        if (party.isManualSortActive) {
+             socket.emit("error", { message: "Queue is currently locked by host." });
+             return;
+        }
+        // ------------------
+
         const participant = party.participants[0];
         const { isNew } = await registerParticipant(party.id, data.singerName, participant?.avatar ?? null);
         if (isNew) socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
@@ -120,7 +126,6 @@ export function registerSocketEvents(io: Server) {
         const lastPlayedSong = playedItems.length > 0 ? playedItems.reduce((l, c) => (l.playedAt! > c.playedAt! ? l : c)) : null;
 
         const fairlySorted = party.orderByFairness 
-          // FIX: Updated variable names to match definitions above
           ? orderByRoundRobin(allItems as FairnessPlaylistItem[], unplayedItems as FairnessPlaylistItem[], lastPlayedSong?.singerName ?? null) as PlaylistItem[]
           : unplayedItems;
 
@@ -143,7 +148,6 @@ export function registerSocketEvents(io: Server) {
       } catch (error) { console.error("Error starting party:", error); }
     });
 
-    // --- NEW: Generic refresh event ---
     socket.on("refresh-party", async (data: { partyHash: string }) => {
        await updateAndEmitPlaylist(io, data.partyHash, "refresh-party");
     });
@@ -184,7 +188,6 @@ export function registerSocketEvents(io: Server) {
     socket.on("playback-pause", async (data: { partyHash: string }) => {
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
-        // Fix: Use optional chaining for cleaner syntax
         if (!party?.currentSongStartedAt || party.currentSongRemainingDuration === null) return;
 
         const elapsed = Math.floor((new Date().getTime() - party.currentSongStartedAt.getTime()) / 1000);
@@ -235,6 +238,58 @@ export function registerSocketEvents(io: Server) {
       const suggs = data.suggestions.map((l) => l.trim()).filter(Boolean).slice(0, 10);
       await db.party.update({ where: { hash: data.partyHash }, data: { themeSuggestions: suggs, lastActivityAt: new Date() } });
       io.to(data.partyHash).emit("theme-suggestions-updated", suggs);
+    });
+
+    // --- MANUAL SORT EVENTS ---
+    
+    // 1. Toggle Lock State
+    socket.on("toggle-manual-sort", async (data: { partyHash: string; isActive: boolean }) => {
+        await db.party.update({
+            where: { hash: data.partyHash },
+            data: { isManualSortActive: data.isActive }
+        });
+        // Emitting to everyone so guests get the "Locked" UI
+        await updateAndEmitPlaylist(io, data.partyHash, "toggle-manual-sort");
+    });
+
+    // 2. Save new order
+    socket.on("save-queue-order", async (data: { partyHash: string; newOrderIds: string[] }) => {
+        try {
+            const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+            if (!party) return;
+
+            const unplayed = await db.playlistItem.findMany({
+                where: { partyId: party.id, playedAt: null }
+            });
+
+            if (unplayed.length === 0) return;
+            
+            // Calculate base time from the start of the queue
+            const sortedByTime = [...unplayed].sort((a, b) => a.addedAt.getTime() - b.addedAt.getTime());
+            const baseTime = sortedByTime[0]?.addedAt.getTime() ?? Date.now();
+
+            // Rewrite timestamps to force the new order
+            const updates = data.newOrderIds.map((videoId, index) => {
+                const newAddedAt = new Date(baseTime + (index * 1000));
+                return db.playlistItem.updateMany({
+                    where: { partyId: party.id, videoId: videoId, playedAt: null },
+                    data: { addedAt: newAddedAt }
+                });
+            });
+
+            await db.$transaction(updates);
+
+            // Automatically unlock after saving
+            await db.party.update({
+                where: { id: party.id },
+                data: { isManualSortActive: false }
+            });
+
+            await updateAndEmitPlaylist(io, data.partyHash, "save-queue-order");
+
+        } catch (error) {
+            console.error("Error saving queue order:", error);
+        }
     });
   });
 }

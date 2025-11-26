@@ -23,7 +23,10 @@ type Props = {
   useQueueRules: boolean;
   onToggleRules: () => void;
   disablePlayback: boolean; 
-  onTogglePlayback: () => void; 
+  onTogglePlayback: () => void;
+  isManualSortActive: boolean; // NEW
+  onToggleManualSort: () => void; // NEW
+  onPlaylistReorder: (list: VideoInPlaylist[]) => void; // NEW 
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
@@ -91,7 +94,10 @@ export function HostControlPanel({
   useQueueRules,
   onToggleRules,
   disablePlayback, 
-  onTogglePlayback, 
+  onTogglePlayback,
+  isManualSortActive,
+  onToggleManualSort,
+  onPlaylistReorder, 
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
@@ -204,6 +210,8 @@ export function HostControlPanel({
               remainingTime={remainingTime} 
               onPlay={onPlay}
               onPause={onPause}
+              isManualSortActive={isManualSortActive}
+              onReorder={onPlaylistReorder}
             />
           </TabsContent>
 
@@ -216,7 +224,9 @@ export function HostControlPanel({
               useQueueRules={useQueueRules}
               onToggleRules={onToggleRules}
               disablePlayback={disablePlayback} 
-              onTogglePlayback={onTogglePlayback} 
+              onTogglePlayback={onTogglePlayback}
+              isManualSortActive={isManualSortActive}
+              onToggleManualSort={onToggleManualSort}
               partyHash={party.hash}
               maxSearchResults={maxSearchResults}
               onSetMaxResults={onSetMaxResults}

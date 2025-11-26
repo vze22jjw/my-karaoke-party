@@ -245,6 +245,8 @@ export function PartySceneTabs({
             onSearchQueryConsumed={handleSearchConsumed}
             hasReachedQueueLimit={hasReachedQueueLimit}
             maxQueuePerSinger={MAX_QUEUE_PER_SINGER}
+            // --- PASS LOCK STATE ---
+            isManualSortActive={settings.isManualSortActive}
           />
         </TabsContent>
 

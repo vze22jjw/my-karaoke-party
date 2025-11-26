@@ -17,6 +17,7 @@ type Props = {
   onSearchQueryConsumed: () => void;
   hasReachedQueueLimit: boolean;
   maxQueuePerSinger: number;
+  isManualSortActive?: boolean; // NEW
 };
 
 export function TabAddSong({
@@ -27,6 +28,7 @@ export function TabAddSong({
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
   maxQueuePerSinger: _maxQueuePerSinger,
+  isManualSortActive = false,
 }: Props) {
 
   const playingNow = playlist[0];
@@ -56,20 +58,30 @@ export function TabAddSong({
           Add Songs
         </h2>
 
-        {hasReachedQueueLimit && (
+        {/* NEW: Show lock message */}
+        {isManualSortActive && (
+             <div className="mb-4 rounded-md bg-orange-900/50 border border-orange-500 p-3 text-center text-white font-bold animate-pulse">
+                Queue Locked: Host is reordering the playlist.
+             </div>
+        )}
+
+        {!isManualSortActive && hasReachedQueueLimit && (
           <div className="mb-4 rounded-md bg-red-900/50 border border-red-700 p-2 text-center text-sm text-white font-medium">
             Queue Full! Sing one, then add more.
           </div>
         )}
 
-        <SongSearch
-          onVideoAdded={onVideoAdded}
-          playlist={playlist}
-          name={name}
-          initialSearchQuery={initialSearchQuery}
-          onSearchQueryConsumed={onSearchQueryConsumed}
-          hasReachedQueueLimit={hasReachedQueueLimit}
-        />
+        {/* Disable search if locked */}
+        <div className={isManualSortActive ? "opacity-50 pointer-events-none" : ""}>
+            <SongSearch
+            onVideoAdded={onVideoAdded}
+            playlist={playlist}
+            name={name}
+            initialSearchQuery={initialSearchQuery}
+            onSearchQueryConsumed={onSearchQueryConsumed}
+            hasReachedQueueLimit={hasReachedQueueLimit || isManualSortActive}
+            />
+        </div>
       </div>
 
       {name && (

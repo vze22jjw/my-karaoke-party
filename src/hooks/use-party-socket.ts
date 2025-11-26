@@ -23,6 +23,9 @@ interface SocketActions {
   updateThemeSuggestions: (suggestions: string[]) => void;
   sendApplause: (singerName: string) => Promise<void>; 
   songEnded: (id: string) => Promise<void>;
+  // --- NEW ACTIONS ---
+  toggleManualSort: (isActive: boolean) => void;
+  saveQueueOrder: (newOrderIds: string[]) => void;
 }
 
 type Participant = {
@@ -215,6 +218,10 @@ export function usePartySocket(
         router.push("/");
       });
 
+      newSocket.on("error", (data: { message: string }) => {
+        toast.error(data.message);
+      });
+
       newSocket.on("skip-timer-started", () => setIsSkipping(true));
       newSocket.on("idle-messages-updated", (msgs: string[]) => setIdleMessages(msgs));
       newSocket.on("theme-suggestions-updated", (suggs: string[]) => setThemeSuggestions(suggs));
@@ -230,7 +237,7 @@ export function usePartySocket(
     const heartbeatInterval = setInterval(() => {
       if (socketRef.current?.connected) socketRef.current.emit("heartbeat", { partyHash, singerName, avatar });
       else socketRef.current?.emit("join-party", { partyHash, singerName, avatar });
-    }, 300000); // 300000 (5 mins)
+    }, 300000); 
 
     return () => {
       if (socketRef.current) {
@@ -278,7 +285,7 @@ export function usePartySocket(
     playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
     startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
-    refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }),
+    refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }), 
     updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
     updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
     sendApplause: sendApplauseHttp,
@@ -286,6 +293,9 @@ export function usePartySocket(
       console.log("Song ended: " + id); 
       socketRef.current?.emit("mark-as-played", { partyHash }); 
     },
+    // --- NEW ACTIONS ---
+    toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
+    saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
   }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {

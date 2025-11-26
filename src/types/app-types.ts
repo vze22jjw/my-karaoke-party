@@ -24,6 +24,7 @@ export type KaraokeParty = {
 		orderByFairness: boolean;
 		disablePlayback?: boolean;
         spotifyPlaylistId?: string | null;
+        isManualSortActive?: boolean; // <-- This field is required
 	};
 };
 

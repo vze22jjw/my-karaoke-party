@@ -21,6 +21,8 @@ type Props = {
   onToggleRules: () => void;
   disablePlayback: boolean;
   onTogglePlayback: () => void;
+  isManualSortActive: boolean; // NEW
+  onToggleManualSort: () => void; // NEW
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
@@ -48,6 +50,8 @@ export function TabSettings({
   onToggleRules,
   disablePlayback,
   onTogglePlayback,
+  isManualSortActive,
+  onToggleManualSort,
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
@@ -96,6 +100,8 @@ export function TabSettings({
         onToggleRules={onToggleRules}
         disablePlayback={disablePlayback}
         onTogglePlayback={onTogglePlayback}
+        isManualSortActive={isManualSortActive}
+        onToggleManualSort={onToggleManualSort}
       />
 
       <SettingsSpotify
