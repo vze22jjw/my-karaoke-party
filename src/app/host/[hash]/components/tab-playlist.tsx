@@ -204,7 +204,8 @@ export function TabPlaylist({
       </div>
 
       {/* Scrolling List Section */}
-      <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-32">
+      {/* CHANGED: Reduced bottom padding from pb-32 to pb-6 to match Settings tab */}
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6">
         <DndContext 
             sensors={sensors} 
             collisionDetection={closestCenter} 

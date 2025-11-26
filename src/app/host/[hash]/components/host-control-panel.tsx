@@ -213,7 +213,7 @@ export function HostControlPanel({
           {/* CHANGED: Removed overflow-y-auto to allow internal pinning */}
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-hidden mt-0 pb-0"
+            className="flex-1 overflow-y-auto mt-0 pb-6"
           >
             <TabPlaylist
               currentSong={currentSong}
