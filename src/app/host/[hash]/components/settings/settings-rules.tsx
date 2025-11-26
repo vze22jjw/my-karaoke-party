@@ -7,8 +7,6 @@ import { Alert, AlertDescription } from "~/components/ui/ui/alert";
 import { Info, Loader2, Scale } from "lucide-react";
 import { cn } from "~/lib/utils";
 
-const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
-
 const ToggleButton = ({
   id,
   checked,
@@ -64,8 +62,8 @@ type Props = {
   onToggleRules: () => void;
   disablePlayback: boolean;
   onTogglePlayback: () => void;
-  isManualSortActive: boolean; // NEW
-  onToggleManualSort: () => void; // NEW
+  isManualSortActive: boolean;
+  onToggleManualSort: () => void;
 };
 
 export function SettingsRules({
@@ -80,10 +78,8 @@ export function SettingsRules({
   const [isLoadingRules, setIsLoadingRules] = useState(false);
   const [isLoadingPlayback, setIsLoadingPlayback] = useState(false);
   
-  // No server loading state for local toggle, but nice to have consistent structure
   const isLoadingSort = false; 
 
-  // Automatically clear loading state when the prop changes
   useEffect(() => { if (isLoadingRules) setIsLoadingRules(false); }, [useQueueRules, isLoadingRules]);
   useEffect(() => { if (isLoadingPlayback) setIsLoadingPlayback(false); }, [disablePlayback, isLoadingPlayback]);
 
@@ -140,7 +136,7 @@ export function SettingsRules({
         checked={useQueueRules}
         onCheckedChange={handleToggleRules}
         isLoading={isLoadingRules}
-        label={useQueueRules ? "Queue: Fairness (ON)" : "Queue: First Come (OFF)"}
+        label={useQueueRules ? "Queue: Fairness (ON)" : "Queue: FIFO (OFF)"}
       />
       
       <ToggleButton
@@ -148,7 +144,7 @@ export function SettingsRules({
         checked={!disablePlayback}
         onCheckedChange={handleTogglePlayback}
         isLoading={isLoadingPlayback}
-        label={!disablePlayback ? "Playback: In iFrame (ON)" : "Playback: YouTube Links (OFF)"}
+        label={!disablePlayback ? "Playback: In-App (ON)" : "Playback: YouTube (OFF)"}
       />
     </div>
   );

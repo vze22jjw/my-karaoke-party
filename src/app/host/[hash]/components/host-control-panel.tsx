@@ -24,9 +24,10 @@ type Props = {
   onToggleRules: () => void;
   disablePlayback: boolean; 
   onTogglePlayback: () => void;
-  isManualSortActive: boolean; // NEW
-  onToggleManualSort: () => void; // NEW
-  onPlaylistReorder: (list: VideoInPlaylist[]) => void; // NEW 
+  isManualSortActive: boolean; 
+  onToggleManualSort: () => void;
+  onPlaylistReorder: (list: VideoInPlaylist[]) => void;
+  onTogglePriority: (videoId: string) => void; 
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
@@ -98,6 +99,7 @@ export function HostControlPanel({
   isManualSortActive,
   onToggleManualSort,
   onPlaylistReorder, 
+  onTogglePriority,
   maxSearchResults,
   onSetMaxResults,
   onCloseParty,
@@ -138,24 +140,21 @@ export function HostControlPanel({
             {party.name}
           </FitText>
         </div>
+        
+        {/* INFO HEADER */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-2 text-xs text-muted-foreground mb-2 space-y-1">
           <div className="flex justify-between items-center">
-            <div className="flex flex-col">
-              <span className="font-mono text-lg font-bold text-foreground">
+            <div className="flex flex-col gap-1">
+              {/* CHANGED: Matching Font and Height */}
+              <span className="font-mono text-sm font-bold text-foreground">
                 CODE: {party.hash}
               </span>
               <div className="flex items-center gap-1">
-                <span className="font-medium text-foreground">
-                  Host: {hostName ?? "..."}
+                {/* CHANGED: Matching Font and Height */}
+                <span className="font-mono text-sm font-bold text-foreground">
+                  HOST: {hostName ?? "..."}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 text-muted-foreground"
-                  onClick={onReplayTour}
-                >
-                  <Info className="h-4 w-4" />
-                </Button>
+                {/* REMOVED: Info Button from here */}
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -190,15 +189,31 @@ export function HostControlPanel({
               <ListMusic className="h-4 w-4" />
               <span className="inline">Playlist</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="inline">Settings</span>
+            
+            {/* CHANGED: Added Info Icon to Settings Tab */}
+            <TabsTrigger value="settings" className="flex items-center gap-2 group relative">
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="inline">Settings</span>
+              </div>
+              <div
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReplayTour();
+                }}
+                className="absolute right-2 p-1 rounded-full hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
+                title="Replay Tour"
+              >
+                <Info className="h-4 w-4" />
+              </div>
             </TabsTrigger>
           </TabsList>
 
+          {/* CHANGED: Removed overflow-y-auto to allow internal pinning */}
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-y-auto mt-0 pb-6"
+            className="flex-1 overflow-hidden mt-0 pb-0"
           >
             <TabPlaylist
               currentSong={currentSong}
@@ -212,9 +227,11 @@ export function HostControlPanel({
               onPause={onPause}
               isManualSortActive={isManualSortActive}
               onReorder={onPlaylistReorder}
+              onTogglePriority={onTogglePriority}
             />
           </TabsContent>
 
+          {/* Keep settings scrolling as usual */}
           <TabsContent
             value="settings"
             className="flex-1 overflow-y-auto mt-0 pb-6"

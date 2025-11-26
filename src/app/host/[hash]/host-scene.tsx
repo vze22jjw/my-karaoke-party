@@ -17,7 +17,7 @@ import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 const HOST_TOUR_KEY = "has_seen_host_tour_v1";
-const MANUAL_SORT_KEY = "karaoke-manual-sort-active"; // New key for persistence
+const MANUAL_SORT_KEY = "karaoke-manual-sort-active"; 
 
 type Props = {
   party: Party;
@@ -27,7 +27,7 @@ type Props = {
 export function HostScene({ party, initialData }: Props) {
   const {
     currentSong,
-    unplayedPlaylist, // This comes from socket
+    unplayedPlaylist, 
     playedPlaylist,
     partyStatus,
     participants,
@@ -38,22 +38,21 @@ export function HostScene({ party, initialData }: Props) {
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, "Host");
 
-  // Manage local toggle state with LocalStorage so it persists on refresh
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: MANUAL_SORT_KEY,
     defaultValue: false,
   });
 
-  // Local state to hold the reordered list while sorting is active
-  // Initialize with initialData to prevent empty flash on refresh if sort is active
   const [localUnplayed, setLocalUnplayed] = useState<VideoInPlaylist[]>(initialData.unplayed);
+  const hasSyncedRef = useRef(false);
 
-  // Sync local state with socket data when not manually sorting to keep it fresh.
-  // If we are sorting (isManualSortActive=true), we IGNORE socket updates for this list
-  // so the host doesn't lose their place.
   useEffect(() => {
       if (!isManualSortActive) {
           setLocalUnplayed(unplayedPlaylist);
+          hasSyncedRef.current = true;
+      } else if (!hasSyncedRef.current && unplayedPlaylist.length > 0) {
+          setLocalUnplayed(unplayedPlaylist);
+          hasSyncedRef.current = true;
       }
   }, [unplayedPlaylist, isManualSortActive]);
 
@@ -152,14 +151,11 @@ export function HostScene({ party, initialData }: Props) {
 
   const handleToggleManualSort = () => {
       if (isManualSortActive) {
-          // Toggling OFF -> SAVE
           const newOrderIds = localUnplayed.map(v => v.id);
           socketActions.saveQueueOrder(newOrderIds);
           toast.success("Playlist Order Saved!");
           setIsManualSortActive(false);
       } else {
-          // Toggling ON -> Enable Local Lock
-          // Force sync local state immediately before locking to ensure we have latest data
           setLocalUnplayed(unplayedPlaylist);
           setIsManualSortActive(true);
           toast.info("Manual Sort Enabled.");
@@ -185,7 +181,6 @@ export function HostScene({ party, initialData }: Props) {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         currentSong={currentSong}
-        // Pass localUnplayed if sorting is active, otherwise live socket list
         playlist={isManualSortActive ? localUnplayed : unplayedPlaylist}
         playedPlaylist={playedPlaylist}
         onRemoveSong={socketActions.removeSong}
@@ -210,6 +205,7 @@ export function HostScene({ party, initialData }: Props) {
         isManualSortActive={isManualSortActive}
         onToggleManualSort={handleToggleManualSort}
         onPlaylistReorder={(newList) => setLocalUnplayed(newList)}
+        onTogglePriority={socketActions.togglePriority} // <-- Passed here
 
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}

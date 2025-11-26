@@ -3,16 +3,18 @@
  * typically built from a Prisma PlaylistItem.
  */
 export type VideoInPlaylist = {
-    id: string; // Corresponds to videoId
+    id: string; 
     title: string;
     artist: string;
     song: string;
     coverUrl: string;
-    duration: string | undefined; // ISO 8601 duration
+    duration: string | undefined;
     singerName: string;
     playedAt: Date | null;
     spotifyId?: string | null;
-    createdAt?: Date; // The addedAt field
+    createdAt?: Date; 
+    isPriority: boolean;
+    isManual: boolean; // <-- NEW
 };
 
 /**
@@ -24,13 +26,10 @@ export type KaraokeParty = {
 		orderByFairness: boolean;
 		disablePlayback?: boolean;
         spotifyPlaylistId?: string | null;
-        isManualSortActive?: boolean; // <-- This field is required
+        isManualSortActive?: boolean;
 	};
 };
 
-/**
- * Defines the initial data object expected by client scenes.
- */
 export type InitialPartyData = {
     currentSong: VideoInPlaylist | null;
     unplayed: VideoInPlaylist[];

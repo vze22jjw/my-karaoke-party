@@ -4,6 +4,7 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { spotifyService } from "~/server/lib/spotify";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
+import { cookies } from "next/headers"; // <-- For Cookie Check
 
 export const playlistRouter = createTRPCRouter({
   getPlaylist: publicProcedure
@@ -36,12 +37,14 @@ export const playlistRouter = createTRPCRouter({
           singerName: item.singerName,
           playedAt: item.playedAt,
           spotifyId: item.spotifyId,
+          isPriority: item.isPriority,
+          isManual: item.isManual,
         })),
         settings: {
           orderByFairness: party.orderByFairness,
           disablePlayback: party.disablePlayback,
           spotifyPlaylistId: party.spotifyPlaylistId,
-          isManualSortActive: party.isManualSortActive, 
+          isManualSortActive: party.isManualSortActive,
         },
       };
     }),
@@ -68,14 +71,7 @@ export const playlistRouter = createTRPCRouter({
         throw new Error("Party not found");
       }
 
-      // --- LOCK CHECK ---
-      if (party.isManualSortActive) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "The host is currently reordering the queue. Please try again in a moment.",
-        });
-      }
-      // ------------------
+      // Manual sort lock removed based on user request
 
       const existing = await ctx.db.playlistItem.findFirst({
         where: {
@@ -134,6 +130,13 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      // --- SECURITY CHECK ---
+      const token = cookies().get("admin_token")?.value;
+      if (token !== env.ADMIN_TOKEN) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Host access required" });
+      }
+      // ----------------------
+
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },
       });
@@ -165,6 +168,13 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      // --- SECURITY CHECK ---
+      const token = cookies().get("admin_token")?.value;
+      if (token !== env.ADMIN_TOKEN) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Host access required" });
+      }
+      // ----------------------
+
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },
       });
