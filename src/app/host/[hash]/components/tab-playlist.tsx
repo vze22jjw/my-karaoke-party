@@ -154,7 +154,7 @@ export function TabPlaylist({
   onTogglePriority,
 }: Props) {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -180,7 +180,9 @@ export function TabPlaylist({
   const nextVideos = items;
 
   return (
-    <div className="flex flex-col flex-1 w-full min-h-0">
+    // CHANGED: Replaced wrapper 'div' with Fragment.
+    // The parent TabsContent (in host-control-panel) is 'flex flex-col', so these children will stack correctly.
+    <>
       {/* Pinned Header Section */}
       <div className="flex-shrink-0 bg-background pb-2 z-10">
         {currentSong && (
@@ -204,7 +206,6 @@ export function TabPlaylist({
       </div>
 
       {/* Scrolling List Section */}
-      {/* CHANGED: Reduced bottom padding from pb-32 to pb-6 to match Settings tab */}
       <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6">
         <DndContext 
             sensors={sensors} 
@@ -235,6 +236,6 @@ export function TabPlaylist({
             </p>
         )}
       </div>
-    </div>
+    </>
   );
 }

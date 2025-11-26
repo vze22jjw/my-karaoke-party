@@ -22,9 +22,10 @@ const MANUAL_SORT_KEY = "karaoke-manual-sort-active";
 type Props = {
   party: Party;
   initialData: InitialPartyData;
+  hostName: string; // NEW PROP
 };
 
-export function HostScene({ party, initialData }: Props) {
+export function HostScene({ party, initialData, hostName }: Props) {
   const {
     currentSong,
     unplayedPlaylist, 
@@ -36,7 +37,7 @@ export function HostScene({ party, initialData }: Props) {
     remainingTime,
     settings,
     themeSuggestions,
-  } = usePartySocket(party.hash!, initialData, "Host");
+  } = usePartySocket(party.hash!, initialData, hostName); // CHANGED: Use actual host name
 
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: MANUAL_SORT_KEY,
@@ -201,11 +202,10 @@ export function HostScene({ party, initialData }: Props) {
         onTogglePlayback={() => {
           socketActions.togglePlayback(!settings.disablePlayback);
         }}
-        // NEW PROPS
         isManualSortActive={isManualSortActive}
         onToggleManualSort={handleToggleManualSort}
         onPlaylistReorder={(newList) => setLocalUnplayed(newList)}
-        onTogglePriority={socketActions.togglePriority} // <-- Passed here
+        onTogglePriority={socketActions.togglePriority} 
 
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}

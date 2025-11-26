@@ -145,16 +145,13 @@ export function HostControlPanel({
         <div className="flex-shrink-0 rounded-lg border bg-card p-2 text-xs text-muted-foreground mb-2 space-y-1">
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-1">
-              {/* CHANGED: Matching Font and Height */}
               <span className="font-mono text-sm font-bold text-foreground">
                 CODE: {party.hash}
               </span>
               <div className="flex items-center gap-1">
-                {/* CHANGED: Matching Font and Height */}
                 <span className="font-mono text-sm font-bold text-foreground">
                   HOST: {hostName ?? "..."}
                 </span>
-                {/* REMOVED: Info Button from here */}
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -182,7 +179,7 @@ export function HostControlPanel({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="flex-1 flex flex-col overflow-hidden mt-2" 
+          className="flex-1 flex flex-col overflow-hidden mt-2 min-h-0" 
         >
           <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
@@ -190,7 +187,6 @@ export function HostControlPanel({
               <span className="inline">Playlist</span>
             </TabsTrigger>
             
-            {/* CHANGED: Added Info Icon to Settings Tab */}
             <TabsTrigger value="settings" className="flex items-center gap-2 group relative">
               <div className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
@@ -210,10 +206,9 @@ export function HostControlPanel({
             </TabsTrigger>
           </TabsList>
 
-          {/* CHANGED: Removed overflow-y-auto to allow internal pinning */}
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-y-auto mt-0 pb-6"
+            className="flex-1 flex flex-col overflow-hidden mt-0 pb-0 min-h-0 h-full"
           >
             <TabPlaylist
               currentSong={currentSong}
@@ -231,10 +226,9 @@ export function HostControlPanel({
             />
           </TabsContent>
 
-          {/* Keep settings scrolling as usual */}
           <TabsContent
             value="settings"
-            className="flex-1 overflow-y-auto mt-0 pb-6"
+            className="flex-1 overflow-y-auto mt-0 pb-6 min-h-0"
           >
             <TabSettings
               partyName={partyName} 

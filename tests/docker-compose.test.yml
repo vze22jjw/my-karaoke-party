@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.49.0-jammy # Matches typical Node/Playwright versions
+    container_name: mykaraoke-e2e
+    working_dir: /app
+    ipc: host # Recommended for browser testing to avoid memory crashes
+    environment:
+      # We point to the container name defined in your main docker-compose.yml
+      - BASE_URL=http://mykaraoke-app:3000 
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - CI=true
+    volumes:
+      - .:/app
+      # Mount node_modules anonymously to avoid conflicts with your host OS binaries
+      - /app/node_modules 
+    networks:
+      - mykaraokenetwork
+    # Install pnpm, dependencies, and run tests
+    command: >
+      /bin/sh -c "
+      npm install -g pnpm && 
+      pnpm install && 
+      npx playwright test"
+
+# We reference the network created by your main docker-compose.yml
+networks:
+  mykaraokenetwork:
+    external: true
+    # Note: If your main network has a project prefix (e.g., 'my-karaoke-party_mykaraokenetwork'),
+    # you might need to update this name. See step 2 below.
+    

@@ -200,9 +200,16 @@ export function usePartySocket(
         stopCountdown();
         router.push("/");
       });
+      
       newSocket.on("error", (data: { message: string }) => {
-        toast.error(data.message);
+        // CHANGED: Check for "Video too long" and trigger alert instead of toast
+        if (data.message.toLowerCase().includes("video too long")) {
+            alert(data.message);
+        } else {
+            toast.error(data.message);
+        }
       });
+
       newSocket.on("skip-timer-started", () => setIsSkipping(true));
       newSocket.on("idle-messages-updated", (msgs: string[]) => setIdleMessages(msgs));
       newSocket.on("theme-suggestions-updated", (suggs: string[]) => setThemeSuggestions(suggs));

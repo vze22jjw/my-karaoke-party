@@ -1,34 +1,39 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { env } from "~/env";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { password?: string };
-    const { password } = body;
+    // FIX: Typed the body to prevent 'any' errors
+    const body = (await req.json()) as { password: string };
 
-    if (password !== process.env.ADMIN_TOKEN) {
+    if (body.password !== env.ADMIN_TOKEN) {
       return NextResponse.json(
         { error: "Invalid password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
-    const response = NextResponse.json({ success: true });
+
+    // Calculate expiration (24 hours)
+    const oneDay = 24 * 60 * 60 * 1000;
+    const expirationDate = new Date(Date.now() + oneDay);
+
+    // Only use 'secure: true' if we are in production.
     const isProduction = process.env.NODE_ENV === "production";
-    const isHttps = process.env.NEXT_PUBLIC_APP_URL?.startsWith("https");
-    
-    response.cookies.set("admin_token_verified", "true", {
+
+    cookies().set("admin_token", body.password, {
       httpOnly: true,
-      secure: isProduction && isHttps,
+      secure: isProduction,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24, // 24 hours
+      expires: expirationDate,
     });
 
-    return response;
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
