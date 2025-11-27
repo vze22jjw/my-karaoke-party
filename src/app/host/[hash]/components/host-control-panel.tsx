@@ -208,7 +208,7 @@ export function HostControlPanel({
 
           <TabsContent
             value="playlist"
-            className="flex-1 flex flex-col overflow-hidden mt-0 pb-0 min-h-0 h-full"
+            className="flex-1 overflow-y-auto mt-0 pb-6 min-h-0"
           >
             <TabPlaylist
               currentSong={currentSong}
