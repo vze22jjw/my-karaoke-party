@@ -1,87 +1,96 @@
 "use client";
 
-import { type VideoInPlaylist } from "~/types/app-types";
+import type { VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
-import { Play, Pause, SkipForward } from "lucide-react";
-import { decode } from "html-entities";
+import { Play, Pause, SkipForward } from "lucide-react"; 
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
-import { cn } from "~/lib/utils";
+import { cn } from "~/lib/utils"; 
+import { decode } from "html-entities";
 import Image from "next/image";
+import { type ReactNode } from "react";
 
 type Props = {
-  currentSong: VideoInPlaylist | null;
+  currentSong: VideoInPlaylist;
   isPlaying: boolean;
+  remainingTime: number;
   onPlay: (currentTime?: number) => void;
   onPause: () => void;
   onSkip: () => void;
-  remainingTime: number;
+  extraAction?: ReactNode; 
 };
 
 export function PlaybackControls({
   currentSong,
   isPlaying,
+  remainingTime,
   onPlay,
   onPause,
   onSkip,
-  remainingTime,
+  extraAction,
 }: Props) {
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      onPause();
+    } else {
+      onPlay();
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between gap-4 border-t bg-card p-4">
+    // CHANGED: Completely transparent container with no borders or shadows
+    <div className="relative flex items-center justify-between gap-3 p-1 pt-0 bg-transparent border-none shadow-none"> 
       
-      {currentSong ? (
-        <div className="relative w-12 flex-shrink-0 aspect-video">
-          <Image
-            src={currentSong.coverUrl}
-            fill={true}
-            className="rounded-md object-cover"
-            alt={currentSong.title}
-            sizes="48px"
+      <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md shadow-sm">
+        <Image
+          src={currentSong.coverUrl}
+          alt={currentSong.title}
+          fill
+          className="object-cover"
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="mb-1 flex items-center gap-2">
+            <p className="truncate text-sm font-bold leading-none">
+            {decode(currentSong.title)}
+            </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <p className="truncate max-w-[100px]">{currentSong.singerName}</p>
+          <span>•</span>
+          <SongCountdownTimer
+            remainingTime={remainingTime}
+            className={cn("font-mono", remainingTime < 30 && "text-red-500 font-bold animate-pulse")}
           />
         </div>
-      ) : (
-        <div className="w-12 flex-shrink-0 aspect-video bg-muted/50 rounded-md border border-border" />
-      )}
-
-      <div className="flex-1 min-w-0">
-        <p className="truncate text-sm font-medium">
-          {currentSong ? decode(currentSong.title) : "No song playing"}
-        </p>
-        <div className="flex items-center gap-2">
-          <p className="truncate text-xs text-muted-foreground">
-            {currentSong ? currentSong.singerName : "..."}
-          </p>
-          {currentSong && (
-            <SongCountdownTimer
-              remainingTime={remainingTime}
-              className={cn(isPlaying ? "text-primary" : "text-muted-foreground")}
-            />
-          )}
-        </div>
       </div>
-      <div className="flex flex-shrink-0 items-center gap-2">
+      <div className="flex items-center gap-2">
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          onClick={isPlaying ? onPause : () => onPlay()}
-          disabled={!currentSong}
-          className="h-12 w-12"
+          className="h-10 w-10 rounded-full bg-background border-border/50 shadow-sm"
+          onClick={handlePlayPause}
         >
           {isPlaying ? (
-            <Pause className="h-6 w-6" />
+            <Pause className="h-4 w-4" />
           ) : (
-            <Play className="h-6 w-6" />
+            <Play className="h-4 w-4 pl-0.5" />
           )}
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
+          className="h-10 w-10 rounded-full bg-background border-border/50 shadow-sm"
           onClick={onSkip}
-          disabled={!currentSong}
-          className="h-12 w-12"
         >
-          <SkipForward className="h-6 w-6" />
+          <SkipForward className="h-4 w-4" />
         </Button>
       </div>
+
+      {extraAction && (
+          <div className="absolute bottom-1 right-0 translate-y-1/2 translate-x-1/4">
+              {extraAction}
+          </div>
+      )}
     </div>
   );
 }

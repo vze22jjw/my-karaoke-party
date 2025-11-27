@@ -4,7 +4,7 @@ import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { X, GripVertical, Star } from "lucide-react"; 
+import { X, GripVertical, Star, ChevronDown } from "lucide-react"; 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
 import { useState, useEffect } from "react";
@@ -30,6 +30,7 @@ import { CSS } from "@dnd-kit/utilities";
 type Props = {
   currentSong: VideoInPlaylist | null;
   playlist: KaraokeParty["playlist"];
+  playedPlaylist: VideoInPlaylist[];
   onRemoveSong: (videoId: string) => void;
   onSkip: () => void;
   isSkipping: boolean; 
@@ -41,6 +42,41 @@ type Props = {
   onReorder: (newPlaylist: VideoInPlaylist[]) => void; 
   onTogglePriority: (videoId: string) => void;
 };
+
+function ReadOnlyItem({ video, index }: { video: VideoInPlaylist, index: number }) {
+  return (
+    <div className="flex items-stretch justify-between gap-2 opacity-60 grayscale-[0.5]">
+      <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/30 border border-border/50 flex gap-2 items-center">
+        <div className="w-5" /> 
+        <div className="relative w-16 aspect-video flex-shrink-0">
+          <Image
+            src={video.coverUrl}
+            fill={true}
+            className="rounded-md object-cover"
+            alt={video.title}
+            sizes="64px"
+          />
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-center gap-1 mb-1">
+            <span className="font-mono text-xs text-muted-foreground">✓</span>
+            <p className="font-medium text-xs truncate line-through text-muted-foreground">{decode(video.title)}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground truncate">{video.singerName}</p>
+            {video.isPriority && (
+                <span className="text-[10px] font-bold bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wide">VIP</span>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex-shrink-0 flex items-center gap-1">
+        <Button size="icon" variant="ghost" disabled className="h-10 w-10 opacity-0 cursor-default"><Star className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" disabled className="h-10 w-10 opacity-0 cursor-default"><X className="h-4 w-4" /></Button>
+      </div>
+    </div>
+  );
+}
 
 function SortableItem({ 
     video, 
@@ -78,7 +114,7 @@ function SortableItem({
       <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center">
         
         {isSorting && (
-            <div {...attributes} {...listeners} className="cursor-grab p-1 text-muted-foreground hover:text-foreground">
+            <div {...attributes} {...listeners} className="cursor-grab p-1 text-muted-foreground hover:text-foreground touch-none">
                 <GripVertical className="h-5 w-5" />
             </div>
         )}
@@ -142,9 +178,10 @@ function SortableItem({
 export function TabPlaylist({
   currentSong,
   playlist,
+  playedPlaylist,
   onRemoveSong,
   onSkip,
-  isSkipping: _isSkipping, 
+  isSkipping, 
   isPlaying, 
   remainingTime, 
   onPlay,
@@ -159,6 +196,7 @@ export function TabPlaylist({
   );
 
   const [items, setItems] = useState(playlist);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
       setItems(playlist);
@@ -178,13 +216,12 @@ export function TabPlaylist({
   };
 
   const nextVideos = items;
+  const sortedHistory = [...playedPlaylist].reverse();
 
   return (
-    // CHANGED: Replaced wrapper 'div' with Fragment.
-    // The parent TabsContent (in host-control-panel) is 'flex flex-col', so these children will stack correctly.
     <>
       {/* Pinned Header Section */}
-      <div className="flex-shrink-0 bg-background pb-2 z-10">
+      <div className="flex-shrink-0 bg-background pb-2 z-10 relative">
         {currentSong && (
           <div className="mb-2">
             <PlaybackControls
@@ -194,6 +231,20 @@ export function TabPlaylist({
               onPause={onPause}
               onSkip={onSkip}
               remainingTime={remainingTime}
+              extraAction={
+                <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="p-1 rounded-full bg-transparent hover:bg-white/10 transition-all focus:outline-none text-muted-foreground hover:text-foreground"
+                    title="Toggle Played History"
+                >
+                    <ChevronDown 
+                        className={cn(
+                            "h-4 w-4 transition-transform duration-200",
+                            showHistory && "rotate-180"
+                        )} 
+                    />
+                </button>
+              }
             />
           </div>
         )}
@@ -206,7 +257,25 @@ export function TabPlaylist({
       </div>
 
       {/* Scrolling List Section */}
-      <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6">
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 overscroll-y-none pt-2">
+        
+        {/* HISTORY SECTION */}
+        {showHistory && (
+            <div className="space-y-2 mb-4 pb-4 border-b border-border/50 animate-in fade-in slide-in-from-top-2">
+                {sortedHistory.length === 0 && (
+                     <p className="text-xs text-center text-muted-foreground py-2">No history yet</p>
+                )}
+                {sortedHistory.map((video, index) => (
+                    <ReadOnlyItem 
+                        key={video.id} 
+                        video={video} 
+                        index={index} 
+                    />
+                ))}
+            </div>
+        )}
+
+        {/* ACTIVE PLAYLIST */}
         <DndContext 
             sensors={sensors} 
             collisionDetection={closestCenter} 

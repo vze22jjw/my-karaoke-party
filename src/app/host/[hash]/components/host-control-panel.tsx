@@ -131,7 +131,6 @@ export function HostControlPanel({
 
   const timeOpen = useTimeOpen(party.createdAt);
   if (!party.hash) return null;
-  const totalSongs = playedSongCount + unplayedSongCount;
 
   return (
     <div className="w-full overflow-hidden h-[100dvh]">
@@ -143,73 +142,88 @@ export function HostControlPanel({
           </FitText>
         </div>
         
-        {/* INFO HEADER (GRID LAYOUT FOR ALIGNMENT) */}
+        {/* INFO HEADER */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm">
           <div className="grid grid-cols-2 gap-y-1">
             
-            {/* ROW 1 LEFT: Host */}
-            <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-500 flex-shrink-0" />
-              <span className="font-medium text-foreground text-base truncate max-w-[140px]">
-                {hostName ?? "..."}
-              </span>
-            </div>
-
-            {/* ROW 1 RIGHT: Stats */}
-            <div className="flex items-center justify-end gap-3">
-              <div className="flex items-center gap-1.5">
-                 <Users className="h-5 w-5" />
-                 <span className="font-bold text-foreground">{singerCount}</span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 h-[24px]">
+                <Crown className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+                <span className="font-medium text-foreground text-base truncate max-w-[140px]">
+                  {hostName ?? "..."}
+                </span>
               </div>
-              <div className="h-3 w-[1px] bg-border" /> 
-              <div className="flex items-center gap-1.5">
-                 <Clock className="h-5 w-5" />
-                 <span>{timeOpen}</span>
+
+              <div className="flex items-center gap-2 h-[32px]">
+                <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="font-mono text-xl font-bold text-foreground tracking-wider leading-none mt-0.5">
+                  {party.hash}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground ml-1"
+                  onClick={onReplayTour}
+                  title="Show Tour"
+                >
+                  <Info className="h-5 w-5" />
+                </Button>
               </div>
             </div>
 
-            {/* ROW 2 LEFT: Code + Info */}
-            <div className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
-              <span className="font-mono text-xl font-bold text-foreground tracking-wider">
-                {party.hash}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-muted-foreground hover:text-foreground ml-1"
-                onClick={onReplayTour}
-                title="Show Tour"
-              >
-                <Info className="h-5 w-5" />
-              </Button>
-            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center justify-end gap-3 h-[24px]">
+                <div className="flex items-center gap-1.5">
+                   <Users className="h-5 w-5" />
+                   <span className="font-bold text-foreground text-base">{singerCount}</span>
+                </div>
+                <div className="h-3 w-[1px] bg-border" /> 
+                <div className="flex items-center gap-1.5">
+                   <Clock className="h-5 w-5" />
+                   <span className="font-bold text-foreground text-base">{timeOpen}</span>
+                </div>
+              </div>
 
-            {/* ROW 2 RIGHT: Songs */}
-            <div className="flex items-center justify-end gap-1.5">
-              <Music className="h-5 w-5" />
-              <span className="font-bold text-foreground text-base">
-                {totalSongs} ({unplayedSongCount}/{playedSongCount})
-              </span>
+              <div className="flex items-center justify-end gap-1.5 h-[32px]">
+                <Music className="h-5 w-5" />
+                <span className="font-bold text-foreground text-base leading-none mt-0.5">
+                  {unplayedSongCount} <span className="opacity-50 text-sm">({playedSongCount})</span>
+                </span>
+              </div>
             </div>
 
           </div>
         </div>
 
+        {/* 3. TABS */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden mt-2 min-h-0" 
         >
-          <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0">
+          {/* CHANGED: Added bg-muted, rounded-md, and p-1 to mimic pill container */}
+          <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0 h-auto p-1 bg-muted rounded-md">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
               <ListMusic className="h-4 w-4" />
               <span className="inline">Playlist</span>
             </TabsTrigger>
             
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="inline">Settings</span>
+            <TabsTrigger value="settings" className="flex items-center gap-2 group relative">
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="inline">Settings</span>
+              </div>
+              <div
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReplayTour();
+                }}
+                className="absolute right-2 p-1 rounded-full hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
+                title="Replay Tour"
+              >
+                <Info className="h-4 w-4" />
+              </div>
             </TabsTrigger>
           </TabsList>
 
@@ -230,6 +244,7 @@ export function HostControlPanel({
               isManualSortActive={isManualSortActive}
               onReorder={onPlaylistReorder}
               onTogglePriority={onTogglePriority}
+              playedPlaylist={playedPlaylist}
             />
           </TabsContent>
 
