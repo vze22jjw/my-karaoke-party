@@ -1,7 +1,7 @@
 "use client";
 
 import type { Party, IdleMessage } from "@prisma/client";
-import { ListMusic, Settings, Users, Clock, Music, Info } from "lucide-react";
+import { ListMusic, Settings, Users, Clock, Music, Info, KeyRound, Crown } from "lucide-react";
 import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
@@ -65,14 +65,15 @@ function useTimeOpen(createdAt: Date) {
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMins / 60);
       const diffDays = Math.floor(diffHours / 24);
+      
       if (diffDays > 0) {
-        setTimeOpen(`Open for ${diffDays}d ${diffHours % 24}h`);
+        setTimeOpen(`${diffDays}d`);
       } else if (diffHours > 0) {
-        setTimeOpen(`Open for ${diffHours}h ${diffMins % 60}m`);
+        setTimeOpen(`${diffHours}h`);
       } else if (diffMins > 0) {
-        setTimeOpen(`Open for ${diffMins}m`);
+        setTimeOpen(`${diffMins}m`);
       } else {
-        setTimeOpen("Open just now");
+        setTimeOpen("now");
       }
     };
     calculateTime();
@@ -135,44 +136,63 @@ export function HostControlPanel({
   return (
     <div className="w-full overflow-hidden h-[100dvh]">
       <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
+        
         <div className="flex-shrink-0 mb-2">
           <FitText className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight w-full text-center uppercase">
             {party.name}
           </FitText>
         </div>
         
-        {/* INFO HEADER */}
-        <div className="flex-shrink-0 rounded-lg border bg-card p-2 text-xs text-muted-foreground mb-2 space-y-1">
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col gap-1">
-              <span className="font-mono text-sm font-bold text-foreground">
-                CODE: {party.hash}
+        {/* INFO HEADER (GRID LAYOUT FOR ALIGNMENT) */}
+        <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm">
+          <div className="grid grid-cols-2 gap-y-1">
+            
+            {/* ROW 1 LEFT: Host */}
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+              <span className="font-medium text-foreground text-base truncate max-w-[140px]">
+                {hostName ?? "..."}
               </span>
-              <div className="flex items-center gap-1">
-                <span className="font-mono text-sm font-bold text-foreground">
-                  HOST: {hostName ?? "..."}
-                </span>
+            </div>
+
+            {/* ROW 1 RIGHT: Stats */}
+            <div className="flex items-center justify-end gap-3">
+              <div className="flex items-center gap-1.5">
+                 <Users className="h-5 w-5" />
+                 <span className="font-bold text-foreground">{singerCount}</span>
+              </div>
+              <div className="h-3 w-[1px] bg-border" /> 
+              <div className="flex items-center gap-1.5">
+                 <Clock className="h-5 w-5" />
+                 <span>{timeOpen}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              <span>{timeOpen}</span>
+
+            {/* ROW 2 LEFT: Code + Info */}
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
+              <span className="font-mono text-xl font-bold text-foreground tracking-wider">
+                {party.hash}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground ml-1"
+                onClick={onReplayTour}
+                title="Show Tour"
+              >
+                <Info className="h-5 w-5" />
+              </Button>
             </div>
-          </div>
-          <div className="flex justify-between items-center border-t pt-1">
-            <div className="flex items-center gap-1.5">
-              <Users className="h-4 w-4" />
-              <span className="font-medium text-foreground">{singerCount}</span>
-              <span>{singerCount === 1 ? "Singer" : "Singers"}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Music className="h-4 w-4" />
-              <span className="font-medium text-foreground">{totalSongs}</span>
-              <span>{totalSongs === 1 ? "Song" : "Songs"}</span>
-              <span className="text-xs">
-                ({unplayedSongCount} up, {playedSongCount} done)
+
+            {/* ROW 2 RIGHT: Songs */}
+            <div className="flex items-center justify-end gap-1.5">
+              <Music className="h-5 w-5" />
+              <span className="font-bold text-foreground text-base">
+                {totalSongs} ({unplayedSongCount}/{playedSongCount})
               </span>
             </div>
+
           </div>
         </div>
 
@@ -187,28 +207,15 @@ export function HostControlPanel({
               <span className="inline">Playlist</span>
             </TabsTrigger>
             
-            <TabsTrigger value="settings" className="flex items-center gap-2 group relative">
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="inline">Settings</span>
-              </div>
-              <div
-                role="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReplayTour();
-                }}
-                className="absolute right-2 p-1 rounded-full hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
-                title="Replay Tour"
-              >
-                <Info className="h-4 w-4" />
-              </div>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent
             value="playlist"
-            className="flex-1 overflow-y-auto mt-0 pb-6 min-h-0"
+            className="flex-1 flex flex-col overflow-hidden mt-0 pb-0 min-h-0 h-full data-[state=inactive]:hidden"
           >
             <TabPlaylist
               currentSong={currentSong}
@@ -228,7 +235,7 @@ export function HostControlPanel({
 
           <TabsContent
             value="settings"
-            className="flex-1 overflow-y-auto mt-0 pb-6 min-h-0"
+            className="flex-1 overflow-y-auto mt-0 pb-6 min-h-0 h-full data-[state=inactive]:hidden"
           >
             <TabSettings
               partyName={partyName} 
