@@ -181,7 +181,7 @@ export function TabPlaylist({
   playedPlaylist,
   onRemoveSong,
   onSkip,
-  isSkipping, 
+  isSkipping: _isSkipping, 
   isPlaying, 
   remainingTime, 
   onPlay,
@@ -223,7 +223,8 @@ export function TabPlaylist({
       {/* Pinned Header Section */}
       <div className="flex-shrink-0 bg-background pb-2 z-10 relative">
         {currentSong && (
-          <div className="mb-2">
+          <div className="mb-2 relative">
+            {/* Controls */}
             <PlaybackControls
               currentSong={currentSong}
               isPlaying={isPlaying}
@@ -231,21 +232,23 @@ export function TabPlaylist({
               onPause={onPause}
               onSkip={onSkip}
               remainingTime={remainingTime}
-              extraAction={
-                <button
-                    onClick={() => setShowHistory(!showHistory)}
-                    className="p-1 rounded-full bg-transparent hover:bg-white/10 transition-all focus:outline-none text-muted-foreground hover:text-foreground"
-                    title="Toggle Played History"
-                >
-                    <ChevronDown 
-                        className={cn(
-                            "h-4 w-4 transition-transform duration-200",
-                            showHistory && "rotate-180"
-                        )} 
-                    />
-                </button>
-              }
+              extraAction={null} // No longer using this slot, positioning externally
             />
+            
+            {/* CHANGED: Chevron Button - Positioned absolute bottom-left */}
+            <button
+                onClick={() => setShowHistory(!showHistory)}
+                // Position: Bottom 0 (align with bottom of container), Left 3 (align roughly under album art)
+                className="absolute bottom-0 left-3 p-1 rounded-full bg-transparent hover:bg-white/10 transition-all focus:outline-none text-muted-foreground hover:text-foreground z-20 translate-y-1/2"
+                title="Toggle Played History"
+            >
+                <ChevronDown 
+                    className={cn(
+                        "h-4 w-4 transition-transform duration-200",
+                        showHistory && "rotate-180"
+                    )} 
+                />
+            </button>
           </div>
         )}
 

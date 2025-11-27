@@ -136,13 +136,14 @@ export function HostControlPanel({
     <div className="w-full overflow-hidden h-[100dvh]">
       <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         
+        {/* 1. PARTY NAME */}
         <div className="flex-shrink-0 mb-2">
           <FitText className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight w-full text-center uppercase">
             {party.name}
           </FitText>
         </div>
         
-        {/* INFO HEADER */}
+        {/* 2. INFO HEADER */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm">
           <div className="grid grid-cols-2 gap-y-1">
             
@@ -201,29 +202,16 @@ export function HostControlPanel({
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden mt-2 min-h-0" 
         >
-          {/* CHANGED: Added bg-muted, rounded-md, and p-1 to mimic pill container */}
           <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0 h-auto p-1 bg-muted rounded-md">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
               <ListMusic className="h-4 w-4" />
               <span className="inline">Playlist</span>
             </TabsTrigger>
             
-            <TabsTrigger value="settings" className="flex items-center gap-2 group relative">
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="inline">Settings</span>
-              </div>
-              <div
-                role="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReplayTour();
-                }}
-                className="absolute right-2 p-1 rounded-full hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
-                title="Replay Tour"
-              >
-                <Info className="h-4 w-4" />
-              </div>
+            {/* CHANGED: Removed Info Icon and click handler */}
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
