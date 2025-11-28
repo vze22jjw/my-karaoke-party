@@ -4,7 +4,7 @@ import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { X, GripVertical, Star, ChevronDown } from "lucide-react"; 
+import { X, GripVertical, Star, ChevronDown, Save } from "lucide-react"; 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
 import { useState, useEffect } from "react";
@@ -41,9 +41,11 @@ type Props = {
   isManualSortActive: boolean; 
   onReorder: (newPlaylist: VideoInPlaylist[]) => void; 
   onTogglePriority: (videoId: string) => void;
+  onToggleManualSort: () => void; // NEW PROP
 };
 
-function ReadOnlyItem({ video, index }: { video: VideoInPlaylist, index: number }) {
+// FIX: Renamed index to _index to silence linter
+function ReadOnlyItem({ video, index: _index }: { video: VideoInPlaylist, index: number }) {
   return (
     <div className="flex items-stretch justify-between gap-2 opacity-60 grayscale-[0.5]">
       <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/30 border border-border/50 flex gap-2 items-center">
@@ -189,6 +191,7 @@ export function TabPlaylist({
   isManualSortActive,
   onReorder,
   onTogglePriority,
+  onToggleManualSort,
 }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -224,7 +227,6 @@ export function TabPlaylist({
       <div className="flex-shrink-0 bg-background pb-2 z-10 relative">
         {currentSong && (
           <div className="mb-2 relative">
-            {/* Controls */}
             <PlaybackControls
               currentSong={currentSong}
               isPlaying={isPlaying}
@@ -232,30 +234,34 @@ export function TabPlaylist({
               onPause={onPause}
               onSkip={onSkip}
               remainingTime={remainingTime}
-              extraAction={null} // No longer using this slot, positioning externally
+              extraAction={
+                <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="absolute bottom-0 left-3 p-1 rounded-full bg-transparent hover:bg-white/10 transition-all focus:outline-none text-muted-foreground hover:text-foreground z-20 translate-y-1/2"
+                    title="Toggle Played History"
+                >
+                    <ChevronDown 
+                        className={cn(
+                            "h-4 w-4 transition-transform duration-200",
+                            showHistory && "rotate-180"
+                        )} 
+                    />
+                </button>
+              }
             />
-            
-            {/* CHANGED: Chevron Button - Positioned absolute bottom-left */}
-            <button
-                onClick={() => setShowHistory(!showHistory)}
-                // Position: Bottom 0 (align with bottom of container), Left 3 (align roughly under album art)
-                className="absolute bottom-0 left-3 p-1 rounded-full bg-transparent hover:bg-white/10 transition-all focus:outline-none text-muted-foreground hover:text-foreground z-20 translate-y-1/2"
-                title="Toggle Played History"
-            >
-                <ChevronDown 
-                    className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        showHistory && "rotate-180"
-                    )} 
-                />
-            </button>
           </div>
         )}
 
+        {/* CHANGED: Banner is now a clickable button to Save & Finish */}
         {isManualSortActive && (
-            <div className="bg-orange-500/10 border border-orange-500 text-orange-500 p-2 rounded-md mb-2 text-center text-sm font-bold animate-pulse">
-                Manual Sort Active - Drag to Reorder
-            </div>
+            <Button
+                onClick={onToggleManualSort}
+                variant="outline"
+                className="w-full bg-orange-500/10 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white mb-2 h-auto py-2 animate-pulse hover:animate-none transition-all"
+            >
+                <Save className="mr-2 h-4 w-4" />
+                Manual Sort Active - Save & Finish
+            </Button>
         )}
       </div>
 

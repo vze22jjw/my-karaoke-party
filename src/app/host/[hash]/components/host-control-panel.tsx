@@ -143,10 +143,11 @@ export function HostControlPanel({
           </FitText>
         </div>
         
-        {/* 2. INFO HEADER */}
+        {/* 2. INFO HEADER LAYOUT */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm">
           <div className="grid grid-cols-2 gap-y-1">
             
+            {/* LEFT COLUMN */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 h-[24px]">
                 <Crown className="h-5 w-5 text-yellow-500 flex-shrink-0" />
@@ -172,6 +173,7 @@ export function HostControlPanel({
               </div>
             </div>
 
+            {/* RIGHT COLUMN */}
             <div className="flex flex-col items-end gap-1">
               <div className="flex items-center justify-end gap-3 h-[24px]">
                 <div className="flex items-center gap-1.5">
@@ -208,7 +210,6 @@ export function HostControlPanel({
               <span className="inline">Playlist</span>
             </TabsTrigger>
             
-            {/* CHANGED: Removed Info Icon and click handler */}
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               <span className="inline">Settings</span>
@@ -232,6 +233,7 @@ export function HostControlPanel({
               isManualSortActive={isManualSortActive}
               onReorder={onPlaylistReorder}
               onTogglePriority={onTogglePriority}
+              onToggleManualSort={onToggleManualSort} // Prop Passed
               playedPlaylist={playedPlaylist}
             />
           </TabsContent>
