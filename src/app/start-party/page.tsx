@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { PartyPopper } from "lucide-react";
 import { OpenPlayersButton } from "~/components/open-players-drawer";
-import { ConnectToHostButton } from "~/components/connect-to-host-drawer"; // <-- Import new component
+import { ConnectToHostButton } from "~/components/connect-to-host-drawer";
 
 function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
     return (

@@ -24,7 +24,7 @@ import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { FitText } from "~/components/fit-text";
 
-// NEW AVATAR COMPONENTS ---
+// AVATAR COMPONENTS ---
 const AVATARS = [
   "🎤", "🎧", "🥁", "🧑‍🎤", "👩‍🎤",
   "🔥", "🍺", "😎", "🕺", "💃",

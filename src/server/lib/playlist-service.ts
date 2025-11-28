@@ -4,9 +4,6 @@ import type { PlaylistItem } from "@prisma/client";
 import { type KaraokeParty, type VideoInPlaylist } from "~/types/app-types";
 import { parseISO8601Duration } from "~/utils/string";
 
-/**
- * Helper to format Prisma items into the VideoInPlaylist type.
- */
 function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
   return {
     id: item.videoId,
@@ -19,13 +16,11 @@ function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
     playedAt: item.playedAt,
     createdAt: item.addedAt,
     spotifyId: item.spotifyId,
+    isPriority: item.isPriority,
+    isManual: item.isManual, 
   };
 }
 
-/**
- * Fetches and sorts the playlist for a given party.
- * Returns the playlist separated into current, unplayed, and played.
- */
 export async function getFreshPlaylist(partyHash: string): Promise<{
   currentSong: VideoInPlaylist | null;
   unplayed: VideoInPlaylist[];
@@ -46,69 +41,117 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     },
   });
 
-  if (!party) {
-    throw new Error("Party not found");
-  }
+  if (!party) throw new Error("Party not found");
 
   const useQueueRules = party.orderByFairness;
   const allItems: PlaylistItem[] = party.playlistItems;
 
   const playedItems = allItems.filter((item) => item.playedAt);
+  
+  // Use a mutable copy for extraction
   const unplayedItems = allItems.filter((item) => !item.playedAt);
 
-  const playedPlaylist = playedItems
-    .sort((a, b) => (b.playedAt?.getTime() ?? 0) - (a.playedAt?.getTime() ?? 0))
-    .map(formatPlaylistItem); // This now includes spotifyId
+  // --- 1. PIN CURRENT SONG (CRITICAL) ---
+  // If the party is STARTED, the song referenced by currentSongId MUST be the first item.
+  // We extract it now so it is completely immune to sorting logic.
+  let pinnedCurrentSong: PlaylistItem | null = null;
+  
+  if (party.status === "STARTED" && party.currentSongId) {
+      const idx = unplayedItems.findIndex(item => item.videoId === party.currentSongId);
+      if (idx !== -1) {
+          pinnedCurrentSong = unplayedItems[idx]!;
+          unplayedItems.splice(idx, 1); 
+      }
+  }
 
-  const lastPlayedSong =
-    playedItems.length > 0
-      ? playedItems.reduce((latest, current) =>
-          (latest.playedAt?.getTime() ?? 0) > (current.playedAt?.getTime() ?? 0)
-            ? latest
-            : current,
-        )
-      : null;
+  // --- 2. SEPARATE VIPs ---
+  // Filter only from the REMAINING items
+  const priorityItems = unplayedItems.filter(i => i.isPriority);
+  const standardPool = unplayedItems.filter(i => !i.isPriority);
 
-  const singerToDeprioritize = lastPlayedSong?.singerName ?? null;
-
-  let fairlySortedUnplayed: PlaylistItem[] = [];
+  let sortedStandardItems: PlaylistItem[] = [];
 
   if (useQueueRules) {
-    fairlySortedUnplayed = orderByRoundRobin(
+    // --- HYBRID FAIRNESS ---
+    const manualItems = standardPool.filter(i => i.isManual);
+    const floatingItems = standardPool.filter(i => !i.isManual);
+
+    const lastPlayedSong = playedItems.length > 0
+      ? playedItems.reduce((latest, current) =>
+          (latest.playedAt?.getTime() ?? 0) > (current.playedAt?.getTime() ?? 0) ? latest : current,
+        )
+      : null;
+    const singerToDeprioritize = lastPlayedSong?.singerName ?? null;
+
+    const sortedFloating = orderByRoundRobin(
       allItems as FairnessPlaylistItem[],
-      unplayedItems as FairnessPlaylistItem[], 
+      floatingItems as FairnessPlaylistItem[], 
       singerToDeprioritize,
     ) as PlaylistItem[];
+
+    const merged: PlaylistItem[] = [];
+    let floatIndex = 0;
+    const totalSize = manualItems.length + sortedFloating.length;
+
+    for (let i = 0; i < totalSize; i++) {
+        const manualItemForSlot = manualItems.find(m => m.orderIndex === i);
+        if (manualItemForSlot) {
+            merged.push(manualItemForSlot);
+        } else {
+            if (floatIndex < sortedFloating.length) {
+                merged.push(sortedFloating[floatIndex]!);
+                floatIndex++;
+            }
+        }
+    }
+    while (floatIndex < sortedFloating.length) {
+        merged.push(sortedFloating[floatIndex]!);
+        floatIndex++;
+    }
+    sortedStandardItems = merged;
+
   } else {
-    fairlySortedUnplayed = unplayedItems;
+    // FIFO (Standard)
+    sortedStandardItems = standardPool;
   }
 
-  const currentSongItem = fairlySortedUnplayed[0] ?? null;
-  const remainingUnplayed = fairlySortedUnplayed.slice(1);
+  // --- 3. FINAL ASSEMBLY ---
+  const finalQueue: PlaylistItem[] = [];
+  
+  if (pinnedCurrentSong) {
+      finalQueue.push(pinnedCurrentSong);
+  }
+  
+  finalQueue.push(...priorityItems);
+  finalQueue.push(...sortedStandardItems);
 
-  const formattedCurrentSong = currentSongItem
-    ? formatPlaylistItem(currentSongItem)
-    : null;
+  const currentSongItem = finalQueue[0] ?? null;
+  const remainingUnplayed = finalQueue.slice(1);
+
+  const formattedCurrentSong = currentSongItem ? formatPlaylistItem(currentSongItem) : null;
   const unplayedPlaylist = remainingUnplayed.map(formatPlaylistItem);
+  const playedPlaylist = playedItems
+    .sort((a, b) => (b.playedAt?.getTime() ?? 0) - (a.playedAt?.getTime() ?? 0))
+    .map(formatPlaylistItem);
 
   let remainingDuration: number | null = null;
-  
   if (party.currentSongStartedAt) {
-    remainingDuration = party.currentSongRemainingDuration;
+     remainingDuration = party.currentSongRemainingDuration;
   } else if (party.currentSongRemainingDuration) {
-    remainingDuration = party.currentSongRemainingDuration;
+     remainingDuration = party.currentSongRemainingDuration;
   } else if (formattedCurrentSong?.duration) {
-    remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
+     remainingDuration = Math.floor((parseISO8601Duration(formattedCurrentSong.duration) ?? 0) / 1000);
   }
 
-  // Helper to build the settings object
   const settings: KaraokeParty["settings"] = {
     orderByFairness: useQueueRules,
     disablePlayback: party.disablePlayback,
-    spotifyPlaylistId: party.spotifyPlaylistId, // <-- Ensure it's here
+    spotifyPlaylistId: party.spotifyPlaylistId,
+    isManualSortActive: party.isManualSortActive,
   };
 
   if (party.status === "OPEN") {
+    // In OPEN mode, nothing is "Playing", so the first item is just top of queue
     const allUnplayed = currentSongItem
       ? [formatPlaylistItem(currentSongItem), ...unplayedPlaylist]
       : unplayedPlaylist;
@@ -117,20 +160,19 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       currentSong: null,
       unplayed: allUnplayed,
       played: playedPlaylist,
-      settings, // <-- Pass settings object
+      settings,
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
       status: party.status,
       idleMessages: party.idleMessages,
       themeSuggestions: party.themeSuggestions,
     };
-  
   } else {
     return {
       currentSong: formattedCurrentSong,
       unplayed: unplayedPlaylist,
       played: playedPlaylist,
-      settings, // <-- Pass settings object
+      settings,
       currentSongStartedAt: party.currentSongStartedAt,
       currentSongRemainingDuration: remainingDuration,
       status: party.status,

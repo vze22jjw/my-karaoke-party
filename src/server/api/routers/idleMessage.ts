@@ -36,7 +36,6 @@ export const idleMessageRouter = createTRPCRouter({
         });
       }
 
-      // Create the new message
       return ctx.db.idleMessage.create({
         data: {
           hostName: input.hostName,
@@ -51,9 +50,6 @@ export const idleMessageRouter = createTRPCRouter({
   delete: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      // Note: In a real app, you'd also check if this message
-      // belongs to the host trying to delete it.
-      // For this app's structure, we'll keep it simple.
       return ctx.db.idleMessage.delete({
         where: { id: input.id },
       });

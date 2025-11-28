@@ -12,9 +12,7 @@ export function QrCode({ url, size = 128, className }: Props) {
     <div className={cn("w-fit bg-white p-2", className)}>
       <QRCode
         size={size}
-        // style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-        value={url} // Create ID
-        // viewBox={`0 0 256 256`}
+        value={url}
       />
     </div>
   );

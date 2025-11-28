@@ -7,8 +7,6 @@ import { Alert, AlertDescription } from "~/components/ui/ui/alert";
 import { Info, Loader2, Scale } from "lucide-react";
 import { cn } from "~/lib/utils";
 
-const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
-
 const ToggleButton = ({
   id,
   checked,
@@ -64,6 +62,8 @@ type Props = {
   onToggleRules: () => void;
   disablePlayback: boolean;
   onTogglePlayback: () => void;
+  isManualSortActive: boolean;
+  onToggleManualSort: () => void;
 };
 
 export function SettingsRules({
@@ -71,28 +71,24 @@ export function SettingsRules({
   onToggleRules,
   disablePlayback,
   onTogglePlayback,
+  isManualSortActive,
+  onToggleManualSort,
 }: Props) {
   const [showRulesInfo, setShowRulesInfo] = useState(false);
   const [isLoadingRules, setIsLoadingRules] = useState(false);
   const [isLoadingPlayback, setIsLoadingPlayback] = useState(false);
+  
+  const isLoadingSort = false; 
 
-  // Automatically clear loading state when the prop changes (Server confirmation received)
-  useEffect(() => {
-    if (isLoadingRules) setIsLoadingRules(false);
-  }, [useQueueRules, isLoadingRules]);
-
-  useEffect(() => {
-    if (isLoadingPlayback) setIsLoadingPlayback(false);
-  }, [disablePlayback, isLoadingPlayback]);
+  useEffect(() => { if (isLoadingRules) setIsLoadingRules(false); }, [useQueueRules, isLoadingRules]);
+  useEffect(() => { if (isLoadingPlayback) setIsLoadingPlayback(false); }, [disablePlayback, isLoadingPlayback]);
 
   const handleToggleRules = () => {
-    if (IS_DEBUG) console.log("[SettingsRules] Toggling rules...");
     setIsLoadingRules(true);
     onToggleRules();
   };
 
   const handleTogglePlayback = () => {
-    if (IS_DEBUG) console.log("[SettingsRules] Toggling playback...");
     setIsLoadingPlayback(true);
     onTogglePlayback();
   };
@@ -116,35 +112,39 @@ export function SettingsRules({
       {showRulesInfo && (
         <Alert className="mt-2 space-y-2">
           <AlertDescription>
-            <strong>Queue Ordering:</strong> &quot;ON (Fairness)&quot; ensures
-            everyone gets a turn. &quot;OFF&quot; is first-come, first-served.
+            <strong>Queue Ordering:</strong> &quot;Fairness&quot; rotates singers. &quot;FIFO&quot; is first-come, first-served.
           </AlertDescription>
           <AlertDescription>
-            <strong>Play Videos in iFrame:</strong> &quot;ON&quot; plays most
-            videos inside the app. &quot;OFF&quot; requires clicking a link to
-            open YouTube.
+            <strong>Manual Queue Sort:</strong> Enable to unlock drag-and-drop reordering in the Playlist tab. Disabling it saves the new order.
+          </AlertDescription>
+          <AlertDescription>
+            <strong>Playback:</strong> &quot;In-App&quot; plays videos here. &quot;YouTube&quot; forces external links.
           </AlertDescription>
         </Alert>
       )}
+      
+      <ToggleButton
+        id="manual-sort"
+        checked={isManualSortActive}
+        onCheckedChange={onToggleManualSort}
+        isLoading={isLoadingSort}
+        label={isManualSortActive ? "Manual Sort: Active" : "Manual Sort: OFF"}
+      />
+
       <ToggleButton
         id="queue-rules"
         checked={useQueueRules}
         onCheckedChange={handleToggleRules}
         isLoading={isLoadingRules}
-        label={
-          useQueueRules ? "Queue: Fairness (ON)" : "Queue: FIFO (OFF)"
-        }
+        label={useQueueRules ? "Queue: Fairness (ON)" : "Queue: FIFO (OFF)"}
       />
+      
       <ToggleButton
         id="disable-playback"
         checked={!disablePlayback}
         onCheckedChange={handleTogglePlayback}
         isLoading={isLoadingPlayback}
-        label={
-          !disablePlayback
-            ? "Playback: In-App (ON)"
-            : "Playback: YouTube (OFF)"
-        }
+        label={!disablePlayback ? "Playback: In-App (ON)" : "Playback: YouTube (OFF)"}
       />
     </div>
   );

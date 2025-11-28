@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { spotifyService } from "~/server/lib/spotify";
 import { env } from "~/env";
+import { TRPCError } from "@trpc/server";
+import { cookies } from "next/headers";
 
 export const playlistRouter = createTRPCRouter({
   getPlaylist: publicProcedure
@@ -35,11 +37,14 @@ export const playlistRouter = createTRPCRouter({
           singerName: item.singerName,
           playedAt: item.playedAt,
           spotifyId: item.spotifyId,
+          isPriority: item.isPriority,
+          isManual: item.isManual,
         })),
         settings: {
           orderByFairness: party.orderByFairness,
           disablePlayback: party.disablePlayback,
-          spotifyPlaylistId: party.spotifyPlaylistId, 
+          spotifyPlaylistId: party.spotifyPlaylistId,
+          isManualSortActive: party.isManualSortActive,
         },
       };
     }),
@@ -123,6 +128,11 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const token = cookies().get("admin_token")?.value;
+      if (token !== env.ADMIN_TOKEN) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Host access required" });
+      }
+
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },
       });
@@ -154,6 +164,11 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const token = cookies().get("admin_token")?.value;
+      if (token !== env.ADMIN_TOKEN) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Host access required" });
+      }
+
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },
       });
@@ -247,7 +262,6 @@ export const playlistRouter = createTRPCRouter({
       }));
     }
 
-    // 1. Fetch raw songs sung count
     const topSingersRaw = await ctx.db.playlistItem.groupBy({
       by: ["singerName"],
       where: {
@@ -260,7 +274,6 @@ export const playlistRouter = createTRPCRouter({
 
     const singerNames = topSingersRaw.map(s => s.singerName);
 
-    // 2. Fetch applause counts for these singers
     const participants = await ctx.db.partyParticipant.findMany({
       where: {
         name: { in: singerNames }
@@ -283,7 +296,6 @@ export const playlistRouter = createTRPCRouter({
       };
     });
 
-    // List 1: Top Singers by Songs Sung (Tie-break with Applause)
     const topSingersBySongs = [...allSingers].sort((a, b) => {
       if (b.count !== a.count) {
         return b.count - a.count; 
@@ -291,7 +303,6 @@ export const playlistRouter = createTRPCRouter({
       return b.applauseCount - a.applauseCount;
     }).slice(0, 5);
 
-    // List 2: Top Singers by Applause (Tie-break with Songs)
     const topSingersByApplause = [...allSingers].sort((a, b) => {
       if (b.applauseCount !== a.applauseCount) {
         return b.applauseCount - a.applauseCount; 
@@ -303,7 +314,6 @@ export const playlistRouter = createTRPCRouter({
       topSongs,
       topSingersBySongs,
       topSingersByApplause,
-      // Keep legacy prop for safety until client updates fully propagate, though we won't use it
       topSingers: topSingersBySongs, 
     };
   }),

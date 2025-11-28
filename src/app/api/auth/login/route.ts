@@ -1,34 +1,51 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { env } from "~/env";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { password?: string };
-    const { password } = body;
+    const body = (await req.json()) as { password: string };
 
-    if (password !== process.env.ADMIN_TOKEN) {
+    if (body.password !== env.ADMIN_TOKEN) {
       return NextResponse.json(
         { error: "Invalid password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
-    const response = NextResponse.json({ success: true });
+
+    // Calculate expiration (24 hours)
+    const oneDay = 24 * 60 * 60 * 1000;
+    const expirationDate = new Date(Date.now() + oneDay);
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    const isHttps = appUrl.startsWith("https://");
     const isProduction = process.env.NODE_ENV === "production";
-    const isHttps = process.env.NEXT_PUBLIC_APP_URL?.startsWith("https");
     
-    response.cookies.set("admin_token_verified", "true", {
+    // Only use secure cookie if we are definitely on HTTPS in production
+    const useSecureCookie = isProduction && isHttps;
+
+    cookies().set("admin_token", body.password, {
       httpOnly: true,
-      secure: isProduction && isHttps,
+      secure: useSecureCookie,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24, // 24 hours
+      expires: expirationDate,
+    });
+    
+    // Set verification cookie
+    cookies().set("admin_token_verified", "true", {
+        httpOnly: false, 
+        secure: useSecureCookie,
+        sameSite: "lax",
+        path: "/",
+        expires: expirationDate,
     });
 
-    return response;
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

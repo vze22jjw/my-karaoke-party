@@ -13,20 +13,22 @@ import { toast } from "sonner";
 import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import Confetti from "react-canvas-confetti";
 import type { Party } from "@prisma/client";
-import type { InitialPartyData } from "~/types/app-types";
+import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
 
 const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
 const HOST_TOUR_KEY = "has_seen_host_tour_v1";
+const MANUAL_SORT_KEY = "karaoke-manual-sort-active"; 
 
 type Props = {
   party: Party;
   initialData: InitialPartyData;
+  hostName: string;
 };
 
-export function HostScene({ party, initialData }: Props) {
+export function HostScene({ party, initialData, hostName }: Props) {
   const {
     currentSong,
-    unplayedPlaylist,
+    unplayedPlaylist, 
     playedPlaylist,
     partyStatus,
     participants,
@@ -35,7 +37,25 @@ export function HostScene({ party, initialData }: Props) {
     remainingTime,
     settings,
     themeSuggestions,
-  } = usePartySocket(party.hash!, initialData, "Host");
+  } = usePartySocket(party.hash!, initialData, hostName);
+
+  const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
+    key: MANUAL_SORT_KEY,
+    defaultValue: false,
+  });
+
+  const [localUnplayed, setLocalUnplayed] = useState<VideoInPlaylist[]>(initialData.unplayed);
+  const hasSyncedRef = useRef(false);
+
+  useEffect(() => {
+      if (!isManualSortActive) {
+          setLocalUnplayed(unplayedPlaylist);
+          hasSyncedRef.current = true;
+      } else if (!hasSyncedRef.current && unplayedPlaylist.length > 0) {
+          setLocalUnplayed(unplayedPlaylist);
+          hasSyncedRef.current = true;
+      }
+  }, [unplayedPlaylist, isManualSortActive]);
 
   const { 
     data: hostIdleMessages, 
@@ -52,7 +72,7 @@ export function HostScene({ party, initialData }: Props) {
   
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
-    defaultValue: 12,
+    defaultValue: 9,
   });
 
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
@@ -130,6 +150,19 @@ export function HostScene({ party, initialData }: Props) {
     statusMutation.mutate({ hash: party.hash!, status: statusToSend });
   };
 
+  const handleToggleManualSort = () => {
+      if (isManualSortActive) {
+          const newOrderIds = localUnplayed.map(v => v.id);
+          socketActions.saveQueueOrder(newOrderIds);
+          toast.success("Playlist Order Saved!");
+          setIsManualSortActive(false);
+      } else {
+          setLocalUnplayed(unplayedPlaylist);
+          setIsManualSortActive(true);
+          toast.info("Manual Sort Enabled.");
+      }
+  };
+
   if (!isMounted) return <LoaderFull />;
 
   return (
@@ -149,7 +182,7 @@ export function HostScene({ party, initialData }: Props) {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         currentSong={currentSong}
-        playlist={unplayedPlaylist}
+        playlist={isManualSortActive ? localUnplayed : unplayedPlaylist}
         playedPlaylist={playedPlaylist}
         onRemoveSong={socketActions.removeSong}
         onMarkAsPlayed={async () => {
@@ -169,6 +202,11 @@ export function HostScene({ party, initialData }: Props) {
         onTogglePlayback={() => {
           socketActions.togglePlayback(!settings.disablePlayback);
         }}
+        isManualSortActive={isManualSortActive}
+        onToggleManualSort={handleToggleManualSort}
+        onPlaylistReorder={(newList) => setLocalUnplayed(newList)}
+        onTogglePriority={socketActions.togglePriority} 
+
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
         onCloseParty={() => setIsConfirmingClose(true)}

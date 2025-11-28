@@ -29,17 +29,19 @@ model Party {
     lastActivityAt DateTime       @default(now())
     orderByFairness Boolean        @default(true)
     disablePlayback Boolean        @default(false)
+    isManualSortActive Boolean     @default(false)
+    
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
 
     currentSongId                String?
     currentSongStartedAt         DateTime?
     currentSongRemainingDuration Int?
-    status         String         @default("OPEN") // OPEN, STARTED, CLOSED
+    status         String         @default("OPEN")
     idleMessages   String[]       @default([]) 
     themeSuggestions String[]     @default([]) 
     spotifyPlaylistId String?
-
+    
     @@index([hash])
     @@index([lastActivityAt])
     @@index([status])
@@ -53,7 +55,8 @@ model PartyParticipant {
     joinedAt  DateTime      @default(now())
     role      String        @default("Guest") 
     applauseCount Int       @default(0)
-    avatar    String?       // Will store an emoji or icon identifier
+    avatar    String?
+    
     @@unique([partyId, name])
     @@index([partyId])
 }
@@ -71,10 +74,12 @@ model PlaylistItem {
     singerName String
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
-    orderIndex Int       @default(0)
+    orderIndex Int       @default(0) // Stores manual slot
     randomBreaker Float?
     spotifyId  String?
-
+    isPriority Boolean   @default(false)
+    isManual   Boolean   @default(false) // <-- NEW: Tracks manual sort status
+    
     @@index([partyId])
     @@index([playedAt])
 }

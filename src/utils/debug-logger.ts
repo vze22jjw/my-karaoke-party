@@ -5,14 +5,10 @@
 
 import { type KaraokeParty } from "~/types/app-types";
 
-// Check both server-side and client-side env vars
 const IS_DEBUG_MODE =
   process.env.EVENT_DEBUG === "true" ||
   process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
-/**
- * Formats a playlist array into a simple, readable string array of titles for logging.
- */
 export const formatPlaylistForLog = (
   playlist: KaraokeParty["playlist"],
 ): string[] => {
@@ -22,7 +18,6 @@ export const formatPlaylistForLog = (
   if (playlist.length === 0) {
     return ["(Playlist is empty)"];
   }
-  // --- This includes your requested duration logging ---
   return playlist.map(
     (item, index) =>
       `${index + 1}: ${item?.title ?? "N/A"} (${

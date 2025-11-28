@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { PlayerQrCode } from "./player-qr-code"; // Import the new component
+import { PlayerQrCode } from "./player-qr-code";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { cn } from "~/lib/utils";
 import { useEffect, useState } from "react";
@@ -29,10 +29,10 @@ function Slideshow({ messages }: { messages: string[] }) {
 
   const currentMessage = messages[currentIndex] ?? "";
   
-  // CHANGED: Use "@" as separator instead of " -- "
+  // Use "@" as separator
   const parts = currentMessage.includes("@") ? currentMessage.split("@") : [currentMessage, ""];
   
-  // Added trim() to clean up any surrounding spaces user might have typed
+  // trim() to clean up any surrounding spaces user might have typed
   const quote = parts[0]?.trim() ?? "";
   const author = parts[1]?.trim() ?? "";
 

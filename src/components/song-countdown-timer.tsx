@@ -4,7 +4,7 @@ import { cn } from "~/lib/utils";
 import { memo } from "react";
 
 type Props = {
-  remainingTime: number; // Time in seconds
+  remainingTime: number;
   className?: string;
   message?: string;
 };

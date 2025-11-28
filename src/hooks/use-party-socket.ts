@@ -23,6 +23,9 @@ interface SocketActions {
   updateThemeSuggestions: (suggestions: string[]) => void;
   sendApplause: (singerName: string) => Promise<void>; 
   songEnded: (id: string) => Promise<void>;
+  toggleManualSort: (isActive: boolean) => void;
+  saveQueueOrder: (newOrderIds: string[]) => void;
+  togglePriority: (videoId: string) => void;
 }
 
 type Participant = {
@@ -131,16 +134,7 @@ export function usePartySocket(
   useEffect(() => {
     const socketInitializer = async () => {
       if (socketRef.current) return;
-      
-      console.log(`${LOG_TAG} Fetching /api/socket to wake server...`);
-      try { 
-        await fetch("/api/socket"); 
-      } catch (e) { 
-        console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); 
-      }
-
-      const socketUrl = typeof window !== "undefined" ? window.location.origin : "";
-      console.log(`${LOG_TAG} Connecting to socket at: ${socketUrl} with path: /socket.io`);
+      try { await fetch("/api/socket"); } catch (e) { console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); }
 
       const newSocket = io({
         path: "/socket.io",
@@ -152,13 +146,8 @@ export function usePartySocket(
       socketRef.current = newSocket;
 
       newSocket.on("connect", () => {
-        console.log(`${LOG_TAG} Connected. ID: ${newSocket.id}`);
         setIsConnected(true);
         newSocket.emit("join-party", { partyHash, singerName, avatar });
-      });
-
-      newSocket.on("connect_error", (err) => {
-        console.error(`${LOG_TAG} Connection Error:`, err.message);
       });
 
       newSocket.on("disconnect", (reason) => {
@@ -168,7 +157,6 @@ export function usePartySocket(
       });
 
       newSocket.on("playlist-updated", (partyData: PartySocketData) => {
-        console.log(`${LOG_TAG} Received 'playlist-updated'`);
         if (prevSongIdRef.current !== partyData.currentSong?.id) {
           setIsSkipping(false);
           resetCountdown(partyData.currentSong);
@@ -205,14 +193,21 @@ export function usePartySocket(
       });
 
       newSocket.on("singers-updated", (list: Participant[]) => setParticipants(list));
-      
       newSocket.on("new-singer-joined", (name: string) => {
         if (name && name !== singerName) toast.info(`${name} has joined the party!`);
       });
-
       newSocket.on("party-closed", () => {
         stopCountdown();
         router.push("/");
+      });
+      
+      newSocket.on("error", (data: { message: string }) => {
+        // CHANGED: Check for "Video too long" and trigger alert instead of toast
+        if (data.message.toLowerCase().includes("video too long")) {
+            alert(data.message);
+        } else {
+            toast.error(data.message);
+        }
       });
 
       newSocket.on("skip-timer-started", () => setIsSkipping(true));
@@ -230,11 +225,10 @@ export function usePartySocket(
     const heartbeatInterval = setInterval(() => {
       if (socketRef.current?.connected) socketRef.current.emit("heartbeat", { partyHash, singerName, avatar });
       else socketRef.current?.emit("join-party", { partyHash, singerName, avatar });
-    }, 300000); // 300000 (5 mins)
+    }, 300000); 
 
     return () => {
       if (socketRef.current) {
-        console.log(`${LOG_TAG} Cleaning up/Disconnecting socket.`);
         socketRef.current.disconnect();
         socketRef.current = null;
       }
@@ -250,18 +244,12 @@ export function usePartySocket(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ partyHash, singerName: singer }),
       });
-
       if (!response.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-        const errorData: any = await response.json();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        const errorData = (await response.json()) as { error?: string };
         const msg = errorData?.error ?? "Server error";
-        toast.error("Failed to register applause.", { description: msg as string });
-      } else {
-        console.log(`${LOG_TAG} Applause sent via REST successfully.`);
+        toast.error("Failed to register applause.", { description: msg });
       }
     } catch (error) {
-      console.error(`${LOG_TAG} Applause REST Error:`, error);
       toast.error("Network error while sending applause.");
     }
   }, [partyHash]);
@@ -278,14 +266,17 @@ export function usePartySocket(
     playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
     startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
-    refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }),
+    refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }), 
     updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
     updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
     sendApplause: sendApplauseHttp,
     songEnded: async (id: string) => { 
-      console.log("Song ended: " + id); 
-      socketRef.current?.emit("mark-as-played", { partyHash }); 
+        console.log("Song ended: " + id); 
+        socketRef.current?.emit("mark-as-played", { partyHash }); 
     },
+    toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
+    saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
+    togglePriority: (videoId) => socketRef.current?.emit("toggle-priority", { partyHash, videoId }),
   }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {

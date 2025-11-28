@@ -29,7 +29,7 @@ export const partyRouter = createTRPCRouter({
           data: {
             name: input.name,
             status: "OPEN",
-            hash: "temp", // Temporary hash
+            hash: "temp",
           },
         });
 
@@ -72,6 +72,27 @@ export const partyRouter = createTRPCRouter({
       }
     }),
 
+  getHostName: publicProcedure
+    .input(z.object({ hash: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const party = await ctx.db.party.findUnique({
+        where: { hash: input.hash },
+        select: { id: true },
+      });
+      
+      if (!party) return null;
+
+      const host = await ctx.db.partyParticipant.findFirst({
+        where: { 
+          partyId: party.id, 
+          role: "Host" 
+        },
+        select: { name: true },
+      });
+
+      return host?.name ?? "Host";
+    }),
+
   updateSpotifyPlaylist: publicProcedure
     .input(z.object({ 
       hash: z.string(), 
@@ -96,11 +117,10 @@ export const partyRouter = createTRPCRouter({
       return { success: true, newId: finalId };
     }),
 
-  // --- Toggle Status Mutation (Secured) ---
   toggleStatus: protectedProcedure
     .input(z.object({ 
       hash: z.string(), 
-      status: z.string() // Accepts OPEN, STARTED, CLOSED
+      status: z.string() 
     }))
     .mutation(async ({ ctx, input }) => {
       const party = await ctx.db.party.update({
@@ -108,7 +128,6 @@ export const partyRouter = createTRPCRouter({
         data: { 
           status: input.status,
           lastActivityAt: new Date(),
-          // If entering OPEN (Intermission), clear the start time so the timer stops
           ...(input.status === "OPEN" ? {
              currentSongStartedAt: null,
              currentSongRemainingDuration: null

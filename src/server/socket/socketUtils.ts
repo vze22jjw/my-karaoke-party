@@ -28,7 +28,7 @@ export type Participant = {
   name: string;
   role: string;
   avatar: string | null;
-  applauseCount: number; // ADDED
+  applauseCount: number;
 };
 
 export async function getSingers(partyId: number): Promise<Participant[]> {
@@ -115,7 +115,6 @@ export async function registerParticipant(
           data: { avatar: avatar },
         });
       } catch (updateError) {
-        // ignore
       }
       return { isNew: false };
     }

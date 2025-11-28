@@ -41,7 +41,10 @@ export default async function HostPage({ params }: Props) {
   }
 
   const partyHash = params.hash;
-  const party = await api.party.getByHash({ hash: partyHash });
+  const [party, hostName] = await Promise.all([
+    api.party.getByHash({ hash: partyHash }),
+    api.party.getHostName({ hash: partyHash }),
+  ]);
 
   if (!party) {
     notFound();
@@ -79,5 +82,5 @@ export default async function HostPage({ params }: Props) {
     console.warn("Failed to fetch initial playlist for host page", error);
   }
 
-  return <HostScene party={party} initialData={initialData} />;
+  return <HostScene party={party} initialData={initialData} hostName={hostName ?? "Host"} />;
 }

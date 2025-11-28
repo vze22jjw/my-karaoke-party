@@ -9,7 +9,7 @@ export const youtubeRouter = createTRPCRouter({
     .input(
       z.object({
         keyword: z.string(),
-        maxResults: z.number().optional(), // <-- Added maxResults
+        maxResults: z.number().optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -26,7 +26,6 @@ export const youtubeRouter = createTRPCRouter({
         );
 
       if (cachedVideos === null) {
-        // cache miss
         log.info("Cache miss, searching YouTube API", {
           keyword: input.keyword,
         });
