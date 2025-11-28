@@ -6,6 +6,7 @@ import { Input } from "~/components/ui/ui/input";
 import { Button } from "~/components/ui/ui/button";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export function AdminLogin() {
   const router = useRouter();
@@ -33,10 +34,9 @@ export function AdminLogin() {
 
       toast.success("Authenticated!");
       
-      // FIX: Removed window.location.reload() to prevent double refresh.
-      // router.refresh() re-fetches server components (the page) with new cookie state.
+      // Refresh server components to pick up the new cookie
       router.refresh();
-      
+
     } catch (error) {
       toast.error("Something went wrong");
       setLoading(false);
@@ -72,6 +72,15 @@ export function AdminLogin() {
             {loading ? "Verifying..." : "Unlock Controls"}
           </Button>
         </form>
+
+        <div className="pt-2">
+            <Link 
+                href="/" 
+                className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
+            >
+                &larr; Back to Home
+            </Link>
+        </div>
       </div>
     </div>
   );
