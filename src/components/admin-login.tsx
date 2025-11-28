@@ -32,7 +32,11 @@ export function AdminLogin() {
       }
 
       toast.success("Authenticated!");
+      
+      // FIX: Removed window.location.reload() to prevent double refresh.
+      // router.refresh() re-fetches server components (the page) with new cookie state.
       router.refresh();
+      
     } catch (error) {
       toast.error("Something went wrong");
       setLoading(false);
