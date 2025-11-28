@@ -49,7 +49,6 @@ function ConnectToHostDrawerComponent() {
 
     const handleEnterHost = (hash: string) => {
         setIsOpen(false);
-        // Redirect to host page. The existing page logic handles auth/login.
         router.push(`/host/${hash}`);
     };
 

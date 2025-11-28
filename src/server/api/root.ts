@@ -3,7 +3,7 @@ import { partyRouter } from "./routers/party";
 import { playlistRouter } from "./routers/playlist";
 import { youtubeRouter } from "./routers/youtube";
 import { idleMessageRouter } from "./routers/idleMessage"; 
-import { spotifyRouter } from "./routers/spotify"; // <-- IMPORT
+import { spotifyRouter } from "./routers/spotify";
 
 /**
  * This is the primary router for your server.
@@ -15,10 +15,9 @@ export const appRouter = createTRPCRouter({
   playlist: playlistRouter,
   youtube: youtubeRouter,
   idleMessage: idleMessageRouter,
-  spotify: spotifyRouter, // <-- REGISTER
+  spotify: spotifyRouter,
 });
 
-// export type definition of API
 export type AppRouter = typeof appRouter;
 
 /**

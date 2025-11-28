@@ -22,7 +22,7 @@ const MANUAL_SORT_KEY = "karaoke-manual-sort-active";
 type Props = {
   party: Party;
   initialData: InitialPartyData;
-  hostName: string; // NEW PROP
+  hostName: string;
 };
 
 export function HostScene({ party, initialData, hostName }: Props) {
@@ -37,7 +37,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
     remainingTime,
     settings,
     themeSuggestions,
-  } = usePartySocket(party.hash!, initialData, hostName); // CHANGED: Use actual host name
+  } = usePartySocket(party.hash!, initialData, hostName);
 
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: MANUAL_SORT_KEY,

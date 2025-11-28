@@ -56,18 +56,14 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
             // e.g. If party is ABCD, user enters DCBA. We reverse it back to ABCD here.
             const realHash = values.hash.split("").reverse().join("");
 
-            // Fallback: Use the fetch API which we know exists at /api/playlist/[hash] (returns 404 if not found)
             const res = await fetch(`/api/playlist/${realHash}`);
             
             if (!res.ok) {
                  setStatusError("Party not found or invalid code.");
                  return;
             }
-
-            // FIX: Type assertion to satisfy linter
             const data = (await res.json()) as { status: string };
 
-            // Verify status if needed (the playlist endpoint returns party data)
             if (data.status === 'CLOSED') {
                 setStatusError("Party has ended.");
                 return;

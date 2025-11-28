@@ -10,14 +10,13 @@ export const env = createEnv({
     SPOTIFY_CLIENT_ID: z.string().optional(),
     SPOTIFY_CLIENT_SECRET: z.string().optional(),
     PORT: z.string().optional(),
-    ADMIN_TOKEN: z.string(), // <-- ADDED ADMIN_TOKEN HERE
+    ADMIN_TOKEN: z.string(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
     NEXT_PUBLIC_EVENT_DEBUG: z.string().optional(),
     NEXT_PUBLIC_MKP_APP_VER: z.string().default("0.0.0-BETA"),
     NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: z.string().optional(),
-    // New variables for the About page
     NEXT_PUBLIC_BUILD_DATE: z.string().optional(),
     NEXT_PUBLIC_GIT_COMMIT_SHA: z.string().optional(),
   },
@@ -32,7 +31,7 @@ export const env = createEnv({
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
     PORT: process.env.PORT,
-    ADMIN_TOKEN: process.env.ADMIN_TOKEN, // <-- ADDED ADMIN_TOKEN HERE
+    ADMIN_TOKEN: process.env.ADMIN_TOKEN,
     NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: process.env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL,
     NEXT_PUBLIC_BUILD_DATE: process.env.NEXT_PUBLIC_BUILD_DATE,
     NEXT_PUBLIC_GIT_COMMIT_SHA: process.env.NEXT_PUBLIC_GIT_COMMIT_SHA,

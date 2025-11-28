@@ -17,9 +17,6 @@ export async function POST(req: Request) {
     const oneDay = 24 * 60 * 60 * 1000;
     const expirationDate = new Date(Date.now() + oneDay);
 
-    // FIX: Determine if we should force a secure cookie.
-    // We only want 'secure: true' if we are in production AND the app URL is actually HTTPS.
-    // This prevents "production builds" running on local HTTP from breaking.
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
     const isHttps = appUrl.startsWith("https://");
     const isProduction = process.env.NODE_ENV === "production";
@@ -29,7 +26,7 @@ export async function POST(req: Request) {
 
     cookies().set("admin_token", body.password, {
       httpOnly: true,
-      secure: useSecureCookie, // <--- Updated Logic
+      secure: useSecureCookie,
       sameSite: "lax",
       path: "/",
       expires: expirationDate,
@@ -38,7 +35,7 @@ export async function POST(req: Request) {
     // Set verification cookie
     cookies().set("admin_token_verified", "true", {
         httpOnly: false, 
-        secure: useSecureCookie, // <--- Updated Logic
+        secure: useSecureCookie,
         sameSite: "lax",
         path: "/",
         expires: expirationDate,

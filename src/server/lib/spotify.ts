@@ -4,7 +4,6 @@ import { env } from "~/env";
 import { cache } from "../cache";
 import { debugLog } from "~/utils/debug-logger";
 
-// Internal Spotify API types
 type SpotifyTokenResponse = {
   access_token: string;
   token_type: string;
@@ -27,7 +26,6 @@ type SpotifyTrack = {
   external_urls: { spotify: string };
 };
 
-// Public type for our app
 export type SpotifyRecommendation = {
   title: string;
   artist: string;
@@ -35,7 +33,7 @@ export type SpotifyRecommendation = {
 };
 
 const LOG_TAG = "[SpotifyService]";
-const DEFAULT_KARAOKE_PLAYLIST_ID = "1NXdf9sRWYkgfuHVU3LKUi"; // Need to use a playlist user other than Spotify to return data
+const DEFAULT_KARAOKE_PLAYLIST_ID = "1NXdf9sRWYkgfuHVU3LKUi"; // Use a playlist user other than Spotify default to return data
 
 export const spotifyService = {
   async getAccessToken(): Promise<string | null> {
@@ -51,7 +49,6 @@ export const spotifyService = {
         `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
       ).toString("base64");
 
-      // --- FIX: Correct URL ---
       const res = await axios.post<SpotifyTokenResponse>(
         "https://accounts.spotify.com/api/token",
         "grant_type=client_credentials",
@@ -82,7 +79,6 @@ export const spotifyService = {
         .replace(/official video|lyrics|karaoke|instrumental/gi, "")
         .trim();
 
-      // --- FIX: Correct URL ---
       const res = await axios.get<{ tracks: { items: SpotifyTrack[] } }>(
         "https://api.spotify.com/v1/search",
         {
@@ -118,10 +114,7 @@ export const spotifyService = {
     const token = await this.getAccessToken();
     if (!token) return [];
 
-    // --- FIX: Use || (logical OR) instead of ?? (nullish coalescing) ---
-    // This treats an empty string "" as falsy and uses the default ID.
     const idToUse = playlistId || DEFAULT_KARAOKE_PLAYLIST_ID;
-    // -----------------------------------------------------------------
     
     const CACHE_KEY = `spotify:top_tracks:${idToUse}`;
     
@@ -135,7 +128,6 @@ export const spotifyService = {
     try {
       debugLog(LOG_TAG, `Fetching tracks from playlist: ${idToUse}`);
       
-      // --- FIX: Correct URL with ${idToUse} ---
       const tracksRes = await axios.get<{ items: { track: SpotifyTrack }[] }>(
         `https://api.spotify.com/v1/playlists/${idToUse}/tracks`,
         {

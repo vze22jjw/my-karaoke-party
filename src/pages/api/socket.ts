@@ -4,7 +4,6 @@ import { type Socket as NetSocket } from "net";
 import { Server } from "socket.io";
 import { registerSocketEvents } from "~/server/socket/socketHandler";
 
-// Disable body parsing so we don't interfere with anything, though less critical now with path separation
 export const config = {
   api: {
     bodyParser: false,
@@ -22,7 +21,6 @@ type NextApiResponseWithSocket = NextApiResponse & {
 const LOG_TAG = "[SocketServer]";
 
 const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
-  // Debug log for the initialization request
   const origin = req.headers.origin;
   console.log(`${LOG_TAG} Init request to /api/socket from origin: '${origin ?? "undefined"}'`);
 
@@ -35,11 +33,9 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   console.log(`${LOG_TAG} Initializing Socket.io server on path: /socket.io ...`);
 
   const io = new Server(res.socket.server, {
-    // FIX: Change path to "/socket.io" (default) to avoid Next.js API route collision
     path: "/socket.io",
     addTrailingSlash: false,
     cors: {
-      // Allow ALL origins dynamically
       origin: (requestOrigin, callback) => {
         callback(null, true);
       },

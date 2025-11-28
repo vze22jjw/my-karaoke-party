@@ -2,12 +2,9 @@
 // It determines the URL at RUNTIME.
 function getBaseUrl() {
   if (typeof window !== "undefined") {
-    // Client-side: use the browser's origin
     return window.location.origin;
   }
   
-  // Server-side (during SSR or API route):
-  // We fall back to the env var. This is now a RUNTIME variable.
   if (process.env.NEXT_PUBLIC_APP_URL) {
     return process.env.NEXT_PUBLIC_APP_URL;
   }

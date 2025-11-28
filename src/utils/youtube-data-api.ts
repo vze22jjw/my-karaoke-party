@@ -1,7 +1,6 @@
 import axios from "axios";
 import { env } from "~/env";
 
-// ... (interfaces Thumbnail, Thumbnails, SearchResultSnippet, SearchResultItem, YouTubeSearchResponse, VideoDetailsResponse remain the same) ...
 interface Thumbnail {
   url: string;
   width: number;
@@ -50,7 +49,6 @@ interface VideoDetailsResponse {
     };
   }[];
 }
-
 
 class YouTubeDataAPI {
   private apiKeys: string[];
@@ -127,13 +125,6 @@ class YouTubeDataAPI {
 }
 
 export { YouTubeDataAPI };
-
-// --- THIS IS THE FIX ---
-// We provide a fallback empty string `?? ""` so that .split()
-// will not crash even if env.YOUTUBE_API_KEY is undefined during the build.
 const apiKeys = (env.YOUTUBE_API_KEY ?? "").split(",");
-// --- END THE FIX ---
-
 const youtubeAPI = new YouTubeDataAPI(apiKeys);
-
 export default youtubeAPI;

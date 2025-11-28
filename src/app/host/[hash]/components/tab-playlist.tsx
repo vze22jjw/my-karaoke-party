@@ -41,10 +41,9 @@ type Props = {
   isManualSortActive: boolean; 
   onReorder: (newPlaylist: VideoInPlaylist[]) => void; 
   onTogglePriority: (videoId: string) => void;
-  onToggleManualSort: () => void; // NEW PROP
+  onToggleManualSort: () => void;
 };
 
-// FIX: Renamed index to _index to silence linter
 function ReadOnlyItem({ video, index: _index }: { video: VideoInPlaylist, index: number }) {
   return (
     <div className="flex items-stretch justify-between gap-2 opacity-60 grayscale-[0.5]">
@@ -252,7 +251,6 @@ export function TabPlaylist({
           </div>
         )}
 
-        {/* CHANGED: Banner is now a clickable button to Save & Finish */}
         {isManualSortActive && (
             <Button
                 onClick={onToggleManualSort}

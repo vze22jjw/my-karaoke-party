@@ -68,9 +68,9 @@ function getSingerStats(
   const stats: Record<
     string,
     {
-      playedCount: number; // Total songs sung (Rule 4 - kept for stats/future logic)
-      nextCount: number; // Songs currently in queue (Rule 3)
-      lastPlayed: Date | null; // Last time a song was played (Rule 2)
+      playedCount: number;
+      nextCount: number;
+      lastPlayed: Date | null;
     }
   > = {};
 
@@ -81,13 +81,12 @@ function getSingerStats(
     }
 
     if (item.playedAt) {
-      stats[name].playedCount++; // Total songs sung
-      // Find the LATEST played song (most recent playedAt)
+      stats[name].playedCount++;
       if (!stats[name].lastPlayed || item.playedAt > stats[name].lastPlayed!) {
         stats[name].lastPlayed = item.playedAt;
       }
     } else {
-      stats[name].nextCount++; // Songs currently in queue
+      stats[name].nextCount++;
     }
   }
 
@@ -97,20 +96,19 @@ function getSingerStats(
 /**
  * Implements a strict Round Robin queue sorting logic.
  *
- * @param allItems - The entire playlist history (used for accurate stats calculation)
- * @param itemsToSort - The subset of unplayed items to be sorted (remaining queue)
- * @param singerToDeprioritize - The singer of the currently playing/last finished song (for anti-consecutive rule)
- */
+ * @param allItems - (used for accurate stats calculation)
+ * @param itemsToSort - (remaining queue)
+ * @param singerToDeprioritize - (for anti-consecutive rule)
+ **/
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export function orderByRoundRobin<T extends FairnessPlaylistItem>(
   allItems: T[],
   itemsToSort: T[],
-  singerToDeprioritize: string | null, // Accepts the current playing singer
+  singerToDeprioritize: string | null,
 ): T[] {
   // Calculate stats based on the ENTIRE playlist history
   const stats = getSingerStats(allItems);
 
-  // 1. Create the initial result/history list of singer names to calculate "distance"
   const playedSingers = allItems
     .filter(item => item.playedAt)
     .sort((a, b) => a.playedAt!.getTime() - b.playedAt!.getTime())
@@ -124,10 +122,8 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
     resultByUser.push(singerToDeprioritize);
   }
 
-  // 2. Group all songs to be sorted by singer, maintaining original order (addedAt)
   const singerMap = new Map<string, T[]>(); 
   
-  // Sort itemsToSort by addedAt time before grouping to ensure FIFO within a singer's turn
   const sortedItemsToSort = [...itemsToSort].sort((a, b) => a.addedAt.getTime() - b.addedAt.getTime());
 
   sortedItemsToSort.forEach(item => {
@@ -139,7 +135,6 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
   
   const upcoming: T[] = [];
   
-  // 3. Iteratively build the Round Robin queue
   while (singerMap.size > 0) {
     let maxDistance = -1;
     let maxSingerId: string | null = null;
@@ -191,7 +186,6 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
     const nextSong = userItems.shift()!;
     upcoming.push(nextSong);
 
-    // Update the distance history for the next iteration
     resultByUser.push(maxSingerId);
 
     // Remove singer from map if their queue is now empty
@@ -200,7 +194,6 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
     }
   }
 
-  // FIX: Return the newly constructed 'upcoming' array
   return upcoming; 
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */

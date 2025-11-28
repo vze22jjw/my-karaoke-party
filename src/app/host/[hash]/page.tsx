@@ -41,7 +41,6 @@ export default async function HostPage({ params }: Props) {
   }
 
   const partyHash = params.hash;
-  // Fetch both party and host name
   const [party, hostName] = await Promise.all([
     api.party.getByHash({ hash: partyHash }),
     api.party.getHostName({ hash: partyHash }),
@@ -83,6 +82,5 @@ export default async function HostPage({ params }: Props) {
     console.warn("Failed to fetch initial playlist for host page", error);
   }
 
-  // Pass the actual host name to the scene
   return <HostScene party={party} initialData={initialData} hostName={hostName ?? "Host"} />;
 }

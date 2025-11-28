@@ -233,7 +233,7 @@ export function HostControlPanel({
               isManualSortActive={isManualSortActive}
               onReorder={onPlaylistReorder}
               onTogglePriority={onTogglePriority}
-              onToggleManualSort={onToggleManualSort} // Prop Passed
+              onToggleManualSort={onToggleManualSort}
               playedPlaylist={playedPlaylist}
             />
           </TabsContent>

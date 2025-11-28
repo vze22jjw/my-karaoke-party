@@ -7,7 +7,7 @@ import { Monitor } from "lucide-react";
 
 type Props = {
   currentSong: VideoInPlaylist | null; 
-  playlist: KaraokeParty["playlist"]; // This is the upcoming queue
+  playlist: KaraokeParty["playlist"];
   playedPlaylist: KaraokeParty["playlist"];
 };
 

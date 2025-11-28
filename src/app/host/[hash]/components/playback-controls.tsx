@@ -37,7 +37,6 @@ export function PlaybackControls({
   };
 
   return (
-    // CHANGED: Completely transparent container with no borders or shadows
     <div className="relative flex items-center justify-between gap-3 p-1 pt-0 bg-transparent border-none shadow-none"> 
       
       <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md shadow-sm">

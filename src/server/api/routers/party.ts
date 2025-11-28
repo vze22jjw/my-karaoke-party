@@ -29,7 +29,7 @@ export const partyRouter = createTRPCRouter({
           data: {
             name: input.name,
             status: "OPEN",
-            hash: "temp", // Temporary hash
+            hash: "temp",
           },
         });
 
@@ -72,7 +72,6 @@ export const partyRouter = createTRPCRouter({
       }
     }),
 
-  // --- NEW: Fetch the Host's Name ---
   getHostName: publicProcedure
     .input(z.object({ hash: z.string().min(1) }))
     .query(async ({ ctx, input }) => {

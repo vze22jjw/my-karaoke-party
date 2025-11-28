@@ -4,7 +4,7 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { spotifyService } from "~/server/lib/spotify";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
-import { cookies } from "next/headers"; // <-- For Cookie Check
+import { cookies } from "next/headers";
 
 export const playlistRouter = createTRPCRouter({
   getPlaylist: publicProcedure
@@ -71,8 +71,6 @@ export const playlistRouter = createTRPCRouter({
         throw new Error("Party not found");
       }
 
-      // Manual sort lock removed based on user request
-
       const existing = await ctx.db.playlistItem.findFirst({
         where: {
           partyId: party.id,
@@ -130,12 +128,10 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      // --- SECURITY CHECK ---
       const token = cookies().get("admin_token")?.value;
       if (token !== env.ADMIN_TOKEN) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Host access required" });
       }
-      // ----------------------
 
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },
@@ -168,12 +164,10 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      // --- SECURITY CHECK ---
       const token = cookies().get("admin_token")?.value;
       if (token !== env.ADMIN_TOKEN) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Host access required" });
       }
-      // ----------------------
 
       const party = await ctx.db.party.findUnique({
         where: { hash: input.partyHash },

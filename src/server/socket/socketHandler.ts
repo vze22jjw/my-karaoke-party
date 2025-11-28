@@ -18,11 +18,9 @@ import { type PlaylistItem } from "@prisma/client";
 import youtubeAPI from "~/utils/youtube-data-api";
 import { parseISO8601Duration } from "~/utils/string";
 
-// --- 1. RATE LIMITING ---
 const addSongRateLimit = new Map<string, number>();
 const RATE_LIMIT_WINDOW = 2000; // 2 seconds
 
-// --- 2. HOST AUTH HELPER ---
 function ensureHost(socket: Socket): boolean {
   const role = socket.data.role as string | undefined;
   if (role !== "Host") {
@@ -65,7 +63,6 @@ export function registerSocketEvents(io: Server) {
       if (party) {
         const { isNew } = await registerParticipant(party.id, singerName, avatar);
         
-        // --- SECURITY: Cache Role on Socket ---
         const participant = await db.partyParticipant.findUnique({
             where: { partyId_name: { partyId: party.id, name: singerName } },
             select: { role: true }
@@ -73,7 +70,6 @@ export function registerSocketEvents(io: Server) {
         if (participant) {
             socket.data.role = participant.role;
         }
-        // -------------------------------------
 
         if (isNew) socket.broadcast.to(partyHash).emit("new-singer-joined", singerName);
         void updateAndEmitPlaylist(io, partyHash, "join-party");
@@ -83,7 +79,6 @@ export function registerSocketEvents(io: Server) {
 
     socket.on("add-song", async (data: { partyHash: string; videoId: string; title: string; coverUrl: string; singerName: string }) => {
       try {
-        // --- RATE LIMIT CHECK ---
         const lastRequest = addSongRateLimit.get(socket.id) ?? 0;
         const now = Date.now();
         if (now - lastRequest < RATE_LIMIT_WINDOW) {
@@ -91,7 +86,6 @@ export function registerSocketEvents(io: Server) {
             return;
         }
         addSongRateLimit.set(socket.id, now);
-        // ------------------------
 
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
@@ -110,13 +104,11 @@ export function registerSocketEvents(io: Server) {
         if (!existing) {
           const durationISO = await youtubeAPI.getVideoDuration(data.videoId);
           
-          // --- NEW: DURATION CHECK ---
           const durationMs = parseISO8601Duration(durationISO);
           if (durationMs && durationMs > 10 * 60 * 1000) { // 10 minutes in ms
              socket.emit("error", { message: "Video too long! Max duration is 10 minutes." });
              return;
           }
-          // ---------------------------
 
           let spotifyId: string | undefined;
           try {
@@ -347,7 +339,6 @@ export function registerSocketEvents(io: Server) {
         }
     });
 
-    // --- PRIORITY TOGGLE (ONE-WAY) ---
     socket.on("toggle-priority", async (data: { partyHash: string; videoId: string }) => {
         if (!ensureHost(socket)) return;
         try {

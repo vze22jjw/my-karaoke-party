@@ -17,7 +17,7 @@ type Props = {
   onSearchQueryConsumed: () => void;
   hasReachedQueueLimit: boolean;
   maxQueuePerSinger: number;
-  isManualSortActive?: boolean; // NEW
+  isManualSortActive?: boolean;
 };
 
 export function TabAddSong({
@@ -58,7 +58,7 @@ export function TabAddSong({
           Add Songs
         </h2>
 
-        {/* NEW: Show lock message */}
+        {/* Show lock message */}
         {isManualSortActive && (
              <div className="mb-4 rounded-md bg-orange-900/50 border border-orange-500 p-3 text-center text-white font-bold animate-pulse">
                 Queue Locked: Host is reordering the playlist.
