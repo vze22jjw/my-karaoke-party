@@ -15,9 +15,8 @@ import Confetti from "react-canvas-confetti";
 import type { Party } from "@prisma/client";
 import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
 
-const MAX_SEARCH_RESULTS_KEY = "karaoke-max-results";
-const HOST_TOUR_KEY = "has_seen_host_tour_v1";
-const MANUAL_SORT_KEY = "karaoke-manual-sort-active"; 
+// Scoped keys helper (though useLocalStorage needs a literal or constant usually, we construct it dynamically)
+const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 
 type Props = {
   party: Party;
@@ -39,9 +38,26 @@ export function HostScene({ party, initialData, hostName }: Props) {
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, hostName);
 
+  // Scoped Keys
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
-    key: MANUAL_SORT_KEY,
+    key: getScopedKey(party.hash!, "manual-sort"),
     defaultValue: false,
+  });
+
+  const [activeTab, setActiveTab] = useLocalStorage({
+    key: getScopedKey(party.hash!, "active-tab"),
+    defaultValue: "playlist",
+  });
+
+  const [hasSeenTour, setHasSeenTour] = useLocalStorage({
+    key: getScopedKey(party.hash!, "tour-seen"),
+    defaultValue: false,
+  });
+
+  // Global Keys (Shared preferences)
+  const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
+    key: "host-global-max-results",
+    defaultValue: 9,
   });
 
   const [localUnplayed, setLocalUnplayed] = useState<VideoInPlaylist[]>(initialData.unplayed);
@@ -65,24 +81,10 @@ export function HostScene({ party, initialData, hostName }: Props) {
     { enabled: !!participants.length }
   );
 
-  const [activeTab, setActiveTab] = useLocalStorage({
-    key: "karaoke-player-active-tab",
-    defaultValue: "playlist",
-  });
-  
-  const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
-    key: MAX_SEARCH_RESULTS_KEY,
-    defaultValue: 9,
-  });
-
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const [hasSeenTour, setHasSeenTour] = useLocalStorage({
-    key: HOST_TOUR_KEY,
-    defaultValue: false,
-  });
 
   const { width, height } = useViewportSize();
   const confettiRef = useRef<any>(null);

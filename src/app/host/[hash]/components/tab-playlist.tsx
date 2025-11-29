@@ -114,9 +114,8 @@ function SortableItem({
     zIndex: isDragging ? 50 : "auto",
   };
 
-  // Removed 'mb-2' from className to unify spacing with parent's space-y-2
   return (
-    <div ref={setNodeRef} style={style} className="w-full touch-manipulation relative overflow-hidden">
+    <div ref={setNodeRef} style={style} className="w-full mb-2 touch-manipulation relative overflow-hidden">
       <div className={cn(
           "flex items-center w-full p-2 rounded-lg border transition-colors bg-card border-border/50 shadow-sm"
       )}>
@@ -167,7 +166,12 @@ function SortableItem({
                         <Button
                             size="icon"
                             variant={video.isPriority ? "default" : "ghost"}
-                            className={cn("h-9 w-9 rounded-full shrink-0", video.isPriority && "bg-yellow-500 hover:bg-yellow-600 text-black")}
+                            className={cn(
+                                "h-9 w-9 rounded-full shrink-0 z-10", 
+                                video.isPriority 
+                                    ? "bg-yellow-500 hover:bg-yellow-600 text-black" 
+                                    : "bg-card border border-white/10 hover:bg-muted text-muted-foreground"
+                            )}
                             onClick={(e) => { e.stopPropagation(); onTogglePriority(video.id); }}
                         >
                             <Star className={cn("h-4 w-4", video.isPriority && "fill-current")} />
@@ -175,7 +179,7 @@ function SortableItem({
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 rounded-full shrink-0 text-red-500 hover:bg-red-500/10"
+                            className="h-9 w-9 rounded-full shrink-0 text-red-500 bg-card border border-white/10 hover:bg-red-500/10 z-10"
                             onClick={(e) => { e.stopPropagation(); onRemove(video.id); }}
                         >
                             <Trash2 className="h-4 w-4" />
@@ -242,7 +246,8 @@ export function TabPlaylist({
       
       if (newState) {
           setTimeout(() => {
-              topOfQueueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // FIX: Changed behavior from 'smooth' to 'auto' to prevent scroll animation
+              topOfQueueRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
           }, 100);
       }
   };
@@ -271,7 +276,6 @@ export function TabPlaylist({
       <div className="flex-shrink-0 z-20 relative">
         {!isManualSortActive ? (
             currentSong && (
-                // Removed pb-2 to align gap
                 <div>
                     <PlaybackControls
                         currentSong={currentSong}
@@ -301,7 +305,6 @@ export function TabPlaylist({
 
       <div 
         ref={scrollContainerRef}
-        // Added rounded-3xl to container
         className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 pt-2 overscroll-y-contain w-full max-w-[100vw] px-1 rounded-3xl"
         onScroll={() => { if(openMenuId) setOpenMenuId(null); }}
       >

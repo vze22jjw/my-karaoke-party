@@ -1,7 +1,7 @@
 "use client";
 
 import type { Party, IdleMessage } from "@prisma/client";
-import { ListMusic, Settings, Users, Clock, Music, Info, KeyRound, Crown } from "lucide-react";
+import { ListMusic, Settings, Users, Clock, Music, Info, KeyRound, Crown, LogOut } from "lucide-react";
 import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TabPlaylist } from "./tab-playlist";
@@ -9,6 +9,7 @@ import { TabSettings } from "./tab-settings";
 import { useState, useEffect } from "react"; 
 import { Button } from "~/components/ui/ui/button";
 import { FitText } from "~/components/fit-text";
+import { useRouter } from "next/navigation";
 
 type Props = {
   party: Party;
@@ -128,9 +129,21 @@ export function HostControlPanel({
   spotifyPlaylistId,
   onReplayTour,
 }: Props) {
-
+  const router = useRouter();
   const timeOpen = useTimeOpen(party.createdAt);
+  
   if (!party.hash) return null;
+
+  const handleHostLogout = () => {
+    if (typeof window !== "undefined") {
+      Object.keys(window.localStorage).forEach((key) => {
+        if (key.startsWith(`host-${party.hash}-`)) {
+          window.localStorage.removeItem(key);
+        }
+      });
+    }
+    router.push("/");
+  };
 
   return (
     <div className="w-full overflow-hidden h-[100dvh]">
@@ -143,39 +156,21 @@ export function HostControlPanel({
           </FitText>
         </div>
         
-        {/* 2. INFO HEADER LAYOUT */}
-        <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm">
-          <div className="grid grid-cols-2 gap-y-1">
-            
-            {/* LEFT COLUMN */}
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 h-[24px]">
+        {/* 2. INFO HEADER LAYOUT - Refactored for flexibility */}
+        <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm flex flex-col gap-2">
+          
+          {/* ROW 1: Host Name & Stats */}
+          <div className="flex items-center justify-between">
+             {/* Left: Host Name */}
+             <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
                 <Crown className="h-5 w-5 text-yellow-500 flex-shrink-0" />
-                <span className="font-medium text-foreground text-base truncate max-w-[140px]">
+                <span className="font-medium text-foreground text-base truncate">
                   {hostName ?? "..."}
                 </span>
-              </div>
+             </div>
 
-              <div className="flex items-center gap-2 h-[32px]">
-                <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="font-mono text-xl font-bold text-foreground tracking-wider leading-none mt-0.5">
-                  {party.hash}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground ml-1"
-                  onClick={onReplayTour}
-                  title="Show Tour"
-                >
-                  <Info className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN */}
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center justify-end gap-3 h-[24px]">
+             {/* Right: Stats (Users | Time) */}
+             <div className="flex items-center gap-3 flex-shrink-0">
                 <div className="flex items-center gap-1.5">
                    <Users className="h-5 w-5" />
                    <span className="font-bold text-foreground text-base">{singerCount}</span>
@@ -185,17 +180,58 @@ export function HostControlPanel({
                    <Clock className="h-5 w-5" />
                    <span className="font-bold text-foreground text-base">{timeOpen}</span>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-1.5 h-[32px]">
-                <Music className="h-5 w-5" />
-                <span className="font-bold text-foreground text-base leading-none mt-0.5">
-                  {unplayedSongCount} <span className="opacity-50 text-sm">({playedSongCount})</span>
-                </span>
-              </div>
-            </div>
-
+             </div>
           </div>
+
+          {/* ROW 2: Hash, Songs, Leave */}
+          <div className="flex items-center justify-between h-[32px] gap-2">
+             
+             {/* 1. Party Code (Fixed Left) */}
+             <div className="flex items-center gap-1 flex-shrink-0">
+                <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="flex items-start relative">
+                    <span className="font-mono text-xl font-bold text-foreground tracking-wider leading-none">
+                      {party.hash}
+                    </span>
+                    {/* Superscript Info Button */}
+                    <button
+                        className="text-muted-foreground hover:text-foreground ml-0.5 -mt-2 p-1"
+                        onClick={onReplayTour}
+                        title="Show Tour"
+                    >
+                        <Info className="h-3 w-3" />
+                    </button>
+                </div>
+             </div>
+
+             {/* 2. Song Counts (Flexible Middle - Shrinks if needed) */}
+             {/* Centered in remaining space, fills space to right */}
+             <div className="flex-1 flex items-center justify-center min-w-0 px-1">
+                 <div className="flex items-center gap-1.5 opacity-80 max-w-full justify-center">
+                    <Music className="h-5 w-5 flex-shrink-0" />
+                    {/* Flexible container for FitText */}
+                    <div className="flex-1 min-w-0 flex justify-center w-full">
+                         <FitText className="font-bold text-foreground text-base leading-none whitespace-nowrap">
+                            {unplayedSongCount} <span className="opacity-60 text-[0.9em]">({playedSongCount})</span>
+                         </FitText>
+                    </div>
+                 </div>
+             </div>
+
+             {/* 3. Leave Button (Fixed Right) */}
+             <div className="flex-shrink-0">
+                <Button 
+                    variant="ghost" 
+                    onClick={handleHostLogout} 
+                    className="h-8 px-2 hover:bg-transparent hover:text-foreground/80 -mr-2" 
+                    aria-label="Leave party"
+                >
+                    <span className="text-sm font-semibold text-white mr-1">Leave</span>
+                    <LogOut className="h-4 w-4" />
+                </Button>
+             </div>
+          </div>
+
         </div>
 
         {/* 3. TABS */}

@@ -9,6 +9,7 @@ import { decode } from "html-entities";
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import Link from "next/link";
 import { formatCompactNumber } from "~/utils/number";
+import { useRouter } from "next/navigation";
 
 type Participant = {
   name: string;
@@ -32,8 +33,9 @@ type Props = {
 const nextSingerMessages = ["Serve In", "Turn Up", "Sing In", "Mic In", "Set In", "Next In"];
 
 export function TabSingers({
-  currentSong, unplayedPlaylist, playedPlaylist, participants, name, onLeaveParty, isPlaying, remainingTime, onReplayTour
+  currentSong, unplayedPlaylist, playedPlaylist, participants, name, onLeaveParty: _propLeaveParty, isPlaying, remainingTime, onReplayTour
 }: Props) {
+  const router = useRouter();
   const [showPlayedMap, setShowPlayedMap] = useState<Record<string, boolean>>({});
   const togglePlayed = (singer: string) => setShowPlayedMap((prev) => ({ ...prev, [singer]: !prev[singer] }));
 
@@ -57,6 +59,24 @@ export function TabSingers({
     if (hash) setCurrentPartyHash(hash);
   }
 
+  // Enhanced Leave Logic for Party Guests (Scoped)
+  const handleGuestLeave = () => {
+    if (typeof window !== "undefined") {
+      // 1. Clear ONLY party-specific keys
+      Object.keys(window.localStorage).forEach((key) => {
+        if (key.startsWith(`guest-${currentPartyHash}-`)) {
+          window.localStorage.removeItem(key);
+        }
+      });
+      // 2. Note: We keep the global 'name' and 'avatar' for convenience across parties.
+    }
+
+    // 3. DO NOT Clear Cookies (preserves host auth if they are also a host)
+    
+    // 4. Redirect
+    router.push("/");
+  };
+
   return (
     <div className="bg-card rounded-lg p-4 border">
       <div className="flex items-center justify-between mb-4 h-16 gap-1">
@@ -76,7 +96,6 @@ export function TabSingers({
           </Button>
         </div>
         
-        {/* Center: Applause Button */}
         <div className="flex-1 flex justify-center items-center px-2 min-w-0">
           {currentPartyHash && (
              <Link href={`/applause/${currentPartyHash}`} passHref legacyBehavior>
@@ -96,7 +115,7 @@ export function TabSingers({
         <div className="flex items-center flex-shrink-0">
           <Button 
             variant="ghost" 
-            onClick={onLeaveParty} 
+            onClick={handleGuestLeave} 
             className="text-foreground/80 px-2 hover:bg-transparent hover:text-foreground/80" 
             aria-label="Leave party"
           >

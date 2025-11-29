@@ -34,15 +34,18 @@ export function PartySceneTabs({
 }) {
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   const router = useRouter();
+  
+  // Scoped Key
   const [activeTab, setActiveTab] = useLocalStorage({
-    key: "karaoke-party-active-tab",
+    key: `guest-${party.hash}-active-tab`,
     defaultValue: "player",
   });
 
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Scoped Key
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
-    key: "has_seen_guest_tour_v1",
+    key: `guest-${party.hash}-tour-seen`,
     defaultValue: false,
   });
   const [isTourOpen, setIsTourOpen] = useState(false);
