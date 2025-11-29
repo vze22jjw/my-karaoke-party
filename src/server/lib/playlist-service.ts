@@ -48,12 +48,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
 
   const playedItems = allItems.filter((item) => item.playedAt);
   
-  // Use a mutable copy for extraction
   const unplayedItems = allItems.filter((item) => !item.playedAt);
 
-  // --- 1. PIN CURRENT SONG (CRITICAL) ---
-  // If the party is STARTED, the song referenced by currentSongId MUST be the first item.
-  // We extract it now so it is completely immune to sorting logic.
   let pinnedCurrentSong: PlaylistItem | null = null;
   
   if (party.status === "STARTED" && party.currentSongId) {
@@ -64,15 +60,12 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       }
   }
 
-  // --- 2. SEPARATE VIPs ---
-  // Filter only from the REMAINING items
   const priorityItems = unplayedItems.filter(i => i.isPriority);
   const standardPool = unplayedItems.filter(i => !i.isPriority);
 
   let sortedStandardItems: PlaylistItem[] = [];
 
   if (useQueueRules) {
-    // --- HYBRID FAIRNESS ---
     const manualItems = standardPool.filter(i => i.isManual);
     const floatingItems = standardPool.filter(i => !i.isManual);
 
@@ -111,11 +104,9 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     sortedStandardItems = merged;
 
   } else {
-    // FIFO (Standard)
     sortedStandardItems = standardPool;
   }
 
-  // --- 3. FINAL ASSEMBLY ---
   const finalQueue: PlaylistItem[] = [];
   
   if (pinnedCurrentSong) {

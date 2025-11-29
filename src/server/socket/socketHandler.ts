@@ -71,6 +71,12 @@ export function registerSocketEvents(io: Server) {
             socket.data.role = participant.role;
         }
 
+        // FIX: Explicitly grant Host privileges to the "Player" client.
+        // This ensures the Player screen can perform actions like auto-skip, pause, etc.
+        if (singerName === "Player") {
+            socket.data.role = "Host";
+        }
+
         if (isNew) socket.broadcast.to(partyHash).emit("new-singer-joined", singerName);
         void updateAndEmitPlaylist(io, partyHash, "join-party");
         void updateAndEmitSingers(io, party.id, partyHash);

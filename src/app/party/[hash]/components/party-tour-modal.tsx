@@ -34,7 +34,7 @@ const StepContent = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="flex items-start gap-4 rounded-lg border bg-muted/50 p-4">
+  <div className="flex items-start gap-4 rounded-lg border bg-muted/50 p-4 select-none">
     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
       {icon}
     </div>
@@ -63,18 +63,68 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const [step, setStep] = useState(1);
   const totalSteps = 2; 
 
+  // Swipe State
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
   const handleClose = () => {
     onFireConfetti();
     onClose();
     setTimeout(() => setStep(1), 200);
   };
 
+  // Swipe Handlers
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    // FIX: Safer access
+    const touch = e.targetTouches[0];
+    if (touch) {
+        setTouchStart(touch.clientX);
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    // FIX: Safer access
+    const touch = e.targetTouches[0];
+    if (touch) {
+        setTouchEnd(touch.clientX);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      if (step < totalSteps) {
+        setStep((s) => s + 1);
+      } else {
+        handleClose();
+      }
+    }
+
+    if (isRightSwipe) {
+      if (step > 1) {
+        setStep((s) => s - 1);
+      }
+    }
+  };
+
   return (
     <Drawer open={isOpen} onClose={handleClose}>
       <DrawerContent className="flex flex-col h-full snap-align-none z-[10000]">
         
-        <div className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto">
-          <DrawerHeader className="pb-4">
+        <div 
+            className="mx-auto w-full max-w-2xl p-4 pt-8 pb-4 flex-1 overflow-y-auto"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
+          <DrawerHeader className="pb-4 select-none">
             <DrawerTitle className="text-3xl font-bold">
               Welcome to the Party!
             </DrawerTitle>
@@ -86,7 +136,7 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
           <div className="px-4 space-y-4">
             
             {step === 1 && (
-              <>
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Monitor className="h-6 w-6" />} title="1. Playing">
                   See what&apos;s currently playing, who is singing, and what&apos;s up next in the queue.
                 </StepContent>
@@ -99,13 +149,13 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
                     )} 
                     title="2. Add Song"
                 >
-                  Search YouTube for any karaoke song and add it to the list. Fairness rules ensure everyone gets a turn!
+                  Search YouTube for any karaoke song and add it to the list. Fairness rules ensure everyone gets a turn! (Max length: 10 mins).
                 </StepContent>
-              </>
+              </div>
             )}
 
             {step === 2 && (
-              <>
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Lightbulb className="h-6 w-6 text-yellow-500" />} title="3. Suggestions">
                   Get inspiration from the host&apos;s themes, **Hot on Spotify** trends, and the party&apos;s all-time Top Played songs.
                 </StepContent>
@@ -113,7 +163,7 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
                   See everyone in the party and check their queue. 
                   Tap the 👏 button to send applause and boost the singer&apos;s score!
                 </StepContent>
-              </>
+              </div>
             )}
           </div>
         </div>

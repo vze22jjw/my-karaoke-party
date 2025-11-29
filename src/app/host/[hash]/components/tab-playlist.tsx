@@ -4,10 +4,10 @@ import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { X, GripVertical, Star, ChevronDown, Save } from "lucide-react"; 
+import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown, History } from "lucide-react"; 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
   DndContext,
@@ -44,36 +44,33 @@ type Props = {
   onToggleManualSort: () => void;
 };
 
-function ReadOnlyItem({ video, index: _index }: { video: VideoInPlaylist, index: number }) {
+// Extended type for frontend-only unique tracking
+type ClientVideoInPlaylist = VideoInPlaylist & {
+    _clientId: string;
+};
+
+function ReadOnlyItem({ video, index }: { video: VideoInPlaylist, index: number }) {
   return (
-    <div className="flex items-stretch justify-between gap-2 opacity-60 grayscale-[0.5]">
-      <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/30 border border-border/50 flex gap-2 items-center">
-        <div className="w-5" /> 
-        <div className="relative w-16 aspect-video flex-shrink-0">
-          <Image
-            src={video.coverUrl}
-            fill={true}
-            className="rounded-md object-cover"
-            alt={video.title}
-            sizes="64px"
-          />
-        </div>
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-center gap-1 mb-1">
-            <span className="font-mono text-xs text-muted-foreground">✓</span>
-            <p className="font-medium text-xs truncate line-through text-muted-foreground">{decode(video.title)}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground truncate">{video.singerName}</p>
-            {video.isPriority && (
-                <span className="text-[10px] font-bold bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wide">VIP</span>
-            )}
-          </div>
-        </div>
+    <div className="flex items-center gap-3 p-2 rounded-lg bg-black/30 border border-white/10 w-full overflow-hidden">
+      <div className="relative w-12 h-12 flex-shrink-0">
+        <Image
+          src={video.coverUrl}
+          fill={true}
+          className="rounded-md object-cover"
+          alt={video.title}
+          sizes="48px"
+        />
       </div>
-      <div className="flex-shrink-0 flex items-center gap-1">
-        <Button size="icon" variant="ghost" disabled className="h-10 w-10 opacity-0 cursor-default"><Star className="h-4 w-4" /></Button>
-        <Button size="icon" variant="ghost" disabled className="h-10 w-10 opacity-0 cursor-default"><X className="h-4 w-4" /></Button>
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-white/70 shrink-0">#{index}</span>
+            <p className="font-bold text-sm truncate text-white text-outline w-full">
+                {decode(video.title)}
+            </p>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-xs text-white/90 drop-shadow-md truncate font-medium">{video.singerName}</p>
+        </div>
       </div>
     </div>
   );
@@ -84,13 +81,19 @@ function SortableItem({
     index, 
     onRemove, 
     onTogglePriority,
-    isSorting, 
+    isSorting,
+    isMenuOpen,
+    onToggleMenu,
+    uniqueId,
 }: { 
     video: VideoInPlaylist, 
     index: number, 
     onRemove: (id: string) => void, 
     onTogglePriority: (id: string) => void,
     isSorting: boolean,
+    isMenuOpen: boolean,
+    onToggleMenu: () => void,
+    uniqueId: string,
 }) {
   const {
     attributes,
@@ -100,7 +103,7 @@ function SortableItem({
     transition,
     isDragging
   } = useSortable({ 
-      id: video.id, 
+      id: uniqueId, 
       disabled: !isSorting 
   });
 
@@ -108,69 +111,88 @@ function SortableItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : "auto",
   };
 
+  // Removed 'mb-2' from className to unify spacing with parent's space-y-2
   return (
-    <div ref={setNodeRef} style={style} className="flex items-stretch justify-between gap-2 touch-none">
-      <div className="flex-1 min-w-0 p-2 rounded-lg bg-muted/50 border border-border flex gap-2 items-center">
+    <div ref={setNodeRef} style={style} className="w-full touch-manipulation relative overflow-hidden">
+      <div className={cn(
+          "flex items-center w-full p-2 rounded-lg border transition-colors bg-card border-border/50 shadow-sm"
+      )}>
         
-        {isSorting && (
-            <div {...attributes} {...listeners} className="cursor-grab p-1 text-muted-foreground hover:text-foreground touch-none">
-                <GripVertical className="h-5 w-5" />
+        <div className={cn(
+            "flex items-center gap-3 flex-1 min-w-0 transition-all duration-300 ease-in-out",
+            isMenuOpen ? "mr-[-40px]" : "mr-0"
+        )}>
+            <div className="relative w-12 h-12 flex-shrink-0">
+                <Image
+                    src={video.coverUrl}
+                    fill={true}
+                    className="rounded-md object-cover"
+                    alt={video.title}
+                    sizes="48px"
+                />
             </div>
-        )}
 
-        <div className="relative w-16 aspect-video flex-shrink-0">
-          <Image
-            src={video.coverUrl}
-            fill={true}
-            className="rounded-md object-cover"
-            alt={video.title}
-            sizes="64px"
-          />
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center gap-2">
+                    {!isSorting && (
+                        <span className="text-xs font-bold font-mono text-primary shrink-0">
+                            #{index}
+                        </span>
+                    )}
+                    <p className="font-bold text-sm truncate">{decode(video.title)}</p>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5 min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{video.singerName}</p>
+                    {video.isPriority && (
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500 shrink-0" />
+                    )}
+                </div>
+            </div>
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-center gap-1 mb-1">
-            <span className="font-mono text-xs text-muted-foreground">#{index + 1}</span>
-            <p className="font-medium text-xs truncate">{decode(video.title)}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground truncate">{video.singerName}</p>
-            {video.isPriority && (
-                <span className="text-[10px] font-bold bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wide">VIP</span>
+        <div className="flex-shrink-0 flex items-center justify-end pl-2">
+            {isSorting ? (
+                <div {...attributes} {...listeners} className="p-3 text-muted-foreground hover:text-foreground touch-none cursor-grab active:cursor-grabbing">
+                    <GripVertical className="h-6 w-6" />
+                </div>
+            ) : (
+                <div className="flex items-center">
+                    <div className={cn(
+                        "flex items-center gap-1 overflow-hidden transition-all duration-300 ease-in-out",
+                        isMenuOpen ? "w-auto opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-4"
+                    )}>
+                        <Button
+                            size="icon"
+                            variant={video.isPriority ? "default" : "ghost"}
+                            className={cn("h-9 w-9 rounded-full shrink-0", video.isPriority && "bg-yellow-500 hover:bg-yellow-600 text-black")}
+                            onClick={(e) => { e.stopPropagation(); onTogglePriority(video.id); }}
+                        >
+                            <Star className={cn("h-4 w-4", video.isPriority && "fill-current")} />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 rounded-full shrink-0 text-red-500 hover:bg-red-500/10"
+                            onClick={(e) => { e.stopPropagation(); onRemove(video.id); }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className={cn("h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground transition-transform", isMenuOpen && "rotate-90 text-primary")}
+                        onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
+                    >
+                        {isMenuOpen ? <X className="h-5 w-5" /> : <MoreVertical className="h-5 w-5" />}
+                    </Button>
+                </div>
             )}
-          </div>
         </div>
-      </div>
-
-      <div className="flex-shrink-0 flex items-center gap-1">
-        {!isSorting && (
-            <Button
-                size="icon"
-                variant={video.isPriority ? "default" : "ghost"}
-                disabled={video.isPriority} 
-                className={cn(
-                    "h-10 w-10 p-2 rounded-lg border border-border transition-all",
-                    video.isPriority 
-                        ? "bg-yellow-500 text-white border-yellow-600 opacity-100 hover:bg-yellow-500 cursor-default" 
-                        : "bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => onTogglePriority(video.id)}
-            >
-                <Star className={cn("h-4 w-4", video.isPriority && "fill-current")} />
-            </Button>
-        )}
-
-        <Button
-          size="icon"
-          className="h-10 w-10 p-2 rounded-lg bg-muted/50 border border-border text-red-500 hover:bg-gray-700"
-          onClick={() => onRemove(video.id)}
-          disabled={isSorting} 
-        >
-          <span className="sr-only">Remove song</span>
-          <X className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );
@@ -182,7 +204,6 @@ export function TabPlaylist({
   playedPlaylist,
   onRemoveSong,
   onSkip,
-  isSkipping: _isSkipping, 
   isPlaying, 
   remainingTime, 
   onPlay,
@@ -197,19 +218,41 @@ export function TabPlaylist({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const [items, setItems] = useState(playlist);
+  const [items, setItems] = useState<ClientVideoInPlaylist[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const topOfQueueRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-      setItems(playlist);
+      setItems(playlist.map((video, idx) => ({
+          ...video,
+          _clientId: `${video.id}_${video.createdAt?.toString() ?? ''}_${idx}_${Math.random().toString(36).substring(2, 9)}`
+      })));
   }, [playlist]);
+
+  useEffect(() => {
+      setOpenMenuId(null);
+  }, [isManualSortActive]);
+
+  const handleToggleHistory = () => {
+      const newState = !showHistory;
+      setShowHistory(newState);
+      
+      if (newState) {
+          setTimeout(() => {
+              topOfQueueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+      }
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
-      const oldIndex = items.findIndex((item) => item.id === active.id);
-      const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = items.findIndex((item) => item._clientId === active.id);
+      const newIndex = items.findIndex((item) => item._clientId === over.id);
       
       const newOrder = arrayMove(items, oldIndex, newIndex);
       setItems(newOrder);
@@ -217,98 +260,102 @@ export function TabPlaylist({
     }
   };
 
-  const nextVideos = items;
-  const sortedHistory = [...playedPlaylist].reverse();
+  const queueIndexStart = showHistory ? playedPlaylist.length + 1 : 1;
+
+  const sortedHistory = [...playedPlaylist].sort((a,b) => 
+    new Date(a.playedAt ?? 0).getTime() - new Date(b.playedAt ?? 0).getTime()
+  );
 
   return (
     <>
-      {/* Pinned Header Section */}
-      <div className="flex-shrink-0 bg-background pb-2 z-10 relative">
-        {currentSong && (
-          <div className="mb-2 relative">
-            <PlaybackControls
-              currentSong={currentSong}
-              isPlaying={isPlaying}
-              onPlay={onPlay}
-              onPause={onPause}
-              onSkip={onSkip}
-              remainingTime={remainingTime}
-              extraAction={
-                <button
-                    onClick={() => setShowHistory(!showHistory)}
-                    className="absolute bottom-0 left-3 p-1 rounded-full bg-transparent hover:bg-white/10 transition-all focus:outline-none text-muted-foreground hover:text-foreground z-20 translate-y-1/2"
-                    title="Toggle Played History"
-                >
-                    <ChevronDown 
-                        className={cn(
-                            "h-4 w-4 transition-transform duration-200",
-                            showHistory && "rotate-180"
-                        )} 
+      <div className="flex-shrink-0 z-20 relative">
+        {!isManualSortActive ? (
+            currentSong && (
+                // Removed pb-2 to align gap
+                <div>
+                    <PlaybackControls
+                        currentSong={currentSong}
+                        isPlaying={isPlaying}
+                        onPlay={onPlay}
+                        onPause={onPause}
+                        onSkip={onSkip}
+                        remainingTime={remainingTime}
+                        isHistoryOpen={showHistory}
+                        onToggleHistory={handleToggleHistory}
                     />
-                </button>
-              }
-            />
-          </div>
-        )}
-
-        {isManualSortActive && (
-            <Button
-                onClick={onToggleManualSort}
-                variant="outline"
-                className="w-full bg-orange-500/10 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white mb-2 h-auto py-2 animate-pulse hover:animate-none transition-all"
-            >
-                <Save className="mr-2 h-4 w-4" />
-                Manual Sort Active - Save & Finish
-            </Button>
+                </div>
+            )
+        ) : (
+            <div className="pb-2 animate-in fade-in slide-in-from-top-2">
+                <Button
+                    onClick={onToggleManualSort}
+                    variant="outline"
+                    className="w-full bg-orange-500/10 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white h-12 text-lg font-bold shadow-sm transition-all"
+                >
+                    <Save className="mr-2 h-5 w-5" />
+                    Save New Order
+                </Button>
+            </div>
         )}
       </div>
 
-      {/* Scrolling List Section */}
-      <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 overscroll-y-none pt-2">
-        
-        {/* HISTORY SECTION */}
-        {showHistory && (
-            <div className="space-y-2 mb-4 pb-4 border-b border-border/50 animate-in fade-in slide-in-from-top-2">
-                {sortedHistory.length === 0 && (
-                     <p className="text-xs text-center text-muted-foreground py-2">No history yet</p>
-                )}
+      <div 
+        ref={scrollContainerRef}
+        // Added rounded-3xl to container
+        className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 pt-2 overscroll-y-contain w-full max-w-[100vw] px-1 rounded-3xl"
+        onScroll={() => { if(openMenuId) setOpenMenuId(null); }}
+      >
+        {!isManualSortActive && showHistory && playedPlaylist.length > 0 && (
+            <div className="space-y-2 mb-2">
                 {sortedHistory.map((video, index) => (
                     <ReadOnlyItem 
-                        key={video.id} 
+                        key={`${video.id}_${index}_history`} 
                         video={video} 
-                        index={index} 
+                        index={index + 1} 
                     />
                 ))}
+                
+                <div className="flex items-center gap-2 py-4 opacity-70">
+                    <div className="h-[1px] bg-primary flex-1" />
+                    <span className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+                        <ChevronDown className="h-3 w-3" /> Up Next
+                    </span>
+                    <div className="h-[1px] bg-primary flex-1" />
+                </div>
             </div>
         )}
 
-        {/* ACTIVE PLAYLIST */}
+        <div ref={topOfQueueRef} />
+
         <DndContext 
             sensors={sensors} 
             collisionDetection={closestCenter} 
             onDragEnd={handleDragEnd}
         >
             <SortableContext 
-                items={nextVideos.map(v => v.id)} 
+                items={items.map(v => v._clientId)} 
                 strategy={verticalListSortingStrategy}
                 disabled={!isManualSortActive} 
             >
-                {nextVideos.map((video, index) => (
+                {items.map((video, index) => (
                     <SortableItem 
-                        key={video.id} 
+                        key={video._clientId} 
+                        uniqueId={video._clientId}
                         video={video} 
-                        index={index + 1} 
+                        index={queueIndexStart + index} 
                         onRemove={onRemoveSong}
                         onTogglePriority={onTogglePriority}
                         isSorting={isManualSortActive}
+                        isMenuOpen={openMenuId === video._clientId}
+                        onToggleMenu={() => setOpenMenuId(openMenuId === video._clientId ? null : video._clientId)}
                     />
                 ))}
             </SortableContext>
         </DndContext>
 
-        {!currentSong && nextVideos.length === 0 && (
-            <p className="text-muted-foreground text-sm p-4 text-center">
-                No songs in queue.
+        {!currentSong && items.length === 0 && (
+            <p className="text-muted-foreground text-sm p-4 text-center mt-8">
+                The queue is currently empty.
             </p>
         )}
       </div>
