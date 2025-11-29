@@ -72,7 +72,6 @@ export function registerSocketEvents(io: Server) {
         }
 
         // FIX: Explicitly grant Host privileges to the "Player" client.
-        // This ensures the Player screen can perform actions like auto-skip, pause, etc.
         if (singerName === "Player") {
             socket.data.role = "Host";
         }
@@ -117,16 +116,32 @@ export function registerSocketEvents(io: Server) {
           }
 
           let spotifyId: string | undefined;
+          let cleanArtist: string | undefined; // <-- NEW
+          let cleanSong: string | undefined;   // <-- NEW
+
           try {
+            // Get rich metadata from Spotify service
             const match = await spotifyService.searchTrack(data.title);
-            if (match) spotifyId = match.id;
+            if (match) {
+                spotifyId = match.id;
+                cleanArtist = match.artist; // <-- CAPTURE
+                cleanSong = match.title;    // <-- CAPTURE
+            }
           } catch (e) { /* ignore */ }
 
           await db.playlistItem.create({
             data: {
-              partyId: party.id, videoId: data.videoId, title: data.title, artist: "", song: "",
-              coverUrl: data.coverUrl, duration: durationISO ? durationISO : getRandomDurationISO(),
-              singerName: data.singerName, randomBreaker: Math.random(), spotifyId: spotifyId,
+              partyId: party.id, 
+              videoId: data.videoId, 
+              // Use cleaned metadata if available, otherwise fallback to raw YouTube title
+              title: cleanSong ?? data.title,    
+              artist: cleanArtist ?? "", 
+              song: cleanSong ?? "", 
+              coverUrl: data.coverUrl, 
+              duration: durationISO ? durationISO : getRandomDurationISO(),
+              singerName: data.singerName, 
+              randomBreaker: Math.random(), 
+              spotifyId: spotifyId,
             },
           });
         }
@@ -138,7 +153,7 @@ export function registerSocketEvents(io: Server) {
       }
     });
 
-    // --- PROTECTED HOST ACTIONS ---
+    // --- PROTECTED HOST ACTIONS (Rest of file unchanged) ---
 
     socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
       if (!ensureHost(socket)) return;
