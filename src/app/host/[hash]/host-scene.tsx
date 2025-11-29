@@ -14,6 +14,7 @@ import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import Confetti from "react-canvas-confetti";
 import type { Party } from "@prisma/client";
 import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
+import { useRouter } from "next/navigation";
 
 const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export function HostScene({ party, initialData, hostName }: Props) {
+  const router = useRouter();
   const {
     currentSong,
     unplayedPlaylist, 
@@ -70,7 +72,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
       }
   }, [unplayedPlaylist, isManualSortActive]);
 
-  // CHANGED: Fetch ALL idle messages (Shared Library)
   const { 
     data: sharedIdleMessages, 
     refetch: refetchIdleMessages 
@@ -109,10 +110,30 @@ export function HostScene({ party, initialData, hostName }: Props) {
     }
   }, [isMounted, hasSeenTour]);
 
+  // CHANGED: Added logout logic to onSuccess
   const closePartyMutation = api.party.toggleStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Party closed successfully");
+      
+      // 1. Clear server-side cookies
+      await fetch("/api/auth/logout", { method: "POST" });
+
+      // 2. Clear client-side storage for this party
+      if (typeof window !== "undefined") {
+        Object.keys(window.localStorage).forEach((key) => {
+          if (key.startsWith(`host-${party.hash}-`)) {
+            window.localStorage.removeItem(key);
+          }
+        });
+      }
+
+      // 3. Force redirect to home
+      router.push("/");
+      router.refresh();
     },
+    onError: () => {
+      toast.error("Failed to close party. Please try again.");
+    }
   });
 
   const statusMutation = api.party.toggleStatus.useMutation({
@@ -204,13 +225,16 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
+        
         onCloseParty={() => setIsConfirmingClose(true)}
         isConfirmingClose={isConfirmingClose}
         onConfirmClose={() => {
+          // Trigger the mutation which now handles logout/redirect
           closePartyMutation.mutate({ hash: party.hash!, status: "CLOSED" });
           setIsConfirmingClose(false);
         }}
         onCancelClose={() => setIsConfirmingClose(false)}
+        
         isSkipping={isSkipping}
         isPlaying={isPlaying}
         remainingTime={remainingTime}

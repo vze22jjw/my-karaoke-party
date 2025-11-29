@@ -116,6 +116,15 @@ export function PartySceneTabs({
     settings,
   } = usePartySocket(party.hash!, initialData, name);
 
+  // --- NEW: Watchdog for Back Button / Cache restore ---
+  useEffect(() => {
+    if (partyStatus === "CLOSED") {
+      // Use replace to avoid adding the closed page to history again
+      router.replace("/");
+    }
+  }, [partyStatus, router]);
+  // ------------------------------------------------------
+
   useEffect(() => {
     const value = readLocalStorageValue({ key: "name" });
     if (!value) {
@@ -231,7 +240,7 @@ export function PartySceneTabs({
             currentSong={currentSong}
             playlist={unplayedPlaylist}
             playedPlaylist={playedPlaylist}
-            spotifyLink={settings.spotifyLink} // <-- NEW PROP
+            spotifyLink={settings.spotifyLink} 
           />
         </TabsContent>
 

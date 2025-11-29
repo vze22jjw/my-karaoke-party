@@ -37,8 +37,8 @@ export default async function PartyPage({ params }: Props) {
   if (!party) {
     notFound();
   }
-  
-  // ADDED CHECK: If party is closed, redirect to home.
+
+  // Explicitly redirect if the party exists but is closed
   if (party.status === "CLOSED") {
     redirect("/");
   }
