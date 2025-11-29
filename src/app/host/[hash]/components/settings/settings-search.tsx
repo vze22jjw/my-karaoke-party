@@ -15,13 +15,12 @@ const ALLOWED_VALUES = [5, 9, 12, 15, 20, 25];
 type Props = {
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
+  isPartyClosed?: boolean;
 };
 
-export function SettingsSearch({ maxSearchResults, onSetMaxResults }: Props) {
+export function SettingsSearch({ maxSearchResults, onSetMaxResults, isPartyClosed }: Props) {
   const [showSearchInfo, setShowSearchInfo] = useState(false);
 
-  // Determine the slider index based on the current maxSearchResults
-  // This snaps the slider to the nearest allowed value if the current value isn't exact
   const currentSliderIndex = (() => {
     const exactIndex = ALLOWED_VALUES.indexOf(maxSearchResults);
     if (exactIndex !== -1) return exactIndex;
@@ -44,7 +43,7 @@ export function SettingsSearch({ maxSearchResults, onSetMaxResults }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Search className="h-5 w-5 text-orange-500" />
-          Search Settings
+          Search Settings {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Locked)</span>}
         </h3>
         <Button
           variant="ghost"
@@ -77,7 +76,9 @@ export function SettingsSearch({ maxSearchResults, onSetMaxResults }: Props) {
           max={ALLOWED_VALUES.length - 1}
           step={1}
           value={currentSliderIndex}
+          disabled={isPartyClosed}
           onChange={(e) => {
+            if (isPartyClosed) return;
             const index = Number(e.target.value);
             const val = ALLOWED_VALUES[index];
             

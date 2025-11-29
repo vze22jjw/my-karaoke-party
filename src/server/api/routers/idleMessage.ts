@@ -2,37 +2,32 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 
-const MAX_IDLE_MESSAGES = 20;
+const MAX_MESSAGES_PER_HOST = 20;
 
 export const idleMessageRouter = createTRPCRouter({
-  /**
-   * Get all idle messages for a specific host.
-   */
-  getByHost: publicProcedure
-    .input(z.object({ hostName: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
+
+  getAll: publicProcedure
+    .query(async ({ ctx }) => {
       return ctx.db.idleMessage.findMany({
-        where: { hostName: input.hostName },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
       });
     }),
 
   /**
-   * Add a new idle message to a host's library.
-   * Enforces a limit of 20 messages.
+   * Add a new idle message to the shared library.
+   * Enforces a limit of 20 messages PER HOST (Author).
    */
   add: publicProcedure
     .input(z.object({ hostName: z.string().min(1), message: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      // Check count first
       const count = await ctx.db.idleMessage.count({
         where: { hostName: input.hostName },
       });
 
-      if (count >= MAX_IDLE_MESSAGES) {
+      if (count >= MAX_MESSAGES_PER_HOST) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: `You have reached the maximum of ${MAX_IDLE_MESSAGES} saved messages. Please delete one to add another.`,
+          message: `You have reached your limit of ${MAX_MESSAGES_PER_HOST} messages. Delete some of yours to add new ones.`,
         });
       }
 

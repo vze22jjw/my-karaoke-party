@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
 import { api } from "~/trpc/server";
 
@@ -37,6 +37,11 @@ export default async function PartyHashPage({ params }: Props) {
 
   if (!party) {
     notFound();
+  }
+
+  // SECURITY: Server-side check to prevent access if closed
+  if (party.status === "CLOSED") {
+    redirect("/");
   }
 
   let initialData: InitialPartyData = { 

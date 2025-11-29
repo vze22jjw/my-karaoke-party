@@ -76,7 +76,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
     setTimeout(() => setStep(1), 200);
   };
 
-  // Swipe Handlers
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null); 
     const touch = e.targetTouches[0];
@@ -175,12 +174,11 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
             {step === 4 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Music className="h-6 w-6" />} title="7. Spotify & Search">
-                  Link a **Spotify Playlist** to show trending tracks to your guests. 
-                  You can also limit **Search Results** to keep things fast.
+                  Add a **Spotify Playlist ID** for song suggestions, or add a **Playlist Link** to display a shortcut for guests to open Spotify directly.
                 </StepContent>
-                <StepContent icon={<Download className="h-6 w-6" />} title="8. Export History">
-                  At the end of the night, **Export** the list of played songs 
-                  to save your party&apos;s soundtrack to Spotify or a text file.
+                <StepContent icon={<Download className="h-6 w-6" />} title="8. Data Tools">
+                  **Export** played songs to a text list or Spotify format. 
+                  Use **Backup & Restore** to save your entire party history to a file for safe keeping.
                 </StepContent>
               </div>
             )}

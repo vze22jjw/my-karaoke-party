@@ -134,7 +134,7 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Monitor className="h-6 w-6" />} title="1. Playing">
-                  See what&apos;s currently playing, who is singing, and what&apos;s up next in the queue.
+                  See what&apos;s playing and who is singing. If the host added a playlist, look for the **Spotify Link** in the header!
                 </StepContent>
                 <StepContent 
                     icon={(

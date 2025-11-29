@@ -1,6 +1,6 @@
 import JoinScene from "~/app/join/join-scene";
 import { api } from "~/trpc/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function JoinPartyHashPage({
   params,
@@ -13,6 +13,10 @@ export default async function JoinPartyHashPage({
 
   if (!party) {
     notFound();
+  }
+
+  if (party.status === "CLOSED") {
+    redirect("/");
   }
 
   return <JoinScene partyHash={partyHash} partyName={party.name} />;

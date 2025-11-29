@@ -4,7 +4,7 @@ import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown } from "lucide-react"; 
+import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown, Lock } from "lucide-react"; 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
@@ -42,6 +42,7 @@ type Props = {
   onReorder: (newPlaylist: VideoInPlaylist[]) => void; 
   onTogglePriority: (videoId: string) => void;
   onToggleManualSort: () => void;
+  isPartyClosed?: boolean;
 };
 
 type ClientVideoInPlaylist = VideoInPlaylist & {
@@ -215,6 +216,7 @@ export function TabPlaylist({
   onReorder,
   onTogglePriority,
   onToggleManualSort,
+  isPartyClosed
 }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -262,11 +264,35 @@ export function TabPlaylist({
     }
   };
 
-  const queueIndexStart = showHistory ? playedPlaylist.length + 1 : 1;
-
   const sortedHistory = [...playedPlaylist].sort((a,b) => 
     new Date(a.playedAt ?? 0).getTime() - new Date(b.playedAt ?? 0).getTime()
   );
+
+  if (isPartyClosed) {
+      return (
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 pt-2 px-1">
+            <div className="flex items-center justify-center gap-2 p-4 mb-2 bg-muted/50 rounded-lg border border-border/50">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Party Closed • History View</span>
+            </div>
+
+            {sortedHistory.length > 0 ? (
+                sortedHistory.map((video, index) => (
+                    <ReadOnlyItem 
+                        key={`${video.id}_${index}_history_closed`} 
+                        video={video} 
+                        index={index + 1} 
+                    />
+                ))
+            ) : (
+                <p className="text-muted-foreground text-sm p-8 text-center">
+                    No songs were played during this party.
+                </p>
+            )}
+        </div>
+      );
+  }
+  const queueIndexStart = showHistory ? playedPlaylist.length + 1 : 1;
 
   return (
     <>

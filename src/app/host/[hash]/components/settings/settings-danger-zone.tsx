@@ -12,6 +12,7 @@ type Props = {
   isConfirmingClose: boolean;
   onConfirmClose: () => void;
   onCancelClose: () => void;
+  isPartyClosed?: boolean;
 };
 
 export function SettingsDangerZone({
@@ -19,6 +20,7 @@ export function SettingsDangerZone({
   isConfirmingClose,
   onConfirmClose,
   onCancelClose,
+  isPartyClosed
 }: Props) {
   const [showDangerInfo, setShowDangerInfo] = useState(false);
 
@@ -42,16 +44,25 @@ export function SettingsDangerZone({
         {showDangerInfo && (
           <Alert className="mt-2" variant="destructive">
             <AlertDescription>
-              This will close the party, delete all songs, and disconnect
-              everyone. This can&apos;t be undone.
+              This will close the party and disconnect everyone. 
+              The party will become read-only but data is preserved.
             </AlertDescription>
           </Alert>
         )}
-        {isConfirmingClose ? (
+        
+        {isPartyClosed ? (
+            <Button
+                disabled
+                variant="secondary"
+                className="w-full opacity-50 cursor-not-allowed"
+            >
+                Party Already Closed
+            </Button>
+        ) : isConfirmingClose ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Are you sure?</AlertTitle>
-            <AlertDescription>This action is permanent.</AlertDescription>
+            <AlertDescription>This will end the party for everyone.</AlertDescription>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={onCancelClose}>
                 Cancel

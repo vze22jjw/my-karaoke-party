@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { FitText } from "~/components/fit-text";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Props = {
   party: Party;
@@ -134,17 +135,27 @@ export function HostControlPanel({
   const router = useRouter();
   const timeOpen = useTimeOpen(party.createdAt);
   
+  const isPartyClosed = partyStatus === "CLOSED";
+  
   if (!party.hash) return null;
 
-  const handleHostLogout = () => {
-    if (typeof window !== "undefined") {
-      Object.keys(window.localStorage).forEach((key) => {
-        if (key.startsWith(`host-${party.hash}-`)) {
-          window.localStorage.removeItem(key);
-        }
-      });
+  const handleHostLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+
+      if (typeof window !== "undefined") {
+        Object.keys(window.localStorage).forEach((key) => {
+          if (key.startsWith(`host-${party.hash}-`)) {
+            window.localStorage.removeItem(key);
+          }
+        });
+      }
+      
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      toast.error("Failed to log out");
     }
-    router.push("/");
   };
 
   return (
@@ -246,7 +257,18 @@ export function HostControlPanel({
             className="flex-1 flex flex-col overflow-hidden mt-0 pb-0 min-h-0 h-full data-[state=inactive]:hidden"
           >
             <TabPlaylist
-              currentSong={currentSong}
+              currentSong={currentSong ?? {
+                  id: "empty",
+                  title: "No Song Playing",
+                  singerName: "Idle",
+                  coverUrl: "/my-karaoke-party-logo.png",
+                  artist: "",
+                  song: "",
+                  duration: "0",
+                  isPriority: false,
+                  isManual: false,
+                  playedAt: null
+              }}
               playlist={playlist}
               onRemoveSong={onRemoveSong}
               onSkip={onMarkAsPlayed} 
@@ -260,6 +282,7 @@ export function HostControlPanel({
               onTogglePriority={onTogglePriority}
               onToggleManualSort={onToggleManualSort}
               playedPlaylist={playedPlaylist}
+              isPartyClosed={isPartyClosed}
             />
           </TabsContent>
 
@@ -294,7 +317,7 @@ export function HostControlPanel({
               themeSuggestions={themeSuggestions}
               onUpdateThemeSuggestions={onUpdateThemeSuggestions}
               spotifyPlaylistId={spotifyPlaylistId}
-              spotifyLink={spotifyLink} // <-- Pass to TabSettings
+              spotifyLink={spotifyLink} 
             />
           </TabsContent>
         </Tabs>

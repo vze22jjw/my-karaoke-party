@@ -11,11 +11,13 @@ const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 type Props = {
   themeSuggestions: string[];
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
+  isPartyClosed?: boolean;
 };
 
 export function SettingsSuggestions({
   themeSuggestions,
   onUpdateThemeSuggestions,
+  isPartyClosed,
 }: Props) {
   const [newSuggestion, setNewSuggestion] = useState("");
   const [showSuggestionsInfo, setShowSuggestionsInfo] = useState(false);
@@ -39,7 +41,7 @@ export function SettingsSuggestions({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-yellow-500" />
-          Party Theme / Song Suggestions
+          Party Theme / Suggestions {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Read-Only)</span>}
         </h3>
         <Button
           variant="ghost"
@@ -62,16 +64,17 @@ export function SettingsSuggestions({
       <div className="flex w-full items-center space-x-2">
         <Input
           type="text"
-          placeholder="e.g. 'Songs featuring a color in the title'"
+          placeholder={isPartyClosed ? "Suggestions are disabled in closed party" : "e.g. 'Songs featuring a color in the title'"}
           value={newSuggestion}
           onChange={(e) => setNewSuggestion(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAddSuggestion()}
+          onKeyDown={(e) => e.key === 'Enter' && !isPartyClosed && handleAddSuggestion()}
           className="bg-background"
+          disabled={isPartyClosed}
         />
         <Button
           type="button"
           onClick={handleAddSuggestion}
-          disabled={!newSuggestion.trim()}
+          disabled={(isPartyClosed ?? false) || !newSuggestion.trim()}
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -93,6 +96,7 @@ export function SettingsSuggestions({
                 size="icon"
                 className="h-6 w-6 flex-shrink-0 text-red-500"
                 onClick={() => handleDeleteSuggestion(index)}
+                disabled={isPartyClosed}
               >
                 <X className="h-4 w-4" />
               </Button>

@@ -25,7 +25,6 @@ function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
             
             <OpenPlayersButton />
             
-            {/* New Button Added Here */}
             <ConnectToHostButton />
             
             <Link

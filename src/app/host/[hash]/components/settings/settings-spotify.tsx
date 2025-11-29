@@ -15,9 +15,10 @@ type Props = {
   partyHash: string;
   spotifyPlaylistId: string | null;
   spotifyLink?: string | null;
+  isPartyClosed?: boolean;
 };
 
-export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: Props) {
+export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink, isPartyClosed }: Props) {
   const [spotifyIdInput, setSpotifyIdInput] = useState(spotifyPlaylistId ?? "");
   const [spotifyLinkInput, setSpotifyLinkInput] = useState(spotifyLink ?? "");
   
@@ -44,6 +45,7 @@ export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: P
   });
 
   const handleSave = () => {
+    if (isPartyClosed) return;
     setIsSaving(true);
     updateSpotify.mutate({ 
         hash: partyHash, 
@@ -53,6 +55,7 @@ export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: P
   };
 
   const handleClearLink = () => {
+      if (isPartyClosed) return;
       setSpotifyLinkInput("");
       setActiveLink(null);
       setIsSaving(true);
@@ -68,7 +71,7 @@ export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: P
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Music className="h-5 w-5 text-green-500" />
-          Spotify Integration
+          Spotify Integration {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Read-Only)</span>}
         </h3>
         <Button
           variant="ghost"
@@ -96,6 +99,7 @@ export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: P
             value={spotifyIdInput}
             onChange={(e) => setSpotifyIdInput(e.target.value)}
             placeholder="e.g. 37i9dQZF1DXbITwg1ZjkYt (optional)"
+            disabled={isPartyClosed}
         />
       </div>
 
@@ -119,6 +123,7 @@ export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: P
                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     onClick={handleClearLink}
                     title="Clear Link"
+                    disabled={isPartyClosed}
                 >
                     <X className="h-4 w-4" />
                 </Button>
@@ -129,13 +134,14 @@ export function SettingsSpotify({ partyHash, spotifyPlaylistId, spotifyLink }: P
                 value={spotifyLinkInput}
                 onChange={(e) => setSpotifyLinkInput(e.target.value)}
                 placeholder="https://open.spotify.com/playlist/..."
+                disabled={isPartyClosed}
             />
         )}
       </div>
 
       <Button 
         onClick={handleSave}
-        disabled={isSaving}
+        disabled={isSaving || isPartyClosed}
         className="w-full"
       >
         {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Settings"}

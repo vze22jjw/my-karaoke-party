@@ -77,9 +77,6 @@ export function CreateParty() {
         
         const targetUrl = `/host/${data.hash}`;
         router.push(targetUrl);
-        setTimeout(() => {
-             window.location.href = targetUrl;
-        }, 500);
       }
     },
     onError: (error) => {

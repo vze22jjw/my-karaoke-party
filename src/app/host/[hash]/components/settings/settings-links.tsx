@@ -7,15 +7,16 @@ import { QrCode } from "~/components/qr-code";
 import { getUrl } from "~/utils/url";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Link as LinkIcon } from "lucide-react";
+import { Info, Link as LinkIcon, ExternalLink } from "lucide-react";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
 type Props = {
   partyHash: string;
+  isPartyClosed?: boolean;
 };
 
-export function SettingsLinks({ partyHash }: Props) {
+export function SettingsLinks({ partyHash, isPartyClosed }: Props) {
   if (IS_DEBUG) console.log("[SettingsLinks] Rendering for hash:", partyHash);
 
   const [isQrExpanded, setIsQrExpanded] = useState(false);
@@ -23,13 +24,17 @@ export function SettingsLinks({ partyHash }: Props) {
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
 
+  const openLink = (url: string) => {
+    window.open(url, "_blank");
+  };
+
   return (
     <>
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             <LinkIcon className="h-5 w-5 text-blue-500" />
-            Party Links
+            Party Links {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Closed)</span>}
           </h3>
           <Button
             variant="ghost"
@@ -57,9 +62,19 @@ export function SettingsLinks({ partyHash }: Props) {
             <div className="flex items-center space-x-2">
               <Input
                 readOnly
+                disabled={isPartyClosed}
                 value={joinUrl}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                onClick={() => openLink(joinUrl)}
+                title="Open Join Page"
+                disabled={isPartyClosed}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <div className="space-y-1">
@@ -67,9 +82,19 @@ export function SettingsLinks({ partyHash }: Props) {
             <div className="flex items-center space-x-2">
               <Input
                 readOnly
+                disabled={isPartyClosed}
                 value={playerUrl}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                onClick={() => openLink(playerUrl)}
+                title="Open Player"
+                disabled={isPartyClosed}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <div className="flex justify-center">
@@ -78,15 +103,18 @@ export function SettingsLinks({ partyHash }: Props) {
               onClick={() => setIsQrExpanded(true)}
               className="transition-transform hover:scale-105 active:scale-95"
               title="Click to enlarge"
+              disabled={isPartyClosed}
             >
-              <QrCode url={joinUrl} />
+              <div className={isPartyClosed ? "opacity-50 grayscale" : ""}>
+                <QrCode url={joinUrl} />
+              </div>
             </button>
           </div>
         </div>
       </div>
 
       {/* Full Screen Overlay */}
-      {isQrExpanded && (
+      {isQrExpanded && !isPartyClosed && (
         <div 
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/95 p-4 animate-in fade-in duration-200 cursor-pointer"
           onClick={() => setIsQrExpanded(false)}

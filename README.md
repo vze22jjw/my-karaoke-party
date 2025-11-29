@@ -28,27 +28,76 @@ See who is singing next and interact with the performance in real-time.
 
 ## Features
 
-- 🎉 **Host a Party**: Create a new karaoke party with a unique 4-character code.
-- 📱 **Join as a Guest**: Guests can join via a simple link or QR code, with no app install required.
-- 📺 **TV/Player Mode**: A dedicated player view (`/player/[hash]`) designed for a main screen or TV. 
-    - *Security Note:* When connecting manually to the player from the start page, the host must enter the 4-digit party code **backwards** (e.g., enter `DCBA` for party `ABCD`).
-- 🔐 **Host Controls**: A password-protected host page (`/host/[hash]`) to manage the party.
-- 🔍 **YouTube Search**: Search for any karaoke video on YouTube.
-- 📋 **Shared Queue**: Songs are added to a real-time queue, visible to all guests.
-- ⚖️ **Fairness Mode**: The queue automatically sorts by "fairness" to ensure everyone gets a turn and prevent singers from going back-to-back. (Can be toggled off by the host).
-- 🎶 **Song Suggestions**:
-    - **Host Themes**: The host can add custom theme suggestions (e.g., "80s Night").
-    - **Spotify Trends**: Guests see a list of "Hot Karaoke From Spotify" for inspiration (configurable by the host).
-    - **Top Played**: The queue shows the all-time most-played songs for the whole app.
-- 🆔 **Spotify Song Matching**:
-    - Automatically matches added YouTube videos to their Spotify track ID.
-    - Aggregates "Top Played" stats by song, not by individual video (e.g., "Bohemian Rhapsody - Official" and "Bohemian Rhapsody - Lyrics" count as one song).
-    - Allows hosts to export a list of Spotify URIs to instantly create a playlist.
-- 💬 **Idle Screen Messages**: Hosts can create a library of messages (quotes, lyrics, announcements) to display on the player screen when no music is playing.
-- ⏯️ **Playback Controls**: Host can play, pause, and skip the current song.
-- 🧹 **Auto-Cleanup**: Parties are automatically deleted after a period of inactivity to save resources.
-- 🐳 **Docker Ready**: Fully containerized for easy deployment.
-- 💻 **100% Cross-Platform**: Works on Windows, Linux, and macOS for development and hosting.
+Features
+
+🎉 Host a Party: Create a new karaoke party with a unique 4-character code.
+
+📱 Join as a Guest: Guests can join via a simple link or QR code, with no app install required.
+
+📺 TV/Player Mode: A dedicated player view (/player/[hash]) designed for a main screen or TV.
+
+Security Note: When connecting manually to the player from the start page, the host must enter the 4-digit party code backwards (e.g., enter DCBA for party ABCD).
+
+🔐 Host Controls: A password-protected host page (/host/[hash]) to manage the party.
+
+🔍 YouTube Search: Search for any karaoke video on YouTube.
+
+📋 Shared Queue: Songs are added to a real-time queue, visible to all guests.
+
+⚖️ Fairness Mode: The queue automatically sorts by "fairness" to ensure everyone gets a turn and prevent singers from going back-to-back. (Can be toggled off by the host).
+
+🎶 Song Suggestions:
+
+Host Themes: The host can add custom theme suggestions (e.g., "80s Night").
+
+Spotify Trends: Guests see a list of "Hot Karaoke From Spotify" for inspiration (configurable by the host).
+
+Top Played: The queue shows the all-time most-played songs for the whole app.
+
+🆔 Spotify Song Matching:
+
+Automatically matches added YouTube videos to their Spotify track ID.
+
+Aggregates "Top Played" stats by song, not by individual video.
+
+Allows hosts to export a list of Spotify URIs to instantly create a playlist.
+
+💬 Idle Screen Messages: Hosts can create a library of messages (quotes, lyrics, announcements) to display on the player screen when no music is playing.
+
+⏯️ Playback Controls: Host can play, pause, and skip the current song.
+
+💾 Backup & Restore: Save your party data to a JSON file and restore it later (or move it to another server).
+
+🐳 Docker Ready: Fully containerized for easy deployment.
+
+💻 100% Cross-Platform: Works on Windows, Linux, and macOS for development and hosting.
+
+💾 Data Retention & Storage
+
+This application is designed to keep your party history forever. The automatic cleanup jobs have been disabled.
+
+Why?
+The data footprint of this application is extremely small. Since we only store text metadata (YouTube links, song titles, singer names) and not the actual video/audio files, the database grows very slowly.
+
+The Math:
+A typical party with 20 singers performing 6 songs each takes up approximately ~92 KB of database space.
+Even on a free-tier database (e.g., 256 MB limit), you would need to host:
+
+~2,700 Parties
+
+Or host a monthly party for 225 Years
+
+...before running out of space. Keeping the data allows you to maintain "All-Time" stats, leaderboards, and memories without cost concerns.
+
+📦 Backup & Restore
+
+Found in the Settings tab of the Host Controls.
+
+Backup: Downloads a .json file containing all parties, singers, songs, and idle messages currently in the database.
+
+Restore: Upload a previously saved .json file. The system will restore any parties that do not currently exist in the database (it skips duplicates based on the Party Hash).
+
+This feature is useful for migrating data between servers or keeping local archives.
 
 ## Stack
 

@@ -14,6 +14,7 @@ import { useLocalStorage, useViewportSize } from "@mantine/hooks";
 import Confetti from "react-canvas-confetti";
 import type { Party } from "@prisma/client";
 import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
+import { useRouter } from "next/navigation";
 
 const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export function HostScene({ party, initialData, hostName }: Props) {
+  const router = useRouter();
   const {
     currentSong,
     unplayedPlaylist, 
@@ -71,12 +73,9 @@ export function HostScene({ party, initialData, hostName }: Props) {
   }, [unplayedPlaylist, isManualSortActive]);
 
   const { 
-    data: hostIdleMessages, 
+    data: sharedIdleMessages, 
     refetch: refetchIdleMessages 
-  } = api.idleMessage.getByHost.useQuery(
-    { hostName: participants.find(p => p.role === "Host")?.name ?? "Host" },
-    { enabled: !!participants.length }
-  );
+  } = api.idleMessage.getAll.useQuery();
 
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
@@ -112,9 +111,25 @@ export function HostScene({ party, initialData, hostName }: Props) {
   }, [isMounted, hasSeenTour]);
 
   const closePartyMutation = api.party.toggleStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Party closed successfully");
+      
+      await fetch("/api/auth/logout", { method: "POST" });
+
+      if (typeof window !== "undefined") {
+        Object.keys(window.localStorage).forEach((key) => {
+          if (key.startsWith(`host-${party.hash}-`)) {
+            window.localStorage.removeItem(key);
+          }
+        });
+      }
+
+      router.push("/");
+      router.refresh();
     },
+    onError: () => {
+      toast.error("Failed to close party. Please try again.");
+    }
   });
 
   const statusMutation = api.party.toggleStatus.useMutation({
@@ -206,6 +221,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
+        
         onCloseParty={() => setIsConfirmingClose(true)}
         isConfirmingClose={isConfirmingClose}
         onConfirmClose={() => {
@@ -213,6 +229,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
           setIsConfirmingClose(false);
         }}
         onCancelClose={() => setIsConfirmingClose(false)}
+        
         isSkipping={isSkipping}
         isPlaying={isPlaying}
         remainingTime={remainingTime}
@@ -226,7 +243,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
         onStartParty={socketActions.startParty}
         onToggleIntermission={handleToggleIntermission}
         
-        hostIdleMessages={hostIdleMessages ?? []}
+        hostIdleMessages={sharedIdleMessages ?? []} 
         onAddIdleMessage={(vars) => {
           idleMessageMutation.mutate({ ...vars, hostName: vars.hostName });
         }}

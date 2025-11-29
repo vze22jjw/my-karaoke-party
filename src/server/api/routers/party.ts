@@ -4,7 +4,6 @@ import { getErrorMessage } from "~/utils/string";
 import { customAlphabet } from "nanoid";
 import { TRPCError } from "@trpc/server"; 
 
-// Use uppercase and numbers, excluding confusing chars like I, O
 const generatePartyCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789", 4);
 
 export const partyRouter = createTRPCRouter({
@@ -105,6 +104,27 @@ export const partyRouter = createTRPCRouter({
       });
 
       return host?.name ?? "Host";
+    }),
+
+  getAll: protectedProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.party.findMany({
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          hash: true,
+          name: true,
+          status: true,
+          createdAt: true,
+          lastActivityAt: true,
+          _count: {
+            select: {
+              participants: true,
+              playlistItems: true,
+            }
+          }
+        }
+      });
     }),
 
   updateSpotifyPlaylist: publicProcedure
