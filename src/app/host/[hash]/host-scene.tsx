@@ -70,13 +70,11 @@ export function HostScene({ party, initialData, hostName }: Props) {
       }
   }, [unplayedPlaylist, isManualSortActive]);
 
+  // CHANGED: Fetch ALL idle messages (Shared Library)
   const { 
-    data: hostIdleMessages, 
+    data: sharedIdleMessages, 
     refetch: refetchIdleMessages 
-  } = api.idleMessage.getByHost.useQuery(
-    { hostName: participants.find(p => p.role === "Host")?.name ?? "Host" },
-    { enabled: !!participants.length }
-  );
+  } = api.idleMessage.getAll.useQuery();
 
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
@@ -226,7 +224,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
         onStartParty={socketActions.startParty}
         onToggleIntermission={handleToggleIntermission}
         
-        hostIdleMessages={hostIdleMessages ?? []}
+        hostIdleMessages={sharedIdleMessages ?? []} 
         onAddIdleMessage={(vars) => {
           idleMessageMutation.mutate({ ...vars, hostName: vars.hostName });
         }}

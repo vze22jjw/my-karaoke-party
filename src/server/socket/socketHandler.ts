@@ -300,7 +300,8 @@ export function registerSocketEvents(io: Server) {
 
     socket.on("update-idle-messages", async (data: { partyHash: string; messages: string[] }) => {
       if (!ensureHost(socket)) return;
-      const msgs = data.messages.map((l) => l.trim()).filter(Boolean).slice(0, 10);
+      // Increased limit to 20
+      const msgs = data.messages.map((l) => l.trim()).filter(Boolean).slice(0, 20);
       await db.party.update({ where: { hash: data.partyHash }, data: { idleMessages: msgs, lastActivityAt: new Date() } });
       io.to(data.partyHash).emit("idle-messages-updated", msgs);
     });

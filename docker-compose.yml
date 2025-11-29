@@ -52,7 +52,6 @@ services:
       NODE_ENV: ${NODE_ENV}
       NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED}
       ADMIN_TOKEN: ${ADMIN_TOKEN}
-      CLEANUP_INTERVAL_DAYS: ${CLEANUP_INTERVAL_DAYS}
       EVENT_DEBUG: ${EVENT_DEBUG}
       NEXT_PUBLIC_EVENT_DEBUG: ${NEXT_PUBLIC_EVENT_DEBUG}
       ## Spotify API Credentials Optional
@@ -71,24 +70,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Cron Job para limpeza automática
-  mk-cleanup-cron:
-    image: curlimages/curl:latest
-    container_name: mykaraoke-cleanup
-    restart: always
-    depends_on:
-      - mk-app
-    environment:
-      CLEANUP_INTERVAL_DAYS: ${CLEANUP_INTERVAL_DAYS}  
-    networks:
-      - mykaraokenetwork
-    entrypoint: /bin/sh
-    command: >
-      -c "while true; do
-        sleep "${CLEANUP_INTERVAL_DAYS:-7}d";
-        curl -f http://mk-app:3000/api/cron/cleanup-parties || echo 'Cleanup failed';
-      done"
 
 volumes:
   postgres_data:

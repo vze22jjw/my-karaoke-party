@@ -177,9 +177,9 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
                 <StepContent icon={<Music className="h-6 w-6" />} title="7. Spotify & Search">
                   Add a **Spotify Playlist ID** for song suggestions, or add a **Playlist Link** to display a shortcut for guests to open Spotify directly.
                 </StepContent>
-                <StepContent icon={<Download className="h-6 w-6" />} title="8. Export History">
-                  At the end of the night, **Export** the list of played songs 
-                  to save your party&apos;s soundtrack to Spotify or a text file.
+                <StepContent icon={<Download className="h-6 w-6" />} title="8. Data Tools">
+                  **Export** played songs to a text list or Spotify format. 
+                  Use **Backup & Restore** to save your entire party history to a file for safe keeping.
                 </StepContent>
               </div>
             )}
