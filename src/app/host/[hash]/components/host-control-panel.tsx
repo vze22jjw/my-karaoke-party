@@ -12,6 +12,7 @@ import { FitText } from "~/components/fit-text";
 import { useRouter } from "next/navigation";
 
 type Props = {
+  // ... existing props ...
   party: Party;
   partyName: string;
   activeTab: string;
@@ -54,10 +55,13 @@ type Props = {
   themeSuggestions: string[]; 
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
   spotifyPlaylistId: string | null;
+  spotifyLink?: string | null; // <-- NEW PROP
   onReplayTour: () => void;
 };
 
+// ... helper functions ...
 function useTimeOpen(createdAt: Date) {
+  // ... existing code ...
   const [timeOpen, setTimeOpen] = useState("");
   useEffect(() => {
     const calculateTime = () => {
@@ -85,6 +89,7 @@ function useTimeOpen(createdAt: Date) {
 }
 
 export function HostControlPanel({
+  // ... destructure props including spotifyLink ...
   party,
   partyName,
   activeTab,
@@ -127,6 +132,7 @@ export function HostControlPanel({
   themeSuggestions, 
   onUpdateThemeSuggestions,
   spotifyPlaylistId,
+  spotifyLink,
   onReplayTour,
 }: Props) {
   const router = useRouter();
@@ -149,19 +155,15 @@ export function HostControlPanel({
     <div className="w-full overflow-hidden h-[100dvh]">
       <div className="flex flex-col h-full flex-1 overflow-hidden p-4">
         
-        {/* 1. PARTY NAME */}
         <div className="flex-shrink-0 mb-2">
           <FitText className="text-outline scroll-m-20 text-3xl sm:text-xl font-extrabold tracking-tight w-full text-center uppercase">
             {party.name}
           </FitText>
         </div>
         
-        {/* 2. INFO HEADER LAYOUT - Refactored for flexibility */}
         <div className="flex-shrink-0 rounded-lg border bg-card p-3 text-sm text-muted-foreground mb-2 shadow-sm flex flex-col gap-2">
           
-          {/* ROW 1: Host Name & Stats */}
           <div className="flex items-center justify-between">
-             {/* Left: Host Name */}
              <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
                 <Crown className="h-5 w-5 text-yellow-500 flex-shrink-0" />
                 <span className="font-medium text-foreground text-base truncate">
@@ -169,7 +171,6 @@ export function HostControlPanel({
                 </span>
              </div>
 
-             {/* Right: Stats (Users | Time) */}
              <div className="flex items-center gap-3 flex-shrink-0">
                 <div className="flex items-center gap-1.5">
                    <Users className="h-5 w-5" />
@@ -183,17 +184,14 @@ export function HostControlPanel({
              </div>
           </div>
 
-          {/* ROW 2: Hash, Songs, Leave */}
           <div className="flex items-center justify-between h-[32px] gap-2">
              
-             {/* 1. Party Code (Fixed Left) */}
              <div className="flex items-center gap-1 flex-shrink-0">
                 <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
                 <div className="flex items-start relative">
                     <span className="font-mono text-xl font-bold text-foreground tracking-wider leading-none">
                       {party.hash}
                     </span>
-                    {/* Superscript Info Button */}
                     <button
                         className="text-muted-foreground hover:text-foreground ml-0.5 -mt-2 p-1"
                         onClick={onReplayTour}
@@ -204,12 +202,9 @@ export function HostControlPanel({
                 </div>
              </div>
 
-             {/* 2. Song Counts (Flexible Middle - Shrinks if needed) */}
-             {/* Centered in remaining space, fills space to right */}
              <div className="flex-1 flex items-center justify-center min-w-0 px-1">
                  <div className="flex items-center gap-1.5 opacity-80 max-w-full justify-center">
                     <Music className="h-5 w-5 flex-shrink-0" />
-                    {/* Flexible container for FitText */}
                     <div className="flex-1 min-w-0 flex justify-center w-full">
                          <FitText className="font-bold text-foreground text-base leading-none whitespace-nowrap">
                             {unplayedSongCount} <span className="opacity-60 text-[0.9em]">({playedSongCount})</span>
@@ -218,7 +213,6 @@ export function HostControlPanel({
                  </div>
              </div>
 
-             {/* 3. Leave Button (Fixed Right) */}
              <div className="flex-shrink-0">
                 <Button 
                     variant="ghost" 
@@ -234,7 +228,6 @@ export function HostControlPanel({
 
         </div>
 
-        {/* 3. TABS */}
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -305,6 +298,7 @@ export function HostControlPanel({
               themeSuggestions={themeSuggestions}
               onUpdateThemeSuggestions={onUpdateThemeSuggestions}
               spotifyPlaylistId={spotifyPlaylistId}
+              spotifyLink={spotifyLink} // <-- Pass to TabSettings
             />
           </TabsContent>
         </Tabs>

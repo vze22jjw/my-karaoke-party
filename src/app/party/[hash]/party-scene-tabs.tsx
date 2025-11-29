@@ -233,6 +233,7 @@ export function PartySceneTabs({
             currentSong={currentSong}
             playlist={unplayedPlaylist}
             playedPlaylist={playedPlaylist}
+            spotifyLink={settings.spotifyLink} // <-- NEW PROP
           />
         </TabsContent>
 

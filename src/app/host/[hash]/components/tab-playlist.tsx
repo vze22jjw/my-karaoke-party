@@ -4,7 +4,7 @@ import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
 import { cn } from "~/lib/utils";
 import { decode } from "html-entities";
-import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown, History } from "lucide-react"; 
+import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown } from "lucide-react"; 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
 import { useState, useEffect, useRef } from "react";
@@ -44,7 +44,6 @@ type Props = {
   onToggleManualSort: () => void;
 };
 
-// Extended type for frontend-only unique tracking
 type ClientVideoInPlaylist = VideoInPlaylist & {
     _clientId: string;
 };
@@ -246,7 +245,6 @@ export function TabPlaylist({
       
       if (newState) {
           setTimeout(() => {
-              // FIX: Changed behavior from 'smooth' to 'auto' to prevent scroll animation
               topOfQueueRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
           }, 100);
       }

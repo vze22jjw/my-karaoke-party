@@ -11,6 +11,7 @@ import { SettingsSpotify } from "./settings/settings-spotify";
 import { SettingsSearch } from "./settings/settings-search";
 import { SettingsExport } from "./settings/settings-export";
 import { SettingsDangerZone } from "./settings/settings-danger-zone";
+import { SettingsBackup } from "./settings/settings-backup"; 
 
 type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
 
@@ -21,8 +22,8 @@ type Props = {
   onToggleRules: () => void;
   disablePlayback: boolean;
   onTogglePlayback: () => void;
-  isManualSortActive: boolean; // NEW
-  onToggleManualSort: () => void; // NEW
+  isManualSortActive: boolean; 
+  onToggleManualSort: () => void; 
   maxSearchResults: number;
   onSetMaxResults: (value: number) => void;
   onCloseParty: () => void;
@@ -41,6 +42,7 @@ type Props = {
   themeSuggestions: string[];
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
   spotifyPlaylistId: string | null;
+  spotifyLink?: string | null;
 };
 
 export function TabSettings({
@@ -70,6 +72,7 @@ export function TabSettings({
   themeSuggestions,
   onUpdateThemeSuggestions,
   spotifyPlaylistId,
+  spotifyLink,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -107,6 +110,7 @@ export function TabSettings({
       <SettingsSpotify
         partyHash={partyHash}
         spotifyPlaylistId={spotifyPlaylistId}
+        spotifyLink={spotifyLink}
       />
 
       <SettingsSearch
@@ -118,6 +122,8 @@ export function TabSettings({
         partyName={partyName}
         playedPlaylist={playedPlaylist}
       />
+      
+      <SettingsBackup />
 
       <SettingsDangerZone
         onCloseParty={onCloseParty}

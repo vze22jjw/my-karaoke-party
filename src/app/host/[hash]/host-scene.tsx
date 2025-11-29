@@ -15,7 +15,7 @@ import Confetti from "react-canvas-confetti";
 import type { Party } from "@prisma/client";
 import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
 
-// Scoped keys helper (though useLocalStorage needs a literal or constant usually, we construct it dynamically)
+// Scoped keys helper
 const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 
 type Props = {
@@ -38,7 +38,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, hostName);
 
-  // Scoped Keys
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: getScopedKey(party.hash!, "manual-sort"),
     defaultValue: false,
@@ -54,7 +53,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
     defaultValue: false,
   });
 
-  // Global Keys (Shared preferences)
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: "host-global-max-results",
     defaultValue: 9,
@@ -156,12 +154,12 @@ export function HostScene({ party, initialData, hostName }: Props) {
       if (isManualSortActive) {
           const newOrderIds = localUnplayed.map(v => v.id);
           socketActions.saveQueueOrder(newOrderIds);
-          toast.success("Playlist Order Saved!");
+          // TOAST REMOVED: toast.success("Playlist Order Saved!");
           setIsManualSortActive(false);
       } else {
           setLocalUnplayed(unplayedPlaylist);
           setIsManualSortActive(true);
-          toast.info("Manual Sort Enabled.");
+          // TOAST REMOVED: toast.info("Manual Sort Enabled.");
       }
   };
 
@@ -242,6 +240,8 @@ export function HostScene({ party, initialData, hostName }: Props) {
         themeSuggestions={themeSuggestions}
         onUpdateThemeSuggestions={socketActions.updateThemeSuggestions}
         spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
+        // New Prop passed down
+        spotifyLink={settings.spotifyLink ?? null}
         onReplayTour={() => setIsTourOpen(true)}
       />
     </>
