@@ -268,7 +268,6 @@ export function TabPlaylist({
     new Date(a.playedAt ?? 0).getTime() - new Date(b.playedAt ?? 0).getTime()
   );
 
-  // --- CLOSED STATE VIEW ---
   if (isPartyClosed) {
       return (
         <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 pt-2 px-1">
@@ -293,8 +292,6 @@ export function TabPlaylist({
         </div>
       );
   }
-  // -------------------------
-
   const queueIndexStart = showHistory ? playedPlaylist.length + 1 : 1;
 
   return (

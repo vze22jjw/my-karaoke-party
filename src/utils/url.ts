@@ -9,7 +9,6 @@ function getBaseUrl() {
     return process.env.NEXT_PUBLIC_APP_URL;
   }
 
-  // Fallback for local development
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 

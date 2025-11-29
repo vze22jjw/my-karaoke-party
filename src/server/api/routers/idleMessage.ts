@@ -5,9 +5,7 @@ import { TRPCError } from "@trpc/server";
 const MAX_MESSAGES_PER_HOST = 20;
 
 export const idleMessageRouter = createTRPCRouter({
-  /**
-   * Get ALL idle messages from the shared library (all hosts).
-   */
+
   getAll: publicProcedure
     .query(async ({ ctx }) => {
       return ctx.db.idleMessage.findMany({
@@ -22,7 +20,6 @@ export const idleMessageRouter = createTRPCRouter({
   add: publicProcedure
     .input(z.object({ hostName: z.string().min(1), message: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      // Check count for THIS specific host only
       const count = await ctx.db.idleMessage.count({
         where: { hostName: input.hostName },
       });

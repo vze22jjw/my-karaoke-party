@@ -22,7 +22,6 @@ const ToggleButton = ({
   isLoading?: boolean;
   disabled?: boolean;
 }) => {
-  // Safe boolean derivation to satisfy linter
   const isEffectiveDisabled = (isLoading ?? false) || (disabled ?? false);
 
   return (

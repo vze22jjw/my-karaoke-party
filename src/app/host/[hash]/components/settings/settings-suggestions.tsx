@@ -74,7 +74,6 @@ export function SettingsSuggestions({
         <Button
           type="button"
           onClick={handleAddSuggestion}
-          // FIX: explicit nullish coalescing
           disabled={(isPartyClosed ?? false) || !newSuggestion.trim()}
         >
           <Plus className="h-4 w-4" />

@@ -77,7 +77,6 @@ export function CreateParty() {
         
         const targetUrl = `/host/${data.hash}`;
         router.push(targetUrl);
-        // REMOVED: Redundant window.location.href causing reload
       }
     },
     onError: (error) => {

@@ -110,15 +110,12 @@ export function HostScene({ party, initialData, hostName }: Props) {
     }
   }, [isMounted, hasSeenTour]);
 
-  // CHANGED: Added logout logic to onSuccess
   const closePartyMutation = api.party.toggleStatus.useMutation({
     onSuccess: async () => {
       toast.success("Party closed successfully");
       
-      // 1. Clear server-side cookies
       await fetch("/api/auth/logout", { method: "POST" });
 
-      // 2. Clear client-side storage for this party
       if (typeof window !== "undefined") {
         Object.keys(window.localStorage).forEach((key) => {
           if (key.startsWith(`host-${party.hash}-`)) {
@@ -127,7 +124,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
         });
       }
 
-      // 3. Force redirect to home
       router.push("/");
       router.refresh();
     },
@@ -229,7 +225,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
         onCloseParty={() => setIsConfirmingClose(true)}
         isConfirmingClose={isConfirmingClose}
         onConfirmClose={() => {
-          // Trigger the mutation which now handles logout/redirect
           closePartyMutation.mutate({ hash: party.hash!, status: "CLOSED" });
           setIsConfirmingClose(false);
         }}

@@ -76,7 +76,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
     setTimeout(() => setStep(1), 200);
   };
 
-  // Swipe Handlers
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null); 
     const touch = e.targetTouches[0];

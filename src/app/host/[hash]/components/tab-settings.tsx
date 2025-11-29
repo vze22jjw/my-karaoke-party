@@ -76,7 +76,6 @@ export function TabSettings({
   spotifyLink,
 }: Props) {
   
-  // Determine closed state
   const isPartyClosed = partyStatus === "CLOSED";
 
   return (

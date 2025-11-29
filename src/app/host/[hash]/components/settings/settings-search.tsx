@@ -21,8 +21,6 @@ type Props = {
 export function SettingsSearch({ maxSearchResults, onSetMaxResults, isPartyClosed }: Props) {
   const [showSearchInfo, setShowSearchInfo] = useState(false);
 
-  // Determine the slider index based on the current maxSearchResults
-  // This snaps the slider to the nearest allowed value if the current value isn't exact
   const currentSliderIndex = (() => {
     const exactIndex = ALLOWED_VALUES.indexOf(maxSearchResults);
     if (exactIndex !== -1) return exactIndex;

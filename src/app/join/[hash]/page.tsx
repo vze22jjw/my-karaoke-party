@@ -15,7 +15,6 @@ export default async function JoinPartyHashPage({
     notFound();
   }
 
-  // Explicitly redirect if the party exists but is closed
   if (party.status === "CLOSED") {
     redirect("/");
   }

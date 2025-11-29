@@ -33,17 +33,14 @@ export function SettingsIdleMessages({
   const [isSyncing, setIsSyncing] = useState(false);
   const [showIdleInfo, setShowIdleInfo] = useState(false);
   
-  // State for selected messages - Persisted to LocalStorage
   const [selectedIds, setSelectedIds] = useLocalStorage<number[]>({
     key: "mkp-idle-selected-ids",
     defaultValue: [],
   });
 
-  // Filter messages authored by current host to enforce the creation limit (20)
   const myMessagesCount = hostIdleMessages.filter(m => m.hostName === hostName).length;
   const creationLimitRemaining = 20 - myMessagesCount;
 
-  // Selection Limit (20 max active on player)
   const selectionCount = selectedIds.length;
 
   const toggleSelection = (id: number) => {
@@ -81,7 +78,7 @@ export function SettingsIdleMessages({
     if (confirm("Are you sure you want to delete this message?")) {
       if (IS_DEBUG) console.log("[SettingsIdleMessages] Deleting message ID:", id);
       onDeleteIdleMessage({ id });
-      setSelectedIds(prev => prev.filter(i => i !== id)); // Remove from selection if deleted
+      setSelectedIds(prev => prev.filter(i => i !== id));
     }
   };
 

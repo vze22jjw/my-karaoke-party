@@ -141,10 +141,8 @@ export function HostControlPanel({
 
   const handleHostLogout = async () => {
     try {
-      // Clear server-side cookies
       await fetch("/api/auth/logout", { method: "POST" });
 
-      // Clear client-side storage
       if (typeof window !== "undefined") {
         Object.keys(window.localStorage).forEach((key) => {
           if (key.startsWith(`host-${party.hash}-`)) {
@@ -259,13 +257,11 @@ export function HostControlPanel({
             className="flex-1 flex flex-col overflow-hidden mt-0 pb-0 min-h-0 h-full data-[state=inactive]:hidden"
           >
             <TabPlaylist
-              // Pass a placeholder object if currentSong is null to force rendering controls
-              // The PlaybackControls component itself handles null values gracefully or displays empty state
               currentSong={currentSong ?? {
                   id: "empty",
                   title: "No Song Playing",
                   singerName: "Idle",
-                  coverUrl: "/my-karaoke-party-logo.png", // Use local asset as placeholder
+                  coverUrl: "/my-karaoke-party-logo.png",
                   artist: "",
                   song: "",
                   duration: "0",
