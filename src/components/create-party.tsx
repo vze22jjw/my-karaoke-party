@@ -75,10 +75,8 @@ export function CreateParty() {
 
         toast.success(`Party "${data.name}" created!`);
         
-        // Explicit redirect logic
         const targetUrl = `/host/${data.hash}`;
         router.push(targetUrl);
-        // Fallback to window location if router push doesn't clear cache fast enough
         setTimeout(() => {
              window.location.href = targetUrl;
         }, 500);

@@ -7,6 +7,7 @@ import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import { cn } from "~/lib/utils"; 
 import { decode } from "html-entities";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 type Props = {
   currentSong: VideoInPlaylist;
@@ -29,6 +30,16 @@ export function PlaybackControls({
   isHistoryOpen,
   onToggleHistory,
 }: Props) {
+  
+  const [isMarqueeActive, setIsMarqueeActive] = useState(false);
+
+  useEffect(() => {
+    setIsMarqueeActive(false);
+    const timer = setTimeout(() => setIsMarqueeActive(true), 50);
+    return () => clearTimeout(timer);
+  }, [currentSong.id]);
+
+
   const handlePlayPause = () => {
     if (isPlaying) {
       onPause();
@@ -40,7 +51,6 @@ export function PlaybackControls({
   return (
     <div className="w-full relative flex items-center gap-3 p-3 pb-6 rounded-2xl bg-card border border-border/50 shadow-sm transition-all overflow-hidden"> 
       
-      {/* Thumbnail */}
       <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md shadow-sm border border-white/10">
         <Image
           src={currentSong.coverUrl}
@@ -48,7 +58,6 @@ export function PlaybackControls({
           fill
           className="object-cover"
         />
-        {/* Animated Equalizer Overlay */}
         {isPlaying && (
             <div className="absolute inset-0 bg-black/30 flex items-end justify-center gap-[2px] pb-1">
                 <div className="w-1 bg-primary/80 h-3 animate-[bounce_1s_infinite]" />
@@ -58,12 +67,14 @@ export function PlaybackControls({
         )}
       </div>
 
-      {/* Info Middle */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1 overflow-hidden">
-        {/* Auto horizontal scroll (CSS Marquee) */}
+        
         <div className="w-full overflow-hidden relative h-5">
-            <div className="whitespace-nowrap absolute animate-[marquee_10s_linear_infinite] hover:animate-none">
-                <p className="text-sm font-bold leading-tight pr-8">
+            <div className={cn(
+                "whitespace-nowrap absolute pr-8",
+                isMarqueeActive && "animate-[marquee_10s_linear_infinite] hover:animate-none"
+            )}>
+                <p className="text-sm font-bold leading-tight">
                     {decode(currentSong.title)}
                 </p>
             </div>
@@ -79,7 +90,6 @@ export function PlaybackControls({
         </div>
       </div>
 
-      {/* Controls Right */}
       <div className="flex items-center gap-1.5 pl-2">
         <Button
           variant="outline"
@@ -103,8 +113,7 @@ export function PlaybackControls({
         </Button>
       </div>
 
-      {/* Chevron Toggle positioned center bottom */}
-      <div className="absolute bottom-0 left-0 w-full flex justify-center">
+\      <div className="absolute bottom-0 left-0 w-full flex justify-center">
           <button
             onClick={onToggleHistory}
             className="w-12 h-5 flex items-center justify-center bg-muted/20 hover:bg-muted/40 rounded-t-lg transition-colors focus:outline-none"

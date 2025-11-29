@@ -6,7 +6,6 @@ import { cookies } from "next/headers";
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  // Verify Admin Token via Cookie
   const token = cookies().get("admin_token")?.value;
   if (token !== env.ADMIN_TOKEN) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as BackupFile;
     
-    // Basic validation
     if (!body.version || !body.data || !Array.isArray(body.data)) {
       return NextResponse.json({ error: "Invalid backup file format" }, { status: 400 });
     }

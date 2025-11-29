@@ -71,7 +71,6 @@ export function registerSocketEvents(io: Server) {
             socket.data.role = participant.role;
         }
 
-        // FIX: Explicitly grant Host privileges to the "Player" client.
         if (singerName === "Player") {
             socket.data.role = "Host";
         }
@@ -116,16 +115,15 @@ export function registerSocketEvents(io: Server) {
           }
 
           let spotifyId: string | undefined;
-          let cleanArtist: string | undefined; // <-- NEW
-          let cleanSong: string | undefined;   // <-- NEW
+          let cleanArtist: string | undefined;
+          let cleanSong: string | undefined;
 
           try {
-            // Get rich metadata from Spotify service
             const match = await spotifyService.searchTrack(data.title);
             if (match) {
                 spotifyId = match.id;
-                cleanArtist = match.artist; // <-- CAPTURE
-                cleanSong = match.title;    // <-- CAPTURE
+                cleanArtist = match.artist;
+                cleanSong = match.title;
             }
           } catch (e) { /* ignore */ }
 
@@ -133,7 +131,6 @@ export function registerSocketEvents(io: Server) {
             data: {
               partyId: party.id, 
               videoId: data.videoId, 
-              // Use cleaned metadata if available, otherwise fallback to raw YouTube title
               title: cleanSong ?? data.title,    
               artist: cleanArtist ?? "", 
               song: cleanSong ?? "", 
@@ -152,8 +149,6 @@ export function registerSocketEvents(io: Server) {
         socket.emit("error", { message: "Failed to add song." });
       }
     });
-
-    // --- PROTECTED HOST ACTIONS (Rest of file unchanged) ---
 
     socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
       if (!ensureHost(socket)) return;

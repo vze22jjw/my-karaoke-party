@@ -37,10 +37,8 @@ export function SettingsExport({ partyName, playedPlaylist }: Props) {
         return uris;
       case "text":
       default:
-        // FIX: Prioritize 'artist' and 'song' fields if they exist (clean metadata)
         return playedPlaylist.map((song) => {
           const artist = song.artist || "Unknown Artist";
-          // Use song.song (clean title) if available, otherwise fallback to raw/cleaned YouTube title
           const title = song.song ? decode(song.song) : decode(removeBracketedContent(song.title));
           
           return `${artist} - ${title}`;
@@ -55,7 +53,6 @@ export function SettingsExport({ partyName, playedPlaylist }: Props) {
     }
     try {
       const dataToCopy = getDataToCopy();
-      // Using document.execCommand('copy') for better compatibility in iframe environments
       const el = document.createElement('textarea');
       el.value = dataToCopy;
       el.setAttribute('readonly', '');

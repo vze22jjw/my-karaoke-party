@@ -6,7 +6,6 @@ import { cookies } from "next/headers";
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  // Verify Admin Token via Cookie
   const token = cookies().get("admin_token")?.value;
   if (token !== env.ADMIN_TOKEN) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

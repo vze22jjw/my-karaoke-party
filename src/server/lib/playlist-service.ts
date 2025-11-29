@@ -49,7 +49,6 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   const playedItems = allItems.filter((item) => item.playedAt);
   const unplayedItems = allItems.filter((item) => !item.playedAt);
 
-  // --- 1. PIN CURRENT SONG ---
   let pinnedCurrentSong: PlaylistItem | null = null;
   if (party.status === "STARTED" && party.currentSongId) {
       const idx = unplayedItems.findIndex(item => item.videoId === party.currentSongId);
@@ -59,7 +58,6 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       }
   }
 
-  // --- 2. SEPARATE VIPs ---
   const priorityItems = unplayedItems.filter(i => i.isPriority);
   const standardPool = unplayedItems.filter(i => !i.isPriority);
 
@@ -107,7 +105,6 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     sortedStandardItems = standardPool;
   }
 
-  // --- 3. FINAL ASSEMBLY ---
   const finalQueue: PlaylistItem[] = [];
   
   if (pinnedCurrentSong) {

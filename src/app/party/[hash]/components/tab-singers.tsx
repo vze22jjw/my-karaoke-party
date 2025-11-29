@@ -59,21 +59,14 @@ export function TabSingers({
     if (hash) setCurrentPartyHash(hash);
   }
 
-  // Enhanced Leave Logic for Party Guests (Scoped)
   const handleGuestLeave = () => {
     if (typeof window !== "undefined") {
-      // 1. Clear ONLY party-specific keys
       Object.keys(window.localStorage).forEach((key) => {
         if (key.startsWith(`guest-${currentPartyHash}-`)) {
           window.localStorage.removeItem(key);
         }
       });
-      // 2. Note: We keep the global 'name' and 'avatar' for convenience across parties.
     }
-
-    // 3. DO NOT Clear Cookies (preserves host auth if they are also a host)
-    
-    // 4. Redirect
     router.push("/");
   };
 

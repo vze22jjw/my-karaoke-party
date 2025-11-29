@@ -12,7 +12,6 @@ import { FitText } from "~/components/fit-text";
 import { useRouter } from "next/navigation";
 
 type Props = {
-  // ... existing props ...
   party: Party;
   partyName: string;
   activeTab: string;
@@ -55,13 +54,11 @@ type Props = {
   themeSuggestions: string[]; 
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
   spotifyPlaylistId: string | null;
-  spotifyLink?: string | null; // <-- NEW PROP
+  spotifyLink?: string | null;
   onReplayTour: () => void;
 };
 
-// ... helper functions ...
 function useTimeOpen(createdAt: Date) {
-  // ... existing code ...
   const [timeOpen, setTimeOpen] = useState("");
   useEffect(() => {
     const calculateTime = () => {
@@ -89,7 +86,6 @@ function useTimeOpen(createdAt: Date) {
 }
 
 export function HostControlPanel({
-  // ... destructure props including spotifyLink ...
   party,
   partyName,
   activeTab,

@@ -28,12 +28,10 @@ export const partyRouter = createTRPCRouter({
           });
         }
 
-        // Generate a unique 4-char hash
         let hash = generatePartyCode();
         let isUnique = false;
         let attempts = 0;
 
-        // Simple collision check loop
         while (!isUnique && attempts < 10) {
             const existing = await ctx.db.party.findUnique({ where: { hash } });
             if (!existing) {
@@ -52,7 +50,7 @@ export const partyRouter = createTRPCRouter({
           data: {
             name: input.name,
             status: "OPEN",
-            hash: hash, // Use the generated random hash
+            hash: hash,
           },
         });
 
@@ -116,7 +114,6 @@ export const partyRouter = createTRPCRouter({
       externalLink: z.string().optional(), 
     }))
     .mutation(async ({ ctx, input }) => {
-      // ID Logic
       let finalId = input.playlistId?.trim() ?? null;
       if (finalId) {
         const match = finalId.match(/(?::|list\/)([a-zA-Z0-9]+)/);
@@ -125,7 +122,6 @@ export const partyRouter = createTRPCRouter({
         }
       }
       
-      // Link Logic
       const finalLink = input.externalLink?.trim() ?? null;
 
       await ctx.db.party.update({

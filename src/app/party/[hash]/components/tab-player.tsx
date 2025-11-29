@@ -9,7 +9,7 @@ type Props = {
   currentSong: VideoInPlaylist | null; 
   playlist: KaraokeParty["playlist"];
   playedPlaylist: KaraokeParty["playlist"];
-  spotifyLink?: string | null; // <-- NEW PROP
+  spotifyLink?: string | null;
 };
 
 export function TabPlayer({ currentSong, playlist, playedPlaylist, spotifyLink }: Props) {

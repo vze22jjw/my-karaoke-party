@@ -243,8 +243,6 @@ export function TabPlaylist({
       setShowHistory((prev) => !prev);
   };
 
-  // FIX: Use useLayoutEffect to synchronously scroll before paint, preventing the flash.
-  // We check for 'window' to ensure it only runs on client.
   useLayoutEffect(() => {
       if (showHistory && topOfQueueRef.current) {
           topOfQueueRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -327,7 +325,6 @@ export function TabPlaylist({
             </div>
         )}
 
-        {/* Anchor point for scroll */}
         <div ref={topOfQueueRef} />
 
         <DndContext 

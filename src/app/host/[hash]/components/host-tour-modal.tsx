@@ -66,7 +66,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const [step, setStep] = useState(1);
   const totalSteps = 4; 
 
-  // Swipe State
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const minSwipeDistance = 50;
@@ -80,7 +79,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   // Swipe Handlers
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null); 
-    // FIX: Safer access
     const touch = e.targetTouches[0];
     if (touch) {
         setTouchStart(touch.clientX);
@@ -88,7 +86,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    // FIX: Safer access
     const touch = e.targetTouches[0];
     if (touch) {
         setTouchEnd(touch.clientX);

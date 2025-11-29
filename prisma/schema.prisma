@@ -41,7 +41,7 @@ model Party {
     idleMessages   String[]       @default([]) 
     themeSuggestions String[]     @default([]) 
     spotifyPlaylistId String?
-    spotifyLink       String?     // <-- NEW FIELD
+    spotifyLink       String?
     
     @@index([hash])
     @@index([lastActivityAt])

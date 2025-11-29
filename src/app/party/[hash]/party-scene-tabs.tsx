@@ -35,7 +35,6 @@ export function PartySceneTabs({
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   const router = useRouter();
   
-  // Scoped Key
   const [activeTab, setActiveTab] = useLocalStorage({
     key: `guest-${party.hash}-active-tab`,
     defaultValue: "player",
@@ -43,7 +42,6 @@ export function PartySceneTabs({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Scoped Key
   const [hasSeenTour, setHasSeenTour] = useLocalStorage({
     key: `guest-${party.hash}-tour-seen`,
     defaultValue: false,

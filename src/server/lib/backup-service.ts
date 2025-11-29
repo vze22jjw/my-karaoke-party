@@ -3,7 +3,6 @@
 import { db } from "~/server/db";
 import type { Party, PartyParticipant, PlaylistItem, IdleMessage } from "@prisma/client";
 
-// Define a structure for the backup file
 export type PartyBackup = {
   party: Party;
   participants: Omit<PartyParticipant, "id" | "partyId">[];
@@ -18,9 +17,7 @@ export type BackupFile = {
 };
 
 export const backupService = {
-  /**
-   * Export all parties or a single party.
-   */
+
   async exportParties(partyHash?: string): Promise<BackupFile> {
     const where = partyHash ? { hash: partyHash } : {};
     
@@ -60,9 +57,6 @@ export const backupService = {
     };
   },
 
-  /**
-   * Import parties from JSON.
-   */
   async importParties(backup: BackupFile) {
     const results = { success: 0, skipped: 0, errors: 0 };
     
@@ -84,7 +78,6 @@ export const backupService = {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _oldId, ...rawPartyData } = item.party;
 
-        // Explicitly construct the object
         const partyData = {
             hash: rawPartyData.hash,
             name: rawPartyData.name,
@@ -100,7 +93,6 @@ export const backupService = {
             idleMessages: rawPartyData.idleMessages,
             themeSuggestions: rawPartyData.themeSuggestions,
             spotifyPlaylistId: rawPartyData.spotifyPlaylistId,
-            // FIX: Cast to 'any' to safely access property that might not exist on the type in older backups
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             spotifyLink: (rawPartyData as any).spotifyLink ?? null, 
         };
