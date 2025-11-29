@@ -22,7 +22,14 @@ export function SettingsBackup() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `mkp_backup_${new Date().toISOString().slice(0, 10)}.json`;
+
+      // Generate timestamp: YYYY-MM-DD_HH-MM-SS
+      const now = new Date();
+      const datePart = now.toISOString().split('T')[0];
+      const timePart = now.toTimeString().split(' ')[0]!.replace(/:/g, '-'); // HH-MM-SS
+      
+      a.download = `mkp_backup_${datePart}_${timePart}.json`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

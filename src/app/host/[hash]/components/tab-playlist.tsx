@@ -7,7 +7,7 @@ import { decode } from "html-entities";
 import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown } from "lucide-react"; 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 
 import {
   DndContext,
@@ -240,15 +240,16 @@ export function TabPlaylist({
   }, [isManualSortActive]);
 
   const handleToggleHistory = () => {
-      const newState = !showHistory;
-      setShowHistory(newState);
-      
-      if (newState) {
-          setTimeout(() => {
-              topOfQueueRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
-          }, 100);
-      }
+      setShowHistory((prev) => !prev);
   };
+
+  // FIX: Use useLayoutEffect to synchronously scroll before paint, preventing the flash.
+  // We check for 'window' to ensure it only runs on client.
+  useLayoutEffect(() => {
+      if (showHistory && topOfQueueRef.current) {
+          topOfQueueRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+  }, [showHistory]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -326,6 +327,7 @@ export function TabPlaylist({
             </div>
         )}
 
+        {/* Anchor point for scroll */}
         <div ref={topOfQueueRef} />
 
         <DndContext 
