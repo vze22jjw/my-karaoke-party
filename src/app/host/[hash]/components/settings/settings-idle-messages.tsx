@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Input } from "~/components/ui/ui/input";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Plus, X, Check, Send, MessageSquareQuote, Globe } from "lucide-react";
+import { Info, Plus, X, Check, Send, Globe } from "lucide-react"; // Removed MessageSquareQuote
 import type { IdleMessage } from "@prisma/client";
 import { toast } from "sonner";
 
@@ -12,10 +12,11 @@ const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
 type Props = {
   hostName: string | null;
-  hostIdleMessages: IdleMessage[]; // Now contains shared messages
+  hostIdleMessages: IdleMessage[]; 
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
   onSyncIdleMessages: (messages: string[]) => void;
+  isPartyClosed?: boolean;
 };
 
 export function SettingsIdleMessages({
@@ -24,6 +25,7 @@ export function SettingsIdleMessages({
   onAddIdleMessage,
   onDeleteIdleMessage,
   onSyncIdleMessages,
+  isPartyClosed
 }: Props) {
   const [newMessage, setNewMessage] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
@@ -34,6 +36,7 @@ export function SettingsIdleMessages({
   const messagesRemaining = 20 - myMessagesCount;
 
   const handleAddMessage = () => {
+    if (isPartyClosed) return;
     if (!newMessage.trim() || !hostName) return;
     if (messagesRemaining <= 0) {
       toast.error("You have reached your 20 message limit.");
@@ -45,9 +48,6 @@ export function SettingsIdleMessages({
     
     onAddIdleMessage({ hostName, message: messageToAdd });
 
-    // Auto-sync updated list (Top 20 recent from shared pool + new one)
-    // Since the optimistic update of the whole list is hard with shared data, 
-    // we just sync the *current* top 19 + new one for immediate feedback.
     const messagesToSync = [messageToAdd, ...hostIdleMessages.map(m => m.message)].slice(0, 20);
     
     onSyncIdleMessages(messagesToSync);
@@ -55,11 +55,11 @@ export function SettingsIdleMessages({
   };
 
   const handleDeleteMessage = (id: number) => {
+    if (isPartyClosed) return;
     if (confirm("Are you sure you want to delete this message?")) {
       if (IS_DEBUG) console.log("[SettingsIdleMessages] Deleting message ID:", id);
       onDeleteIdleMessage({ id });
       
-      // Re-sync top 20 remaining
       const updatedList = hostIdleMessages
         .filter(m => m.id !== id)
         .map(m => m.message)
@@ -69,8 +69,8 @@ export function SettingsIdleMessages({
   };
 
   const handleSyncToParty = () => {
+    if (isPartyClosed) return;
     setIsSyncing(true);
-    // Sync top 20 from the shared library
     const messagesToSync = hostIdleMessages.map((m) => m.message).slice(0, 20);
     if (IS_DEBUG) console.log("[SettingsIdleMessages] Manual syncing messages:", messagesToSync);
     
@@ -86,7 +86,7 @@ export function SettingsIdleMessages({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Globe className="h-5 w-5 text-indigo-500" />
-          Shared Message Library
+          Shared Message Library {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Read-Only)</span>}
         </h3>
         <Button
           variant="ghost"
@@ -109,16 +109,16 @@ export function SettingsIdleMessages({
       <div className="flex w-full items-center space-x-2">
         <Input
           type="text"
-          placeholder="Add a new message (e.g., Lyric @ Author)"
+          placeholder={isPartyClosed ? "Messaging disabled in closed party" : "Add a new message (e.g., Lyric @ Author)"}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          disabled={messagesRemaining <= 0}
+          disabled={messagesRemaining <= 0 || isPartyClosed}
           className="bg-background"
         />
         <Button
           type="button"
           onClick={handleAddMessage}
-          disabled={messagesRemaining <= 0 || !newMessage.trim()}
+          disabled={messagesRemaining <= 0 || !newMessage.trim() || isPartyClosed}
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -150,6 +150,7 @@ export function SettingsIdleMessages({
                     className="h-6 w-6 flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-100/50"
                     onClick={() => handleDeleteMessage(msg.id)}
                     title="Delete Message"
+                    disabled={isPartyClosed}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -167,7 +168,7 @@ export function SettingsIdleMessages({
       <Button
         type="button"
         onClick={handleSyncToParty}
-        disabled={isSyncing || hostIdleMessages.length === 0}
+        disabled={isSyncing || hostIdleMessages.length === 0 || isPartyClosed}
         className="w-full"
       >
         {isSyncing ? (

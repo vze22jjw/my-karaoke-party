@@ -43,6 +43,7 @@ type Props = {
   onUpdateThemeSuggestions: (suggestions: string[]) => void;
   spotifyPlaylistId: string | null;
   spotifyLink?: string | null;
+  isPartyClosed?: boolean;
 };
 
 export function TabSettings({
@@ -74,20 +75,29 @@ export function TabSettings({
   spotifyPlaylistId,
   spotifyLink,
 }: Props) {
+  
+  // Determine closed state
+  const isPartyClosed = partyStatus === "CLOSED";
+
   return (
     <div className="space-y-4">
-      <SettingsLinks partyHash={partyHash} />
+      <SettingsLinks 
+        partyHash={partyHash} 
+        isPartyClosed={isPartyClosed} 
+      />
 
       <SettingsStatus
         partyStatus={partyStatus}
         playedPlaylist={playedPlaylist}
         onStartParty={onStartParty}
         onToggleIntermission={onToggleIntermission}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsSuggestions
         themeSuggestions={themeSuggestions}
         onUpdateThemeSuggestions={onUpdateThemeSuggestions}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsIdleMessages
@@ -96,6 +106,7 @@ export function TabSettings({
         onAddIdleMessage={onAddIdleMessage}
         onDeleteIdleMessage={onDeleteIdleMessage}
         onSyncIdleMessages={onSyncIdleMessages}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsRules
@@ -105,17 +116,20 @@ export function TabSettings({
         onTogglePlayback={onTogglePlayback}
         isManualSortActive={isManualSortActive}
         onToggleManualSort={onToggleManualSort}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsSpotify
         partyHash={partyHash}
         spotifyPlaylistId={spotifyPlaylistId}
         spotifyLink={spotifyLink}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsSearch
         maxSearchResults={maxSearchResults}
         onSetMaxResults={onSetMaxResults}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsExport
@@ -130,6 +144,7 @@ export function TabSettings({
         isConfirmingClose={isConfirmingClose}
         onConfirmClose={onConfirmClose}
         onCancelClose={onCancelClose}
+        isPartyClosed={isPartyClosed}
       />
     </div>
   );
