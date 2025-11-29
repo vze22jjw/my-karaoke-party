@@ -38,8 +38,9 @@ export function SettingsExport({ partyName, playedPlaylist }: Props) {
       case "text":
       default:
         return playedPlaylist.map((song) => {
-          const title = decode(removeBracketedContent(song.title));
-          const artist = song.artist ? decode(song.artist) : "Unknown Artist";
+          const artist = song.artist || "Unknown Artist";
+          const title = song.song ? decode(song.song) : decode(removeBracketedContent(song.title));
+          
           return `${artist} - ${title}`;
         }).join("\n");
     }
@@ -52,7 +53,16 @@ export function SettingsExport({ partyName, playedPlaylist }: Props) {
     }
     try {
       const dataToCopy = getDataToCopy();
-      await navigator.clipboard.writeText(dataToCopy);
+      const el = document.createElement('textarea');
+      el.value = dataToCopy;
+      el.setAttribute('readonly', '');
+      el.style.position = 'absolute';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
       toast.success(`Copied ${exportFormat.toUpperCase()} list to clipboard!`);
       if (IS_DEBUG) console.log("[SettingsExport] Copied data to clipboard");
       setIsCopied(true);
@@ -149,9 +159,11 @@ export function SettingsExport({ partyName, playedPlaylist }: Props) {
           <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-background p-2">
             {playedPlaylist.length > 0 ? (
               <div className="text-xs font-mono p-1 space-y-1">
-                {exportFormat === "text" ? playedPlaylist.map((song) => (
-                  <div key={song.id} className="truncate">
-                    {song.artist ? `${decode(song.artist)} - ` : ""}{decode(removeBracketedContent(song.title))}
+                {exportFormat === "text" ? playedPlaylist.map((song, index) => (
+                  <div key={song.id + index} className="truncate">
+                    {song.artist && song.song
+                        ? `${decode(song.artist)} - ${decode(song.song)}`
+                        : `${decode(removeBracketedContent(song.title))}`}
                   </div>
                 )) : (
                   <pre className="whitespace-pre-wrap">

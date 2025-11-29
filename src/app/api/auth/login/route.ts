@@ -21,7 +21,6 @@ export async function POST(req: Request) {
     const isHttps = appUrl.startsWith("https://");
     const isProduction = process.env.NODE_ENV === "production";
     
-    // Only use secure cookie if we are definitely on HTTPS in production
     const useSecureCookie = isProduction && isHttps;
 
     cookies().set("admin_token", body.password, {
@@ -32,7 +31,6 @@ export async function POST(req: Request) {
       expires: expirationDate,
     });
     
-    // Set verification cookie
     cookies().set("admin_token_verified", "true", {
         httpOnly: false, 
         secure: useSecureCookie,

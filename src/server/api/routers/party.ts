@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
-import { sqids } from "~/server/utils/sqids";
+import { customAlphabet } from "nanoid";
 import { TRPCError } from "@trpc/server"; 
+
+// Use uppercase and numbers, excluding confusing chars like I, O
+const generatePartyCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789", 4);
 
 export const partyRouter = createTRPCRouter({
   create: publicProcedure
@@ -25,19 +28,30 @@ export const partyRouter = createTRPCRouter({
           });
         }
 
+        let hash = generatePartyCode();
+        let isUnique = false;
+        let attempts = 0;
+
+        while (!isUnique && attempts < 10) {
+            const existing = await ctx.db.party.findUnique({ where: { hash } });
+            if (!existing) {
+                isUnique = true;
+            } else {
+                hash = generatePartyCode();
+                attempts++;
+            }
+        }
+
+        if (!isUnique) {
+            throw new Error("Failed to generate a unique party code. Please try again.");
+        }
+
         const party = await ctx.db.party.create({
           data: {
             name: input.name,
             status: "OPEN",
-            hash: "temp",
+            hash: hash,
           },
-        });
-
-        const hash = sqids.encode([party.id]);
-        
-        const updatedParty = await ctx.db.party.update({
-          where: { id: party.id },
-          data: { hash },
         });
 
         await ctx.db.partyParticipant.create({
@@ -48,7 +62,7 @@ export const partyRouter = createTRPCRouter({
           },
         });
 
-        return updatedParty;
+        return party;
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
@@ -96,7 +110,8 @@ export const partyRouter = createTRPCRouter({
   updateSpotifyPlaylist: publicProcedure
     .input(z.object({ 
       hash: z.string(), 
-      playlistId: z.string().optional()
+      playlistId: z.string().optional(),
+      externalLink: z.string().optional(), 
     }))
     .mutation(async ({ ctx, input }) => {
       let finalId = input.playlistId?.trim() ?? null;
@@ -106,15 +121,18 @@ export const partyRouter = createTRPCRouter({
           finalId = match[1];
         }
       }
+      
+      const finalLink = input.externalLink?.trim() ?? null;
 
       await ctx.db.party.update({
         where: { hash: input.hash },
         data: {
           spotifyPlaylistId: finalId,
+          spotifyLink: finalLink, 
           lastActivityAt: new Date(),
         },
       });
-      return { success: true, newId: finalId };
+      return { success: true, newId: finalId, newLink: finalLink };
     }),
 
   toggleStatus: protectedProcedure

@@ -30,11 +30,7 @@ export function AdminLogin() {
         toast.error(data.error ?? "Invalid password");
         setLoading(false);
         return;
-      }
-
-      toast.success("Authenticated!");
-      
-      // Refresh server components to pick up the new cookie
+      }      
       router.refresh();
 
     } catch (error) {

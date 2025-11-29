@@ -71,6 +71,10 @@ export function registerSocketEvents(io: Server) {
             socket.data.role = participant.role;
         }
 
+        if (singerName === "Player") {
+            socket.data.role = "Host";
+        }
+
         if (isNew) socket.broadcast.to(partyHash).emit("new-singer-joined", singerName);
         void updateAndEmitPlaylist(io, partyHash, "join-party");
         void updateAndEmitSingers(io, party.id, partyHash);
@@ -111,16 +115,30 @@ export function registerSocketEvents(io: Server) {
           }
 
           let spotifyId: string | undefined;
+          let cleanArtist: string | undefined;
+          let cleanSong: string | undefined;
+
           try {
             const match = await spotifyService.searchTrack(data.title);
-            if (match) spotifyId = match.id;
+            if (match) {
+                spotifyId = match.id;
+                cleanArtist = match.artist;
+                cleanSong = match.title;
+            }
           } catch (e) { /* ignore */ }
 
           await db.playlistItem.create({
             data: {
-              partyId: party.id, videoId: data.videoId, title: data.title, artist: "", song: "",
-              coverUrl: data.coverUrl, duration: durationISO ? durationISO : getRandomDurationISO(),
-              singerName: data.singerName, randomBreaker: Math.random(), spotifyId: spotifyId,
+              partyId: party.id, 
+              videoId: data.videoId, 
+              title: cleanSong ?? data.title,    
+              artist: cleanArtist ?? "", 
+              song: cleanSong ?? "", 
+              coverUrl: data.coverUrl, 
+              duration: durationISO ? durationISO : getRandomDurationISO(),
+              singerName: data.singerName, 
+              randomBreaker: Math.random(), 
+              spotifyId: spotifyId,
             },
           });
         }
@@ -131,8 +149,6 @@ export function registerSocketEvents(io: Server) {
         socket.emit("error", { message: "Failed to add song." });
       }
     });
-
-    // --- PROTECTED HOST ACTIONS ---
 
     socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
       if (!ensureHost(socket)) return;

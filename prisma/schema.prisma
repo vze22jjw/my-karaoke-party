@@ -41,6 +41,7 @@ model Party {
     idleMessages   String[]       @default([]) 
     themeSuggestions String[]     @default([]) 
     spotifyPlaylistId String?
+    spotifyLink       String?
     
     @@index([hash])
     @@index([lastActivityAt])
@@ -56,7 +57,7 @@ model PartyParticipant {
     role      String        @default("Guest") 
     applauseCount Int       @default(0)
     avatar    String?
-    
+
     @@unique([partyId, name])
     @@index([partyId])
 }
@@ -78,7 +79,7 @@ model PlaylistItem {
     randomBreaker Float?
     spotifyId  String?
     isPriority Boolean   @default(false)
-    isManual   Boolean   @default(false) // <-- NEW: Tracks manual sort status
+    isManual   Boolean   @default(false) 
     
     @@index([partyId])
     @@index([playedAt])
