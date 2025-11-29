@@ -135,6 +135,8 @@ export function HostControlPanel({
   const router = useRouter();
   const timeOpen = useTimeOpen(party.createdAt);
   
+  const isPartyClosed = partyStatus === "CLOSED";
+  
   if (!party.hash) return null;
 
   const handleHostLogout = async () => {
@@ -257,7 +259,20 @@ export function HostControlPanel({
             className="flex-1 flex flex-col overflow-hidden mt-0 pb-0 min-h-0 h-full data-[state=inactive]:hidden"
           >
             <TabPlaylist
-              currentSong={currentSong}
+              // Pass a placeholder object if currentSong is null to force rendering controls
+              // The PlaybackControls component itself handles null values gracefully or displays empty state
+              currentSong={currentSong ?? {
+                  id: "empty",
+                  title: "No Song Playing",
+                  singerName: "Idle",
+                  coverUrl: "/my-karaoke-party-logo.png", // Use local asset as placeholder
+                  artist: "",
+                  song: "",
+                  duration: "0",
+                  isPriority: false,
+                  isManual: false,
+                  playedAt: null
+              }}
               playlist={playlist}
               onRemoveSong={onRemoveSong}
               onSkip={onMarkAsPlayed} 
@@ -271,6 +286,7 @@ export function HostControlPanel({
               onTogglePriority={onTogglePriority}
               onToggleManualSort={onToggleManualSort}
               playedPlaylist={playedPlaylist}
+              isPartyClosed={isPartyClosed}
             />
           </TabsContent>
 

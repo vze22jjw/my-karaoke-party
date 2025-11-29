@@ -112,8 +112,7 @@ export function PlaybackControls({
           <SkipForward className="h-5 w-5" />
         </Button>
       </div>
-
-\      <div className="absolute bottom-0 left-0 w-full flex justify-center">
+      <div className="absolute bottom-0 left-0 w-full flex justify-center">
           <button
             onClick={onToggleHistory}
             className="w-12 h-5 flex items-center justify-center bg-muted/20 hover:bg-muted/40 rounded-t-lg transition-colors focus:outline-none"

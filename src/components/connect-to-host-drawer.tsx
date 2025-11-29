@@ -13,8 +13,9 @@ import {
   DrawerTrigger,
 } from "~/components/ui/ui/drawer";
 import { Button } from "~/components/ui/ui/button";
-import { KeyRound, Music, Users, Clock } from "lucide-react";
+import { KeyRound, Music, Users, Clock, LayoutDashboard } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
+import Link from "next/link";
 
 type Party = {
   hash: string;
@@ -88,12 +89,13 @@ function ConnectToHostDrawerComponent() {
                 </Button>
             </DrawerTrigger>
             <DrawerContent>
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="mx-auto w-full max-w-2xl flex flex-col h-[80vh]">
                     <DrawerHeader>
                         <DrawerTitle>Reconnect as Host</DrawerTitle>
-                        <DrawerDescription>Select your party to log back in.</DrawerDescription>
+                        <DrawerDescription>Select an active party or view your history.</DrawerDescription>
                     </DrawerHeader>
-                    <div className="p-4 pb-0">
+                    
+                    <div className="p-4 pb-0 flex-1 overflow-y-auto">
                         {loading && (
                             <div className="space-y-3">
                                 <Skeleton className="h-16 w-full" />
@@ -109,7 +111,7 @@ function ConnectToHostDrawerComponent() {
                         )}
 
                         {!loading && !error && parties && parties.length > 0 && (
-                            <div className="max-h-[400px] space-y-3 overflow-y-auto">
+                            <div className="space-y-3">
                                 {parties.map((party) => (
                                     <div
                                         key={party.hash}
@@ -146,9 +148,19 @@ function ConnectToHostDrawerComponent() {
                              </div>
                         )}
                     </div>
-                    <DrawerFooter>
+
+                    <div className="p-4 border-t bg-background mt-auto">
+                         <Button asChild variant="outline" className="w-full h-12 text-base" onClick={() => setIsOpen(false)}>
+                            <Link href="/host">
+                                <LayoutDashboard className="mr-2 h-5 w-5" />
+                                Party History Dashboard
+                            </Link>
+                        </Button>
+                    </div>
+
+                    <DrawerFooter className="pt-2">
                         <DrawerClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="ghost">Cancel</Button>
                         </DrawerClose>
                     </DrawerFooter>
                 </div>

@@ -107,6 +107,29 @@ export const partyRouter = createTRPCRouter({
       return host?.name ?? "Host";
     }),
 
+  // --- NEW PROCEDURE ---
+  getAll: protectedProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.party.findMany({
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          hash: true,
+          name: true,
+          status: true,
+          createdAt: true,
+          lastActivityAt: true,
+          _count: {
+            select: {
+              participants: true,
+              playlistItems: true,
+            }
+          }
+        }
+      });
+    }),
+  // ---------------------
+
   updateSpotifyPlaylist: publicProcedure
     .input(z.object({ 
       hash: z.string(), 
