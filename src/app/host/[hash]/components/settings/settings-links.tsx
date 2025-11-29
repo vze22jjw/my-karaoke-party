@@ -7,7 +7,7 @@ import { QrCode } from "~/components/qr-code";
 import { getUrl } from "~/utils/url";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Link as LinkIcon } from "lucide-react";
+import { Info, Link as LinkIcon, ExternalLink } from "lucide-react";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
@@ -22,6 +22,10 @@ export function SettingsLinks({ partyHash }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   const joinUrl = getUrl(`/join/${partyHash}`);
   const playerUrl = getUrl(`/player/${partyHash}`);
+
+  const openLink = (url: string) => {
+    window.open(url, "_blank");
+  };
 
   return (
     <>
@@ -60,6 +64,14 @@ export function SettingsLinks({ partyHash }: Props) {
                 value={joinUrl}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                onClick={() => openLink(joinUrl)}
+                title="Open Join Page"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <div className="space-y-1">
@@ -70,6 +82,14 @@ export function SettingsLinks({ partyHash }: Props) {
                 value={playerUrl}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                onClick={() => openLink(playerUrl)}
+                title="Open Player"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <div className="flex justify-center">

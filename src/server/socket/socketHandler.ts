@@ -131,7 +131,9 @@ export function registerSocketEvents(io: Server) {
             data: {
               partyId: party.id, 
               videoId: data.videoId, 
-              title: cleanSong ?? data.title,    
+              // FIX: Use original YouTube title for the queue display
+              title: data.title,    
+              // Store Spotify metadata for history/exports
               artist: cleanArtist ?? "", 
               song: cleanSong ?? "", 
               coverUrl: data.coverUrl, 

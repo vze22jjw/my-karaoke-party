@@ -175,8 +175,7 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
             {step === 4 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Music className="h-6 w-6" />} title="7. Spotify & Search">
-                  Link a **Spotify Playlist** to show trending tracks to your guests. 
-                  You can also limit **Search Results** to keep things fast.
+                  Add a **Spotify Playlist ID** for song suggestions, or add a **Playlist Link** to display a shortcut for guests to open Spotify directly.
                 </StepContent>
                 <StepContent icon={<Download className="h-6 w-6" />} title="8. Export History">
                   At the end of the night, **Export** the list of played songs 

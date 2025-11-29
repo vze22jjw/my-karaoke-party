@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { FitText } from "~/components/fit-text";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Props = {
   party: Party;
@@ -136,15 +137,25 @@ export function HostControlPanel({
   
   if (!party.hash) return null;
 
-  const handleHostLogout = () => {
-    if (typeof window !== "undefined") {
-      Object.keys(window.localStorage).forEach((key) => {
-        if (key.startsWith(`host-${party.hash}-`)) {
-          window.localStorage.removeItem(key);
-        }
-      });
+  const handleHostLogout = async () => {
+    try {
+      // Clear server-side cookies
+      await fetch("/api/auth/logout", { method: "POST" });
+
+      // Clear client-side storage
+      if (typeof window !== "undefined") {
+        Object.keys(window.localStorage).forEach((key) => {
+          if (key.startsWith(`host-${party.hash}-`)) {
+            window.localStorage.removeItem(key);
+          }
+        });
+      }
+      
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      toast.error("Failed to log out");
     }
-    router.push("/");
   };
 
   return (
@@ -294,7 +305,7 @@ export function HostControlPanel({
               themeSuggestions={themeSuggestions}
               onUpdateThemeSuggestions={onUpdateThemeSuggestions}
               spotifyPlaylistId={spotifyPlaylistId}
-              spotifyLink={spotifyLink} // <-- Pass to TabSettings
+              spotifyLink={spotifyLink} 
             />
           </TabsContent>
         </Tabs>
