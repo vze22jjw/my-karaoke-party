@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "~/navigation"; // FIX: Localized
+import { useRouter } from "~/navigation";
 import { Input } from "~/components/ui/ui/input";
 import { Button } from "~/components/ui/ui/button";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "~/navigation"; // FIX: Localized
+import { Link } from "~/navigation";
 import { useTranslations } from "next-intl";
 
 export function AdminLogin() {

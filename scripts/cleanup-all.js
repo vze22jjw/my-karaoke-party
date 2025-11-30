@@ -17,7 +17,6 @@
 
 import readline from "readline";
 
-// --- Configuration & Localization ---
 const API_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "change-me-in-production";
 const LOCALE = process.env.NEXT_PUBLIC_DEFAULT_LOCALE === "pt" ? "pt" : "en";

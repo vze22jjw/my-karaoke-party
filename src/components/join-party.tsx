@@ -2,7 +2,6 @@
 
 import { useRouter, usePathname } from "~/navigation";
 import { useSearchParams } from "next/navigation";
-// FIX: Added useCallback
 import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import {
   Drawer,
@@ -51,7 +50,6 @@ function JoinPartyDrawer() {
     }
   }, [searchParams, pathname, router]);
 
-  // FIX: Wrapped in useCallback
   const fetchParties = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -72,9 +70,8 @@ function JoinPartyDrawer() {
     } finally {
       setLoading(false);
     }
-  }, [tCommon]); // Dependency on tCommon is safe as it's stable from useTranslations
+  }, [tCommon]);
 
-  // FIX: Added fetchParties to dependency array
   useEffect(() => {
     if (isOpen) void fetchParties();
   }, [isOpen, fetchParties]);

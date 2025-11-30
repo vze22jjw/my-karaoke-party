@@ -17,7 +17,7 @@ import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
 import { useLocalStorage } from "@mantine/hooks";
 import { cn } from "~/lib/utils";
-import { useTranslations } from "next-intl"; // NEW IMPORT
+import { useTranslations } from "next-intl";
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
@@ -40,7 +40,7 @@ export function SongSearch({
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
 }: Props) {
-  const t = useTranslations('guest.addSong'); // NEW HOOK
+  const t = useTranslations('guest.addSong');
 
   const [videoInputValue, setVideoInputValue] = useState(initialSearchQuery ?? "");
   const [canFetch, setCanFetch] = useState((initialSearchQuery ?? "").length >= 3);
@@ -105,7 +105,7 @@ export function SongSearch({
           <Input
             type="text"
             name="video-url"
-            placeholder={t('searchPlaceholder')} // LOCALIZED
+            placeholder={t('searchPlaceholder')}
             className="w-full pr-10"
             value={videoInputValue}
             onChange={(e) => {
@@ -146,9 +146,9 @@ export function SongSearch({
       {isError && (
         <Alert variant={"destructive"} className="mt-4 bg-red-500 text-white">
           <Frown className="h-4 w-4" color="white" />
-          <AlertTitle>{t('errorTitle')}</AlertTitle> {/* LOCALIZED */}
+          <AlertTitle>{t('errorTitle')}</AlertTitle>
           <AlertDescription>
-            {t('errorDesc')} {/* LOCALIZED */}
+            {t('errorDesc')}
           </AlertDescription>
         </Alert>
       )}
@@ -156,9 +156,9 @@ export function SongSearch({
       {isFetched && !isError && !data?.length && (
         <Alert className="mt-4">
           <Frown className="h-4 w-4" />
-          <AlertTitle>{t('notFoundTitle')}</AlertTitle> {/* LOCALIZED */}
+          <AlertTitle>{t('notFoundTitle')}</AlertTitle>
           <AlertDescription>
-            {t('notFoundDesc', { query: videoInputValue })} {/* LOCALIZED with param */}
+            {t('notFoundDesc', { query: videoInputValue })}
           </AlertDescription>
         </Alert>
       )}

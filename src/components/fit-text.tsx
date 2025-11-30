@@ -6,7 +6,7 @@ import { cn } from "~/lib/utils";
 interface FitTextProps {
   children: React.ReactNode;
   className?: string;
-  contentClassName?: string; // NEW: Allows overriding origin
+  contentClassName?: string;
 }
 
 export function FitText({ children, className, contentClassName }: FitTextProps) {

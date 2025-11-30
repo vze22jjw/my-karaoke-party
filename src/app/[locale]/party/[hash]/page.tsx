@@ -44,7 +44,6 @@ export default async function PartyHashPage({ params }: Props) {
     notFound();
   }
 
-  // SECURITY: Server-side check to prevent access if closed
   if (party.status === "CLOSED") {
     redirect("/");
   }

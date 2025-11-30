@@ -34,7 +34,6 @@ export default async function ApplausePage({ params }: Props) {
     const party = await api.party.getByHash({ hash: partyHash });
     if (!party) notFound();
 
-    // Use env var for public URL, fallback to localhost for internal container fetch
     const baseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
     
     const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, { 
@@ -52,7 +51,6 @@ export default async function ApplausePage({ params }: Props) {
     }
   } catch (error) {
     console.warn("Failed to fetch data for applause page", error);
-    // Even if fetch fails, we let the scene load and connect via socket
   }
 
   return (

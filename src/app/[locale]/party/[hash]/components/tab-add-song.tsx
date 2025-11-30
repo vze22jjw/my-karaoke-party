@@ -61,7 +61,6 @@ export function TabAddSong({
           {t('title')}
         </h2>
 
-        {/* Show lock message */}
         {isManualSortActive && (
              <div className="mb-4 rounded-md bg-orange-900/50 border border-orange-500 p-3 text-center text-white font-bold animate-pulse">
                 {t('queueLocked')}
@@ -74,7 +73,6 @@ export function TabAddSong({
           </div>
         )}
 
-        {/* Disable search if locked */}
         <div className={isManualSortActive ? "opacity-50 pointer-events-none" : ""}>
             <SongSearch
             onVideoAdded={onVideoAdded}

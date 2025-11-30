@@ -16,7 +16,7 @@ import {
   Plus,
   Lightbulb,
   Users,
-  Globe, // NEW ICON
+  Globe,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
@@ -66,7 +66,7 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const tParty = useTranslations('tour.party');
 
   const [step, setStep] = useState(1);
-  const totalSteps = 3; // INCREASED STEPS
+  const totalSteps = 3;
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -170,7 +170,6 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
               </div>
             )}
 
-            {/* NEW PAGE */}
             {step === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Globe className="h-6 w-6" />} title={tParty('step5Title')}>

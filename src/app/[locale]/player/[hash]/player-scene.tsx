@@ -6,12 +6,12 @@ import type { Party } from "@prisma/client";
 import type { KaraokeParty, VideoInPlaylist } from "~/types/app-types";
 import { useState, useEffect, useRef, useCallback } from "react"; 
 import { getUrl } from "~/utils/url";
-import { useRouter } from "~/navigation"; // Localized router
+import { useRouter } from "~/navigation";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import type { RefCallback } from "react"; 
 import { parseISO8601Duration } from "~/utils/string"; 
 import { PlayerDesktopView } from "./components/player-desktop-view";
-import { useTranslations } from "next-intl"; // NEW IMPORT
+import { useTranslations } from "next-intl";
 
 type InitialPartyData = {
   currentSong: VideoInPlaylist | null;
@@ -32,7 +32,7 @@ type Props = {
 
 export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
-  const t = useTranslations('player'); // Use player translations
+  const t = useTranslations('player');
   const [forceAutoplay, setForceAutoplay] = useState(false);
   
   if (!party.hash) {

@@ -26,7 +26,6 @@ export async function generateMetadata({ params: { locale } }: Props) {
 export default function AboutPage() {
   const t = useTranslations('about');
   
-  // FIX: Use dynamic versions from env
   const nextVersion = env.NEXT_PUBLIC_NEXT_VERSION;
   const prismaVersion = env.NEXT_PUBLIC_PRISMA_VERSION;
   
@@ -55,7 +54,6 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-6 pt-4">
           
-          {/* Build Info Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-white/5">
               <div className="flex items-center gap-3">
@@ -82,7 +80,6 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Core Dependencies Section */}
           <div>
             <h3 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-widest ml-1">
               {t('coreDependencies')}

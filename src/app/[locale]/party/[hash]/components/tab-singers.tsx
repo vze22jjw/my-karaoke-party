@@ -61,7 +61,7 @@ export function TabSingers({
   const [currentPartyHash, setCurrentPartyHash] = useState('');
   if (typeof window !== 'undefined' && currentPartyHash === '') {
     const parts = window.location.pathname.split('/');
-    const hash = parts[3]; // /en/party/HASH
+    const hash = parts[3];
     if (hash) setCurrentPartyHash(hash);
   }
 

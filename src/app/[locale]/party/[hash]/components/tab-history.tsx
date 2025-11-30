@@ -219,7 +219,6 @@ export function TabHistory({
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {/* FIX: Translated */}
               {t('sortBySongs')}
             </button>
             <button
@@ -231,7 +230,6 @@ export function TabHistory({
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {/* FIX: Translated */}
               {t('sortByClaps')}
             </button>
           </div>

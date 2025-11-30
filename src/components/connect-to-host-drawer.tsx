@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "~/navigation"; // FIX: Localized
+import { useRouter } from "~/navigation";
 import { useState, Suspense } from "react";
 import {
   Drawer,
@@ -55,7 +55,6 @@ function ConnectToHostDrawerComponent() {
         router.push(`/host/${hash}`);
     };
 
-    // Helper for time formatting
     const formatTimeAgo = (dateString: string) => {
         const now = new Date();
         const created = new Date(dateString);

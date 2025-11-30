@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "~/navigation"; // FIX: Localized
+import { useRouter } from "~/navigation";
 import { useState, Suspense } from "react";
 import {
   Drawer,
