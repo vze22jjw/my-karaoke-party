@@ -19,6 +19,7 @@ import {
   MessageSquareQuote,
   Scale,
   Download,
+  Globe, // NEW ICON
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
@@ -65,10 +66,10 @@ const Dots = ({ total, current }: { total: number; current: number }) => (
 
 export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const t = useTranslations('tour');
-  const tHost = useTranslations('tour.host'); // Specific namespace for host steps
+  const tHost = useTranslations('tour.host');
 
   const [step, setStep] = useState(1);
-  const totalSteps = 4; 
+  const totalSteps = 5; // INCREASED STEPS
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -191,6 +192,17 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
                 </StepContent>
                 <StepContent icon={<Download className="h-6 w-6" />} title={tHost('step8Title')}>
                   {tHost.rich('step8Desc', {
+                    strong: (chunks) => <strong className="font-bold text-foreground">{chunks}</strong>
+                  })}
+                </StepContent>
+              </div>
+            )}
+
+            {/* NEW PAGE */}
+            {step === 5 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <StepContent icon={<Globe className="h-6 w-6" />} title={tHost('step9Title')}>
+                  {tHost.rich('step9Desc', {
                     strong: (chunks) => <strong className="font-bold text-foreground">{chunks}</strong>
                   })}
                 </StepContent>

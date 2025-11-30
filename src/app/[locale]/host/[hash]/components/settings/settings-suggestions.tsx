@@ -6,6 +6,7 @@ import { Input } from "~/components/ui/ui/input";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
 import { Lightbulb, Info, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { FitText } from "~/components/fit-text";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
@@ -21,6 +22,7 @@ export function SettingsSuggestions({
   isPartyClosed,
 }: Props) {
   const t = useTranslations('host.settings.suggestions');
+  const tCommon = useTranslations('common');
   const [newSuggestion, setNewSuggestion] = useState("");
   const [showSuggestionsInfo, setShowSuggestionsInfo] = useState(false);
 
@@ -40,20 +42,35 @@ export function SettingsSuggestions({
 
   return (
     <div className="space-y-3 rounded-lg border bg-card p-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-yellow-500" />
-          {t('title')} {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Read-Only)</span>}
-        </h3>
+      <div className="flex items-center justify-between h-9">
+        <div className="flex items-center gap-2 min-w-0 flex-1 mr-2 overflow-hidden">
+          <Lightbulb className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+          
+          <div className="flex-1 min-w-0">
+             {/* FIX: Use FitText with left alignment */}
+             <FitText className="justify-start h-full" contentClassName="origin-left">
+                <span className="text-lg font-medium flex items-center gap-2">
+                    {t('title')}
+                    {isPartyClosed && (
+                        <span className="text-sm text-muted-foreground font-normal whitespace-nowrap">
+                            ({tCommon('readOnly')})
+                        </span>
+                    )}
+                </span>
+             </FitText>
+          </div>
+        </div>
+        
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground"
+          className="h-6 w-6 text-muted-foreground flex-shrink-0"
           onClick={() => setShowSuggestionsInfo((s) => !s)}
         >
           <Info className="h-4 w-4" />
         </Button>
       </div>
+
       {showSuggestionsInfo && (
         <Alert className="mt-2">
           <AlertDescription>{t('info')}</AlertDescription>

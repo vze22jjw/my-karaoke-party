@@ -70,6 +70,16 @@ Allows hosts to export a list of Spotify URIs to instantly create a playlist.
 
 🐳 Docker Ready: Fully containerized for easy deployment.
 
+## 🌍 Internationalization (i18n)
+
+The application supports multiple languages (currently English and Portuguese).
+
+* **Auto-Detection:** The app attempts to detect the user's browser language automatically.
+* **Manual Toggle:** A language switcher is available in the footer of every page (except the Player view).
+* **Configuration:**
+    * Set default language: `NEXT_PUBLIC_DEFAULT_LOCALE=en` (in `.env`)
+    * Hide/Show footer toggle: `NEXT_PUBLIC_SHOW_FOOTER=true` (in `.env`)
+
 💻 100% Cross-Platform: Works on Windows, Linux, and macOS for development and hosting.
 
 💾 Data Retention & Storage

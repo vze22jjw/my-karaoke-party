@@ -34,6 +34,7 @@ export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
     console.log(`${LOG_TAG} New Socket Connection Accepted: ${socket.id}`);
 
+    // ... (keep request-open-parties and join-party events as is) ...
     socket.on("request-open-parties", async () => {
       try {
         const parties = await db.party.findMany({
@@ -86,11 +87,13 @@ export function registerSocketEvents(io: Server) {
         const lastRequest = addSongRateLimit.get(socket.id) ?? 0;
         const now = Date.now();
         if (now - lastRequest < RATE_LIMIT_WINDOW) {
-            socket.emit("error", { message: "Please wait a few seconds before adding another song." });
+            // FIX: Send error code instead of English text
+            socket.emit("error", { message: "rateLimit" });
             return;
         }
         addSongRateLimit.set(socket.id, now);
 
+        // ... (rest of add-song logic remains exactly the same) ...
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
           include: { participants: { where: { name: data.singerName } } },
@@ -150,6 +153,7 @@ export function registerSocketEvents(io: Server) {
       }
     });
 
+    // ... (rest of file: remove-song, mark-as-played, start-party, etc. remain unchanged) ...
     socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
       if (!ensureHost(socket)) return;
       try {

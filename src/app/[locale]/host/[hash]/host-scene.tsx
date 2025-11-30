@@ -26,7 +26,7 @@ type Props = {
 export function HostScene({ party, initialData, hostName }: Props) {
   const router = useRouter();
   const tCommon = useTranslations('common');
-  const tHost = useTranslations('host');
+  const tToasts = useTranslations('toasts.host'); // NEW
 
   const {
     currentSong,
@@ -41,6 +41,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, hostName);
 
+  // ... (keep all state: isManualSortActive, activeTab, hasSeenTour, maxSearchResults, localUnplayed, hasSyncedRef, etc.) ...
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: getScopedKey(party.hash!, "manual-sort"),
     defaultValue: false,
@@ -116,7 +117,8 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
   const closePartyMutation = api.party.toggleStatus.useMutation({
     onSuccess: async () => {
-      toast.success(tCommon('success'));
+      // FIX: Localized toast
+      toast.success(tToasts('closed'));
       
       await fetch("/api/auth/logout", { method: "POST" });
 
@@ -132,7 +134,8 @@ export function HostScene({ party, initialData, hostName }: Props) {
       router.refresh();
     },
     onError: () => {
-      toast.error(tCommon('error'));
+      // FIX: Localized toast
+      toast.error(tToasts('closeFailed'));
     }
   });
 
@@ -141,15 +144,18 @@ export function HostScene({ party, initialData, hostName }: Props) {
         if (variables.status === "OPEN") {
              socketActions.playbackPause();
              socketActions.refreshParty();
-             toast.info(tHost('settings.status.intermission'));
+             // FIX: Localized toast
+             toast.info(tToasts('intermission'));
         } else {
              socketActions.startParty(); 
-             toast.success(tHost('settings.status.started'));
+             // FIX: Localized toast
+             toast.success(tToasts('resumed'));
         }
     },
     onError: () => toast.error(tCommon('error'))
   });
 
+  // ... (keep idleMessageMutation, deleteIdleMessageMutation, handleCloseTour, handleToggleIntermission, handleToggleManualSort) ...
   const idleMessageMutation = api.idleMessage.add.useMutation({
     onSuccess: () => { void refetchIdleMessages(); }
   });

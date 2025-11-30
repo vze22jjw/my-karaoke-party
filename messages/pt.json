@@ -1,5 +1,5 @@
 {
-  "common": {
+"common": {
     "appName": "My Karaoke Party",
     "backToHome": "Voltar para o Início",
     "cancel": "Cancelar",
@@ -10,7 +10,8 @@
     "required": "Obrigatório",
     "leave": "Sair",
     "viewHistory": "Ver Histórico",
-    "terms": "Termos de Serviço"
+    "terms": "Termos de Serviço",
+    "readOnly": "Somente Leitura"
   },
   "home": {
     "joinParty": "Entrar na Festa",
@@ -173,6 +174,11 @@
         "confirmDesc": "Isso encerrará a festa para todos. Ela se tornará somente leitura.",
         "confirmBtn": "Sim, Encerrar Festa"
       }
+    },
+    "card": {
+      "manage": "Gerenciar Festa",
+      "history": "Ver Histórico",
+      "createdAt": "{date} às {time}"
     }
   },
   "player": {
@@ -195,16 +201,16 @@
       "singers": "Cantores"
     },
     "player": {
-        "playingNow": "Tocando Agora",
-        "spotify": "Spotify",
-        "noQueued": "Sem músicas na fila",
-        "nextInLine": "Na Fila ({count})",
-        "hideQueue": "Ocultar Fila",
-        "showAll": "Ver Todos ({count})",
-        "moreNext": "E mais {count} música(s)...",
-        "alreadyPlayed": "Já Tocaram ({count})",
-        "hideHistory": "Ocultar Histórico",
-        "moreHistory": "E mais {count} música(s) no histórico..."
+      "playingNow": "Tocando Agora",
+      "spotify": "Spotify",
+      "noQueued": "Sem músicas na fila",
+      "nextInLine": "Na Fila ({count})",
+      "hideQueue": "Ocultar Fila",
+      "showAll": "Ver Todos ({count})",
+      "moreNext": "E mais {count} música(s)...",
+      "alreadyPlayed": "Já Tocaram ({count})",
+      "hideHistory": "Ocultar Histórico",
+      "moreHistory": "E mais {count} música(s) no histórico..."
     },
     "addSong": {
       "title": "Adicionar Música",
@@ -257,38 +263,42 @@
     "prev": "Voltar",
     "next": "Próximo",
     "party": {
-        "welcome": "Bem-vindo à Festa!",
-        "intro": "Aqui está um guia rápido dos controles.",
-        "step1Title": "1. Tocando",
-        "step1Desc": "Veja o que está tocando. Se houver uma playlist, procure o **Link do Spotify**!",
-        "step2Title": "2. Adicionar",
-        "step2Desc": "Busque qualquer karaokê no YouTube. O sistema de Justiça garante a vez de todos!",
-        "step3Title": "3. Sugestões",
-        "step3Desc": "Inspire-se com temas do anfitrião, **Tendências Spotify** e as Mais Tocadas.",
-        "step4Title": "4. Cantores e Aplausos",
-        "step4Desc": "Veja a fila. Toque no botão 👏 para enviar aplausos e pontuar o cantor!",
-        "finish": "Entendi, vamos cantar!"
+      "welcome": "Bem-vindo à Festa!",
+      "intro": "Aqui está um guia rápido dos controles.",
+      "step1Title": "1. Tocando",
+      "step1Desc": "Veja o que está tocando. Se houver uma playlist, procure o **Link do Spotify**!",
+      "step2Title": "2. Adicionar",
+      "step2Desc": "Busque qualquer karaokê no YouTube. O sistema de Justiça garante a vez de todos!",
+      "step3Title": "3. Sugestões",
+      "step3Desc": "Inspire-se com temas do anfitrião, **Tendências Spotify** e as Mais Tocadas.",
+      "step4Title": "4. Cantores e Aplausos",
+      "step4Desc": "Veja a fila. Toque no botão 👏 para enviar aplausos e pontuar o cantor!",
+      "step5Title": "5. Idioma",
+      "step5Desc": "Prefere outro idioma? Procure o **Seletor de Idioma** no rodapé inferior (se ativado pelo servidor).",
+      "finish": "Entendi, vamos cantar!"
     },
     "host": {
-        "title": "Controles do Host",
-        "desc": "Um guia rápido para gerenciar sua festa.",
-        "step1Title": "1. Links da Festa",
-        "step1Desc": "Compartilhe o **Link de Entrada**. Abra o **Link do Player** na TV.",
-        "step2Title": "2. Gerenciar Status",
-        "step2Desc": "Use **Iniciar Festa** para começar. Use **Intervalo** para pausar a fila.",
-        "step3Title": "3. Controle da Fila",
-        "step3Desc": "A aba **Playlist** é seu controle. Pule músicas ou use **Ordenação Manual**.",
-        "step4Title": "4. Regras",
-        "step4Desc": "Alterne o **Modo Justiça** ou mude os modos de **Reprodução**.",
-        "step5Title": "5. Engajar Convidados",
-        "step5Desc": "Adicione **Sugestões de Tema** para inspirar escolhas.",
-        "step6Title": "6. Mensagens de Espera",
-        "step6Desc": "Crie mensagens personalizadas para exibir na TV quando ocioso.",
-        "step7Title": "7. Spotify e Busca",
-        "step7Desc": "Adicione um **ID de Playlist Spotify** ou Link.",
-        "step8Title": "8. Ferramentas de Dados",
-        "step8Desc": "**Exporte** músicas ou faça **Backup** do histórico da festa.",
-        "finish": "Entendi, vamos começar!"
+      "title": "Controles do Host",
+      "desc": "Um guia rápido para gerenciar sua festa.",
+      "step1Title": "1. Links da Festa",
+      "step1Desc": "Compartilhe o **Link de Entrada**. Abra o **Link do Player** na TV.",
+      "step2Title": "2. Gerenciar Status",
+      "step2Desc": "Use **Iniciar Festa** para começar. Use **Intervalo** para pausar a fila.",
+      "step3Title": "3. Controle da Fila",
+      "step3Desc": "A aba **Playlist** é seu controle. Pule músicas ou use **Ordenação Manual**.",
+      "step4Title": "4. Regras",
+      "step4Desc": "Alterne o **Modo Justiça** ou mude os modos de **Reprodução**.",
+      "step5Title": "5. Engajar Convidados",
+      "step5Desc": "Adicione **Sugestões de Tema** para inspirar escolhas.",
+      "step6Title": "6. Mensagens de Espera",
+      "step6Desc": "Crie mensagens personalizadas para exibir na TV quando ocioso.",
+      "step7Title": "7. Spotify e Busca",
+      "step7Desc": "Adicione um **ID de Playlist Spotify** ou Link.",
+      "step8Title": "8. Ferramentas de Dados",
+      "step8Desc": "**Exporte** músicas ou faça **Backup** do histórico da festa.",
+      "step9Title": "9. Configurações de Idioma",
+      "step9Desc": "Você pode alternar entre **Inglês** e **Português** usando o botão no rodapé (se configurado).",
+      "finish": "Entendi, vamos começar!"
     }
   },
   "about": {
@@ -321,5 +331,44 @@
     "contactTitle": "Informações de Contato",
     "contactText": "Se tiver dúvidas, entre em contato conosco.",
     "back": "Voltar ao Início"
+  },
+  "toasts": {
+    "adminLogin": {
+      "invalid": "Senha inválida",
+      "error": "Algo deu errado"
+    },
+    "host": {
+      "closed": "Festa fechada com sucesso",
+      "closeFailed": "Falha ao fechar festa. Tente novamente.",
+      "intermission": "Intervalo Iniciado",
+      "resumed": "Festa Retomada!"
+    },
+    "settings": {
+      "spotifyUpdated": "Configurações do Spotify atualizadas!",
+      "spotifyFailed": "Falha ao atualizar configurações.",
+      "noSongsCopy": "Sem músicas para copiar!",
+      "copySuccess": "Lista {format} copiada para a área de transferência!",
+      "copyFailed": "Falha ao copiar lista.",
+      "backupDownloaded": "Backup baixado!",
+      "backupFailed": "Falha ao baixar backup.",
+      "invalidJson": "Arquivo JSON inválido.",
+      "restoreSuccess": "Restaurado: {success} festas. Pulado: {skipped}.",
+      "restoreFailed": "Falha ao restaurar backup.",
+      "maxSelected": "Máx. 20 mensagens selecionadas.",
+      "creationLimit": "Você atingiu o limite de 20 mensagens.",
+      "messageAdded": "Mensagem adicionada. Marque para sincronizar.",
+      "syncSuccess": "Sincronizado {count} mensagens com o player!"
+    },
+    "guest": {
+      "songAdded": "Música adicionada à fila!",
+      "addError": "Erro ao adicionar música",
+      "tryAgain": "Por favor, tente novamente."
+    },
+    "socket": {
+      "joined": "{name} entrou na festa!",
+      "applauseError": "Falha ao registrar aplauso.",
+      "networkError": "Erro de rede ao enviar aplauso.",
+      "rateLimit": "Aguarde alguns segundos antes de adicionar outra música."
+    }
   }
 }
