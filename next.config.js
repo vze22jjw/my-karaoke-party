@@ -1,9 +1,10 @@
-import { withAxiom } from "next-axiom"
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
- */
+import { withAxiom } from "next-axiom";
+import createNextIntlPlugin from 'next-intl/plugin';
+
 await import("./src/env.js");
+
+// FIX: Explicitly point to the i18n file location
+const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
 
 /** @type {import("next").NextConfig} */
 const config = {
@@ -21,4 +22,4 @@ const config = {
   }
 };
 
-export default withAxiom(config);
+export default withAxiom(withNextIntl(config));

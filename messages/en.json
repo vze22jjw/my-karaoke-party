@@ -1,0 +1,326 @@
+{
+  "common": {
+    "appName": "My Karaoke Party",
+    "backToHome": "Back to Home",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "required": "Required",
+    "leave": "Leave",
+    "viewHistory": "View History",
+    "terms": "Terms of Service"
+  },
+  "home": {
+    "joinParty": "Join Party",
+    "startNew": "or Start a New Party",
+    "openParties": "Open Parties",
+    "noOpenParties": "No parties open at the moment",
+    "beTheFirst": "Be the first to create a party!",
+    "chooseParty": "Choose a party to join",
+    "enter": "Enter"
+  },
+  "startParty": {
+    "title": "Start New Party",
+    "backToOptions": "Back to Options",
+    "backToHome": "Back to Home",
+    "pageTitle": "Start Party - My Karaoke Party"
+  },
+  "drawers": {
+    "openPlayers": "Open Players",
+    "enterHash": "Enter Party Hash",
+    "hashPlaceholder": "e.g., DCBA",
+    "connectPlayer": "Connect to Player",
+    "connecting": "Connecting...",
+    "openNames": "Open Party Names:",
+    "reconnectHost": "Reconnect as Host",
+    "reconnectDesc": "Select an active party or view your history.",
+    "connectHostBtn": "Connect to Host",
+    "noActive": "No active parties found.",
+    "historyDashboard": "Party History Dashboard",
+    "songs": "songs",
+    "singers": "singers",
+    "cancel": "Cancel",
+    "notFoundError": "Party not found or invalid code.",
+    "endedError": "Party has ended.",
+    "genericError": "An unexpected error occurred.",
+    "loadingError": "Error loading parties. Please try again."
+  },
+  "join": {
+    "title": "Join Party",
+    "partyCode": "Party Code",
+    "enterCode": "Enter the party code...",
+    "name": "Name",
+    "enterName": "Enter your name...",
+    "chooseIcon": "Choose Your Icon",
+    "joining": "Joining...",
+    "nameTip": "Tip: Your name is case-sensitive. Use the exact same name to keep your history!",
+    "backToList": "Back to parties list"
+  },
+  "create": {
+    "title": "Create a New Party",
+    "description": "Give your party a name and enter the admin password.",
+    "partyName": "Party Name",
+    "placeholderName": "MY AWESOME KARAOKE PARTY",
+    "yourName": "Your Name",
+    "placeholderUser": "Your name",
+    "adminPassword": "Admin Password",
+    "placeholderPass": "Enter admin token...",
+    "createButton": "Create Party",
+    "creating": "Creating...",
+    "authFailed": "Authentication failed",
+    "invalidPassword": "Invalid Admin Password",
+    "toastSuccess": "Party \"{name}\" created!",
+    "toastError": "Failed to create party"
+  },
+  "host": {
+    "dashboardTitle": "Host Dashboard",
+    "dashboardDesc": "Manage all your karaoke parties in one place.",
+    "newParty": "New Party",
+    "noParties": "No parties found.",
+    "startFirst": "Start your first party to see it here!",
+    "access": {
+      "title": "Host Access",
+      "desc": "Please enter the admin password to manage this party.",
+      "unlock": "Unlock Controls"
+    },
+    "tabs": {
+      "playlist": "Playlist",
+      "settings": "Settings"
+    },
+    "playback": {
+      "noSong": "No Song Playing",
+      "emptyQueue": "The queue is currently empty.",
+      "saveOrder": "Save New Order",
+      "closedHistory": "Party Closed • History View",
+      "noHistory": "No songs were played during this party."
+    },
+    "settings": {
+      "status": {
+        "title": "Party Status",
+        "open": "Party is OPEN",
+        "started": "Party in Progress",
+        "intermission": "Intermission (Paused)",
+        "closed": "Party Closed",
+        "start": "Start Party",
+        "resume": "Resume Party",
+        "pause": "Start Intermission (Pause)",
+        "info": "Use this to manage the flow. Start to begin music. Intermission pauses the queue and shows the idle slideshow."
+      },
+      "links": {
+        "title": "Party Links",
+        "join": "Join Link (for singers)",
+        "player": "Player Link (for TV/projector)",
+        "info": "Share the Join Link with guests. Open the Player Link on a TV/Projector. Click the QR code to enlarge."
+      },
+      "suggestions": {
+        "title": "Party Theme / Suggestions",
+        "placeholder": "e.g. 'Songs featuring a color in the title'",
+        "empty": "No suggestions added yet.",
+        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab."
+      },
+      "messages": {
+        "title": "Shared Message Library",
+        "placeholder": "New message (e.g. Lyric @ Artist)",
+        "sync": "Sync {count} Messages to Player",
+        "synced": "Synced!",
+        "limitError": "You have reached your message creation limit.",
+        "info": "Select messages to display on the TV. You can select up to 20.",
+        "yourCreations": "Your creations:",
+        "selected": "Selected to sync:",
+        "emptyLib": "The shared library is empty."
+      },
+      "rules": {
+        "title": "Party Rules",
+        "fairnessOn": "Queue: Fairness (ON)",
+        "fairnessOff": "Queue: FIFO (OFF)",
+        "playbackApp": "Playback: In-App (ON)",
+        "playbackYoutube": "Playback: YouTube (OFF)",
+        "manualSort": "Manual Sort",
+        "infoQueue": "Queue Ordering: Fairness rotates singers. FIFO is first-come, first-served.",
+        "infoSort": "Manual Queue Sort: Enable to drag-and-drop. Disabling saves the order.",
+        "infoPlayback": "Playback: In-App plays videos here. YouTube forces external links."
+      },
+      "spotify": {
+        "title": "Spotify Integration",
+        "playlistId": "Trending Playlist ID (Suggestions Tab)",
+        "link": "Party Playlist Link (Guest Header)",
+        "save": "Save Settings",
+        "info": "Trending ID: Shows songs in Suggestions. Party Link: Adds a direct link in Guest Player header."
+      },
+      "search": {
+        "title": "Search Settings",
+        "maxResults": "Max Search Results",
+        "info": "Limit the number of results guests see when searching. Fewer results speed up loading."
+      },
+      "export": {
+        "title": "Export Played Songs",
+        "copySpotify": "Copy for Spotify",
+        "copyText": "Copy as Text",
+        "info": "Copies the list of played songs. 'Copy for Spotify' formats as URIs for the Desktop App."
+      },
+      "backup": {
+        "title": "Backup & Restore",
+        "download": "Save Backup",
+        "upload": "Restore",
+        "info": "Backup: Downloads all data to JSON. Restore: Upload JSON to restore parties."
+      },
+      "danger": {
+        "title": "Danger Zone",
+        "closeParty": "Close Party",
+        "confirmTitle": "Are you sure?",
+        "confirmDesc": "This will end the party for everyone. It becomes read-only.",
+        "confirmBtn": "Yes, End Party"
+      }
+    }
+  },
+  "player": {
+    "waiting": "Waiting for the host to start the party...",
+    "intermission": "Your Host Is Taking a Break...",
+    "startSoon": "The Party Will Start In A Moment...",
+    "callToAction": "Got a Song? Let's Sing!",
+    "nextUp": "Next Up:",
+    "startingIn": "Starting in",
+    "skip": "Skip",
+    "openYoutube": "Open on YouTube",
+    "playbackDisabled": "Playback Is Disabled For This Party.",
+    "cantEmbed": "This Video Cannot Be Played Inside The App."
+  },
+  "guest": {
+    "tabs": {
+      "playing": "Playing",
+      "add": "Add",
+      "suggestions": "Suggestions",
+      "singers": "Singers"
+    },
+    "player": {
+        "playingNow": "Playing Now",
+        "spotify": "Spotify",
+        "noQueued": "No songs queued",
+        "nextInLine": "Next in Line ({count})",
+        "hideQueue": "Hide Queue",
+        "showAll": "Show All ({count})",
+        "moreNext": "And {count} more song(s)...",
+        "alreadyPlayed": "Already Played ({count})",
+        "hideHistory": "Hide History",
+        "moreHistory": "And {count} more song(s) in history..."
+    },
+    "addSong": {
+      "title": "Add Songs",
+      "searchPlaceholder": "Enter artist and/or song name...",
+      "queueFull": "Queue Full! Sing one, then add more.",
+      "queueLocked": "Queue Locked: Host is reordering.",
+      "myQueue": "My Queued Songs",
+      "emptyHistory": "You haven't added any songs yet.",
+      "added": "Song added to queue!",
+      "playingNow": "(Playing Now)",
+      "notFoundTitle": "Nothing found!",
+      "notFoundDesc": "No karaoke videos found for {query}",
+      "errorTitle": "Error!",
+      "errorDesc": "There was an unexpected error searching for videos. Try again later."
+    },
+    "history": {
+      "suggestions": "Song Suggestions",
+      "hotSpotify": "Hot Karaoke From Spotify",
+      "topPlayed": "Top Played (All Time)",
+      "topSingers": "Top Singers",
+      "noSongs": "No songs played yet.",
+      "noSingers": "No singers yet.",
+      "sortBySongs": "Songs",
+      "sortByClaps": "Claps"
+    },
+    "singers": {
+      "title": "Singers",
+      "leaveParty": "Leave",
+      "you": "You",
+      "sang": "sang",
+      "next": "next",
+      "inLine": "In Line:",
+      "history": "History:",
+      "claps": "Claps:",
+      "countdown": {
+        "serve": "Serve In",
+        "turnUp": "Turn Up",
+        "singIn": "Sing In",
+        "micIn": "Mic In"
+      }
+    }
+  },
+  "applause": {
+    "title": "Applause for",
+    "waiting": "Waiting for Singers...",
+    "instruction": "Click repeatedly! Each clap is added to the singer's score.",
+    "back": "Back to Party"
+  },
+  "tour": {
+    "prev": "Previous",
+    "next": "Next",
+    "party": {
+        "welcome": "Welcome to the Party!",
+        "intro": "Here's a quick look at the controls.",
+        "step1Title": "1. Playing",
+        "step1Desc": "See what's playing and who is singing. Look for the **Spotify Link** if available!",
+        "step2Title": "2. Add Song",
+        "step2Desc": "Search YouTube for any karaoke song. Fairness rules ensure everyone gets a turn!",
+        "step3Title": "3. Suggestions",
+        "step3Desc": "Get inspiration from host themes, **Hot on Spotify**, and Top Played songs.",
+        "step4Title": "4. Singers & Applause",
+        "step4Desc": "Check the queue. Tap the 👏 button to send applause and boost scores!",
+        "finish": "Got it, let's sing!"
+    },
+    "host": {
+        "title": "Host Controls",
+        "desc": "A quick guide to managing your party.",
+        "step1Title": "1. Party Links",
+        "step1Desc": "Share the **Join Link** with singers. Open the **Player Link** on your TV.",
+        "step2Title": "2. Manage Status",
+        "step2Desc": "Use **Start Party** to begin. Hit **Intermission** to pause and show slides.",
+        "step3Title": "3. Control the Queue",
+        "step3Desc": "Play, pause, skip, or enable **Manual Sort** to drag-and-drop.",
+        "step4Title": "4. Party Rules",
+        "step4Desc": "Toggle **Fairness Mode** or switch **Playback** modes.",
+        "step5Title": "5. Engage Guests",
+        "step5Desc": "Add **Theme Suggestions** to inspire song choices.",
+        "step6Title": "6. Idle Messages",
+        "step6Desc": "Create custom messages to display on TV when idle.",
+        "step7Title": "7. Spotify & Search",
+        "step7Desc": "Add a **Spotify Playlist ID** or Link.",
+        "step8Title": "8. Data Tools",
+        "step8Desc": "**Export** songs or **Backup** your party history.",
+        "finish": "Got it, let's start!"
+    }
+  },
+  "about": {
+    "title": "About",
+    "buildInfo": "Build Information",
+    "appVersion": "App Version",
+    "buildDate": "Build Date",
+    "gitCommit": "Git Commit",
+    "coreDependencies": "Core Dependencies",
+    "nodeEnv": "Node Environment",
+    "back": "Back to Home"
+  },
+  "notfound": {
+    "title": "404 - Page Not Found",
+    "desc": "Oops! The party you're looking for doesn't exist or has ended.",
+    "home": "Go Back Home"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "introTitle": "Introduction",
+    "introText": "Welcome to \"My Karaoke Party\"! These Terms of Service govern your use of our web application. By using our App, you agree to these Terms.",
+    "personalUseTitle": "Personal Use Only",
+    "nonCommercialTitle": "Non-Commercial Use",
+    "nonCommercialText": "You agree to use the App solely for private enjoyment, in a non-commercial setting.",
+    "privateLocTitle": "Private Locations",
+    "privateLocText": "The App is designed for use in private spaces, such as homes.",
+    "rightsTitle": "Performing Rights and Licensing",
+    "rightsText": "You acknowledge that using karaoke tracks publicly can implicate performing rights.",
+    "liabilityTitle": "Limitation of Liability",
+    "liabilityText": "We are not responsible for any unauthorized or illegal use of the App.",
+    "contactTitle": "Contact Information",
+    "contactText": "If you have questions, please contact us.",
+    "back": "Back to Home"
+  }
+}

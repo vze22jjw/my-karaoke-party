@@ -9,6 +9,7 @@ import { PlayerQrCode } from "./player-qr-code";
 import { Button } from "./ui/ui/button";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { SongCountdownTimer } from "./song-countdown-timer";
+import { useTranslations } from "next-intl";
 
 type Props = {
   video: VideoInPlaylist;
@@ -20,6 +21,7 @@ type Props = {
   isSkipping: boolean;
   remainingTime: number;
   message?: string;
+  isLargeText?: boolean;
 };
 
 export function PlayerDisabledView({
@@ -29,18 +31,15 @@ export function PlayerDisabledView({
   onOpenYouTubeAndAutoSkip,
   onSkip,
   remainingTime,
-  message = "Playback Is Disabled For This Party.",
+  message,
 }: Props) {
+  const t = useTranslations('player');
+  const displayMessage = message ?? t('playbackDisabled');
+
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-start bg-gradient text-white overflow-hidden p-6">
-      
       <div className="absolute inset-0 flex h-full w-full items-center justify-center opacity-20 pointer-events-none select-none">
-        <Image
-          src={logo}
-          alt="My Karaoke Party"
-          priority
-          className="w-[60%] object-contain opacity-50 blur-sm"
-        />
+        <Image src={logo} alt="My Karaoke Party" priority className="w-[60%] object-contain opacity-50 blur-sm" />
       </div>
 
       {nextSong && (
@@ -49,12 +48,12 @@ export function PlayerDisabledView({
              <div className="text-right">
                 <div className="text-xs font-bold text-white/90 mb-1">
                   <span className="text-primary mr-1">{nextSong.singerName}</span>
-                  <span className="opacity-70 uppercase tracking-wider">Up Next In:</span>
+                  <span className="opacity-70 uppercase tracking-wider">{t('nextUp')}</span>
                   <span className="ml-1 font-mono">
                     <SongCountdownTimer remainingTime={remainingTime} />
                   </span>
                 </div>
-                <p className="text-sm font-bold text-white leading-tight truncate max-w-[250px] ml-auto">
+                <p className="text-sm font-bold text-white leading-tight truncate ml-auto max-w-[250px]">
                   {decode(removeBracketedContent(nextSong.title))}
                 </p>
              </div>
@@ -63,14 +62,8 @@ export function PlayerDisabledView({
       )}
 
       <div className="z-10 flex flex-col items-center space-y-8 text-center animate-in fade-in zoom-in duration-500 max-w-5xl w-full mt-2">
-        
         <div className="relative w-full max-w-[21rem] aspect-video rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
-           <Image
-             src={video.coverUrl}
-             alt={video.title}
-             fill
-             className="object-cover"
-           />
+           <Image src={video.coverUrl} alt={video.title} fill className="object-cover" />
         </div>
         
         <div className="space-y-2 w-full">
@@ -85,7 +78,7 @@ export function PlayerDisabledView({
 
         <div className="flex flex-col items-center gap-6 w-full">
           <p className="text-lg text-white/90 font-medium drop-shadow-md">
-            {message}
+            {displayMessage}
           </p>
 
           <button
@@ -93,7 +86,7 @@ export function PlayerDisabledView({
             className="group relative flex items-center gap-3 rounded-full bg-red-600 px-8 py-4 text-xl font-bold text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all hover:scale-105 hover:bg-red-700 hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-95"
           >
             <ExternalLink className="h-6 w-6" />
-            <span>Open on YouTube</span>
+            <span>{t('openYoutube')}</span>
           </button>
         </div>
       </div>
@@ -108,7 +101,7 @@ export function PlayerDisabledView({
             onClick={onSkip}
           >
             <SkipForward className="h-4 w-4" />
-            Skip
+            {t('skip')}
           </Button>
       </div>
     </div>

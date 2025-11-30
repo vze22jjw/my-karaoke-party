@@ -1,9 +1,7 @@
-/* eslint-disable */
 "use client";
 
-import { useLocalStorage, useViewportSize } from "@mantine/hooks";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useLocalStorage } from "@mantine/hooks";
+import { useRouter } from "~/navigation"; // FIX: Localized
 import { useForm } from "react-hook-form";
 import { api } from "~/trpc/react";
 import { Button } from "./ui/ui/button";
@@ -27,32 +25,24 @@ import {
 } from "./ui/ui/form";
 import { toast } from "sonner";
 import { Loader2, PartyPopper } from "lucide-react";
+import { useTranslations } from "next-intl";
 
+// Note: Zod schema messages are hardcoded here for simplicity, 
+// but you can use z.errorMap or pass t function if needed for validation errors.
 const formSchema = z.object({
   partyName: z
     .string()
-    .min(2, {
-      message: "Party name must be at least 2 characters.",
-    })
-    .max(30, {
-      message: "Party name must be 30 characters or less.",
-    })
-    .regex(/^[A-Z0-9 -]*$/, {
-      message: "Only uppercase letters, numbers, spaces, and dashes allowed.",
-    })
-    .refine((s) => s.trim() === s, {
-      message: "Party name cannot start or end with a space.",
-    }),
-  yourName: z.string().min(2, {
-    message: "Your name must be at least 2 characters.",
-  }),
-  adminPassword: z.string().min(1, {
-    message: "Admin password is required to create a party.",
-  }),
+    .min(2)
+    .max(30)
+    .regex(/^[A-Z0-9 -]*$/)
+    .refine((s) => s.trim() === s),
+  yourName: z.string().min(2),
+  adminPassword: z.string().min(1),
 });
 
 export function CreateParty() {
   const router = useRouter();
+  const t = useTranslations('create');
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,14 +63,14 @@ export function CreateParty() {
             window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
         }
 
-        toast.success(`Party "${data.name}" created!`);
+        toast.success(t('toastSuccess', { name: data.name }));
         
         const targetUrl = `/host/${data.hash}`;
         router.push(targetUrl);
       }
     },
     onError: (error) => {
-      toast.error("Failed to create party", {
+      toast.error(t('toastError'), {
         description: error.message,
       });
     },
@@ -97,7 +87,7 @@ export function CreateParty() {
       if (!res.ok) {
         form.setError("adminPassword", { 
           type: "manual", 
-          message: "Invalid Admin Password" 
+          message: t('invalidPassword') 
         });
         return;
       }
@@ -105,17 +95,15 @@ export function CreateParty() {
       createParty.mutate({ name: values.partyName, singerName: values.yourName });
 
     } catch (error) {
-      toast.error("Authentication failed");
+      toast.error(t('authFailed'));
     }
   }
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Create a New Party</CardTitle>
-        <CardDescription>
-          Give your party a name and enter the admin password.
-        </CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -128,10 +116,10 @@ export function CreateParty() {
               name="partyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Party Name</FormLabel>
+                  <FormLabel>{t('partyName')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="MY AWESOME KARAOKE PARTY"
+                      placeholder={t('placeholderName')}
                       {...field}
                       onChange={(e) => {
                         const uppercaseValue = e.target.value.toUpperCase();
@@ -152,9 +140,9 @@ export function CreateParty() {
               name="yourName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Name</FormLabel>
+                  <FormLabel>{t('yourName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your name" {...field} />
+                    <Input placeholder={t('placeholderUser')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,11 +153,11 @@ export function CreateParty() {
               name="adminPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Admin Password</FormLabel>
+                  <FormLabel>{t('adminPassword')}</FormLabel>
                   <FormControl>
                     <Input 
                       type="password" 
-                      placeholder="Enter admin token..." 
+                      placeholder={t('placeholderPass')} 
                       {...field} 
                     />
                   </FormControl>
@@ -188,7 +176,7 @@ export function CreateParty() {
               ) : (
                 <PartyPopper className="mr-2 h-4 w-4" />
               )}
-              Create Party
+              {form.formState.isSubmitting ? t('creating') : t('createButton')}
             </Button>
           </form>
         </Form>

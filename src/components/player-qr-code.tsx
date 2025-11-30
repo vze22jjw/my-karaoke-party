@@ -16,10 +16,11 @@ export function PlayerQrCode({ joinPartyUrl, className }: Props) {
         className
       )}
     >
-      <QrCode url={joinPartyUrl} />
+      <QrCode url={joinPartyUrl} size={128} />
       <a
         href={joinPartyUrl}
         target="_blank"
+        rel="noreferrer"
         className="font-mono text-xl text-white pl-4 text-outline"
       >
         {joinPartyUrl.split("//")[1]}

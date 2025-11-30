@@ -17,6 +17,7 @@ import { Skeleton } from "./ui/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/ui/alert";
 import { useLocalStorage } from "@mantine/hooks";
 import { cn } from "~/lib/utils";
+import { useTranslations } from "next-intl"; // NEW IMPORT
 
 type Props = {
   onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
@@ -39,6 +40,7 @@ export function SongSearch({
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
 }: Props) {
+  const t = useTranslations('guest.addSong'); // NEW HOOK
 
   const [videoInputValue, setVideoInputValue] = useState(initialSearchQuery ?? "");
   const [canFetch, setCanFetch] = useState((initialSearchQuery ?? "").length >= 3);
@@ -81,7 +83,7 @@ export function SongSearch({
           setCanFetch(false);
           onSearchQueryConsumed?.();
         })();
-      }, 100); // Small 100ms delay
+      }, 100);
 
       return () => clearTimeout(timer);
     }
@@ -103,7 +105,7 @@ export function SongSearch({
           <Input
             type="text"
             name="video-url"
-            placeholder="Enter artist and/or song name..."
+            placeholder={t('searchPlaceholder')} // LOCALIZED
             className="w-full pr-10"
             value={videoInputValue}
             onChange={(e) => {
@@ -144,10 +146,9 @@ export function SongSearch({
       {isError && (
         <Alert variant={"destructive"} className="mt-4 bg-red-500 text-white">
           <Frown className="h-4 w-4" color="white" />
-          <AlertTitle>Error!</AlertTitle>
+          <AlertTitle>{t('errorTitle')}</AlertTitle> {/* LOCALIZED */}
           <AlertDescription>
-            There was an unexpected error while searching for karaoke videos.
-            Try again later.
+            {t('errorDesc')} {/* LOCALIZED */}
           </AlertDescription>
         </Alert>
       )}
@@ -155,9 +156,9 @@ export function SongSearch({
       {isFetched && !isError && !data?.length && (
         <Alert className="mt-4">
           <Frown className="h-4 w-4" />
-          <AlertTitle>Nothing found!</AlertTitle>
+          <AlertTitle>{t('notFoundTitle')}</AlertTitle> {/* LOCALIZED */}
           <AlertDescription>
-            No karaoke videos found for {videoInputValue}
+            {t('notFoundDesc', { query: videoInputValue })} {/* LOCALIZED with param */}
           </AlertDescription>
         </Alert>
       )}

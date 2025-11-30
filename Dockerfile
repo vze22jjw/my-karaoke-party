@@ -73,6 +73,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
+# FIX: Copy messages folder for i18n
+COPY --from=builder /app/messages ./messages
+
 # Copy prisma schema for the migration
 COPY --from=builder /app/prisma ./prisma
 
