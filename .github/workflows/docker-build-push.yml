@@ -67,7 +67,7 @@ jobs:
           bash docker-builds/docker-build.sh --build-type release --deploy
           
           # Export variables for the summary step
-          echo "VERSION=${{ env.VERSION }}-${{ gitbub.run_number}}" >> $GITHUB_ENV
+          echo "VERSION=${{ env.VERSION }}.${{ github.run_number }}" >> $GITHUB_ENV
           echo "REGISTRY=${{ vars.ECR_REGISTRY }}" >> $GITHUB_ENV
           echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
       
