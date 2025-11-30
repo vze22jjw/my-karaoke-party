@@ -1,4 +1,4 @@
-import { Link } from "~/navigation"; // FIX: Localized Link
+import { Link } from "~/navigation";
 import Image from "next/image";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { Button } from "~/components/ui/ui/button";
