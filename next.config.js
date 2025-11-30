@@ -13,7 +13,6 @@ const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
 const config = {
   output: "standalone",
   
-  // FIX: Inject versions from package.json
   env: {
     NEXT_PUBLIC_NEXT_VERSION: pkg.dependencies.next,
     NEXT_PUBLIC_PRISMA_VERSION: pkg.dependencies["@prisma/client"],
