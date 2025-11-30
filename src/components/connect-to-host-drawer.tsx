@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "~/navigation";
 import { useState, Suspense } from "react";
 import {
   Drawer,
@@ -15,7 +15,8 @@ import {
 import { Button } from "~/components/ui/ui/button";
 import { KeyRound, Music, Users, Clock, LayoutDashboard } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
-import Link from "next/link";
+import { Link } from "~/navigation";
+import { useTranslations } from "next-intl";
 
 type Party = {
   hash: string;
@@ -27,6 +28,7 @@ type Party = {
 
 function ConnectToHostDrawerComponent() {
     const router = useRouter();
+    const t = useTranslations('drawers');
     const [isOpen, setIsOpen] = useState(false);
     const [parties, setParties] = useState<Party[] | null>(null);
     const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ function ConnectToHostDrawerComponent() {
             const data = await response.json() as Party[];
             setParties(data);
         } catch (e) {
-            setError("Error loading parties. Please try again.");
+            setError(t('loadingError'));
             console.error(e);
         } finally {
             setLoading(false);
@@ -56,15 +58,13 @@ function ConnectToHostDrawerComponent() {
     const formatTimeAgo = (dateString: string) => {
         const now = new Date();
         const created = new Date(dateString);
-        const diffInMinutes = Math.floor(
-          (now.getTime() - created.getTime()) / (1000 * 60),
-        );
+        const diffInMinutes = Math.floor((now.getTime() - created.getTime()) / (1000 * 60));
     
-        if (diffInMinutes < 1) return "right now";
-        if (diffInMinutes < 60) return `created ${diffInMinutes} min`;
+        if (diffInMinutes < 1) return "now";
+        if (diffInMinutes < 60) return `${diffInMinutes}m`;
         const diffInHours = Math.floor(diffInMinutes / 60);
-        if (diffInHours < 24) return `created ${diffInHours}h`;
-        return `created ${Math.floor(diffInHours / 24)}d`;
+        if (diffInHours < 24) return `${diffInHours}h`;
+        return `${Math.floor(diffInHours / 24)}d`;
     };
 
     return (
@@ -84,15 +84,15 @@ function ConnectToHostDrawerComponent() {
                     variant="secondary"
                     className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
                 >
-                    Connect to Host
+                    {t('connectHostBtn')}
                     <KeyRound className="ml-3 h-6 w-6 text-cyan-400" />
                 </Button>
             </DrawerTrigger>
             <DrawerContent>
                 <div className="mx-auto w-full max-w-2xl flex flex-col h-[80vh]">
                     <DrawerHeader>
-                        <DrawerTitle>Reconnect as Host</DrawerTitle>
-                        <DrawerDescription>Select an active party or view your history.</DrawerDescription>
+                        <DrawerTitle>{t('reconnectHost')}</DrawerTitle>
+                        <DrawerDescription>{t('reconnectDesc')}</DrawerDescription>
                     </DrawerHeader>
                     
                     <div className="p-4 pb-0 flex-1 overflow-y-auto">
@@ -144,7 +144,7 @@ function ConnectToHostDrawerComponent() {
 
                         {!loading && !error && parties && parties.length === 0 && (
                              <div className="text-center py-8 text-muted-foreground">
-                                 No active parties found.
+                                 {t('noActive')}
                              </div>
                         )}
                     </div>
@@ -153,14 +153,14 @@ function ConnectToHostDrawerComponent() {
                          <Button asChild variant="outline" className="w-full h-12 text-base" onClick={() => setIsOpen(false)}>
                             <Link href="/host">
                                 <LayoutDashboard className="mr-2 h-5 w-5" />
-                                Party History Dashboard
+                                {t('historyDashboard')}
                             </Link>
                         </Button>
                     </div>
 
                     <DrawerFooter className="pt-2">
                         <DrawerClose asChild>
-                            <Button variant="ghost">Cancel</Button>
+                            <Button variant="ghost">{t('cancel')}</Button>
                         </DrawerClose>
                     </DrawerFooter>
                 </div>
@@ -170,6 +170,7 @@ function ConnectToHostDrawerComponent() {
 }
 
 export function ConnectToHostButton() {
+    const t = useTranslations('drawers');
     return (
         <Suspense fallback={
             <Button 
@@ -178,7 +179,7 @@ export function ConnectToHostButton() {
                 className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
                 disabled
             >
-                Connect to Host
+                {t('connectHostBtn')}
                 <KeyRound className="ml-3 h-6 w-6 text-cyan-400" />
             </Button>
         }>

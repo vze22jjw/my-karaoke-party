@@ -6,9 +6,10 @@ import { cn } from "~/lib/utils";
 interface FitTextProps {
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
 }
 
-export function FitText({ children, className }: FitTextProps) {
+export function FitText({ children, className, contentClassName }: FitTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [scale, setScale] = useState(1);
@@ -58,7 +59,7 @@ export function FitText({ children, className }: FitTextProps) {
     >
       <span
         ref={textRef}
-        className="whitespace-nowrap origin-center transition-transform duration-200 ease-out"
+        className={cn("whitespace-nowrap origin-center transition-transform duration-200 ease-out", contentClassName)}
         style={{ transform: `scale(${scale})`, display: 'inline-block' }}
       >
         {children}

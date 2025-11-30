@@ -9,7 +9,7 @@ on:
     - cron: '12 9 3 * *' ## Monthly run at 9:12 AM UTC
 
 env:
-  VERSION: "v0.0.2"  
+  VERSION: "0.3b"
 
 jobs:
   build-and-push:
@@ -67,7 +67,7 @@ jobs:
           bash docker-builds/docker-build.sh --build-type release --deploy
           
           # Export variables for the summary step
-          echo "VERSION=${{ env.VERSION }}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "VERSION=${{ env.VERSION }}-${{ gitbub.run_number}}" >> $GITHUB_ENV
           echo "REGISTRY=${{ vars.ECR_REGISTRY }}" >> $GITHUB_ENV
           echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
       

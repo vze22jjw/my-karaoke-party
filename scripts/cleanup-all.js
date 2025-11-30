@@ -7,17 +7,100 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 /**
+ * Script to clean up all parties from the system
  * Script para limpar todas as parties do sistema
  *
- * Uso:
- *   pnpm cleanup:all              # Preview (mostra o que seria deletado)
- *   pnpm cleanup:all --confirm    # Deleta todas as parties
+ * Usage/Uso:
+ * pnpm cleanup:all              # Preview (shows what would be deleted)
+ * pnpm cleanup:all --confirm    # Deletes all parties
  */
 
 import readline from "readline";
 
 const API_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "change-me-in-production";async function getPartiesStats() {
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "change-me-in-production";
+const LOCALE = process.env.NEXT_PUBLIC_DEFAULT_LOCALE === "pt" ? "pt" : "en";
+
+const MESSAGES = {
+  en: {
+    fetching: "🔍 Fetching party statistics...\n",
+    currentStats: "📊 Current Statistics:",
+    totalParties: "   Total Parties:",
+    totalSongs: "   Total Songs:",
+    noParties: "✅ No parties to cleanup!",
+    openParties: "📋 Open Parties:",
+    /**
+     * @param {string} name
+     * @param {string} hash
+     * @param {number} count
+     * @param {string} date
+     */
+    partyItem: (name, hash, count, date) => `   ${name} (${hash}) - ${count} songs - Created at ${date}`,
+    preview: "⚠️  Preview mode - no parties were deleted",
+    /** @param {number} count */
+    runToDelete: (count) => `   To delete all ${count} parties, run:`,
+    command: "   pnpm cleanup:all --confirm\n",
+    warning: "⚠️  WARNING: You are about to delete ALL parties!",
+    /**
+     * @param {number} pCount
+     * @param {number} sCount
+     */
+    warningDetails: (pCount, sCount) => `   This will remove ${pCount} parties and ${sCount} songs.\n`,
+    confirmPrompt: "Type 'YES' to confirm: ",
+    confirmKey: "YES",
+    cancelled: "\n❌ Operation cancelled by user",
+    deleting: "\n🗑️  Deleting all parties...",
+    success: "\n✅ Cleanup completed successfully!",
+    deletedCount: "   Deleted parties:",
+    timestamp: "   Timestamp:",
+    errorFetch: "❌ Error fetching statistics:",
+    errorDelete: "❌ Error deleting parties:",
+    errorFatal: "❌ Fatal error:",
+    dateLocale: "en-US"
+  },
+  pt: {
+    fetching: "🔍 Buscando estatísticas das parties...\n",
+    currentStats: "📊 Estatísticas Atuais:",
+    totalParties: "   Total de Parties:",
+    totalSongs: "   Total de Músicas:",
+    noParties: "✅ Não há parties para limpar!",
+    openParties: "📋 Parties abertas:",
+    /**
+     * @param {string} name
+     * @param {string} hash
+     * @param {number} count
+     * @param {string} date
+     */
+    partyItem: (name, hash, count, date) => `   ${name} (${hash}) - ${count} músicas - Criada em ${date}`,
+    preview: "⚠️  Preview mode - nenhuma party foi deletada",
+    /** @param {number} count */
+    runToDelete: (count) => `   Para deletar todas as ${count} parties, execute:`,
+    command: "   pnpm cleanup:all --confirm\n",
+    warning: "⚠️  ATENÇÃO: Você está prestes a deletar TODAS as parties!",
+    /**
+     * @param {number} pCount
+     * @param {number} sCount
+     */
+    warningDetails: (pCount, sCount) => `   Isso irá remover ${pCount} parties e ${sCount} músicas.\n`,
+    confirmPrompt: "Digite 'SIM' para confirmar: ",
+    confirmKey: "SIM",
+    cancelled: "\n❌ Operação cancelada pelo usuário",
+    deleting: "\n🗑️  Deletando todas as parties...",
+    success: "\n✅ Limpeza concluída com sucesso!",
+    deletedCount: "   Parties deletadas:",
+    timestamp: "   Timestamp:",
+    errorFetch: "❌ Erro ao buscar estatísticas:",
+    errorDelete: "❌ Erro ao deletar parties:",
+    errorFatal: "❌ Erro fatal:",
+    dateLocale: "pt-BR"
+  }
+};
+
+const t = MESSAGES[LOCALE];
+
+// --- Functions ---
+
+async function getPartiesStats() {
   try {
     const response = await fetch(`${API_URL}/api/admin/cleanup-all`, {
       method: "GET",
@@ -30,7 +113,7 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "change-me-in-production";async f
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("❌ Erro ao buscar estatísticas:", error);
+    console.error(t.errorFetch, error);
     process.exit(1);
   }
 }
@@ -52,7 +135,7 @@ async function deleteAllParties() {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("❌ Erro ao deletar parties:", error);
+    console.error(t.errorDelete, error);
     process.exit(1);
   }
 }
@@ -60,46 +143,41 @@ async function deleteAllParties() {
 async function main() {
   const shouldConfirm = process.argv.includes("--confirm");
 
-  console.log("🔍 Buscando estatísticas das parties...\n");
+  console.log(t.fetching);
 
   const stats = await getPartiesStats();
 
-  console.log("📊 Estatísticas Atuais:");
-  console.log(`   Total de Parties: ${stats.totalParties}`);
-  console.log(`   Total de Músicas: ${stats.totalPlaylistItems}\n`);
+  console.log(t.currentStats);
+  console.log(`${t.totalParties} ${stats.totalParties}`);
+  console.log(`${t.totalSongs} ${stats.totalPlaylistItems}\n`);
 
   if (stats.totalParties === 0) {
-    console.log("✅ Não há parties para limpar!");
+    console.log(t.noParties);
     process.exit(0);
   }
 
-  console.log("📋 Parties abertas:");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any
-  stats.parties.forEach((/** @type {any} */ party, /** @type {any} */ index) => {
-    const date = new Date(party.createdAt).toLocaleString("pt-BR");
-    console.log(
-      `   ${index + 1}. ${party.name} (${party.hash}) - ${party.songsCount} músicas - Criada em ${date}`
-    );
+  console.log(t.openParties);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stats.parties.forEach((/** @type {any} */ party, /** @type {number} */ index) => {
+    const date = new Date(party.createdAt).toLocaleString(t.dateLocale);
+    // Fix: Ensure we pass a string or number as expected, party.songsCount should be number
+    console.log(t.partyItem(String(index + 1) + ". " + party.name, party.hash, Number(party.songsCount), date));
   });
 
   console.log("");
 
   if (!shouldConfirm) {
-    console.log("⚠️  Preview mode - nenhuma party foi deletada");
-    console.log(
-      `   Para deletar todas as ${stats.totalParties} parties, execute:`
-    );
-    console.log("   pnpm cleanup:all --confirm\n");
+    console.log(t.preview);
+    console.log(t.runToDelete(stats.totalParties));
+    console.log(t.command);
     process.exit(0);
   }
 
-  // Confirmação adicional
-  console.log("⚠️  ATENÇÃO: Você está prestes a deletar TODAS as parties!");
-  console.log(
-    `   Isso irá remover ${stats.totalParties} parties e ${stats.totalPlaylistItems} músicas.\n`
-  );
+  // Additional Confirmation
+  console.log(t.warning);
+  console.log(t.warningDetails(stats.totalParties, stats.totalPlaylistItems));
 
-  // Em ambiente interativo, pedir confirmação
+  // Interactive confirmation
   if (process.stdin.isTTY) {
     const rl = readline.createInterface({
       input: process.stdin,
@@ -107,27 +185,27 @@ async function main() {
     });
 
     const answer = await new Promise((resolve) => {
-      rl.question("Digite 'SIM' para confirmar: ", resolve);
+      rl.question(t.confirmPrompt, resolve);
     });
 
     rl.close();
 
-    if (answer !== "SIM") {
-      console.log("\n❌ Operação cancelada pelo usuário");
+    if (answer !== t.confirmKey) {
+      console.log(t.cancelled);
       process.exit(0);
     }
   }
 
-  console.log("\n🗑️  Deletando todas as parties...");
+  console.log(t.deleting);
 
   const result = await deleteAllParties();
 
-  console.log("\n✅ Limpeza concluída com sucesso!");
-  console.log(`   Parties deletadas: ${result.deletedCount}`);
-  console.log(`   Timestamp: ${new Date(result.timestamp).toLocaleString("pt-BR")}\n`);
+  console.log(t.success);
+  console.log(`${t.deletedCount} ${result.deletedCount}`);
+  console.log(`${t.timestamp} ${new Date(result.timestamp).toLocaleString(t.dateLocale)}\n`);
 }
 
 main().catch((error) => {
-  console.error("❌ Erro fatal:", error);
+  console.error(t.errorFatal, error);
   process.exit(1);
 });

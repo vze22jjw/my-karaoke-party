@@ -49,12 +49,12 @@ BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Version configuration
 if [ "$BUILD_TYPE" == "release" ]; then
-    export VERSION="v0.0.2-${GIT_SHORT_SHA}"
+    export VERSION="0.3b"
     export ECR_BUILD="true"
     export BUILD_NODE_ENV="production"
     echo "Release build version: $VERSION"
 else
-    export VERSION="${GIT_SHORT_SHA}-$(date "+%y%m%d%S")"
+    export VERSION="${GIT_SHORT_SHA}-$(date "+%H%S")"
     export ECR_BUILD="false"
     echo "Development build version: $VERSION"
 fi

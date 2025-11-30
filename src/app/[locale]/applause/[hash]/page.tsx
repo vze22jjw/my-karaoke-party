@@ -1,0 +1,63 @@
+import { api } from "~/trpc/server";
+import { notFound } from "next/navigation";
+import ApplauseScene from "./applause-scene";
+import type { VideoInPlaylist } from "~/types/app-types";
+import { env } from "~/env";
+import { getTranslations } from 'next-intl/server';
+
+type Props = {
+  params: { hash: string; locale: string };
+};
+
+export async function generateMetadata({ params }: Props) {
+  const t = await getTranslations({ locale: params.locale, namespace: 'applause' });
+  const partyHash = params.hash;
+  
+  try {
+    const party = await api.party.getByHash({ hash: partyHash });
+    if (!party) return { title: 'My Karaoke Party' };
+    
+    return { 
+      title: `${t('title')} ${party.name}` 
+    };
+  } catch (e) {
+    return { title: 'My Karaoke Party' };
+  }
+}
+
+export default async function ApplausePage({ params }: Props) {
+  const partyHash = params.hash;
+  let currentSong: VideoInPlaylist | null = null;
+  let unplayed: VideoInPlaylist[] = [];
+
+  try {
+    const party = await api.party.getByHash({ hash: partyHash });
+    if (!party) notFound();
+
+    const baseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+    
+    const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, { 
+      method: "GET", 
+      next: { revalidate: 0 }, 
+    });
+    
+    if (playlistRes.ok) {
+        const data = (await playlistRes.json()) as { 
+          currentSong: VideoInPlaylist | null, 
+          unplayed: VideoInPlaylist[] 
+        };
+        currentSong = data.currentSong ?? null;
+        unplayed = data.unplayed ?? [];
+    }
+  } catch (error) {
+    console.warn("Failed to fetch data for applause page", error);
+  }
+
+  return (
+    <ApplauseScene 
+      partyHash={partyHash} 
+      initialCurrentSong={currentSong} 
+      initialUnplayed={unplayed} 
+    />
+  );
+}

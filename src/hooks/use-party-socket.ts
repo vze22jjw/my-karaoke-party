@@ -1,10 +1,11 @@
 import { type KaraokeParty, type VideoInPlaylist } from "~/types/app-types";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { io, type Socket } from "socket.io-client";
-import { useRouter } from "next/navigation";
+import { useRouter } from "~/navigation";
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 import { useLocalStorage } from "@mantine/hooks";
+import { useTranslations } from "next-intl";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
@@ -72,6 +73,7 @@ export function usePartySocket(
   singerName: string,
 ): UsePartySocketReturn {
   const router = useRouter();
+  const tToasts = useTranslations('toasts.socket');
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [avatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "🎤" });
@@ -193,19 +195,31 @@ export function usePartySocket(
       });
 
       newSocket.on("singers-updated", (list: Participant[]) => setParticipants(list));
+      
       newSocket.on("new-singer-joined", (name: string) => {
-        if (name && name !== singerName) toast.info(`${name} has joined the party!`);
+        if (name && name !== singerName) toast.info(tToasts('joined', { name }));
       });
+
       newSocket.on("party-closed", () => {
         stopCountdown();
         router.push("/");
       });
       
       newSocket.on("error", (data: { message: string }) => {
-        // CHANGED: Check for "Video too long" and trigger alert instead of toast
-        if (data.message.toLowerCase().includes("video too long")) {
-            alert(data.message);
-        } else {
+        switch (data.message) {
+          case 'rateLimit':
+            toast.error(tToasts('rateLimit'));
+            break;
+          case 'unauthorized':
+            toast.error(tToasts('unauthorized'));
+            break;
+          case 'videoTooLong':
+            alert(tToasts('videoTooLong')); 
+            break;
+          case 'addFailed':
+            toast.error(tToasts('addFailed'));
+            break;
+          default:
             toast.error(data.message);
         }
       });
@@ -235,7 +249,7 @@ export function usePartySocket(
       clearInterval(heartbeatInterval);
       stopCountdown();
     };
-  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar, initialData.currentSongStartedAt, initialData.currentSongRemainingDuration]);
+  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar, initialData.currentSongStartedAt, initialData.currentSongRemainingDuration, tToasts]);
 
   const sendApplauseHttp = useCallback(async (singer: string) => {
     try {
@@ -247,12 +261,12 @@ export function usePartySocket(
       if (!response.ok) {
         const errorData = (await response.json()) as { error?: string };
         const msg = errorData?.error ?? "Server error";
-        toast.error("Failed to register applause.", { description: msg });
+        toast.error(tToasts('applauseError'), { description: msg });
       }
     } catch (error) {
-      toast.error("Network error while sending applause.");
+      toast.error(tToasts('networkError'));
     }
-  }, [partyHash]);
+  }, [partyHash, tToasts]);
 
   const socketActions: SocketActions = useMemo(() => ({
     addSong: (videoId, title, coverUrl, singerName) => socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName }),

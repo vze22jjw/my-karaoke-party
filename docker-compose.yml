@@ -59,6 +59,10 @@ services:
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
       ## Optional links to extranl applause sounds
       NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: ${NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL}
+      # Default Language (en or pt)
+      NEXT_PUBLIC_DEFAULT_LOCALE: ${NEXT_PUBLIC_DEFAULT_LOCALE}
+      # Show/Hide Footer with translations switcher (true or false)
+      NEXT_PUBLIC_SHOW_FOOTER: ${NEXT_PUBLIC_SHOW_FOOTER}
 
     networks:
       - mykaraokenetwork

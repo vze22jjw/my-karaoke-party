@@ -24,7 +24,7 @@ const RATE_LIMIT_WINDOW = 2000; // 2 seconds
 function ensureHost(socket: Socket): boolean {
   const role = socket.data.role as string | undefined;
   if (role !== "Host") {
-    socket.emit("error", { message: "Unauthorized: Host access required." });
+    socket.emit("error", { message: "unauthorized" });
     return false;
   }
   return true;
@@ -86,7 +86,8 @@ export function registerSocketEvents(io: Server) {
         const lastRequest = addSongRateLimit.get(socket.id) ?? 0;
         const now = Date.now();
         if (now - lastRequest < RATE_LIMIT_WINDOW) {
-            socket.emit("error", { message: "Please wait a few seconds before adding another song." });
+            // TRANSLATION FIX: Send code
+            socket.emit("error", { message: "rateLimit" });
             return;
         }
         addSongRateLimit.set(socket.id, now);
@@ -109,8 +110,8 @@ export function registerSocketEvents(io: Server) {
           const durationISO = await youtubeAPI.getVideoDuration(data.videoId);
           
           const durationMs = parseISO8601Duration(durationISO);
-          if (durationMs && durationMs > 10 * 60 * 1000) { // 10 minutes in ms
-             socket.emit("error", { message: "Video too long! Max duration is 10 minutes." });
+          if (durationMs && durationMs > 10 * 60 * 1000) { 
+             socket.emit("error", { message: "videoTooLong" });
              return;
           }
 
@@ -146,7 +147,7 @@ export function registerSocketEvents(io: Server) {
         await updateAndEmitSingers(io, party.id, data.partyHash);
       } catch (error) {
         console.error("Error adding song:", error);
-        socket.emit("error", { message: "Failed to add song." });
+        socket.emit("error", { message: "addFailed" });
       }
     });
 

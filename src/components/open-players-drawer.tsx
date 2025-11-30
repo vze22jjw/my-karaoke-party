@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "~/navigation";
 import { useState, Suspense } from "react";
 import {
   Drawer,
@@ -27,6 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/ui/form";
+import { useTranslations } from "next-intl";
 
 type Party = {
   hash: string;
@@ -37,11 +38,12 @@ type Party = {
 };
 
 const hashSchema = z.object({
-    hash: z.string().min(4, "Hash must be 4 characters or more").max(10),
+    hash: z.string().min(4).max(10),
 });
 
 function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
     const router = useRouter();
+    const t = useTranslations('drawers');
     const [statusError, setStatusError] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof hashSchema>>({
@@ -59,13 +61,13 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
             const res = await fetch(`/api/playlist/${realHash}`);
             
             if (!res.ok) {
-                 setStatusError("Party not found or invalid code.");
+                 setStatusError(t('notFoundError'));
                  return;
             }
             const data = (await res.json()) as { status: string };
 
             if (data.status === 'CLOSED') {
-                setStatusError("Party has ended.");
+                setStatusError(t('endedError'));
                 return;
             }
 
@@ -73,7 +75,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
             router.push(`/player/${realHash}`);
 
         } catch (e) {
-            setStatusError("An unexpected error occurred.");
+            setStatusError(t('genericError'));
             console.error(e);
         }
     }
@@ -87,10 +89,10 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                         name="hash"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-white">Enter Party Hash</FormLabel>
+                                <FormLabel className="text-white">{t('enterHash')}</FormLabel>
                                 <FormControl>
                                     <Input
-                                        placeholder="e.g., DCBA"
+                                        placeholder={t('hashPlaceholder')}
                                         className="w-full text-center font-mono uppercase"
                                         maxLength={10}
                                         {...field}
@@ -113,14 +115,14 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                         className="w-full h-12 text-lg font-bold"
                         disabled={form.formState.isSubmitting}
                     >
-                        {form.formState.isSubmitting ? "Connecting..." : "Connect to Player"}
+                        {form.formState.isSubmitting ? t('connecting') : t('connectPlayer')}
                     </Button>
                 </form>
             </Form>
 
             {parties && parties.length > 0 && (
                 <div className="max-h-[300px] space-y-3 overflow-y-auto pt-4 border-t">
-                    <h3 className="font-semibold text-sm text-muted-foreground">Open Party Names:</h3>
+                    <h3 className="font-semibold text-sm text-muted-foreground">{t('openNames')}</h3>
                     {parties.map((party) => (
                         <div
                             key={party.hash}
@@ -133,11 +135,11 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <span className="flex items-center gap-1">
                                         <Music className="h-4 w-4" />
-                                        {party.songCount} songs
+                                        {party.songCount} {t('songs')}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Users className="h-4 w-4" />
-                                        {party.singerCount} singers
+                                        {party.singerCount} {t('singers')}
                                     </span>
                                 </div>
                             </div>
@@ -150,6 +152,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
 }
 
 function OpenPlayersDrawerComponent() {
+    const t = useTranslations('drawers');
     const [isOpen, setIsOpen] = useState(false);
     const [parties, setParties] = useState<Party[] | null>(null);
     const [loading, setLoading] = useState(false);
@@ -164,7 +167,7 @@ function OpenPlayersDrawerComponent() {
             const data = await response.json() as Party[];
             setParties(data);
         } catch (e) {
-            setError("Error loading parties. Please try again.");
+            setError(t('loadingError'));
             console.error(e);
         } finally {
             setLoading(false);
@@ -188,15 +191,15 @@ function OpenPlayersDrawerComponent() {
                     variant="secondary"
                     className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
                 >
-                    Connect to Player
+                    {t('connectPlayer')}
                     <Tv className="ml-3 h-6 w-6 text-cyan-400" />
                 </Button>
             </DrawerTrigger>
             <DrawerContent>
                 <div className="mx-auto w-full max-w-2xl">
                     <DrawerHeader>
-                        <DrawerTitle>Open Players</DrawerTitle>
-                        <DrawerDescription>Enter the Party Hash.</DrawerDescription>
+                        <DrawerTitle>{t('openPlayers')}</DrawerTitle>
+                        <DrawerDescription>{t('enterHash')}</DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4 pb-0">
                         {loading && (
@@ -218,7 +221,7 @@ function OpenPlayersDrawerComponent() {
                     </div>
                     <DrawerFooter>
                         <DrawerClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="outline">{t('cancel')}</Button>
                         </DrawerClose>
                     </DrawerFooter>
                 </div>
@@ -228,6 +231,7 @@ function OpenPlayersDrawerComponent() {
 }
 
 export function OpenPlayersButton() {
+    const t = useTranslations('drawers');
     return (
         <Suspense fallback={
             <Button 
@@ -236,7 +240,7 @@ export function OpenPlayersButton() {
                 className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
                 disabled
             >
-                Connect to Player
+                {t('connectPlayer')}
                 <Tv className="ml-3 h-6 w-6 text-cyan-400" />
             </Button>
         }>

@@ -13,6 +13,7 @@ import { Spinner } from "./ui/ui/spinner";
 import { SongCountdownTimer } from "./song-countdown-timer";
 import { PlayerQrCode } from "./player-qr-code"; 
 import { PlayerDisabledView } from "./player-disabled-view";
+import { useTranslations } from "next-intl";
 
 type Props = {
   joinPartyUrl: string;
@@ -45,6 +46,7 @@ export function Player({
   remainingTime, 
   onOpenYouTubeAndAutoSkip,
 }: Props) {
+  const t = useTranslations('player');
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
@@ -57,7 +59,6 @@ export function Player({
 
   useEffect(() => {
     if (!playerRef.current || !isReady) return;
-    
     try {
       if (isPlaying) {
         playerRef.current.playVideo();
@@ -80,7 +81,6 @@ export function Player({
   };
 
   const onPlayerReady: YouTubeProps["onReady"] = (event) => {
-    console.log("Player ready", { event });
     playerRef.current = event.target;
     const playerState = event.target.getPlayerState();
     if (playerState !== -1) {
@@ -95,7 +95,6 @@ export function Player({
   };
 
   const onPlayerPlay: YouTubeProps["onPlay"] = (event) => {
-    console.log("handlePlay (from player)");
     setInternalIsPlaying(true);
     if (!isPlaying) { 
       const currentTime = event.target.getCurrentTime() as number;
@@ -104,15 +103,11 @@ export function Player({
   };
 
   const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
-    console.log("handlePause (from player)");
     setInternalIsPlaying(false);
-    if (isPlaying) { 
-      onPause();
-    }
+    if (isPlaying) onPause();
   };
 
-  const onPlayerError: YouTubeProps["onError"] = (event) => {
-    console.log("Player error, showing 'Open on YouTube' button", { event });
+  const onPlayerError: YouTubeProps["onError"] = (_event) => {
     setShowOpenInYouTubeButton(true);
   };
 
@@ -127,7 +122,7 @@ export function Player({
         onSkip={onSkip}
         remainingTime={remainingTime}
         isSkipping={false}
-        message="This Video Cannot Be Played Inside The App."
+        message={t('cantEmbed')}
       />
     );
   }
@@ -137,9 +132,7 @@ export function Player({
       <YouTube
         key={video.id}
         loading="eager"
-        className={`h-full w-full animate-in fade-in ${
-          isReady ? "visible" : "invisible"
-        }`}
+        className={`h-full w-full animate-in fade-in ${isReady ? "visible" : "invisible"}`}
         iframeClassName="w-full h-full"
         videoId={video.id}
         opts={opts}
@@ -147,17 +140,10 @@ export function Player({
         onReady={onPlayerReady}
         onPause={onPlayerPause}
         onError={onPlayerError}
-        onEnd={() => {
-          onPlayerEnd();
-        }}
+        onEnd={() => onPlayerEnd()}
       />
       
-      <div
-        className={cn(
-          "absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none",
-          isReady ? "hidden" : "block"
-        )}
-      >
+      <div className={cn("absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none", isReady ? "hidden" : "block")}>
         <div className="flex w-full flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
           <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl text-white">
             {decode(video.title)}
@@ -167,33 +153,24 @@ export function Player({
             {video.singerName}
           </h2>
         </div>
-
-        {!isReady && (
-          <div className="mt-20">
-            <Spinner size={"large"} />
-          </div>
-        )}
+        {!isReady && <div className="mt-20"><Spinner size={"large"} /></div>}
       </div>
 
       {isReady && !isPlaying && nextSong && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
           <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md">
             <h3 className="text-2xl font-bold text-white mb-2">
-              Next Up: <span className="text-primary">{nextSong.singerName}</span>
+              {t('nextUp')} <span className="text-primary">{nextSong.singerName}</span>
             </h3>
             <div className="text-white/70 text-sm font-mono">
-               Starting in <SongCountdownTimer remainingTime={remainingTime} className="text-white font-bold text-lg" />
+               <SongCountdownTimer remainingTime={remainingTime} className="text-white font-bold text-lg" message={t('startingIn')} />
             </div>
           </div>
         </div>
       )}
 
-      <div className={cn(
-         "transition-opacity duration-500",
-         internalIsPlaying && isFullscreen ? "opacity-0 hover:opacity-100" : "opacity-100"
-      )}>
+      <div className={cn("transition-opacity duration-500", internalIsPlaying && isFullscreen ? "opacity-0 hover:opacity-100" : "opacity-100")}>
          <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
-
          <div className="absolute bottom-20 right-24 z-20">
             <Button
               variant={"secondary"}
@@ -202,7 +179,7 @@ export function Player({
               onClick={() => onSkip()}
             >
               <SkipForward className="h-4 w-4" />
-              Skip
+              {t('skip')}
             </Button>
          </div>
       </div>

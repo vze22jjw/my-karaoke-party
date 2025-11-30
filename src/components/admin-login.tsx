@@ -1,15 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "~/navigation";
 import { Input } from "~/components/ui/ui/input";
 import { Button } from "~/components/ui/ui/button";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "~/navigation";
+import { useTranslations } from "next-intl";
 
 export function AdminLogin() {
   const router = useRouter();
+  const t = useTranslations('host.access');
+  const tCommon = useTranslations('common');
+  const tToasts = useTranslations('toasts.adminLogin');
+
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,14 +32,14 @@ export function AdminLogin() {
       const data = (await res.json()) as { error?: string };
 
       if (!res.ok) {
-        toast.error(data.error ?? "Invalid password");
+        toast.error(data.error ? tToasts('invalid') : tToasts('error'));
         setLoading(false);
         return;
       }      
       router.refresh();
 
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error(tToasts('error'));
       setLoading(false);
     }
   };
@@ -47,9 +52,9 @@ export function AdminLogin() {
         </div>
         
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Host Access</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">
-            Please enter the admin password to manage this party.
+            {t('desc')}
           </p>
         </div>
 
@@ -65,7 +70,7 @@ export function AdminLogin() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Verifying..." : "Unlock Controls"}
+            {loading ? tCommon('loading') : t('unlock')}
           </Button>
         </form>
 
@@ -74,7 +79,7 @@ export function AdminLogin() {
                 href="/" 
                 className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
             >
-                &larr; Back to Home
+                &larr; {tCommon('backToHome')}
             </Link>
         </div>
       </div>

@@ -1,0 +1,379 @@
+{
+  "common": {
+    "appName": "My Karaoke Party",
+    "backToHome": "Voltar para o Início",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "required": "Obrigatório",
+    "leave": "Sair",
+    "viewHistory": "Ver Histórico",
+    "terms": "Termos de Serviço",
+    "readOnly": "Somente Leitura"
+  },
+  "home": {
+    "joinParty": "Entrar na Festa",
+    "startNew": "ou Começar Nova Festa",
+    "openParties": "Festas Abertas",
+    "noOpenParties": "Nenhuma festa aberta no momento",
+    "beTheFirst": "Seja o primeiro a criar uma festa!",
+    "chooseParty": "Escolha uma festa para entrar",
+    "enter": "Entrar"
+  },
+  "startParty": {
+    "title": "Começar Nova Festa",
+    "backToOptions": "Voltar para Opções",
+    "backToHome": "Voltar ao Início",
+    "pageTitle": "Começar Festa - My Karaoke Party"
+  },
+  "drawers": {
+    "openPlayers": "Players Abertos",
+    "enterHash": "Código da Festa",
+    "hashPlaceholder": "ex: DCBA",
+    "connectPlayer": "Conectar ao Player",
+    "connecting": "Conectando...",
+    "openNames": "Nomes das Festas Abertas:",
+    "reconnectHost": "Reconectar como Host",
+    "reconnectDesc": "Selecione uma festa ativa ou veja seu histórico.",
+    "connectHostBtn": "Conectar como Host",
+    "noActive": "Nenhuma festa ativa encontrada.",
+    "historyDashboard": "Painel de Histórico",
+    "songs": "músicas",
+    "singers": "cantores",
+    "cancel": "Cancelar",
+    "notFoundError": "Festa não encontrada ou código inválido.",
+    "endedError": "A festa terminou.",
+    "genericError": "Ocorreu um erro inesperado.",
+    "loadingError": "Erro ao carregar festas. Tente novamente."
+  },
+  "join": {
+    "title": "Entrar na Festa",
+    "partyCode": "Código da Festa",
+    "enterCode": "Digite o código...",
+    "name": "Nome",
+    "enterName": "Digite seu nome...",
+    "chooseIcon": "Escolha seu Ícone",
+    "joining": "Entrando...",
+    "nameTip": "Dica: Seu nome diferencia maiúsculas. Use o mesmo nome para manter seu histórico!",
+    "backToList": "Voltar para lista de festas"
+  },
+  "create": {
+    "title": "Criar Nova Festa",
+    "description": "Dê um nome à sua festa e defina a senha de admin.",
+    "partyName": "Nome da Festa",
+    "placeholderName": "MINHA FESTA INCRÍVEL",
+    "yourName": "Seu Nome",
+    "placeholderUser": "Seu nome",
+    "adminPassword": "Senha de Admin",
+    "placeholderPass": "Digite o token de admin...",
+    "createButton": "Criar Festa",
+    "creating": "Criando...",
+    "authFailed": "Falha na autenticação",
+    "invalidPassword": "Senha de Admin Inválida",
+    "toastSuccess": "Festa \"{name}\" criada!",
+    "toastError": "Erro ao criar festa"
+  },
+  "host": {
+    "dashboardTitle": "Painel do Anfitrião",
+    "dashboardDesc": "Gerencie todas as suas festas de karaokê em um só lugar.",
+    "newParty": "Nova Festa",
+    "noParties": "Nenhuma festa encontrada.",
+    "startFirst": "Inicie sua primeira festa para vê-la aqui!",
+    "access": {
+      "title": "Acesso do Anfitrião",
+      "desc": "Por favor, insira a senha de admin para gerenciar esta festa.",
+      "unlock": "Desbloquear Controles"
+    },
+    "tabs": {
+      "playlist": "Playlist",
+      "settings": "Configurações"
+    },
+    "playback": {
+      "noSong": "Nenhuma Música Tocando",
+      "emptyQueue": "A fila está vazia no momento.",
+      "saveOrder": "Salvar Nova Ordem",
+      "closedHistory": "Festa Fechada • Histórico",
+      "noHistory": "Nenhuma música foi tocada durante esta festa."
+    },
+    "settings": {
+      "status": {
+        "title": "Status da Festa",
+        "open": "Festa ABERTA",
+        "started": "Festa em Andamento",
+        "intermission": "Intervalo (Pausado)",
+        "closed": "Festa Fechada",
+        "start": "Iniciar Festa",
+        "resume": "Retomar Festa",
+        "pause": "Iniciar Intervalo (Pausa)",
+        "info": "Use isso para controlar o fluxo. Intervalo pausa a fila e mostra slides."
+      },
+      "links": {
+        "title": "Links da Festa",
+        "join": "Link de Entrada (para cantores)",
+        "player": "Link do Player (para TV/projetor)",
+        "info": "Compartilhe o Link de Entrada com convidados. Abra o Link do Player na TV. Clique no QR code para ampliar."
+      },
+      "suggestions": {
+        "title": "Tema / Sugestões",
+        "placeholder": "ex: 'Músicas com cores no título'",
+        "empty": "Nenhuma sugestão adicionada.",
+        "info": "Adicione sugestões numeradas para ajudar seus convidados! Elas aparecem na aba Histórico."
+      },
+      "messages": {
+        "title": "Biblioteca de Mensagens",
+        "placeholder": "Nova mensagem (ex: Letra @ Artista)",
+        "sync": "Sincronizar {count} Mensagens",
+        "synced": "Sincronizado!",
+        "limitError": "Você atingiu seu limite de criação de mensagens.",
+        "info": "Selecione mensagens para exibir na TV. Você pode selecionar até 20.",
+        "yourCreations": "Suas criações:",
+        "selected": "Selecionado:",
+        "emptyLib": "A biblioteca está vazia."
+      },
+      "rules": {
+        "title": "Regras da Festa",
+        "fairnessOn": "Fila: Justiça (LIGADO)",
+        "fairnessOff": "Fila: Chegada (DESLIGADO)",
+        "playbackApp": "Reprod: No App (LIGADO)",
+        "playbackYoutube": "Reprod: YouTube (DESLIGADO)",
+        "manualSort": "Ordenação Manual",
+        "infoQueue": "Ordem da Fila: Justiça alterna os cantores. Chegada é por ordem de pedido.",
+        "infoSort": "Ordenação Manual: Ative para arrastar e soltar. Desative para salvar.",
+        "infoPlayback": "Reprodução: No App toca vídeos aqui. YouTube força links externos."
+      },
+      "spotify": {
+        "title": "Integração Spotify",
+        "playlistId": "ID da Playlist (Aba Sugestões)",
+        "link": "Link da Playlist (Cabeçalho)",
+        "save": "Salvar Configurações",
+        "info": "ID de Tendências: Mostra músicas em Sugestões. Link da Festa: Adiciona um link direto no cabeçalho dos convidados."
+      },
+      "search": {
+        "title": "Configurações de Busca",
+        "maxResults": "Máx. Resultados",
+        "info": "Limite o número de resultados da busca no YouTube. Menos resultados carregam mais rápido."
+      },
+      "export": {
+        "title": "Exportar Músicas Tocadas",
+        "copySpotify": "Copiar para Spotify",
+        "copyText": "Copiar como Texto",
+        "info": "Copia a lista de músicas tocadas. 'Copiar para Spotify' formata como URIs para o App Desktop."
+      },
+      "backup": {
+        "title": "Backup e Restauração",
+        "download": "Salvar Backup",
+        "upload": "Restaurar",
+        "info": "Backup: Baixa todos os dados para JSON. Restaurar: Envie um JSON para restaurar festas."
+      },
+      "danger": {
+        "title": "Zona de Perigo",
+        "closeParty": "Fechar Festa",
+        "confirmTitle": "Tem certeza?",
+        "confirmDesc": "Isso encerrará a festa para todos. Ela se tornará somente leitura.",
+        "confirmBtn": "Sim, Encerrar Festa"
+      }
+    },
+    "card": {
+      "manage": "Gerenciar Festa",
+      "history": "Ver Histórico",
+      "createdAt": "{date} às {time}",
+      "closedAt": "Fechada em {date}"
+    }
+  },
+  "player": {
+    "waiting": "Aguardando o anfitrião iniciar a festa...",
+    "intermission": "O Anfitrião está fazendo uma pausa...",
+    "startSoon": "A Festa vai começar em um momento...",
+    "callToAction": "Tem uma música? Vamos cantar!",
+    "nextUp": "A Seguir:",
+    "startingIn": "Começando em",
+    "skip": "Pular",
+    "openYoutube": "Abrir no YouTube",
+    "playbackDisabled": "Reprodução desativada para esta festa.",
+    "cantEmbed": "Este vídeo não pode ser reproduzido dentro do App."
+  },
+  "guest": {
+    "tabs": {
+      "playing": "Tocando",
+      "add": "Adicionar",
+      "suggestions": "Sugestões",
+      "singers": "Cantores"
+    },
+    "player": {
+        "playingNow": "Tocando Agora",
+        "spotify": "Spotify",
+        "noQueued": "Sem músicas na fila",
+        "nextInLine": "Na Fila ({count})",
+        "hideQueue": "Ocultar Fila",
+        "showAll": "Ver Todos ({count})",
+        "moreNext": "E mais {count} música(s)...",
+        "alreadyPlayed": "Já Tocaram ({count})",
+        "hideHistory": "Ocultar Histórico",
+        "moreHistory": "E mais {count} música(s) no histórico..."
+    },
+    "addSong": {
+      "title": "Adicionar Música",
+      "searchPlaceholder": "Digite artista e/ou nome da música...",
+      "queueFull": "Fila Cheia! Cante uma, depois adicione mais.",
+      "queueLocked": "Fila Bloqueada: O anfitrião está reordenando.",
+      "myQueue": "Minhas Músicas na Fila",
+      "emptyHistory": "Você ainda não adicionou músicas.",
+      "added": "Música adicionada à fila!",
+      "playingNow": "(Tocando Agora)",
+      "notFoundTitle": "Nada encontrado!",
+      "notFoundDesc": "Nenhum vídeo de karaokê encontrado para {query}",
+      "errorTitle": "Erro!",
+      "errorDesc": "Houve um erro inesperado ao buscar vídeos. Tente novamente."
+    },
+    "history": {
+      "suggestions": "Sugestões de Música",
+      "hotSpotify": "Karaokê Quente do Spotify",
+      "topPlayed": "Mais Tocadas (Geral)",
+      "topSingers": "Top Cantores",
+      "noSongs": "Nenhuma música tocada ainda.",
+      "noSingers": "Nenhum cantor ainda.",
+      "sortBySongs": "Músicas",
+      "sortByClaps": "Palmas"
+    },
+    "singers": {
+      "title": "Cantores",
+      "leaveParty": "Sair",
+      "you": "Você",
+      "sang": "cantou",
+      "next": "próx",
+      "inLine": "Na Fila:",
+      "history": "Histórico:",
+      "claps": "Palmas:",
+      "countdown": {
+        "serve": "Prepare-se",
+        "turnUp": "Sobe o Som",
+        "singIn": "Cante em",
+        "micIn": "Microfone em"
+      }
+    }
+  },
+  "applause": {
+    "title": "Aplausos para",
+    "waiting": "Aguardando Cantores...",
+    "instruction": "Clique repetidamente! Cada aplauso aumenta a pontuação do cantor.",
+    "back": "Voltar para Festa"
+  },
+  "tour": {
+    "prev": "Voltar",
+    "next": "Próximo",
+    "party": {
+        "welcome": "Bem-vindo à Festa!",
+        "intro": "Aqui está um guia rápido dos controles.",
+        "step1Title": "1. Tocando",
+        "step1Desc": "Veja o que está tocando. Se houver uma playlist, procure o **Link do Spotify**!",
+        "step2Title": "2. Adicionar",
+        "step2Desc": "Busque qualquer karaokê no YouTube. O sistema de Justiça garante a vez de todos!",
+        "step3Title": "3. Sugestões",
+        "step3Desc": "Inspire-se com temas do anfitrião, **Tendências Spotify** e as Mais Tocadas.",
+        "step4Title": "4. Cantores e Aplausos",
+        "step4Desc": "Veja a fila. Toque no botão 👏 para enviar aplausos e pontuar o cantor!",
+        "step5Title": "5. Idioma",
+        "step5Desc": "Prefere outro idioma? Procure o **Seletor de Idioma** no rodapé inferior (se ativado pelo servidor).",
+        "finish": "Entendi, vamos cantar!"
+    },
+    "host": {
+        "title": "Controles do Host",
+        "desc": "Um guia rápido para gerenciar sua festa.",
+        "step1Title": "1. Links da Festa",
+        "step1Desc": "Compartilhe o **Link de Entrada**. Abra o **Link do Player** na TV.",
+        "step2Title": "2. Gerenciar Status",
+        "step2Desc": "Use **Iniciar Festa** para começar. Use **Intervalo** para pausar a fila.",
+        "step3Title": "3. Controle da Fila",
+        "step3Desc": "A aba **Playlist** é seu controle. Pule músicas ou use **Ordenação Manual**.",
+        "step4Title": "4. Regras",
+        "step4Desc": "Alterne o **Modo Justiça** ou mude os modos de **Reprodução**.",
+        "step5Title": "5. Engajar Convidados",
+        "step5Desc": "Adicione **Sugestões de Tema** para inspirar escolhas.",
+        "step6Title": "6. Mensagens de Espera",
+        "step6Desc": "Crie mensagens personalizadas para exibir na TV quando ocioso.",
+        "step7Title": "7. Spotify e Busca",
+        "step7Desc": "Adicione um **ID de Playlist Spotify** ou Link.",
+        "step8Title": "8. Ferramentas de Dados",
+        "step8Desc": "**Exporte** músicas ou faça **Backup** do histórico da festa.",
+        "step9Title": "9. Configurações de Idioma",
+        "step9Desc": "Você pode alternar entre **Inglês** e **Português** usando o botão no rodapé (se configurado).",
+        "finish": "Entendi, vamos começar!"
+    }
+  },
+  "about": {
+    "title": "Sobre",
+    "buildInfo": "Informações da Build",
+    "appVersion": "Versão do App",
+    "buildDate": "Data da Build",
+    "gitCommit": "Commit Git",
+    "coreDependencies": "Dependências Principais",
+    "nodeEnv": "Ambiente Node",
+    "back": "Voltar ao Início"
+  },
+  "notfound": {
+    "title": "404 - Página Não Encontrada",
+    "desc": "Ops! A festa que você procura não existe ou foi encerrada.",
+    "home": "Voltar ao Início"
+  },
+  "terms": {
+    "title": "Termos de Serviço",
+    "introTitle": "Introdução",
+    "introText": "Bem-vindo ao \"My Karaoke Party\"! Estes Termos de Serviço regem o uso do nosso aplicativo. Ao usar nosso App, você concorda com estes Termos.",
+    "personalUseTitle": "Apenas Uso Pessoal",
+    "nonCommercialTitle": "Uso Não Comercial",
+    "nonCommercialText": "Você concorda em usar o App apenas para diversão privada, em um ambiente não comercial.",
+    "privateLocTitle": "Locais Privados",
+    "privateLocText": "O App foi projetado para uso em espaços privados, como residências.",
+    "rightsTitle": "Direitos de Execução e Licenciamento",
+    "rightsText": "Você reconhece que o uso público de faixas de karaokê pode implicar em direitos autorais.",
+    "liabilityTitle": "Limitação de Responsabilidade",
+    "liabilityText": "Não somos responsáveis por qualquer uso não autorizado ou ilegal do App.",
+    "contactTitle": "Informações de Contato",
+    "contactText": "Se tiver dúvidas, entre em contato conosco.",
+    "back": "Voltar ao Início"
+  },
+  "toasts": {
+    "adminLogin": {
+      "invalid": "Senha inválida",
+      "error": "Algo deu errado"
+    },
+    "host": {
+      "closed": "Festa fechada com sucesso",
+      "closeFailed": "Falha ao fechar festa. Tente novamente.",
+      "intermission": "Intervalo Iniciado",
+      "resumed": "Festa Retomada!"
+    },
+    "settings": {
+      "spotifyUpdated": "Configurações do Spotify atualizadas!",
+      "spotifyFailed": "Falha ao atualizar configurações.",
+      "noSongsCopy": "Sem músicas para copiar!",
+      "copySuccess": "Lista {format} copiada para a área de transferência!",
+      "copyFailed": "Falha ao copiar lista.",
+      "backupDownloaded": "Backup baixado!",
+      "backupFailed": "Falha ao baixar backup.",
+      "invalidJson": "Arquivo JSON inválido.",
+      "restoreSuccess": "Restaurado: {success} festas. Pulado: {skipped}.",
+      "restoreFailed": "Falha ao restaurar backup.",
+      "maxSelected": "Máx. 20 mensagens selecionadas.",
+      "creationLimit": "Você atingiu o limite de 20 mensagens.",
+      "messageAdded": "Mensagem adicionada. Marque para sincronizar.",
+      "syncSuccess": "Sincronizado {count} mensagens com o player!"
+    },
+    "guest": {
+      "songAdded": "Música adicionada à fila!",
+      "addError": "Erro ao adicionar música",
+      "tryAgain": "Por favor, tente novamente."
+    },
+    "socket": {
+      "joined": "{name} entrou na festa!",
+      "applauseError": "Falha ao registrar aplauso.",
+      "networkError": "Erro de rede ao enviar aplauso.",
+      "rateLimit": "Aguarde alguns segundos antes de adicionar outra música.",
+      "unauthorized": "Não autorizado: Acesso de anfitrião necessário.",
+      "videoTooLong": "Vídeo muito longo! Duração máxima é 10 minutos.",
+      "addFailed": "Falha ao adicionar música."
+    }
+  }
+}

@@ -1,13 +1,22 @@
-import { withAxiom } from "next-axiom"
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
- */
+import { withAxiom } from "next-axiom";
+import createNextIntlPlugin from 'next-intl/plugin';
+import { createRequire } from "module"; 
+
+const require = createRequire(import.meta.url);
+const pkg = require("./package.json");
+
 await import("./src/env.js");
+
+const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
 
 /** @type {import("next").NextConfig} */
 const config = {
   output: "standalone",
+  
+  env: {
+    NEXT_PUBLIC_NEXT_VERSION: pkg.dependencies.next,
+    NEXT_PUBLIC_PRISMA_VERSION: pkg.dependencies["@prisma/client"],
+  },
 
   images: {
     remotePatterns: [
@@ -21,4 +30,4 @@ const config = {
   }
 };
 
-export default withAxiom(config);
+export default withAxiom(withNextIntl(config));
