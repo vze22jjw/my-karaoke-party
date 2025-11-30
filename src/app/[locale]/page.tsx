@@ -10,9 +10,6 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-gradient">
-      
-      {/* Removed LanguageSwitcher from here, now in RootLayout */}
-
       <div className="container flex flex-1 flex-col items-center gap-8 px-4 py-8">
         <Image
           src={logo}
@@ -43,8 +40,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      {/* Removed Footer from here, now in RootLayout */}
     </main>
   );
 }

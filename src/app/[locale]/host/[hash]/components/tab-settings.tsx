@@ -78,9 +78,6 @@ export function TabSettings({
   
   const isPartyClosed = partyStatus === "CLOSED";
 
-  // Note: The individual settings components below need to be updated to use `useTranslations`
-  // internally. I am providing the container here as requested.
-
   return (
     <div className="space-y-4">
       <SettingsLinks 

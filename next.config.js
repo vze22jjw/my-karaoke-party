@@ -1,14 +1,23 @@
 import { withAxiom } from "next-axiom";
 import createNextIntlPlugin from 'next-intl/plugin';
+import { createRequire } from "module"; 
+
+const require = createRequire(import.meta.url);
+const pkg = require("./package.json");
 
 await import("./src/env.js");
 
-// FIX: Explicitly point to the i18n file location
 const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
 
 /** @type {import("next").NextConfig} */
 const config = {
   output: "standalone",
+  
+  // FIX: Inject versions from package.json
+  env: {
+    NEXT_PUBLIC_NEXT_VERSION: pkg.dependencies.next,
+    NEXT_PUBLIC_PRISMA_VERSION: pkg.dependencies["@prisma/client"],
+  },
 
   images: {
     remotePatterns: [

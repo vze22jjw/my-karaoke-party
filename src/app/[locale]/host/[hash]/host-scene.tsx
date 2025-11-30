@@ -26,7 +26,7 @@ type Props = {
 export function HostScene({ party, initialData, hostName }: Props) {
   const router = useRouter();
   const tCommon = useTranslations('common');
-  const tToasts = useTranslations('toasts.host'); // NEW
+  const tToasts = useTranslations('toasts.host');
 
   const {
     currentSong,
@@ -41,7 +41,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, hostName);
 
-  // ... (keep all state: isManualSortActive, activeTab, hasSeenTour, maxSearchResults, localUnplayed, hasSyncedRef, etc.) ...
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: getScopedKey(party.hash!, "manual-sort"),
     defaultValue: false,
@@ -117,7 +116,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
   const closePartyMutation = api.party.toggleStatus.useMutation({
     onSuccess: async () => {
-      // FIX: Localized toast
       toast.success(tToasts('closed'));
       
       await fetch("/api/auth/logout", { method: "POST" });
@@ -134,7 +132,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
       router.refresh();
     },
     onError: () => {
-      // FIX: Localized toast
       toast.error(tToasts('closeFailed'));
     }
   });
@@ -144,18 +141,15 @@ export function HostScene({ party, initialData, hostName }: Props) {
         if (variables.status === "OPEN") {
              socketActions.playbackPause();
              socketActions.refreshParty();
-             // FIX: Localized toast
              toast.info(tToasts('intermission'));
         } else {
              socketActions.startParty(); 
-             // FIX: Localized toast
              toast.success(tToasts('resumed'));
         }
     },
     onError: () => toast.error(tCommon('error'))
   });
 
-  // ... (keep idleMessageMutation, deleteIdleMessageMutation, handleCloseTour, handleToggleIntermission, handleToggleManualSort) ...
   const idleMessageMutation = api.idleMessage.add.useMutation({
     onSuccess: () => { void refetchIdleMessages(); }
   });
@@ -245,7 +239,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
         remainingTime={remainingTime}
         onPlay={(t) => socketActions.playbackPlay(t)}
         onPause={() => socketActions.playbackPause()}
-        // FIX: Use hostName prop as fallback instead of hardcoded string
         hostName={participants.find((p) => p.role === "Host")?.name ?? hostName}
         singerCount={participants.filter((p) => p.role === "Guest").length}
         playedSongCount={playedPlaylist.length}

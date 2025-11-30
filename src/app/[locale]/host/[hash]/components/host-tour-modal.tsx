@@ -19,7 +19,7 @@ import {
   MessageSquareQuote,
   Scale,
   Download,
-  Globe, // NEW ICON
+  Globe,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
@@ -69,7 +69,7 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const tHost = useTranslations('tour.host');
 
   const [step, setStep] = useState(1);
-  const totalSteps = 5; // INCREASED STEPS
+  const totalSteps = 5;
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -198,7 +198,6 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
               </div>
             )}
 
-            {/* NEW PAGE */}
             {step === 5 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <StepContent icon={<Globe className="h-6 w-6" />} title={tHost('step9Title')}>

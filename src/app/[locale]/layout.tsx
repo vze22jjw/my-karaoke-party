@@ -10,7 +10,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from "next/navigation";
 import { env } from "~/env";
-import { GlobalFooter } from "~/components/global-footer"; // NEW IMPORT
+import { GlobalFooter } from "~/components/global-footer";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -91,7 +91,6 @@ export default async function RootLayout({
       className={`theme-custom ${roboto_slab.variable} ${roboto_mono.variable}`}
     >
       <head>
-        {/* ... keep your existing script ... */}
       </head>
       <body className="bg-gradient min-h-screen">
         <NextIntlClientProvider messages={messages}>
@@ -100,8 +99,6 @@ export default async function RootLayout({
             <SpeedInsights />
             <AxiomWebVitals />
             <Toaster />
-
-            {/* FIX: Use GlobalFooter component which handles hiding on player pages */}
             {showFooter && <GlobalFooter />}
 
         </NextIntlClientProvider>

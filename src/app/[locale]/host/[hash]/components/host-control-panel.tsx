@@ -136,7 +136,6 @@ export function HostControlPanel({
   const router = useRouter();
   const timeOpen = useTimeOpen(party.createdAt);
   
-  // Translation hooks
   const tHost = useTranslations('host');
   const tCommon = useTranslations('common');
   
@@ -245,7 +244,6 @@ export function HostControlPanel({
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden mt-2 min-h-0" 
         >
-          {/* TAB HEADERS TRANSLATED HERE */}
           <TabsList className="grid w-full grid-cols-2 mb-2 flex-shrink-0 h-auto p-1 bg-muted rounded-md">
             <TabsTrigger value="playlist" className="flex items-center gap-2">
               <ListMusic className="h-4 w-4" />

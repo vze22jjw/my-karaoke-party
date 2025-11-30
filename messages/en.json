@@ -1,5 +1,5 @@
 {
-"common": {
+  "common": {
     "appName": "My Karaoke Party",
     "backToHome": "Back to Home",
     "cancel": "Cancel",
@@ -178,7 +178,8 @@
     "card": {
       "manage": "Manage Party",
       "history": "View History",
-      "createdAt": "{date} at {time}"
+      "createdAt": "{date} at {time}",
+      "closedAt": "Closed {date}"
     }
   },
   "player": {
@@ -201,16 +202,16 @@
       "singers": "Singers"
     },
     "player": {
-      "playingNow": "Playing Now",
-      "spotify": "Spotify",
-      "noQueued": "No songs queued",
-      "nextInLine": "Next in Line ({count})",
-      "hideQueue": "Hide Queue",
-      "showAll": "Show All ({count})",
-      "moreNext": "And {count} more song(s)...",
-      "alreadyPlayed": "Already Played ({count})",
-      "hideHistory": "Hide History",
-      "moreHistory": "And {count} more song(s) in history..."
+        "playingNow": "Playing Now",
+        "spotify": "Spotify",
+        "noQueued": "No songs queued",
+        "nextInLine": "Next in Line ({count})",
+        "hideQueue": "Hide Queue",
+        "showAll": "Show All ({count})",
+        "moreNext": "And {count} more song(s)...",
+        "alreadyPlayed": "Already Played ({count})",
+        "hideHistory": "Hide History",
+        "moreHistory": "And {count} more song(s) in history..."
     },
     "addSong": {
       "title": "Add Songs",
@@ -263,42 +264,42 @@
     "prev": "Previous",
     "next": "Next",
     "party": {
-      "welcome": "Welcome to the Party!",
-      "intro": "Here's a quick look at the controls.",
-      "step1Title": "1. Playing",
-      "step1Desc": "See what's playing and who is singing. Look for the **Spotify Link** if available!",
-      "step2Title": "2. Add Song",
-      "step2Desc": "Search YouTube for any karaoke song. Fairness rules ensure everyone gets a turn!",
-      "step3Title": "3. Suggestions",
-      "step3Desc": "Get inspiration from host themes, **Hot on Spotify**, and Top Played songs.",
-      "step4Title": "4. Singers & Applause",
-      "step4Desc": "Check the queue. Tap the 👏 button to send applause and boost scores!",
-      "step5Title": "5. Language",
-      "step5Desc": "Prefer another language? Look for the **Language Switcher** in the bottom footer (if enabled by the server).",
-      "finish": "Got it, let's sing!"
+        "welcome": "Welcome to the Party!",
+        "intro": "Here's a quick look at the controls.",
+        "step1Title": "1. Playing",
+        "step1Desc": "See what's playing and who is singing. Look for the **Spotify Link** if available!",
+        "step2Title": "2. Add Song",
+        "step2Desc": "Search YouTube for any karaoke song. Fairness rules ensure everyone gets a turn!",
+        "step3Title": "3. Suggestions",
+        "step3Desc": "Get inspiration from host themes, **Hot on Spotify**, and Top Played songs.",
+        "step4Title": "4. Singers & Applause",
+        "step4Desc": "Check the queue. Tap the 👏 button to send applause and boost scores!",
+        "step5Title": "5. Language",
+        "step5Desc": "Prefer another language? Look for the **Language Switcher** in the bottom footer (if enabled by the server).",
+        "finish": "Got it, let's sing!"
     },
     "host": {
-      "title": "Host Controls",
-      "desc": "A quick guide to managing your party.",
-      "step1Title": "1. Party Links",
-      "step1Desc": "Share the **Join Link** with singers. Open the **Player Link** on your TV.",
-      "step2Title": "2. Manage Status",
-      "step2Desc": "Use **Start Party** to begin. Hit **Intermission** to pause and show slides.",
-      "step3Title": "3. Control the Queue",
-      "step3Desc": "Play, pause, skip, or enable **Manual Sort** to drag-and-drop.",
-      "step4Title": "4. Party Rules",
-      "step4Desc": "Toggle **Fairness Mode** or switch **Playback** modes.",
-      "step5Title": "5. Engage Guests",
-      "step5Desc": "Add **Theme Suggestions** to inspire song choices.",
-      "step6Title": "6. Idle Messages",
-      "step6Desc": "Create custom messages to display on TV when idle.",
-      "step7Title": "7. Spotify & Search",
-      "step7Desc": "Add a **Spotify Playlist ID** or Link.",
-      "step8Title": "8. Data Tools",
-      "step8Desc": "**Export** songs or **Backup** your party history.",
-      "step9Title": "9. Language Settings",
-      "step9Desc": "You can toggle between **English** and **Portuguese** using the button in the footer (if configured).",
-      "finish": "Got it, let's start!"
+        "title": "Host Controls",
+        "desc": "A quick guide to managing your party.",
+        "step1Title": "1. Party Links",
+        "step1Desc": "Share the **Join Link** with singers. Open the **Player Link** on your TV.",
+        "step2Title": "2. Manage Status",
+        "step2Desc": "Use **Start Party** to begin. Hit **Intermission** to pause and show slides.",
+        "step3Title": "3. Control the Queue",
+        "step3Desc": "Play, pause, skip, or enable **Manual Sort** to drag-and-drop.",
+        "step4Title": "4. Party Rules",
+        "step4Desc": "Toggle **Fairness Mode** or switch **Playback** modes.",
+        "step5Title": "5. Engage Guests",
+        "step5Desc": "Add **Theme Suggestions** to inspire song choices.",
+        "step6Title": "6. Idle Messages",
+        "step6Desc": "Create custom messages to display on TV when idle.",
+        "step7Title": "7. Spotify & Search",
+        "step7Desc": "Add a **Spotify Playlist ID** or Link.",
+        "step8Title": "8. Data Tools",
+        "step8Desc": "**Export** songs or **Backup** your party history.",
+        "step9Title": "9. Language Settings",
+        "step9Desc": "You can toggle between **English** and **Portuguese** using the button in the footer (if configured).",
+        "finish": "Got it, let's start!"
     }
   },
   "about": {
@@ -369,7 +370,10 @@
       "joined": "{name} has joined the party!",
       "applauseError": "Failed to register applause.",
       "networkError": "Network error while sending applause.",
-      "rateLimit": "Please wait a few seconds before adding another song."
+      "rateLimit": "Please wait a few seconds before adding another song.",
+      "unauthorized": "Unauthorized: Host access required.",
+      "videoTooLong": "Video too long! Max duration is 10 minutes.",
+      "addFailed": "Failed to add song."
     }
   }
 }

@@ -1,11 +1,11 @@
 import { type KaraokeParty, type VideoInPlaylist } from "~/types/app-types";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { io, type Socket } from "socket.io-client";
-import { useRouter } from "~/navigation"; // Localized
+import { useRouter } from "~/navigation";
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 import { useLocalStorage } from "@mantine/hooks";
-import { useTranslations } from "next-intl"; // NEW
+import { useTranslations } from "next-intl";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
@@ -73,7 +73,7 @@ export function usePartySocket(
   singerName: string,
 ): UsePartySocketReturn {
   const router = useRouter();
-  const tToasts = useTranslations('toasts.socket'); // NEW
+  const tToasts = useTranslations('toasts.socket');
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [avatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "🎤" });
@@ -206,15 +206,20 @@ export function usePartySocket(
       });
       
       newSocket.on("error", (data: { message: string }) => {
-        // FIX: Handle the rate limit code specifically
-        if (data.message === 'rateLimit') {
-             toast.error(tToasts('rateLimit'));
-             return;
-        }
-
-        if (data.message.toLowerCase().includes("video too long")) {
-            alert(data.message);
-        } else {
+        switch (data.message) {
+          case 'rateLimit':
+            toast.error(tToasts('rateLimit'));
+            break;
+          case 'unauthorized':
+            toast.error(tToasts('unauthorized'));
+            break;
+          case 'videoTooLong':
+            alert(tToasts('videoTooLong')); 
+            break;
+          case 'addFailed':
+            toast.error(tToasts('addFailed'));
+            break;
+          default:
             toast.error(data.message);
         }
       });

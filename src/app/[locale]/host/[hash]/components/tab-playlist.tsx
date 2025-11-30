@@ -8,7 +8,7 @@ import { X, GripVertical, Star, Save, MoreVertical, Trash2, ChevronDown, Lock } 
 import Image from "next/image";
 import { PlaybackControls } from "./playback-controls";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { useTranslations } from "next-intl"; // FIX: Translations
+import { useTranslations } from "next-intl";
 
 import {
   DndContext,
@@ -219,7 +219,7 @@ export function TabPlaylist({
   onToggleManualSort,
   isPartyClosed
 }: Props) {
-  const tHost = useTranslations('host'); // FIX: Added hook
+  const tHost = useTranslations('host');
   const tPlayer = useTranslations('player');
 
   const sensors = useSensors(
@@ -277,7 +277,6 @@ export function TabPlaylist({
         <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-6 pt-2 px-1">
             <div className="flex items-center justify-center gap-2 p-4 mb-2 bg-muted/50 rounded-lg border border-border/50">
                 <Lock className="h-4 w-4 text-muted-foreground" />
-                {/* FIX: Translated */}
                 <span className="text-sm font-medium text-muted-foreground">{tHost('playback.closedHistory')}</span>
             </div>
 
@@ -291,7 +290,6 @@ export function TabPlaylist({
                 ))
             ) : (
                 <p className="text-muted-foreground text-sm p-8 text-center">
-                    {/* FIX: Translated */}
                     {tHost('playback.noHistory')}
                 </p>
             )}
@@ -326,7 +324,6 @@ export function TabPlaylist({
                     className="w-full bg-orange-500/10 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white h-12 text-lg font-bold shadow-sm transition-all"
                 >
                     <Save className="mr-2 h-5 w-5" />
-                    {/* FIX: Translated */}
                     {tHost('playback.saveOrder')}
                 </Button>
             </div>
@@ -351,7 +348,6 @@ export function TabPlaylist({
                 <div className="flex items-center gap-2 py-4 opacity-70">
                     <div className="h-[1px] bg-primary flex-1" />
                     <span className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1">
-                        {/* FIX: Translated */}
                         <ChevronDown className="h-3 w-3" /> {tPlayer('nextUp')}
                     </span>
                     <div className="h-[1px] bg-primary flex-1" />
@@ -389,7 +385,6 @@ export function TabPlaylist({
 
         {!currentSong && items.length === 0 && (
             <p className="text-muted-foreground text-sm p-4 text-center mt-8">
-                {/* FIX: Translated */}
                 {tHost('playback.emptyQueue')}
             </p>
         )}

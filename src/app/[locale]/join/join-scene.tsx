@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter, Link } from "~/navigation"; // FIX: Localized navigation
+import { useRouter, Link } from "~/navigation";
 import { useLocalStorage } from "@mantine/hooks";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { z } from "zod";
@@ -22,7 +22,7 @@ import { useEffect } from "react";
 import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { FitText } from "~/components/fit-text";
-import { useTranslations } from "next-intl"; // FIX: Translations
+import { useTranslations } from "next-intl";
 
 // AVATAR COMPONENTS ---
 const AVATARS = [
@@ -69,7 +69,7 @@ export default function JoinScene({
   partyName?: string;
 }) {
   const router = useRouter();
-  const t = useTranslations('join'); // FIX: Hook
+  const t = useTranslations('join');
   
   const [name, setName] = useLocalStorage({
     key: "name",

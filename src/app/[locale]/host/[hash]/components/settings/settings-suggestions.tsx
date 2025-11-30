@@ -47,7 +47,6 @@ export function SettingsSuggestions({
           <Lightbulb className="h-5 w-5 text-yellow-500 flex-shrink-0" />
           
           <div className="flex-1 min-w-0">
-             {/* FIX: Use FitText with left alignment */}
              <FitText className="justify-start h-full" contentClassName="origin-left">
                 <span className="text-lg font-medium flex items-center gap-2">
                     {t('title')}

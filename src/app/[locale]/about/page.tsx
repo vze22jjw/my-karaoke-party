@@ -12,9 +12,6 @@ import { ArrowLeft, GitCommit, Calendar, Package, FileCode, Tag } from "lucide-r
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 
-// FIX: Remove force-static to prevent env/i18n conflicts
-// export const dynamic = "force-static";
-
 type Props = {
   params: { locale: string };
 };
@@ -29,16 +26,14 @@ export async function generateMetadata({ params: { locale } }: Props) {
 export default function AboutPage() {
   const t = useTranslations('about');
   
-  // FIX: Hardcode versions to avoid importing package.json which crashes in Docker/Standalone
-  const nextVersion = "^14.2.1"; 
-  const prismaVersion = "^5.10.2";
+  // FIX: Use dynamic versions from env
+  const nextVersion = env.NEXT_PUBLIC_NEXT_VERSION;
+  const prismaVersion = env.NEXT_PUBLIC_PRISMA_VERSION;
   
-  // FIX: Safe Date Parsing
   let formattedDate = "Unknown";
   try {
     if (env.NEXT_PUBLIC_BUILD_DATE) {
       const date = new Date(env.NEXT_PUBLIC_BUILD_DATE);
-      // Check if date is valid
       if (!isNaN(date.getTime())) {
         formattedDate = date.toLocaleString();
       }
@@ -87,7 +82,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Core Dependencies Section - RESTORED */}
+          {/* Core Dependencies Section */}
           <div>
             <h3 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-widest ml-1">
               {t('coreDependencies')}

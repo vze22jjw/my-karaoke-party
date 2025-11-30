@@ -38,7 +38,6 @@ export function SettingsLinks({ partyHash, isPartyClosed }: Props) {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             <LinkIcon className="h-5 w-5 text-blue-500" />
-            {/* FIX: Changed error to readOnly */}
             {t('title')} {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">({tCommon('readOnly')})</span>}
           </h3>
           <Button

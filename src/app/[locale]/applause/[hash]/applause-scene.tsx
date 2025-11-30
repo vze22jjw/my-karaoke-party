@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "~/components/ui/ui/button";
-import { useRouter } from "~/navigation"; // FIX: Use localized router
+import { useRouter } from "~/navigation";
 import { usePartySocket } from "~/hooks/use-party-socket";
 import type { VideoInPlaylist } from "~/types/app-types";
 import { MicVocal } from "lucide-react";
@@ -10,7 +10,7 @@ import { decode } from "html-entities";
 import { useLocalStorage } from "@mantine/hooks";
 import { env } from "~/env"; 
 import { useEffect, useRef } from "react";
-import { useTranslations } from "next-intl"; // FIX: Import translation hook
+import { useTranslations } from "next-intl";
 
 const APPLAUSE_EMOJI = "\ud83d\udc4f\ud83c\udffe"; 
 
@@ -44,7 +44,7 @@ type Props = {
 
 export default function ApplauseScene({ partyHash, initialCurrentSong, initialUnplayed }: Props) {
   const router = useRouter();
-  const t = useTranslations('applause'); // FIX: Initialize translations
+  const t = useTranslations('applause');
   const [name] = useLocalStorage<string>({ key: "name", defaultValue: "" });
   
   const playFuncsRef = useRef<Array<() => void>>([]);
@@ -87,7 +87,6 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
     }
   };
 
-  // FIX: Use translation for button label
   const buttonText = `${t('title')} ${currentSingerName ? currentSingerName : "..."}`;
   
   const mainContent = activeSong ? (
@@ -103,7 +102,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
     </>
   ) : (
     <h1 className="text-outline text-xl font-extrabold tracking-tight text-white">
-      {t('waiting')} {/* FIX: Translated text */}
+      {t('waiting')}
     </h1>
   );
 
@@ -128,7 +127,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
         </Button>
         
         <p className="text-lg text-white/80 max-w-xs">
-          {t('instruction')} {/* FIX: Translated text */}
+          {t('instruction')}
         </p>
 
         <Button
@@ -137,7 +136,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
           variant="secondary"
           className="w-full max-w-xs h-10"
         >
-          &larr; {t('back')} {/* FIX: Translated text */}
+          &larr; {t('back')}
         </Button>
       </div>
     </main>

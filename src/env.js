@@ -19,10 +19,11 @@ export const env = createEnv({
     NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: z.string().optional(),
     NEXT_PUBLIC_BUILD_DATE: z.string().optional(),
     NEXT_PUBLIC_GIT_COMMIT_SHA: z.string().optional(),
-    // NEW: Default Locale (defaulting to 'en')
     NEXT_PUBLIC_DEFAULT_LOCALE: z.string().default("en"),
-    // NEW: Show Footer (defaulting to 'true')
     NEXT_PUBLIC_SHOW_FOOTER: z.string().default("true"),
+    // NEW: Version variables
+    NEXT_PUBLIC_NEXT_VERSION: z.string().default("Unknown"),
+    NEXT_PUBLIC_PRISMA_VERSION: z.string().default("Unknown"),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -39,9 +40,11 @@ export const env = createEnv({
     NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: process.env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL,
     NEXT_PUBLIC_BUILD_DATE: process.env.NEXT_PUBLIC_BUILD_DATE,
     NEXT_PUBLIC_GIT_COMMIT_SHA: process.env.NEXT_PUBLIC_GIT_COMMIT_SHA,
-    // NEW ENV VARS
     NEXT_PUBLIC_DEFAULT_LOCALE: process.env.NEXT_PUBLIC_DEFAULT_LOCALE,
     NEXT_PUBLIC_SHOW_FOOTER: process.env.NEXT_PUBLIC_SHOW_FOOTER,
+    // NEW: Runtime mapping
+    NEXT_PUBLIC_NEXT_VERSION: process.env.NEXT_PUBLIC_NEXT_VERSION,
+    NEXT_PUBLIC_PRISMA_VERSION: process.env.NEXT_PUBLIC_PRISMA_VERSION,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

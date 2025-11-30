@@ -136,7 +136,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
     orderByFairness: useQueueRules,
     disablePlayback: party.disablePlayback,
     spotifyPlaylistId: party.spotifyPlaylistId,
-    spotifyLink: party.spotifyLink, // <-- ADDED HERE
+    spotifyLink: party.spotifyLink,
     isManualSortActive: party.isManualSortActive,
   };
 

@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/ui/button";
 import { ArrowLeft, Plus, Clock, Music, Users, Activity, Lock } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { getTranslations } from "next-intl/server";
-import { FitText } from "~/components/fit-text"; // Import FitText
+import { FitText } from "~/components/fit-text";
 
 export const metadata = {
   title: "Host Dashboard - My Karaoke Party",
@@ -27,7 +27,6 @@ export default async function HostDashboardPage({
     return <AdminLogin />;
   }
 
-  // Fetch all parties securely
   const parties = await api.party.getAll();
 
   return (
@@ -66,7 +65,6 @@ export default async function HostDashboardPage({
                     const isClosed = party.status === "CLOSED";
                     const isStarted = party.status === "STARTED";
                     
-                    // Format Date/Time based on Locale
                     const createdDate = new Date(party.createdAt).toLocaleDateString(locale);
                     const createdTime = new Date(party.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
                     const closedDate = new Date(party.lastActivityAt).toLocaleDateString(locale);
@@ -81,7 +79,6 @@ export default async function HostDashboardPage({
                         >
                             <div className="flex-1 min-w-0 w-full space-y-3">
                                 
-                                {/* LINE 1: Status + FitText Name */}
                                 <div className="flex items-center gap-3 w-full overflow-hidden h-8">
                                     <span className={cn(
                                         "flex-shrink-0 flex h-3 w-3 rounded-full",
@@ -95,7 +92,6 @@ export default async function HostDashboardPage({
                                     </div>
                                 </div>
                                 
-                                {/* LINE 2: Hash + Date */}
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <span className="font-mono text-xs font-bold bg-muted px-2 py-1 rounded border border-border/50 text-foreground/80">
                                         {party.hash}
@@ -109,7 +105,6 @@ export default async function HostDashboardPage({
                                     </div>
                                 </div>
 
-                                {/* LINE 3: Stats */}
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground pt-1">
                                     <div className="flex items-center gap-1.5" title="Total Songs">
                                         <Music className="h-4 w-4 text-primary/70" />

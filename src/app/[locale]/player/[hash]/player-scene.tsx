@@ -65,12 +65,12 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   if (partyStatus === "OPEN") {
     if (playedPlaylist.length === 0) {
-        defaultMessage = t('startSoon'); // "The Party Will Start In A Moment..."
+        defaultMessage = t('startSoon');
     } else {
-        defaultMessage = t('intermission'); // "Your Host Is Taking a Break..."
+        defaultMessage = t('intermission');
     }
   } else {
-    defaultMessage = t('callToAction'); // "Got a Song? Let's Sing!"
+    defaultMessage = t('callToAction');
   }
 
   const displayMessages = [defaultMessage, ...idleMessages];

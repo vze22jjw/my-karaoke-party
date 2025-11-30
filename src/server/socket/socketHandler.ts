@@ -24,7 +24,7 @@ const RATE_LIMIT_WINDOW = 2000; // 2 seconds
 function ensureHost(socket: Socket): boolean {
   const role = socket.data.role as string | undefined;
   if (role !== "Host") {
-    socket.emit("error", { message: "Unauthorized: Host access required." });
+    socket.emit("error", { message: "unauthorized" });
     return false;
   }
   return true;
@@ -34,7 +34,6 @@ export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
     console.log(`${LOG_TAG} New Socket Connection Accepted: ${socket.id}`);
 
-    // ... (keep request-open-parties and join-party events as is) ...
     socket.on("request-open-parties", async () => {
       try {
         const parties = await db.party.findMany({
@@ -87,13 +86,12 @@ export function registerSocketEvents(io: Server) {
         const lastRequest = addSongRateLimit.get(socket.id) ?? 0;
         const now = Date.now();
         if (now - lastRequest < RATE_LIMIT_WINDOW) {
-            // FIX: Send error code instead of English text
+            // TRANSLATION FIX: Send code
             socket.emit("error", { message: "rateLimit" });
             return;
         }
         addSongRateLimit.set(socket.id, now);
 
-        // ... (rest of add-song logic remains exactly the same) ...
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
           include: { participants: { where: { name: data.singerName } } },
@@ -112,8 +110,8 @@ export function registerSocketEvents(io: Server) {
           const durationISO = await youtubeAPI.getVideoDuration(data.videoId);
           
           const durationMs = parseISO8601Duration(durationISO);
-          if (durationMs && durationMs > 10 * 60 * 1000) { // 10 minutes in ms
-             socket.emit("error", { message: "Video too long! Max duration is 10 minutes." });
+          if (durationMs && durationMs > 10 * 60 * 1000) { 
+             socket.emit("error", { message: "videoTooLong" });
              return;
           }
 
@@ -149,11 +147,10 @@ export function registerSocketEvents(io: Server) {
         await updateAndEmitSingers(io, party.id, data.partyHash);
       } catch (error) {
         console.error("Error adding song:", error);
-        socket.emit("error", { message: "Failed to add song." });
+        socket.emit("error", { message: "addFailed" });
       }
     });
 
-    // ... (rest of file: remove-song, mark-as-played, start-party, etc. remain unchanged) ...
     socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
       if (!ensureHost(socket)) return;
       try {

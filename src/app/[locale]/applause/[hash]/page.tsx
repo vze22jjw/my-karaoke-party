@@ -31,7 +31,6 @@ export default async function ApplausePage({ params }: Props) {
   let unplayed: VideoInPlaylist[] = [];
 
   try {
-    // Verify party exists first
     const party = await api.party.getByHash({ hash: partyHash });
     if (!party) notFound();
 

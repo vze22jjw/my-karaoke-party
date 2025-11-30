@@ -32,7 +32,6 @@ export function PartySceneTabs({
   party: Party;
   initialData: InitialPartyData;
 }) {
-  // Translations
   const tGuest = useTranslations('guest');
   const tHost = useTranslations('host');
   const tCommon = useTranslations('common');
