@@ -192,13 +192,11 @@ else
         --build-arg BUILD_DATE="${BUILD_DATE}" \
         --build-arg GIT_COMMIT_SHA="${GIT_SHA}" \
         --target runner \
-        -t ${LOCAL_IMAGE_NAME}:${TAG0} \
-        -t ${LOCAL_IMAGE_NAME}:${TAG1} \
+        --tag ${LOCAL_IMAGE_NAME}:${TAG0} \
         .
 
     echo "Successfully built local images:"
     echo "- ${LOCAL_IMAGE_NAME}:${TAG0}"
-    echo "- ${LOCAL_IMAGE_NAME}:${TAG1}"
 
     # Run dev docker-compose
     echo "Running dev docker-compose..."
