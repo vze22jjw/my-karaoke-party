@@ -142,12 +142,11 @@ export function TabSingers({
             return (
               <div 
                 key={participant.name} 
-                // CHANGED: Increased contrast and visibility for low-light environments
                 className={cn(
                   "p-3 rounded-xl border transition-all shadow-sm",
                   isYou 
-                    ? "bg-primary/10 border-primary/40 shadow-primary/5" // Highlight "You"
-                    : "bg-white/5 border-white/10" // Lighter background for others
+                    ? "bg-primary/10 border-primary/40 shadow-primary/5"
+                    : "bg-white/5 border-white/10"
                 )}
               >
                 <div className="flex items-center justify-between mb-1">
