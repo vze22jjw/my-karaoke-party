@@ -257,7 +257,7 @@
   "applause": {
     "title": "Applause for",
     "waiting": "Waiting for Singers...",
-    "instruction": "Click repeatedly! Each clap is added to the singer's score.",
+    "instruction": "Click repeatedly! Each clap adds Friendship to the singer.",
     "back": "Back to Party"
   },
   "tour": {

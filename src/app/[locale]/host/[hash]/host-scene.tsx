@@ -58,7 +58,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
   const [maxSearchResults, setMaxSearchResults] = useLocalStorage<number>({
     key: "host-global-max-results",
-    defaultValue: 9,
+    defaultValue: 12,
   });
 
   const [localUnplayed, setLocalUnplayed] = useState<VideoInPlaylist[]>(initialData.unplayed);

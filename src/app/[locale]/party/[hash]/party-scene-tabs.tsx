@@ -216,22 +216,22 @@ export function PartySceneTabs({
       >
         <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
           <TabsTrigger value="player" className="flex items-center gap-2">
-            <Monitor className="h-4 w-4" />
+            <Monitor className="h-4 w-4 text-green-500" />
             <span className="hidden sm:inline">{tGuest('tabs.playing')}</span>
           </TabsTrigger>
           <TabsTrigger value="add" className="flex items-center gap-2">
             <span className="flex items-center gap-1">
-              <Music className="h-4 w-4" />
-              <Plus className="h-4 w-4" />
+              <Music className="h-4 w-4 text-cyan-400" />
+              <Plus className="h-4 w-4 text-cyan-400" />
             </span>
             <span className="hidden sm:inline">{tGuest('tabs.add')}</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-yellow-500" />
+            <Lightbulb className="h-4 w-4 text-orange-500" />
             <span className="hidden sm:inline">{tGuest('tabs.suggestions')}</span>
           </TabsTrigger>
           <TabsTrigger value="singers" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
+            <Users className="h-4 w-4 text-yellow-500" />
             <span className="hidden sm:inline">{tGuest('tabs.singers')}</span>
           </TabsTrigger>
         </TabsList>

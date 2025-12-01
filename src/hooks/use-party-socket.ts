@@ -261,10 +261,10 @@ export function usePartySocket(
       if (!response.ok) {
         const errorData = (await response.json()) as { error?: string };
         const msg = errorData?.error ?? "Server error";
-        toast.error(tToasts('applauseError'), { description: msg });
+        console.error(`${LOG_TAG} Applause failed: ${msg}`);
       }
     } catch (error) {
-      toast.error(tToasts('networkError'));
+      console.error(`${LOG_TAG} Network error sending applause:`, error);
     }
   }, [partyHash, tToasts]);
 
