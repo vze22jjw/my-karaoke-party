@@ -192,7 +192,7 @@ export function SongSearch({
 
               const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
-              const title = decode(removeBracketedContent(video.snippet.title));
+              const displayTitle = decode(removeBracketedContent(video.snippet.title));
               
               const isDisabled = alreadyInQueue || isFadingOut || hasReachedQueueLimit;
 
@@ -207,14 +207,14 @@ export function SongSearch({
                   <PreviewPlayer
                     key={video.id.videoId}
                     videoId={video.id.videoId}
-                    title={title}
+                    title={displayTitle}
                     thumbnail={video.snippet.thumbnails.high.url}
                   />
                   <div className="absolute inset-0 z-10 rounded-lg bg-black opacity-50" />
 
                   <div className="absolute top-0 z-30 w-full rounded-lg opacity-100">
                     <p className="bg-black bg-opacity-70 p-3 text-xl font-bold text-white">
-                      {title}
+                      {displayTitle}
                     </p>
                   </div>
 
@@ -233,7 +233,7 @@ export function SongSearch({
                       onClick={() => {
                         onVideoAdded(
                           video.id.videoId,
-                          removeBracketedContent(video.snippet.title),
+                          decode(video.snippet.title), 
                           video.snippet.thumbnails.high.url,
                         );
 
