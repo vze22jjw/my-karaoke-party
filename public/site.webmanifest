@@ -1,6 +1,8 @@
 {
     "name": "",
     "short_name": "",
+    "name": "My Karaoke Party",
+    "short_name": "Karaoke Party",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
@@ -16,4 +18,10 @@
     "theme_color": "#ffffff",
     "background_color": "#ffffff",
     "display": "standalone"
+    "theme_color": "#000000",
+    "background_color": "#000000",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "/"
 }
