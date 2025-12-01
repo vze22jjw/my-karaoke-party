@@ -91,12 +91,12 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   
   const mainContent = activeSong ? (
     <>
-      <h2 className="text-outline text-4xl font-bold tracking-tight text-primary sm:text-5xl flex items-center justify-center gap-3">
-        <MicVocal className="text-primary" size={36} />
+      <h2 className="text-outline text-3xl font-bold tracking-tight text-primary sm:text-5xl flex items-center justify-center gap-3">
+        <MicVocal className="text-primary" size={32} />
         {currentSingerName}
       </h2>
       
-      <h1 className="text-outline text-2xl font-extrabold tracking-tight text-white sm:text-3xl uppercase mt-2 line-clamp-2">
+      <h1 className="text-outline text-xl font-extrabold tracking-tight text-white sm:text-3xl uppercase mt-1 line-clamp-2">
         {decode(activeSong.title)}
       </h1>
     </>
@@ -107,26 +107,26 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   );
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 pb-20 bg-gradient">
         {SOUND_URLS.map((url, i) => (
             <SoundAgent key={url} url={url} index={i} onRegister={registerSound} />
         ))}
 
-      <div className="w-full max-w-lg flex flex-col items-center space-y-6 text-center">
+      <div className="w-full max-w-lg flex flex-col items-center space-y-2 text-center">
         
         {mainContent}
 
         <Button
           type="button"
           onClick={handleApplause}
-          className="w-full text-[250px] p-0 border-none bg-transparent hover:bg-transparent text-white shadow-none transition-all duration-100 active:scale-[0.90] focus:ring-4 focus:ring-yellow-300"
+          className="w-full text-[250px] p-0 border-none bg-transparent hover:bg-transparent text-white shadow-none transition-all duration-100 active:scale-[0.90] focus:ring-4 focus:ring-yellow-300 leading-[0.8] -my-10"
           style={{ height: 'auto', minHeight: '300px', maxWidth: '300px' }}
           aria-label={buttonText}
         >
           {APPLAUSE_EMOJI}
         </Button>
         
-        <p className="text-lg text-white/80 max-w-xs">
+        <p className="text-lg text-white/80 max-w-xs relative z-10">
           {t('instruction')}
         </p>
 
@@ -134,7 +134,7 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
           type="button"
           onClick={() => router.back()}
           variant="secondary"
-          className="w-full max-w-xs h-10"
+          className="w-full max-w-xs h-10 relative z-10"
         >
           &larr; {t('back')}
         </Button>

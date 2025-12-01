@@ -140,7 +140,16 @@ export function TabSingers({
             const isNextSinger = participant.name === nextSingerName;
 
             return (
-              <div key={participant.name} className="p-3 rounded-lg border bg-muted/50">
+              <div 
+                key={participant.name} 
+                // CHANGED: Increased contrast and visibility for low-light environments
+                className={cn(
+                  "p-3 rounded-xl border transition-all shadow-sm",
+                  isYou 
+                    ? "bg-primary/10 border-primary/40 shadow-primary/5" // Highlight "You"
+                    : "bg-white/5 border-white/10" // Lighter background for others
+                )}
+              >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className={cn("w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0", isCurrentSinger && "animate-pulse")}>
@@ -190,7 +199,7 @@ export function TabSingers({
                         <span>{nextSongs.length + (currentSongForSinger ? 1 : 0)} {t('next')}</span>
                     </p>
                     {(!!currentSongForSinger || nextSongs.length > 0) && (
-                      <div className="pt-2 border-t">
+                      <div className="pt-2 border-t border-white/10">
                         <p className="text-xs font-medium text-muted-foreground mb-1">{t('inLine')}</p>
                         <ul className="space-y-1">
                           {currentSongForSinger && <li className="text-xs truncate pl-2 font-bold text-primary">• {decode(currentSongForSinger.title)} (Playing Now)</li>}
@@ -199,7 +208,7 @@ export function TabSingers({
                       </div>
                     )}
                     {playedSongs.length > 0 && (
-                      <div className="pt-2 border-t">
+                      <div className="pt-2 border-t border-white/10">
                         <p className="text-xs font-medium text-muted-foreground mb-1">{t('history')}</p>
                         <ul className="space-y-1">
                           {playedSongs.map((song) => <li key={song.id + (song.playedAt?.toString() ?? "")} className="text-xs truncate pl-2 text-muted-foreground">• {decode(song.title)}</li>)}

@@ -46,8 +46,7 @@ export default function StartPartyContent() {
 
     return (
         <main className="flex min-h-screen flex-col items-center bg-gradient">
-            {/* ADDED justify-center to vertically align the entire block */}
-            <div className="container flex flex-1 flex-col items-center justify-center gap-8 px-4 py-8">
+            <div className="container flex flex-1 flex-col items-center justify-center gap-8 px-4 pt-8 pb-28">
                 <Image
                     src={logo}
                     width={666}
