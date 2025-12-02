@@ -269,6 +269,24 @@
         "singIn": "Sing In",
         "micIn": "Mic In"
       }
+    },
+    "funStats": {
+      "waitingData": "Waiting for party data...",
+      "topSingers": "Top Singers",
+      "clapsValue": "{count} Claps",
+      "totalHype": "Total Party Hype",
+      "totalApplause": "Total Applause Sent",
+      "marathonRunner": "The Marathon Runner",
+      "minsSung": "{count} mins sung",
+      "teamSpirit": "Team Spirit",
+      "teamName": "Team {avatar}",
+      "membersCount": "{count} members",
+      "earlyBird": "The Early Bird",
+      "firstToJoin": "First to join!",
+      "concertTime": "Total Concert Time",
+      "nonStopMusic": "Non-stop Music",
+      "oneHitWonder": "One Hit Wonder",
+      "clapsOneSong": "{count} claps (1 song)"
     }
   },
   "applause": {

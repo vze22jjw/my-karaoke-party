@@ -279,6 +279,9 @@ export function PartySceneTabs({
             themeSuggestions={themeSuggestions}
             spotifyPlaylistId={settings.spotifyPlaylistId}
             onSuggestionClick={handleSuggestionClick}
+            participants={participants} 
+            playlist={unplayedPlaylist}
+            playedPlaylist={playedPlaylist}
           />
         </TabsContent>
       </Tabs>

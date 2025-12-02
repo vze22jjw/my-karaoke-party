@@ -269,6 +269,24 @@
         "singIn": "Cante em",
         "micIn": "Microfone em"
       }
+    },
+    "funStats": {
+      "waitingData": "Aguardando dados da festa...",
+      "topSingers": "Top Cantores",
+      "clapsValue": "{count} Palmas",
+      "totalHype": "Hype Total da Festa",
+      "totalApplause": "Total de Aplausos",
+      "marathonRunner": "O Maratonista",
+      "minsSung": "{count} mins cantados",
+      "teamSpirit": "Espírito de Equipe",
+      "teamName": "Time {avatar}",
+      "membersCount": "{count} membros",
+      "earlyBird": "Madrugador",
+      "firstToJoin": "Primeiro a entrar!",
+      "concertTime": "Tempo de Show",
+      "nonStopMusic": "Música Sem Parar",
+      "oneHitWonder": "Sucesso Único",
+      "clapsOneSong": "{count} palmas (1 música)"
     }
   },
   "applause": {

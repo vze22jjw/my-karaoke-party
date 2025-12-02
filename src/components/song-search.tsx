@@ -9,7 +9,7 @@ import { api, type RouterOutputs } from "~/trpc/react";
 import { Search, Check, Loader2, Frown, X, Plus } from "lucide-react";
 import type { KaraokeParty } from "~/types/app-types";
 import { PreviewPlayer } from "./preview-player";
-import { removeBracketedContent } from "~/utils/string";
+// Removed unused import: removeBracketedContent
 import { decode } from "html-entities";
 import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
@@ -94,7 +94,6 @@ export function SongSearch({
   return (
     <>
       {/* STICKY HEADER WRAPPER */}
-      {/* Added px-4 here to align header content with the card edges properly */}
       <div className="sticky top-0 z-50 bg-card px-4 pb-4 pt-4 -mt-1 border-b shadow-sm">
         
         {children && <div className="mb-3">{children}</div>}
@@ -180,7 +179,6 @@ export function SongSearch({
       )}
 
       {isLoading && (
-        // Added px-4 back to give results padding
         <div className="my-5 flex flex-col space-y-5 overflow-hidden px-4">
           <Skeleton className="h-48 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-xl" />
@@ -191,7 +189,6 @@ export function SongSearch({
       )}
 
       {data && (
-        // Added px-4 back to give results padding
         <div className="my-5 flex flex-col space-y-5 overflow-hidden px-4">
           {data
             .filter((video) => {

@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Lightbulb, Trophy, Flame, Loader2, Music2, Music, Plus, Mic2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Lightbulb, Flame, Loader2, Music2, Plus, Mic2 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
-import { formatCompactNumber } from "~/utils/number";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
+import { FunStatsCarousel } from "./fun-stats-carousel";
+import type { VideoInPlaylist } from "~/types/app-types";
+import { formatCompactNumber } from "~/utils/number";
 
 type SpotifySong = {
   title: string;
@@ -16,27 +18,35 @@ type SpotifySong = {
   coverUrl: string;
 };
 
-type TopSinger = {
-  name: string;
-  count: number;
-  applauseCount: number;
-}
+type Participant = {
+    name: string;
+    role: string;
+    avatar: string | null;
+    applauseCount: number;
+    joinedAt?: Date | string; 
+};
 
 type Props = {
   themeSuggestions: string[];
   spotifyPlaylistId?: string | null;
   onSuggestionClick: (title: string, artist: string) => void;
+  participants: Participant[]; 
+  playlist: VideoInPlaylist[]; 
+  playedPlaylist: VideoInPlaylist[];
 };
 
 export function TabHistory({
   themeSuggestions,
   spotifyPlaylistId,
   onSuggestionClick,
+  participants,
+  playlist,
+  playedPlaylist
 }: Props) {
   const t = useTranslations('guest.history');
-  const [sortBy, setSortBy] = useState<"songs" | "applause">("songs");
   const [topPlayedMode, setTopPlayedMode] = useState<"songs" | "artists">("songs");
   const [slide, setSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   const { data: stats, isLoading: isLoadingStats } =
     api.playlist.getGlobalStats.useQuery(undefined, {
@@ -53,11 +63,24 @@ export function TabHistory({
   const hasSpotify = spotifySongs.length > 0;
   const showCarousel = hasSpotify;
 
-  const currentTopSingers = sortBy === "songs" 
-    ? stats?.topSingersBySongs 
-    : stats?.topSingersByApplause;
+  const fullPlaylistHistory = [...playedPlaylist, ...playlist];
 
-  // --- Components for Sections ---
+  // Fixed Touch Handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches[0]) {
+        setTouchStart(e.touches[0].clientX);
+    }
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+      if (touchStart === null || !e.changedTouches[0]) return;
+      const touchEnd = e.changedTouches[0].clientX;
+      const diff = touchStart - touchEnd;
+      if (Math.abs(diff) > 50) {
+          if (diff > 0) setSlide(1); 
+          else setSlide(0); 
+      }
+      setTouchStart(null);
+  };
 
   const SpotifySection = () => (
     <div className="bg-card rounded-lg p-4 border border-green-500/20 h-full">
@@ -211,7 +234,7 @@ export function TabHistory({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-6">
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
@@ -234,7 +257,12 @@ export function TabHistory({
       )}
 
       {showCarousel ? (
-        <div className="w-full overflow-hidden pb-4">
+        // Added touch-pan-y and select-none to fix swipe and scrolling issues
+        <div 
+          className="w-full overflow-hidden touch-pan-y select-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
            <div 
              className="flex transition-transform duration-300 ease-in-out"
              style={{ transform: `translateX(-${slide * 100}%)` }}
@@ -250,11 +278,11 @@ export function TabHistory({
            <div className="flex justify-center gap-2 mt-3">
               <button 
                  onClick={() => setSlide(0)}
-                 className={cn("h-2 w-2 rounded-full transition-all", slide === 0 ? "bg-primary w-4" : "bg-muted-foreground/30")}
+                 className={cn("h-2 w-2 rounded-full transition-all", slide === 0 ? "bg-primary w-4" : "bg-black/40 hover:bg-black/60")}
               />
               <button 
                  onClick={() => setSlide(1)}
-                 className={cn("h-2 w-2 rounded-full transition-all", slide === 1 ? "bg-primary w-4" : "bg-muted-foreground/30")}
+                 className={cn("h-2 w-2 rounded-full transition-all", slide === 1 ? "bg-primary w-4" : "bg-black/40 hover:bg-black/60")}
               />
            </div>
         </div>
@@ -262,87 +290,20 @@ export function TabHistory({
         <TopPlayedSection />
       )}
 
-      <div className="bg-card rounded-lg p-4 border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            {t('topSingers')}
-          </h2>
-          
-          <div className="flex items-center bg-muted rounded-md p-1">
-            <button
-              onClick={() => setSortBy("songs")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-sm transition-all",
-                sortBy === "songs" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t('sortBySongs')}
-            </button>
-            <button
-              onClick={() => setSortBy("applause")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-sm transition-all",
-                sortBy === "applause" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t('sortByClaps')}
-            </button>
-          </div>
-        </div>
+      <FunStatsCarousel 
+         playlist={fullPlaylistHistory.map(v => ({ 
+             singerName: v.singerName, 
+             duration: v.duration, 
+             playedAt: v.playedAt 
+         }))}
+         participants={participants.map(p => ({
+             name: p.name,
+             applauseCount: p.applauseCount,
+             avatar: p.avatar,
+             joinedAt: p.joinedAt ? new Date(p.joinedAt) : new Date() 
+         }))} 
+      />
 
-        {isLoadingStats ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : currentTopSingers && currentTopSingers.length > 0 ? (
-          <ul className="space-y-2">
-            {(currentTopSingers as TopSinger[]).map((singer, index) => ( 
-              <li
-                key={singer.name}
-                className="flex items-center justify-between p-3 rounded-lg transition-colors border border-white/5 bg-muted/30"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={cn(
-                    "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                    index === 0 ? "bg-yellow-500 text-black" : 
-                    index === 1 ? "bg-slate-300 text-black" : 
-                    index === 2 ? "bg-orange-700 text-white" : 
-                    "bg-muted text-muted-foreground" 
-                  )}>
-                    {index + 1}
-                  </div>
-                  <p className="font-semibold text-base truncate text-white">{singer.name}</p>
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1.5 rounded-md border border-white/5">
-                    <Music className={cn("h-3.5 w-3.5", sortBy === 'songs' ? "text-cyan-400" : "text-muted-foreground")} />
-                    <span className={cn("text-xs font-mono font-medium", sortBy === 'songs' ? "text-white" : "text-muted-foreground")}>
-                        {singer.count}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1.5 rounded-md border border-white/5">
-                    <span className="text-sm">👏</span>
-                    <span className={cn("text-xs font-mono font-medium", sortBy === 'applause' ? "text-pink-500" : "text-muted-foreground")}>
-                        {formatCompactNumber(singer.applauseCount)}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            {t('noSingers')}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
