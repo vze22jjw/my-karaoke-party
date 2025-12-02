@@ -266,7 +266,7 @@ export function usePartySocket(
     } catch (error) {
       console.error(`${LOG_TAG} Network error sending applause:`, error);
     }
-  }, [partyHash, tToasts]);
+  }, [partyHash]);
 
   const socketActions: SocketActions = useMemo(() => ({
     addSong: (videoId, title, coverUrl, singerName) => socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName }),

@@ -69,6 +69,9 @@ COPY --from=builder /app/messages ./messages
 # Copy prisma schema for the migration
 COPY --from=builder /app/prisma ./prisma
 
+# Copy scripts folder for prisma auto-baseline ---
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+
 COPY --from=builder /app/package.json ./package.json
 
 ## clean up runner image

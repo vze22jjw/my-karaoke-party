@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Input } from "~/components/ui/ui/input";
-import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Plus, X, Check, Send, Globe, Square, CheckSquare } from "lucide-react";
+import { 
+  Plus, X, Check, Globe, Square, CheckSquare, Search, Library, ChevronLeft, ChevronRight 
+} from "lucide-react";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "~/components/ui/ui/drawer";
 import type { IdleMessage } from "@prisma/client";
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
@@ -12,6 +22,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useTranslations } from "next-intl";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
+const MESSAGES_PER_PAGE = 10;
 
 type Props = {
   hostName: string | null;
@@ -32,23 +43,57 @@ export function SettingsIdleMessages({
 }: Props) {
   const t = useTranslations('host.settings.messages');
   const tCommon = useTranslations('common');
+  
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [showIdleInfo, setShowIdleInfo] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [selectedIds, setSelectedIds] = useLocalStorage<number[]>({
     key: "mkp-idle-selected-ids",
     defaultValue: [],
   });
 
+  const initialSelectedIdsRef = useRef<number[]>([]);
+
+  const handleOpenChange = (open: boolean) => {
+    setIsDrawerOpen(open);
+    if (open) {
+        initialSelectedIdsRef.current = [...selectedIds];
+    } else {
+        // On Close: Check if selection changed, then sync
+        const hasChanged = 
+            selectedIds.length !== initialSelectedIdsRef.current.length ||
+            !selectedIds.every(id => initialSelectedIdsRef.current.includes(id));
+        
+        if (hasChanged && !isPartyClosed) {
+            handleSyncToParty();
+        }
+    }
+  };
+
   const myMessagesCount = hostIdleMessages.filter(m => m.hostName === hostName).length;
   const creationLimitRemaining = 20 - myMessagesCount;
-
   const selectionCount = selectedIds.length;
+  const remainingSelections = 20 - selectionCount;
+
+  const filteredMessages = hostIdleMessages.filter((msg) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+        msg.message.toLowerCase().includes(query) ||
+        msg.hostName.toLowerCase().includes(query)
+    );
+  });
+
+  const totalPages = Math.ceil(filteredMessages.length / MESSAGES_PER_PAGE);
+  const paginatedMessages = filteredMessages.slice(
+    (currentPage - 1) * MESSAGES_PER_PAGE,
+    currentPage * MESSAGES_PER_PAGE
+  );
 
   const toggleSelection = (id: number) => {
     if (isPartyClosed) return;
-    
     if (selectedIds.includes(id)) {
       setSelectedIds(prev => prev.filter(i => i !== id));
     } else {
@@ -67,11 +112,7 @@ export function SettingsIdleMessages({
       toast.error(t('limitError'));
       return;
     }
-    
-    const messageToAdd = newMessage.trim();
-    if (IS_DEBUG) console.log("[SettingsIdleMessages] Adding message:", messageToAdd);
-    
-    onAddIdleMessage({ hostName, message: messageToAdd });
+    onAddIdleMessage({ hostName, message: newMessage.trim() });
     setNewMessage("");
     toast.success(tCommon('success'));
   };
@@ -79,7 +120,6 @@ export function SettingsIdleMessages({
   const handleDeleteMessage = (id: number) => {
     if (isPartyClosed) return;
     if (confirm("Delete?")) {
-      if (IS_DEBUG) console.log("[SettingsIdleMessages] Deleting message ID:", id);
       onDeleteIdleMessage({ id });
       setSelectedIds(prev => prev.filter(i => i !== id));
     }
@@ -87,137 +127,178 @@ export function SettingsIdleMessages({
 
   const handleSyncToParty = () => {
     if (isPartyClosed) return;
-    
     const messagesToSync = hostIdleMessages
       .filter(m => selectedIds.includes(m.id))
       .map(m => m.message);
-
-    setIsSyncing(true);
-    if (IS_DEBUG) console.log("[SettingsIdleMessages] Syncing selected messages:", messagesToSync);
     
+    if (IS_DEBUG) console.log("[SettingsIdleMessages] Auto-syncing:", messagesToSync);
     onSyncIdleMessages(messagesToSync);
     toast.success(t('synced'));
-    setTimeout(() => setIsSyncing(false), 1000);
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   return (
     <div className="space-y-3 rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium flex items-center gap-2">
           <Globe className="h-5 w-5 text-indigo-500" />
-          {t('title')} {isPartyClosed && <span className="text-sm text-muted-foreground font-normal">(Read-Only)</span>}
+          {t('title')} {isPartyClosed && <span className="text-sm text-muted-foreground">({tCommon('readOnly')})</span>}
         </h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground"
-          onClick={() => setShowIdleInfo((s) => !s)}
-        >
-          <Info className="h-4 w-4" />
-        </Button>
-      </div>
-      {showIdleInfo && (
-        <Alert className="mt-2">
-          <AlertDescription>{t('info')}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="flex w-full items-center space-x-2">
-        <Input
-          type="text"
-          placeholder={isPartyClosed ? "Disabled" : t('placeholder')}
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          disabled={creationLimitRemaining <= 0 || isPartyClosed}
-          className="bg-background"
-          onKeyDown={(e) => e.key === 'Enter' && handleAddMessage()}
-        />
-        <Button
-          type="button"
-          onClick={handleAddMessage}
-          disabled={creationLimitRemaining <= 0 || !newMessage.trim() || isPartyClosed}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="flex justify-between text-xs text-muted-foreground px-1">
-          <span>{t('yourCreations')} {myMessagesCount}/20</span>
-          <span className={cn(selectionCount >= 20 ? "text-red-500 font-bold" : "")}>
-            {t('selected')} {selectionCount}/20
-          </span>
       </div>
 
-      <div className="max-h-60 w-full overflow-y-auto rounded-md border bg-muted/50 p-2 space-y-2">
-        {hostIdleMessages.length > 0 ? (
-          hostIdleMessages.map((msg) => {
-            const isMine = msg.hostName === hostName;
-            const isSelected = selectedIds.includes(msg.id);
-            
-            return (
-              <div
-                key={msg.id}
-                className={cn(
-                    "flex items-center gap-3 rounded p-2 border transition-colors",
-                    isSelected ? "bg-primary/10 border-primary/30" : "bg-background border-transparent hover:border-border"
-                )}
-              >
-                <button 
-                    onClick={() => toggleSelection(msg.id)}
-                    className="flex-shrink-0 text-primary hover:opacity-80 focus:outline-none"
-                    disabled={isPartyClosed}
-                >
-                    {isSelected ? (
-                        <CheckSquare className="h-5 w-5" />
-                    ) : (
-                        <Square className="h-5 w-5 text-muted-foreground" />
-                    )}
-                </button>
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-muted-foreground">
+           {t('sync', { count: selectionCount })}
+        </p>
+        
+        <Drawer open={isDrawerOpen} onOpenChange={handleOpenChange}>
+            <DrawerTrigger asChild>
+                <Button variant="outline" className="w-full gap-2 h-12">
+                    <Library className="h-4 w-4" />
+                    {t('manageLibrary')}
+                    <span className="ml-auto text-xs bg-primary/10 px-2 py-0.5 rounded-full">
+                        {hostIdleMessages.length}
+                    </span>
+                </Button>
+            </DrawerTrigger>
+            <DrawerContent className="h-[90vh] flex flex-col">
+                <div className="mx-auto w-full max-w-2xl flex-1 flex flex-col overflow-hidden">
+                    <DrawerHeader>
+                        <DrawerTitle>{t('title')}</DrawerTitle>
+                        <DrawerDescription>
+                            {t('drawerDesc')}
+                        </DrawerDescription>
+                    </DrawerHeader>
 
-                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isPartyClosed && toggleSelection(msg.id)}>
-                   <p className={cn("text-sm truncate", isSelected && "font-medium")}>{msg.message}</p>
-                   <p className="text-[10px] text-muted-foreground truncate">
-                     {isMine ? "You" : msg.hostName}
-                   </p>
+                    {/* CREATION & SEARCH AREA */}
+                    <div className="px-4 py-2 space-y-4 shrink-0">
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder={t('addPlaceholder')}
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                disabled={(isPartyClosed ?? false) || creationLimitRemaining <= 0}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddMessage()}
+                            />
+                            <Button onClick={handleAddMessage} disabled={(isPartyClosed ?? false) || creationLimitRemaining <= 0}>
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        
+                        <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder={t('searchPlaceholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8 bg-muted/30"
+                            />
+                        </div>
+
+                        <div className="flex justify-between text-xs text-muted-foreground font-medium">
+                            <span className={creationLimitRemaining <= 0 ? "text-red-500" : ""}>
+                                {t('creationsLeft', { count: creationLimitRemaining })}
+                            </span>
+                            <span className={remainingSelections <= 0 ? "text-red-500" : "text-primary"}>
+                                {t('selectionsLeft', { count: remainingSelections })}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* SCROLLABLE LIST */}
+                    <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
+                        {paginatedMessages.length > 0 ? (
+                            paginatedMessages.map((msg) => {
+                                const isMine = msg.hostName === hostName;
+                                const isSelected = selectedIds.includes(msg.id);
+                                return (
+                                    <div
+                                        key={msg.id}
+                                        className={cn(
+                                            "flex items-center gap-3 rounded-lg p-3 border transition-all",
+                                            isSelected 
+                                                ? "bg-primary/10 border-primary/40 shadow-sm" 
+                                                : "bg-card border-border hover:border-primary/20"
+                                        )}
+                                        onClick={() => toggleSelection(msg.id)}
+                                    >
+                                        <button className="text-primary shrink-0">
+                                            {isSelected ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5 text-muted-foreground" />}
+                                        </button>
+                                        
+                                        <div className="flex-1 min-w-0">
+                                            <p className={cn("text-sm font-medium truncate", isSelected && "text-primary")}>
+                                                {msg.message}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {isMine ? tCommon('you') : msg.hostName}
+                                            </p>
+                                        </div>
+
+                                        {isMine && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteMessage(msg.id);
+                                                }}
+                                                disabled={isPartyClosed}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <p>{t('noMessages')}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* PAGINATION & FOOTER */}
+                    <div className="p-4 border-t bg-background shrink-0 space-y-4">
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-4">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <span className="text-sm font-medium">
+                                    {t('pageCounter', { current: currentPage, total: totalPages })}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                        
+                        <DrawerClose asChild>
+                            <Button className="w-full h-12 text-lg font-bold shadow-md" variant="default">
+                                <Check className="mr-2 h-5 w-5" />
+                                {t('saveAndSync', { count: selectionCount })}
+                            </Button>
+                        </DrawerClose>
+                    </div>
                 </div>
-                
-                {isMine && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 flex-shrink-0 text-muted-foreground hover:text-red-500"
-                    onClick={() => handleDeleteMessage(msg.id)}
-                    title="Delete Message"
-                    disabled={isPartyClosed}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <p className="text-center text-sm text-muted-foreground p-4">
-            {t('emptyLib')}
-          </p>
-        )}
+            </DrawerContent>
+        </Drawer>
       </div>
-
-      <Button
-        type="button"
-        onClick={handleSyncToParty}
-        disabled={isSyncing || isPartyClosed}
-        className="w-full"
-      >
-        {isSyncing ? (
-          <Check className="mr-2 h-4 w-4" />
-        ) : (
-          <Send className="mr-2 h-4 w-4" />
-        )}
-        {isSyncing
-          ? t('synced')
-          : t('sync', { count: selectionCount })}
-      </Button>
     </div>
   );
 }

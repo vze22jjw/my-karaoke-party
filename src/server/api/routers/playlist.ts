@@ -262,6 +262,33 @@ export const playlistRouter = createTRPCRouter({
       }));
     }
 
+    // NEW: Top Artists Aggregation
+    const topArtistsRaw = await ctx.db.playlistItem.groupBy({
+        by: ["artist"],
+        where: {
+            playedAt: { not: null },
+            // FIX: Use AND to properly combine conditions
+            AND: [
+                { artist: { not: null } },
+                { artist: { not: "" } }
+            ]
+        },
+        _count: {
+            artist: true,
+        },
+        orderBy: {
+            _count: {
+                artist: "desc",
+            },
+        },
+        take: 5,
+    });
+
+    const topArtists = topArtistsRaw.map(a => ({
+        name: a.artist!,
+        count: a._count.artist,
+    }));
+
     const topSingersRaw = await ctx.db.playlistItem.groupBy({
       by: ["singerName"],
       where: {
@@ -312,6 +339,7 @@ export const playlistRouter = createTRPCRouter({
 
     return {
       topSongs,
+      topArtists,
       topSingersBySongs,
       topSingersByApplause,
       topSingers: topSingersBySongs, 

@@ -38,6 +38,11 @@ until node -e "const { PrismaClient } = require('@prisma/client'); const prisma 
   sleep 2
 done
 
+# --- SMART MIGRATION LOGIC ---
+echo "🔍 Checking migration state..."
+node scripts/auto-baseline.js
+# -----------------------------
+
 # Run migrations
 echo "$MSG_MIGRATE"
 pnpm exec prisma migrate deploy

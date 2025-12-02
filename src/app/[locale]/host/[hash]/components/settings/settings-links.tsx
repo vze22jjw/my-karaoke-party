@@ -7,8 +7,9 @@ import { QrCode } from "~/components/qr-code";
 import { getUrl } from "~/utils/url";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Info, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Info, Link as LinkIcon, ExternalLink, LayoutDashboard } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link } from "~/navigation";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
@@ -22,6 +23,7 @@ export function SettingsLinks({ partyHash, isPartyClosed }: Props) {
   
   const t = useTranslations('host.settings.links');
   const tCommon = useTranslations('common');
+  const tHost = useTranslations('host');
 
   const [isQrExpanded, setIsQrExpanded] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -97,7 +99,17 @@ export function SettingsLinks({ partyHash, isPartyClosed }: Props) {
               </Button>
             </div>
           </div>
-          <div className="flex justify-center">
+          
+          <div className="pt-2">
+            <Button asChild variant="secondary" className="w-full gap-2">
+               <Link href="/host">
+                  <LayoutDashboard className="h-4 w-4" />
+                  {tHost('dashboardTitle')}
+               </Link>
+            </Button>
+          </div>
+
+          <div className="flex justify-center pt-2">
             <button 
               type="button" 
               onClick={() => setIsQrExpanded(true)}

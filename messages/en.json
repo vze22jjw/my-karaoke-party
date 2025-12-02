@@ -2,6 +2,7 @@
   "common": {
     "appName": "My Karaoke Party",
     "backToHome": "Back to Home",
+    "back": "Back",
     "cancel": "Cancel",
     "save": "Save",
     "loading": "Loading...",
@@ -77,6 +78,12 @@
   },
   "host": {
     "dashboardTitle": "Host Dashboard",
+    "tabsActive": "Active",
+    "tabsHistory": "History",
+    "noActiveParties": "No active parties.",
+    "noHistory": "No archived parties found.",
+    "noResultsDate": "No parties found for this date.",
+    "page": "Page",
     "dashboardDesc": "Manage all your karaoke parties in one place.",
     "newParty": "New Party",
     "noParties": "No parties found.",
@@ -130,7 +137,16 @@
         "info": "Select messages to display on the TV. You can select up to 20.",
         "yourCreations": "Your creations:",
         "selected": "Selected to sync:",
-        "emptyLib": "The shared library is empty."
+        "emptyLib": "The shared library is empty.",
+        "manageLibrary": "Manage Library",
+        "drawerDesc": "Select up to 20 messages. Closing this drawer will auto-sync selections.",
+        "addPlaceholder": "Add new message...",
+        "searchPlaceholder": "Search messages...",
+        "creationsLeft": "Creations left: {count}",
+        "selectionsLeft": "Selections left: {count}",
+        "noMessages": "No messages found.",
+        "pageCounter": "Page {current} / {total}",
+        "saveAndSync": "Save & Sync ({count})"
       },
       "rules": {
         "title": "Party Rules",
@@ -230,12 +246,13 @@
     "history": {
       "suggestions": "Song Suggestions",
       "hotSpotify": "Hot Karaoke From Spotify",
-      "topPlayed": "Top Played (All Time)",
+      "topPlayed": "Top Played",
       "topSingers": "Top Singers",
       "noSongs": "No songs played yet.",
       "noSingers": "No singers yet.",
       "sortBySongs": "Songs",
-      "sortByClaps": "Claps"
+      "sortByClaps": "Claps",
+      "sortByArtists": "Artists"
     },
     "singers": {
       "title": "Singers",
@@ -257,7 +274,7 @@
   "applause": {
     "title": "Applause for",
     "waiting": "Waiting for Singers...",
-    "instruction": "Click repeatedly! Each clap adds Friendship to the singer.",
+    "instruction": "Click repeatedly! Each clap is added to the singer's score.",
     "back": "Back to Party"
   },
   "tour": {
