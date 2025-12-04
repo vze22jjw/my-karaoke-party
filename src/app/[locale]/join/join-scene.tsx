@@ -18,7 +18,7 @@ import {
 } from "~/components/ui/ui/form";
 import { Input } from "~/components/ui/ui/input";
 import { Button } from "~/components/ui/ui/button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { FitText } from "~/components/fit-text";
@@ -33,12 +33,14 @@ const AVATARS = [
 const AvatarPicker = ({
   value,
   onChange,
+  options, 
 }: {
   value: string;
   onChange: (value: string) => void;
+  options: string[];
 }) => (
   <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border bg-muted/50 p-3">
-    {AVATARS.map((avatar) => (
+    {options.map((avatar) => (
       <button
         key={avatar}
         type="button"
@@ -80,6 +82,16 @@ export default function JoinScene({
     key: "avatar",
     defaultValue: AVATARS[0]!,
   });
+
+  // --- Randomize Avatars on Client Mount ---
+  const [avatarOptions, setAvatarOptions] = useState(AVATARS);
+
+  useEffect(() => {
+    // Simple shuffle
+    const shuffled = [...AVATARS].sort(() => Math.random() - 0.5);
+    setAvatarOptions(shuffled);
+  }, []);
+  // -----------------------------------------
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -156,7 +168,11 @@ export default function JoinScene({
               <FormItem>
                 <FormLabel>{t('chooseIcon')}</FormLabel>
                 <FormControl>
-                  <AvatarPicker value={avatar} onChange={setAvatar} />
+                  <AvatarPicker 
+                    value={avatar} 
+                    onChange={setAvatar} 
+                    options={avatarOptions} 
+                  />
                 </FormControl>
               </FormItem>
               <FormField

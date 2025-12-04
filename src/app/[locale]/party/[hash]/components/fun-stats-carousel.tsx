@@ -6,21 +6,24 @@ import {
   type LucideIcon 
 } from "lucide-react";
 import { formatCompactNumber } from "~/utils/number";
-import { parseISO8601Duration } from "~/utils/string";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
-import type { VideoInPlaylist } from "~/types/app-types";
 
-type Participant = {
-    name: string;
-    applauseCount: number;
-    avatar: string | null;
-    joinedAt: Date;
+type GlobalStatsData = {
+    topSingersBySongs: { name: string; count: number }[];
+    topSingersByApplause: { name: string; applauseCount: number }[];
+    topSongsByApplause: { title: string; applause: number; singer: string }[];
+    globalStats: {
+        totalSongs: number;
+        totalApplause: number;
+        bestDressed: { avatar: string | null; count: number } | null;
+        oneHitWonder: { name: string; applauseCount: number } | null;
+        marathonRunner: { name: string; totalDurationMs: number } | null;
+    };
 };
 
 type Props = {
-    playlist: VideoInPlaylist[];
-    participants: Participant[];
+    stats?: GlobalStatsData;
 };
 
 interface ListItem {
@@ -60,94 +63,59 @@ type CarouselCard = ListCard | GridCard;
 
 const CARD_DURATION = 10000; 
 
-export function FunStatsCarousel({ playlist, participants }: Props) {
+export function FunStatsCarousel({ stats }: Props) {
     const t = useTranslations('guest.funStats');
+    
+    // Hooks must be called unconditionally at the top
     const [activeIndex, setActiveIndex] = useState(0);
     const touchStartRef = useRef<number | null>(null);
     const autoRotateRef = useRef<NodeJS.Timeout | null>(null);
 
-    const singerSongCounts = new Map<string, number>();
-    playlist.forEach(item => {
-        singerSongCounts.set(item.singerName, (singerSongCounts.get(item.singerName) ?? 0) + 1);
-    });
+    // Prepare data safely (defaults if stats is undefined)
+    const topSingersBySongs = stats?.topSingersBySongs ?? [];
+    const topSingersByApplause = stats?.topSingersByApplause ?? [];
+    const topSongsByApplause = stats?.topSongsByApplause ?? [];
     
-    const mostEager = participants
-        .map(p => ({ ...p, songs: singerSongCounts.get(p.name) ?? 0 }))
-        .sort((a, b) => b.songs - a.songs)
-        .slice(0, 5)
-        .filter(p => p.songs > 0);
+    const globalStats = stats?.globalStats ?? { 
+        totalSongs: 0, 
+        totalApplause: 0, 
+        bestDressed: null, 
+        oneHitWonder: null,
+        marathonRunner: null
+    };
 
-    const topSongs = [...playlist]
-        .sort((a, b) => b.applauseCount - a.applauseCount)
-        .slice(0, 5)
-        .filter(s => s.applauseCount > 0);
-
-    const topDivas = participants
-        .sort((a, b) => b.applauseCount - a.applauseCount)
-        .slice(0, 5)
-        .filter(p => p.applauseCount > 0);
-
-    const totalApplause = participants.reduce((acc, p) => acc + p.applauseCount, 0);
-    
-    const durationMap = new Map<string, number>();
-    playlist.forEach(item => {
-        if (item.playedAt) {
-            const ms = parseISO8601Duration(item.duration) ?? 0;
-            durationMap.set(item.singerName, (durationMap.get(item.singerName) ?? 0) + ms);
-        }
-    });
-    const marathonRunner = Array.from(durationMap.entries())
-        .sort((a, b) => b[1] - a[1])[0];
-
-    const avatarCounts = new Map<string, number>();
-    participants.forEach(p => {
-        if (p.avatar) avatarCounts.set(p.avatar, (avatarCounts.get(p.avatar) ?? 0) + 1);
-    });
-    const bestDressed = Array.from(avatarCounts.entries())
-        .sort((a, b) => b[1] - a[1])[0];
-
-    const oneHitWonder = participants
-        .filter(p => (singerSongCounts.get(p.name) ?? 0) === 1)
-        .sort((a, b) => b.applauseCount - a.applauseCount)[0];
-
-    const totalMs = playlist.reduce((acc, item) => {
-        return item.playedAt ? acc + (parseISO8601Duration(item.duration) ?? 0) : acc;
-    }, 0);
-    const totalHours = Math.floor(totalMs / 3600000);
-    const totalMins = Math.floor((totalMs % 3600000) / 60000);
-    const totalDurationStr = totalHours > 0 ? `${totalHours}h ${totalMins}m` : `${totalMins}m`;
-
+    // Build Cards Logic (always runs)
     const rawGridItems: (GridItem | null)[] = [
         {
             label: t('loyalFans'),
-            value: `${formatCompactNumber(totalApplause)} 👏`,
+            value: `${formatCompactNumber(globalStats.totalApplause)} 👏`,
             sub: t('totalClaps'),
             icon: "👏"
         },
-        marathonRunner ? {
+        globalStats.marathonRunner ? {
             label: t('marathon'),
-            value: `${Math.floor(marathonRunner[1] / 60000)}m`,
-            sub: marathonRunner[0],
+            value: `${Math.floor(globalStats.marathonRunner.totalDurationMs / 60000)}m`,
+            sub: globalStats.marathonRunner.name,
             icon: "🏃"
         } : null,
-        bestDressed ? {
-            label: t('bestDressed'),
-            value: `${bestDressed[1]}x`,
-            sub: bestDressed[0],
-            icon: "👔"
-        } : null,
-        oneHitWonder ? {
+        globalStats.oneHitWonder ? {
             label: t('oneHitWonder'),
-            value: `${formatCompactNumber(oneHitWonder.applauseCount)} 👏`,
-            sub: oneHitWonder.name,
+            value: `${formatCompactNumber(globalStats.oneHitWonder.applauseCount)} 👏`,
+            sub: globalStats.oneHitWonder.name,
             icon: "🎯"
         } : null,
         {
             label: t('totalPlayed'),
-            value: totalDurationStr,
-            sub: t('duration'),
+            value: formatCompactNumber(globalStats.totalSongs),
+            sub: t('songsCount', { count: globalStats.totalSongs }).replace(/\d+\s/, ''), 
             icon: "🎵"
-        }
+        },
+        globalStats.bestDressed ? {
+            label: t('bestDressed'),
+            value: `${formatCompactNumber(globalStats.bestDressed.count)}x`,
+            sub: globalStats.bestDressed.avatar,
+            icon: "👔"
+        } : null,
     ];
 
     const gridItems: GridItem[] = rawGridItems.filter((item): item is GridItem => item !== null);
@@ -159,10 +127,10 @@ export function FunStatsCarousel({ playlist, participants }: Props) {
             icon: Trophy,
             color: "text-yellow-500",
             type: "list",
-            data: mostEager.map((p, i) => ({
+            data: topSingersBySongs.map((p, i) => ({
                 rank: i + 1,
                 label: p.name,
-                value: t('songsCount', { count: p.songs }),
+                value: t('songsCount', { count: p.count }),
                 subValue: null
             }))
         },
@@ -172,11 +140,11 @@ export function FunStatsCarousel({ playlist, participants }: Props) {
             icon: ThumbsUp,
             color: "text-blue-400",
             type: "list",
-            data: topSongs.map((s, i) => ({
+            data: topSongsByApplause.map((s, i) => ({
                 rank: i + 1,
                 label: s.title,
-                value: `${formatCompactNumber(s.applauseCount)} 👏`,
-                subValue: s.singerName 
+                value: `${formatCompactNumber(s.applause)} 👏`,
+                subValue: s.singer 
             }))
         },
         {
@@ -185,7 +153,7 @@ export function FunStatsCarousel({ playlist, participants }: Props) {
             icon: Flower2,
             color: "text-pink-500",
             type: "list",
-            data: topDivas.map((p, i) => ({
+            data: topSingersByApplause.map((p, i) => ({
                 rank: i + 1,
                 label: p.name,
                 value: `${formatCompactNumber(p.applauseCount)} 👏`,
@@ -240,6 +208,14 @@ export function FunStatsCarousel({ playlist, participants }: Props) {
         touchStartRef.current = null;
     };
 
+    if (!stats) {
+        return (
+            <div className="bg-card rounded-lg p-8 border text-center text-muted-foreground h-[340px] flex items-center justify-center">
+                {t('waitingData')}
+            </div>
+        );
+    }
+
     if (activeStats.length === 0) {
         return (
             <div className="bg-card rounded-lg p-8 border text-center text-muted-foreground h-[340px] flex items-center justify-center">
@@ -249,6 +225,7 @@ export function FunStatsCarousel({ playlist, participants }: Props) {
     }
 
     const currentCard = activeStats[activeIndex];
+    // Ensure currentCard exists (handles index out of bounds if data changes)
     if (!currentCard) return null;
     
     const Icon = currentCard.icon;

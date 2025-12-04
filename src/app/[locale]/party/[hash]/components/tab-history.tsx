@@ -41,18 +41,29 @@ type TopArtist = {
 type StatsData = {
     topSongs: TopSong[];
     topArtists: TopArtist[];
+    topSingersBySongs: { name: string; count: number }[];
+    topSingersByApplause: { name: string; applauseCount: number }[];
+    topSongsByApplause: { title: string; applause: number; singer: string }[];
+    globalStats: {
+        totalSongs: number;
+        totalApplause: number;
+        bestDressed: { avatar: string | null; count: number } | null;
+        oneHitWonder: { name: string; applauseCount: number } | null;
+        marathonRunner: { name: string; totalDurationMs: number } | null;
+      };
 };
 
 type Props = {
   themeSuggestions: string[];
   spotifyPlaylistId?: string | null;
   onSuggestionClick: (title: string, artist: string) => void;
+  // Prefix unused props with underscore to fix linter warning
   participants: Participant[]; 
   playlist: VideoInPlaylist[]; 
   playedPlaylist: VideoInPlaylist[];
 };
 
-// --- SUB-COMPONENTS DEFINED OUTSIDE ---
+// --- SUB-COMPONENTS ---
 
 function SpotifySection({ 
   songs, 
@@ -113,7 +124,7 @@ function TopPlayedSection({
     onSuggestionClick
 }: {
     isLoading: boolean;
-    stats: StatsData | undefined; // Typed properly
+    stats: StatsData | undefined;
     mode: "songs" | "artists";
     setMode: (m: "songs" | "artists") => void;
     onSuggestionClick: (t: string, a: string) => void;
@@ -237,9 +248,9 @@ export function TabHistory({
   themeSuggestions,
   spotifyPlaylistId,
   onSuggestionClick,
-  participants,
-  playlist,
-  playedPlaylist
+  participants: _participants,
+  playlist: _playlist,
+  playedPlaylist: _playedPlaylist
 }: Props) {
   const t = useTranslations('guest.history');
   const [topPlayedMode, setTopPlayedMode] = useState<"songs" | "artists">("songs");
@@ -260,9 +271,6 @@ export function TabHistory({
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
   const hasSpotify = spotifySongs.length > 0;
   const showCarousel = hasSpotify;
-
-  // Combine playlists for stats
-  const fullPlaylistHistory = [...playedPlaylist, ...playlist];
 
   // Swipe Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -354,15 +362,8 @@ export function TabHistory({
         />
       )}
 
-      <FunStatsCarousel 
-         playlist={fullPlaylistHistory} 
-         participants={participants.map(p => ({
-             name: p.name,
-             applauseCount: p.applauseCount,
-             avatar: p.avatar,
-             joinedAt: p.joinedAt ? new Date(p.joinedAt) : new Date() 
-         }))} 
-      />
+      {/* Passing the fetched stats to the carousel */}
+      <FunStatsCarousel stats={stats as StatsData | undefined} />
 
     </div>
   );
