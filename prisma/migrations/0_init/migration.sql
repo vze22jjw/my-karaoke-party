@@ -106,3 +106,18 @@ ALTER TABLE "PartyParticipant" ADD CONSTRAINT "PartyParticipant_partyId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_partyId_fkey" FOREIGN KEY ("partyId") REFERENCES "Party"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AlterTable
+ALTER TABLE "Party" ADD COLUMN     "isManualSortActive" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "PlaylistItem" ADD COLUMN     "isPriority" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "PlaylistItem" ADD COLUMN "isManual" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "Party" ADD COLUMN "spotifyLink" TEXT;
+
+-- AlterTable
+ALTER TABLE "PlaylistItem" ADD COLUMN "applauseCount" INTEGER NOT NULL DEFAULT 0;

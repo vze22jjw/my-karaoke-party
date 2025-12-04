@@ -39,12 +39,14 @@ export const playlistRouter = createTRPCRouter({
           spotifyId: item.spotifyId,
           isPriority: item.isPriority,
           isManual: item.isManual,
+          applauseCount: item.applauseCount,
         })),
         settings: {
           orderByFairness: party.orderByFairness,
           disablePlayback: party.disablePlayback,
           spotifyPlaylistId: party.spotifyPlaylistId,
           isManualSortActive: party.isManualSortActive,
+          spotifyLink: party.spotifyLink,
         },
       };
     }),
@@ -262,12 +264,10 @@ export const playlistRouter = createTRPCRouter({
       }));
     }
 
-    // NEW: Top Artists Aggregation
     const topArtistsRaw = await ctx.db.playlistItem.groupBy({
         by: ["artist"],
         where: {
             playedAt: { not: null },
-            // FIX: Use AND to properly combine conditions
             AND: [
                 { artist: { not: null } },
                 { artist: { not: "" } }

@@ -8,7 +8,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useTranslations } from "next-intl";
 
 interface SocketActions {
-  addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => void;
+  addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => boolean;
   removeSong: (videoId: string) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
@@ -66,6 +66,7 @@ type PartySocketData = {
 };
 
 const LOG_TAG = "[SocketClient]";
+const CLIENT_RATE_LIMIT_MS = 1000; // 1 seconds client-side cooldown
 
 export function usePartySocket(
   partyHash: string,
@@ -100,6 +101,7 @@ export function usePartySocket(
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
+  const lastAddRef = useRef<number>(0);
 
   const hostName = useMemo(() => {
     const host = participants.find((p) => p.role === "Host");
@@ -269,7 +271,16 @@ export function usePartySocket(
   }, [partyHash]);
 
   const socketActions: SocketActions = useMemo(() => ({
-    addSong: (videoId, title, coverUrl, singerName) => socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName }),
+    addSong: (videoId, title, coverUrl, singerName) => {
+        const now = Date.now();
+        if (now - lastAddRef.current < CLIENT_RATE_LIMIT_MS) {
+            toast.error(tToasts('rateLimit'));
+            return false;
+        }
+        lastAddRef.current = now;
+        socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName });
+        return true;
+    },
     removeSong: (videoId) => socketRef.current?.emit("remove-song", { partyHash, videoId }),
     markAsPlayed: () => socketRef.current?.emit("mark-as-played", { partyHash }),
     toggleRules: (orderByFairness) => socketRef.current?.emit("toggle-rules", { partyHash, orderByFairness }),
@@ -291,7 +302,7 @@ export function usePartySocket(
     toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
     saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
     togglePriority: (videoId) => socketRef.current?.emit("toggle-priority", { partyHash, videoId }),
-  }), [partyHash, singerName, avatar, sendApplauseHttp]);
+  }), [partyHash, singerName, avatar, sendApplauseHttp, tToasts]);
 
   return {
     currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions,

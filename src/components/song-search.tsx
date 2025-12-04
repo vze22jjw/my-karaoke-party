@@ -9,7 +9,6 @@ import { api, type RouterOutputs } from "~/trpc/react";
 import { Search, Check, Loader2, Frown, X, Plus } from "lucide-react";
 import type { KaraokeParty } from "~/types/app-types";
 import { PreviewPlayer } from "./preview-player";
-// Removed unused import: removeBracketedContent
 import { decode } from "html-entities";
 import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
@@ -20,7 +19,7 @@ import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
 
 type Props = {
-  onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
+  onVideoAdded: (videoId: string, title: string, coverUrl: string) => boolean;
   playlist: KaraokeParty["playlist"];
   name: string;
   initialSearchQuery?: string;
@@ -93,7 +92,6 @@ export function SongSearch({
 
   return (
     <>
-      {/* STICKY HEADER WRAPPER */}
       <div className="sticky top-0 z-50 bg-card px-4 pb-4 pt-4 -mt-1 border-b shadow-sm">
         
         {children && <div className="mb-3">{children}</div>}
@@ -153,7 +151,6 @@ export function SongSearch({
         </form>
       </div>
 
-      {/* RESULTS AREA */}
       {isError && (
         <div className="px-4 mt-4">
             <Alert variant={"destructive"} className="bg-red-500 text-white">
@@ -246,23 +243,25 @@ export function SongSearch({
                       className="shadow-xl animate-in spin-in"
                       disabled={isDisabled}
                       onClick={() => {
-                        onVideoAdded(
+                        const success = onVideoAdded(
                           video.id.videoId,
                           decode(video.snippet.title), 
                           video.snippet.thumbnails.high.url,
                         );
 
-                        setFadingOutVideoIds((prev) => [
-                          ...prev,
-                          video.id.videoId,
-                        ]);
-
-                        setTimeout(() => {
-                          setRecentlyAddedVideoIds((prev) => [
+                        if (success) {
+                            setFadingOutVideoIds((prev) => [
                             ...prev,
                             video.id.videoId,
-                          ]);
-                        }, 500);
+                            ]);
+
+                            setTimeout(() => {
+                            setRecentlyAddedVideoIds((prev) => [
+                                ...prev,
+                                video.id.videoId,
+                            ]);
+                            }, 500);
+                        }
                       }}
                     >
                       {alreadyInQueue || isFadingOut ? (

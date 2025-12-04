@@ -272,27 +272,25 @@
     },
     "funStats": {
       "waitingData": "Waiting for party data...",
-      "topSingers": "Top Singers",
-      "clapsValue": "{count} Claps",
-      "totalHype": "Total Party Hype",
-      "totalApplause": "Total Applause Sent",
-      "marathonRunner": "The Marathon Runner",
-      "minsSung": "{count} mins sung",
-      "teamSpirit": "Team Spirit",
-      "teamName": "Team {avatar}",
-      "membersCount": "{count} members",
-      "earlyBird": "The Early Bird",
-      "firstToJoin": "First to join!",
-      "concertTime": "Total Concert Time",
-      "nonStopMusic": "Non-stop Music",
-      "oneHitWonder": "One Hit Wonder",
-      "clapsOneSong": "{count} claps (1 song)"
+      "mostEager": "Most Eager",
+      "encore": "Encore!",
+      "divas": "Divas",
+      "partyStats": "Party Highlights",
+      "loyalFans": "Loyal Fans",
+      "totalClaps": "Total Claps",
+      "marathon": "Marathon",
+      "bestDressed": "Best Dressed",
+      "oneHitWonder": "1-Hit Wonder",
+      "totalPlayed": "Total Played",
+      "duration": "Duration",
+      "songsCount": "{count} Songs",
+      "clapsValue": "{count} Claps"
     }
   },
   "applause": {
     "title": "Applause for",
     "waiting": "Waiting for Singers...",
-    "instruction": "Click repeatedly! Each clap is added to the singer's score.",
+    "instruction": "Click repeatedly! Each clap adds Friendship to the singer.",
     "back": "Back to Party"
   },
   "tour": {

@@ -17,7 +17,8 @@ function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
     createdAt: item.addedAt,
     spotifyId: item.spotifyId,
     isPriority: item.isPriority,
-    isManual: item.isManual, 
+    isManual: item.isManual,
+    applauseCount: item.applauseCount,
   };
 }
 

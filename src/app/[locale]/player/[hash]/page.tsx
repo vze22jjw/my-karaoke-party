@@ -55,7 +55,9 @@ export default async function PartyPage({ params }: Props) {
     settings: { 
       orderByFairness: true,
       disablePlayback: false,
-      spotifyPlaylistId: null
+      spotifyPlaylistId: null,
+      spotifyLink: null,
+      isManualSortActive: false
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,

@@ -271,28 +271,26 @@
       }
     },
     "funStats": {
-      "waitingData": "Aguardando dados da festa...",
-      "topSingers": "Top Cantores",
-      "clapsValue": "{count} Palmas",
-      "totalHype": "Hype Total da Festa",
-      "totalApplause": "Total de Aplausos",
-      "marathonRunner": "O Maratonista",
-      "minsSung": "{count} mins cantados",
-      "teamSpirit": "Espírito de Equipe",
-      "teamName": "Time {avatar}",
-      "membersCount": "{count} membros",
-      "earlyBird": "Madrugador",
-      "firstToJoin": "Primeiro a entrar!",
-      "concertTime": "Tempo de Show",
-      "nonStopMusic": "Música Sem Parar",
+      "waitingData": "Aguardando dados...",
+      "mostEager": "Mais Empolgados",
+      "encore": "Bis!",
+      "divas": "Divas",
+      "partyStats": "Destaques da Festa",
+      "loyalFans": "Fãs Leais",
+      "totalClaps": "Total de Palmas",
+      "marathon": "Maratona",
+      "bestDressed": "Mais Estiloso",
       "oneHitWonder": "Sucesso Único",
-      "clapsOneSong": "{count} palmas (1 música)"
+      "totalPlayed": "Total Tocado",
+      "duration": "Duração",
+      "songsCount": "{count} Músicas",
+      "clapsValue": "{count} Palmas"
     }
   },
   "applause": {
     "title": "Aplausos para",
     "waiting": "Aguardando Cantores...",
-    "instruction": "Clique repetidamente! Cada aplauso aumenta a pontuação do cantor.",
+    "instruction": "Clique repetidamente! Cada aplauso adiciona Amizade ao cantor.",
     "back": "Voltar para Festa"
   },
   "tour": {

@@ -141,20 +141,25 @@ export function PartySceneTabs({
     return myCurrentSongs.length >= MAX_QUEUE_PER_SINGER;
   }, [myCurrentSongs.length]);
 
-  const addSong = async (videoId: string, title: string, coverUrl: string) => {
-    if (hasReachedQueueLimit) return;
+  const addSong = (videoId: string, title: string, coverUrl: string) => {
+    if (hasReachedQueueLimit) return false;
 
     try {
-      socketActions.sendHeartbeat();
-      socketActions.addSong(videoId, title, coverUrl, name);
-      toast.success(tGuest('addSong.added'), {
-        description: decode(title),
-      });
+      const success = socketActions.addSong(videoId, title, coverUrl, name);
+      
+      if (success) {
+        socketActions.sendHeartbeat();
+        toast.success(tGuest('addSong.added'), {
+            description: decode(title),
+        });
+      }
+      return success;
     } catch (error) {
       console.error("Error adding song:", error);
       toast.error(tCommon('error'), {
         description: "Please try again.",
       });
+      return false;
     }
   };
 
@@ -227,11 +232,11 @@ export function PartySceneTabs({
             <span className="hidden sm:inline">{tGuest('tabs.add')}</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-orange-500" />
+            <Lightbulb className="h-4 w-4 text-yellow-500" />
             <span className="hidden sm:inline">{tGuest('tabs.suggestions')}</span>
           </TabsTrigger>
           <TabsTrigger value="singers" className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-yellow-500" />
+            <Users className="h-4 w-4 text-purple-400" />
             <span className="hidden sm:inline">{tGuest('tabs.singers')}</span>
           </TabsTrigger>
         </TabsList>
@@ -279,7 +284,7 @@ export function PartySceneTabs({
             themeSuggestions={themeSuggestions}
             spotifyPlaylistId={settings.spotifyPlaylistId}
             onSuggestionClick={handleSuggestionClick}
-            participants={participants} 
+            participants={participants}
             playlist={unplayedPlaylist}
             playedPlaylist={playedPlaylist}
           />

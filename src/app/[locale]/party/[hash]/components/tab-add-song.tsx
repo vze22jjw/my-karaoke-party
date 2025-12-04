@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 type Props = {
   playlist: VideoInPlaylist[];
   name: string;
-  onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
+  onVideoAdded: (videoId: string, title: string, coverUrl: string) => boolean;
   initialSearchQuery: string;
   onSearchQueryConsumed: () => void;
   hasReachedQueueLimit: boolean;
