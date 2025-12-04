@@ -6,13 +6,13 @@ import { CreateParty } from "~/components/create-party";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
-import { PartyPopper } from "lucide-react";
+import { PartyPopper, KeyRound } from "lucide-react";
 import { OpenPlayersButton } from "~/components/open-players-drawer";
-import { ConnectToHostButton } from "~/components/connect-to-host-drawer";
 import { useTranslations } from "next-intl";
 
 function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
     const t = useTranslations('startParty');
+    const tDrawers = useTranslations('drawers');
     
     return (
         <div className="flex w-full max-w-xs flex-col gap-4 mx-auto">
@@ -28,7 +28,16 @@ function FlowSelector({ onSelect }: { onSelect: (flow: "create") => void }) {
             
             <OpenPlayersButton />
             
-            <ConnectToHostButton />
+            <Button 
+                asChild 
+                variant="secondary"
+                className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
+            >
+                <Link href="/host">
+                    {tDrawers('connectHostBtn')}
+                    <KeyRound className="ml-3 h-6 w-6 text-cyan-400" />
+                </Link>
+            </Button>
             
             <Link
                 href="/"

@@ -6,10 +6,9 @@
 
 import { useState, useEffect } from "react";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { Plus, Search, Check, Loader2, Frown, X } from "lucide-react";
+import { Search, Check, Loader2, Frown, X, Plus } from "lucide-react";
 import type { KaraokeParty } from "~/types/app-types";
 import { PreviewPlayer } from "./preview-player";
-import { removeBracketedContent } from "~/utils/string";
 import { decode } from "html-entities";
 import { Input } from "./ui/ui/input";
 import { Button } from "./ui/ui/button";
@@ -20,12 +19,13 @@ import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
 
 type Props = {
-  onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
+  onVideoAdded: (videoId: string, title: string, coverUrl: string) => boolean;
   playlist: KaraokeParty["playlist"];
   name: string;
   initialSearchQuery?: string;
   onSearchQueryConsumed?: () => void;
   hasReachedQueueLimit?: boolean;
+  children?: React.ReactNode;
 };
 
 type YoutubeSearchItem = RouterOutputs["youtube"]["search"][number];
@@ -39,6 +39,7 @@ export function SongSearch({
   initialSearchQuery,
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
+  children,
 }: Props) {
   const t = useTranslations('guest.addSong');
 
@@ -90,81 +91,92 @@ export function SongSearch({
   }, [initialSearchQuery, refetch, onSearchQueryConsumed]); 
 
   return (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault();
-        onSearchQueryConsumed?.();
-        setRecentlyAddedVideoIds([]);
-        setFadingOutVideoIds([]);
-        await refetch();
-        setCanFetch(false);
-      }}
-    >
-      <div className="flex w-full items-center space-x-2">
-        <div className="relative flex-1">
-          <Input
-            type="text"
-            name="video-url"
-            placeholder={t('searchPlaceholder')}
-            className="w-full pr-10"
-            value={videoInputValue}
-            onChange={(e) => {
-              onSearchQueryConsumed?.();
-              setVideoInputValue(e.target.value);
-              setCanFetch(e.target.value.length >= 3);
+    <>
+      <div className="sticky top-0 z-50 bg-card px-4 pb-4 pt-4 -mt-1 border-b shadow-sm">
+        
+        {children && <div className="mb-3">{children}</div>}
+
+        <form
+            onSubmit={async (e) => {
+            e.preventDefault();
+            onSearchQueryConsumed?.();
+            setRecentlyAddedVideoIds([]);
+            setFadingOutVideoIds([]);
+            await refetch();
+            setCanFetch(false);
             }}
-            required
-            minLength={3}
-            autoComplete="off"
-          />
+        >
+            <div className="flex w-full items-center space-x-2">
+            <div className="relative flex-1">
+                <Input
+                type="text"
+                name="video-url"
+                placeholder={t('searchPlaceholder')}
+                className="w-full pr-10"
+                value={videoInputValue}
+                onChange={(e) => {
+                    onSearchQueryConsumed?.();
+                    setVideoInputValue(e.target.value);
+                    setCanFetch(e.target.value.length >= 3);
+                }}
+                required
+                minLength={3}
+                autoComplete="off"
+                />
 
-          {videoInputValue.length > 0 && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => {
-                onSearchQueryConsumed?.();
-                setVideoInputValue("");
-                setCanFetch(false);
-              }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+                {videoInputValue.length > 0 && (
+                <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                    onSearchQueryConsumed?.();
+                    setVideoInputValue("");
+                    setCanFetch(false);
+                    }}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                >
+                    <X className="h-4 w-4" />
+                </button>
+                )}
+            </div>
 
-        <Button type="submit" disabled={isLoading || !canFetch}>
-          {isLoading ? (
-            <Loader2 className="mx-1 h-6 w-6 animate-spin" />
-          ) : (
-            <Search className="mx-1 h-6 w-6" />
-          )}
-        </Button>
+            <Button type="submit" disabled={isLoading || !canFetch}>
+                {isLoading ? (
+                <Loader2 className="mx-1 h-6 w-6 animate-spin" />
+                ) : (
+                <Search className="mx-1 h-6 w-6" />
+                )}
+            </Button>
+            </div>
+        </form>
       </div>
 
       {isError && (
-        <Alert variant={"destructive"} className="mt-4 bg-red-500 text-white">
-          <Frown className="h-4 w-4" color="white" />
-          <AlertTitle>{t('errorTitle')}</AlertTitle>
-          <AlertDescription>
-            {t('errorDesc')}
-          </AlertDescription>
-        </Alert>
+        <div className="px-4 mt-4">
+            <Alert variant={"destructive"} className="bg-red-500 text-white">
+            <Frown className="h-4 w-4" color="white" />
+            <AlertTitle>{t('errorTitle')}</AlertTitle>
+            <AlertDescription>
+                {t('errorDesc')}
+            </AlertDescription>
+            </Alert>
+        </div>
       )}
 
       {isFetched && !isError && !data?.length && (
-        <Alert className="mt-4">
-          <Frown className="h-4 w-4" />
-          <AlertTitle>{t('notFoundTitle')}</AlertTitle>
-          <AlertDescription>
-            {t('notFoundDesc', { query: videoInputValue })}
-          </AlertDescription>
-        </Alert>
+        <div className="px-4 mt-4">
+            <Alert>
+            <Frown className="h-4 w-4" />
+            <AlertTitle>{t('notFoundTitle')}</AlertTitle>
+            <AlertDescription>
+                {t('notFoundDesc', { query: videoInputValue })}
+            </AlertDescription>
+            </Alert>
+        </div>
       )}
 
       {isLoading && (
-        <div className="my-5 flex flex-col space-y-5 overflow-hidden">
+        <div className="my-5 flex flex-col space-y-5 overflow-hidden px-4">
           <Skeleton className="h-48 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-xl" />
@@ -174,7 +186,7 @@ export function SongSearch({
       )}
 
       {data && (
-        <div className="my-5 flex flex-col space-y-5 overflow-hidden">
+        <div className="my-5 flex flex-col space-y-5 overflow-hidden px-4">
           {data
             .filter((video) => {
               const isRecentlyAdded = recentlyAddedVideoIds.includes(
@@ -192,7 +204,7 @@ export function SongSearch({
 
               const isFadingOut = fadingOutVideoIds.includes(video.id.videoId);
 
-              const displayTitle = decode(removeBracketedContent(video.snippet.title));
+              const displayTitle = decode(video.snippet.title);
               
               const isDisabled = alreadyInQueue || isFadingOut || hasReachedQueueLimit;
 
@@ -231,23 +243,25 @@ export function SongSearch({
                       className="shadow-xl animate-in spin-in"
                       disabled={isDisabled}
                       onClick={() => {
-                        onVideoAdded(
+                        const success = onVideoAdded(
                           video.id.videoId,
                           decode(video.snippet.title), 
                           video.snippet.thumbnails.high.url,
                         );
 
-                        setFadingOutVideoIds((prev) => [
-                          ...prev,
-                          video.id.videoId,
-                        ]);
-
-                        setTimeout(() => {
-                          setRecentlyAddedVideoIds((prev) => [
+                        if (success) {
+                            setFadingOutVideoIds((prev) => [
                             ...prev,
                             video.id.videoId,
-                          ]);
-                        }, 500);
+                            ]);
+
+                            setTimeout(() => {
+                            setRecentlyAddedVideoIds((prev) => [
+                                ...prev,
+                                video.id.videoId,
+                            ]);
+                            }, 500);
+                        }
                       }}
                     >
                       {alreadyInQueue || isFadingOut ? (
@@ -262,6 +276,6 @@ export function SongSearch({
             })}
         </div>
       )}
-    </form>
+    </>
   );
 }

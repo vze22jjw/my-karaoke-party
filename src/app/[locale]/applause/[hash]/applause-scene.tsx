@@ -60,7 +60,13 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
       currentSong: initialCurrentSong,
       unplayed: initialUnplayed,
       played: [],
-      settings: { orderByFairness: true },
+      settings: { 
+        orderByFairness: true,
+        disablePlayback: false,
+        spotifyPlaylistId: null,
+        spotifyLink: null,
+        isManualSortActive: false
+      },
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
       status: "STARTED",

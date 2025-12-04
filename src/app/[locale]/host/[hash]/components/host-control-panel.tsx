@@ -271,7 +271,9 @@ export function HostControlPanel({
                   duration: "0",
                   isPriority: false,
                   isManual: false,
-                  playedAt: null
+                  playedAt: null,
+                  spotifyId: null,
+                  applauseCount: 0
               }}
               playlist={playlist}
               onRemoveSong={onRemoveSong}

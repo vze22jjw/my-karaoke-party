@@ -14,7 +14,8 @@ export type VideoInPlaylist = {
     spotifyId?: string | null;
     createdAt?: Date; 
     isPriority: boolean;
-    isManual: boolean; 
+    isManual: boolean;
+    applauseCount: number;
 };
 
 /**

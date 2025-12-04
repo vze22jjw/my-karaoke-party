@@ -75,11 +75,12 @@ model PlaylistItem {
     singerName String
     addedAt    DateTime  @default(now())
     playedAt   DateTime?
-    orderIndex Int       @default(0) // Stores manual slot
+    orderIndex Int       @default(0)
     randomBreaker Float?
     spotifyId  String?
     isPriority Boolean   @default(false)
     isManual   Boolean   @default(false) 
+    applauseCount Int    @default(0)
     
     @@index([partyId])
     @@index([playedAt])

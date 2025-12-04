@@ -39,12 +39,14 @@ export const playlistRouter = createTRPCRouter({
           spotifyId: item.spotifyId,
           isPriority: item.isPriority,
           isManual: item.isManual,
+          applauseCount: item.applauseCount,
         })),
         settings: {
           orderByFairness: party.orderByFairness,
           disablePlayback: party.disablePlayback,
           spotifyPlaylistId: party.spotifyPlaylistId,
           isManualSortActive: party.isManualSortActive,
+          spotifyLink: party.spotifyLink,
         },
       };
     }),
@@ -262,6 +264,31 @@ export const playlistRouter = createTRPCRouter({
       }));
     }
 
+    const topArtistsRaw = await ctx.db.playlistItem.groupBy({
+        by: ["artist"],
+        where: {
+            playedAt: { not: null },
+            AND: [
+                { artist: { not: null } },
+                { artist: { not: "" } }
+            ]
+        },
+        _count: {
+            artist: true,
+        },
+        orderBy: {
+            _count: {
+                artist: "desc",
+            },
+        },
+        take: 5,
+    });
+
+    const topArtists = topArtistsRaw.map(a => ({
+        name: a.artist!,
+        count: a._count.artist,
+    }));
+
     const topSingersRaw = await ctx.db.playlistItem.groupBy({
       by: ["singerName"],
       where: {
@@ -312,6 +339,7 @@ export const playlistRouter = createTRPCRouter({
 
     return {
       topSongs,
+      topArtists,
       topSingersBySongs,
       topSingersByApplause,
       topSingers: topSingersBySongs, 

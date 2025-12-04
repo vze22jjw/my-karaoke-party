@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 type Props = {
   playlist: VideoInPlaylist[];
   name: string;
-  onVideoAdded: (videoId: string, title: string, coverUrl: string) => void;
+  onVideoAdded: (videoId: string, title: string, coverUrl: string) => boolean;
   initialSearchQuery: string;
   onSearchQueryConsumed: () => void;
   hasReachedQueueLimit: boolean;
@@ -55,33 +55,36 @@ export function TabAddSong({
 
   return (
     <div className="space-y-4">
-      <div className="bg-card rounded-lg p-4 border">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Music className="h-5 w-5" />
-          {t('title')}
-        </h2>
-
-        {isManualSortActive && (
-             <div className="mb-4 rounded-md bg-orange-900/50 border border-orange-500 p-3 text-center text-white font-bold animate-pulse">
-                {t('queueLocked')}
-             </div>
-        )}
-
-        {!isManualSortActive && hasReachedQueueLimit && (
-          <div className="mb-4 rounded-md bg-red-900/50 border border-red-700 p-2 text-center text-sm text-white font-medium">
-            {t('queueFull')}
-          </div>
-        )}
-
+      <div className="bg-card rounded-lg border">
+        
         <div className={isManualSortActive ? "opacity-50 pointer-events-none" : ""}>
             <SongSearch
-            onVideoAdded={onVideoAdded}
-            playlist={playlist}
-            name={name}
-            initialSearchQuery={initialSearchQuery}
-            onSearchQueryConsumed={onSearchQueryConsumed}
-            hasReachedQueueLimit={hasReachedQueueLimit || isManualSortActive}
-            />
+              onVideoAdded={onVideoAdded}
+              playlist={playlist}
+              name={name}
+              initialSearchQuery={initialSearchQuery}
+              onSearchQueryConsumed={onSearchQueryConsumed}
+              hasReachedQueueLimit={hasReachedQueueLimit || isManualSortActive}
+            >
+                <div>
+                    <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <Music className="h-5 w-5" />
+                        {t('title')}
+                    </h2>
+
+                    {isManualSortActive && (
+                        <div className="mb-3 rounded-md bg-orange-900/50 border border-orange-500 p-3 text-center text-white font-bold animate-pulse">
+                            {t('queueLocked')}
+                        </div>
+                    )}
+
+                    {!isManualSortActive && hasReachedQueueLimit && (
+                        <div className="mb-3 rounded-md bg-red-900/50 border border-red-700 p-2 text-center text-sm text-white font-medium">
+                            {t('queueFull')}
+                        </div>
+                    )}
+                </div>
+            </SongSearch>
         </div>
       </div>
 

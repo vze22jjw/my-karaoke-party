@@ -2,6 +2,7 @@
   "common": {
     "appName": "My Karaoke Party",
     "backToHome": "Voltar para o Início",
+    "back": "Voltar",
     "cancel": "Cancelar",
     "save": "Salvar",
     "loading": "Carregando...",
@@ -77,6 +78,12 @@
   },
   "host": {
     "dashboardTitle": "Painel do Anfitrião",
+    "tabsActive": "Ativas",
+    "tabsHistory": "Histórico",
+    "noActiveParties": "Nenhuma festa ativa.",
+    "noHistory": "Nenhuma festa arquivada encontrada.",
+    "noResultsDate": "Nenhuma festa encontrada para esta data.",
+    "page": "Pág",
     "dashboardDesc": "Gerencie todas as suas festas de karaokê em um só lugar.",
     "newParty": "Nova Festa",
     "noParties": "Nenhuma festa encontrada.",
@@ -130,7 +137,16 @@
         "info": "Selecione mensagens para exibir na TV. Você pode selecionar até 20.",
         "yourCreations": "Suas criações:",
         "selected": "Selecionado:",
-        "emptyLib": "A biblioteca está vazia."
+        "emptyLib": "A biblioteca está vazia.",
+        "manageLibrary": "Gerenciar Biblioteca",
+        "drawerDesc": "Selecione até 20 mensagens. Fechar esta gaveta sincronizará automaticamente as seleções.",
+        "addPlaceholder": "Adicionar nova mensagem...",
+        "searchPlaceholder": "Buscar mensagens...",
+        "creationsLeft": "Criações restantes: {count}",
+        "selectionsLeft": "Seleções restantes: {count}",
+        "noMessages": "Nenhuma mensagem encontrada.",
+        "pageCounter": "Página {current} / {total}",
+        "saveAndSync": "Salvar e Sincronizar ({count})"
       },
       "rules": {
         "title": "Regras da Festa",
@@ -230,12 +246,13 @@
     "history": {
       "suggestions": "Sugestões de Música",
       "hotSpotify": "Karaokê Quente do Spotify",
-      "topPlayed": "Mais Tocadas (Geral)",
+      "topPlayed": "Mais Tocadas",
       "topSingers": "Top Cantores",
       "noSongs": "Nenhuma música tocada ainda.",
       "noSingers": "Nenhum cantor ainda.",
       "sortBySongs": "Músicas",
-      "sortByClaps": "Palmas"
+      "sortByClaps": "Palmas",
+      "sortByArtists": "Artistas"
     },
     "singers": {
       "title": "Cantores",
@@ -252,6 +269,22 @@
         "singIn": "Cante em",
         "micIn": "Microfone em"
       }
+    },
+    "funStats": {
+      "waitingData": "Aguardando dados...",
+      "mostEager": "Mais Empolgados",
+      "encore": "Bis!",
+      "divas": "Divas",
+      "partyStats": "Destaques da Festa",
+      "loyalFans": "Fãs Leais",
+      "totalClaps": "Total de Palmas",
+      "marathon": "Maratona",
+      "bestDressed": "Mais Estiloso",
+      "oneHitWonder": "Sucesso Único",
+      "totalPlayed": "Total Tocado",
+      "duration": "Duração",
+      "songsCount": "{count} Músicas",
+      "clapsValue": "{count} Palmas"
     }
   },
   "applause": {

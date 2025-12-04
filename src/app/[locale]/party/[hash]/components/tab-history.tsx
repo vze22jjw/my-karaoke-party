@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Lightbulb, Trophy, Flame, Loader2, Music2, Music, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Lightbulb, Flame, Loader2, Music2, Plus, Mic2 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
-import { formatCompactNumber } from "~/utils/number";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
+import { FunStatsCarousel } from "./fun-stats-carousel";
+import type { VideoInPlaylist } from "~/types/app-types";
 
 type SpotifySong = {
   title: string;
@@ -16,25 +17,234 @@ type SpotifySong = {
   coverUrl: string;
 };
 
-type TopSinger = {
-  name: string;
-  count: number;
-  applauseCount: number;
-}
+type Participant = {
+    name: string;
+    role: string;
+    avatar: string | null;
+    applauseCount: number;
+    joinedAt?: Date | string; 
+};
+
+type TopSong = {
+    id: string;
+    title: string;
+    coverUrl: string;
+    count: number;
+    artist: string | null;
+};
+
+type TopArtist = {
+    name: string;
+    count: number;
+};
+
+type StatsData = {
+    topSongs: TopSong[];
+    topArtists: TopArtist[];
+};
 
 type Props = {
   themeSuggestions: string[];
   spotifyPlaylistId?: string | null;
   onSuggestionClick: (title: string, artist: string) => void;
+  participants: Participant[]; 
+  playlist: VideoInPlaylist[]; 
+  playedPlaylist: VideoInPlaylist[];
 };
+
+// --- SUB-COMPONENTS DEFINED OUTSIDE ---
+
+function SpotifySection({ 
+  songs, 
+  onSuggestionClick 
+}: { 
+  songs: SpotifySong[], 
+  onSuggestionClick: (t: string, a: string) => void 
+}) {
+  const t = useTranslations('guest.history');
+  
+  return (
+    <div className="bg-card rounded-lg p-4 border border-green-500/20 h-full">
+      <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
+        <Music2 className="h-5 w-5" />
+        {t('hotSpotify')}
+      </h2>
+      <ul className="space-y-1">
+        {songs.map((song, index) => (
+          <li key={index} className="flex items-center gap-3 pr-2 rounded transition-colors">
+            <button
+              type="button"
+              className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
+              onClick={() => onSuggestionClick(decode(song.title), song.artist)}
+            >
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md">
+                {song.coverUrl ? (
+                  <Image src={song.coverUrl} alt={song.title} fill className="object-cover" sizes="40px" />
+                ) : (
+                  <div className="h-full w-full bg-muted flex items-center justify-center text-xs">{index + 1}</div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{decode(song.title)}</p>
+                <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+              </div>
+            </button>
+            <Button
+              variant="default"
+              size="icon"
+              className="h-6 w-6 shadow-xl flex-shrink-0"
+              aria-label={`Search for ${song.title}`}
+              onClick={() => onSuggestionClick(decode(song.title), song.artist)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TopPlayedSection({
+    isLoading,
+    stats,
+    mode,
+    setMode,
+    onSuggestionClick
+}: {
+    isLoading: boolean;
+    stats: StatsData | undefined; // Typed properly
+    mode: "songs" | "artists";
+    setMode: (m: "songs" | "artists") => void;
+    onSuggestionClick: (t: string, a: string) => void;
+}) {
+    const t = useTranslations('guest.history');
+
+    return (
+        <div className="bg-card rounded-lg p-4 border h-full">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    {t('topPlayed')}
+                </h2>
+
+                <div className="flex items-center bg-muted rounded-md p-1">
+                    <button
+                        onClick={() => setMode("songs")}
+                        className={cn(
+                            "px-3 py-1 text-xs font-medium rounded-sm transition-all",
+                            mode === "songs" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        {t('sortBySongs')}
+                    </button>
+                    <button
+                        onClick={() => setMode("artists")}
+                        className={cn(
+                            "px-3 py-1 text-xs font-medium rounded-sm transition-all",
+                            mode === "artists" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        {t.has('sortByArtists') ? t('sortByArtists') : "Artists"}
+                    </button>
+                </div>
+            </div>
+
+            {isLoading ? (
+                <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+            ) : (
+                mode === "songs" ? (
+                    stats?.topSongs && stats.topSongs.length > 0 ? (
+                        <ul className="space-y-1">
+                            {stats.topSongs.map((song, index) => (
+                                <li key={song.id} className="flex items-center gap-3 pr-2 rounded transition-colors">
+                                    <button
+                                        type="button"
+                                        className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
+                                        onClick={() => onSuggestionClick(decode(song.title), song.artist ?? "")}
+                                    >
+                                        <div className="relative h-8 w-8 rounded-md bg-orange-500 text-white flex items-center justify-center font-semibold text-sm overflow-hidden">
+                                            {song.coverUrl ? (
+                                                <Image src={song.coverUrl} alt={song.title} fill className="object-cover" sizes="32px" />
+                                            ) : (
+                                                <span>{index + 1}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{decode(song.title)}</p>
+                                            <p className="text-xs text-muted-foreground">Played {song.count} time{song.count !== 1 ? "s" : ""}</p>
+                                        </div>
+                                    </button>
+                                    <Button
+                                        variant="default"
+                                        size="icon"
+                                        className="h-6 w-6 shadow-xl flex-shrink-0"
+                                        aria-label={`Search for ${song.title}`}
+                                        onClick={() => onSuggestionClick(decode(song.title), song.artist ?? "")}
+                                    >
+                                        <Plus className="h-3 w-3" />
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">{t('noSongs')}</p>
+                    )
+                ) : (
+                    stats?.topArtists && stats.topArtists.length > 0 ? (
+                        <ul className="space-y-1">
+                            {stats.topArtists.map((artist) => (
+                                <li key={artist.name} className="flex items-center gap-3 pr-2 rounded transition-colors">
+                                    <button
+                                        type="button"
+                                        className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
+                                        onClick={() => onSuggestionClick(artist.name, "")}
+                                    >
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center font-semibold text-sm">
+                                            <Mic2 className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{decode(artist.name)}</p>
+                                            <p className="text-xs text-muted-foreground">{artist.count} plays</p>
+                                        </div>
+                                    </button>
+                                    <Button
+                                        variant="default"
+                                        size="icon"
+                                        className="h-6 w-6 shadow-xl flex-shrink-0"
+                                        aria-label={`Search for ${artist.name}`}
+                                        onClick={() => onSuggestionClick(artist.name, "")}
+                                    >
+                                        <Plus className="h-3 w-3" />
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No artists played yet.</p>
+                    )
+                )
+            )}
+        </div>
+    );
+}
+
+// --- MAIN COMPONENT ---
 
 export function TabHistory({
   themeSuggestions,
   spotifyPlaylistId,
   onSuggestionClick,
+  participants,
+  playlist,
+  playedPlaylist
 }: Props) {
   const t = useTranslations('guest.history');
-  const [sortBy, setSortBy] = useState<"songs" | "applause">("songs");
+  const [topPlayedMode, setTopPlayedMode] = useState<"songs" | "artists">("songs");
+  const [slide, setSlide] = useState(0);
+  const touchStartRef = useRef<number | null>(null);
 
   const { data: stats, isLoading: isLoadingStats } =
     api.playlist.getGlobalStats.useQuery(undefined, {
@@ -48,13 +258,32 @@ export function TabHistory({
   );
 
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
+  const hasSpotify = spotifySongs.length > 0;
+  const showCarousel = hasSpotify;
 
-  const currentTopSingers = sortBy === "songs" 
-    ? stats?.topSingersBySongs 
-    : stats?.topSingersByApplause;
+  // Combine playlists for stats
+  const fullPlaylistHistory = [...playedPlaylist, ...playlist];
+
+  // Swipe Handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches[0]) {
+        touchStartRef.current = e.touches[0].clientX;
+    }
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+      if (touchStartRef.current === null || !e.changedTouches[0]) return;
+      const touchEnd = e.changedTouches[0].clientX;
+      const diff = touchStartRef.current - touchEnd;
+      
+      if (Math.abs(diff) > 50) {
+          if (diff > 0) setSlide(1); 
+          else setSlide(0); 
+      }
+      touchStartRef.current = null;
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-6">
       {themeSuggestions && themeSuggestions.length > 0 && (
         <div className="bg-card rounded-lg p-4 border">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
@@ -63,17 +292,12 @@ export function TabHistory({
           </h2>
           <ul className="space-y-2">
             {themeSuggestions.map((suggestion, index) => (
-              <li
-                key={index}
-                className="flex items-start gap-3 p-2 rounded transition-colors"
-              >
+              <li key={index} className="flex items-start gap-3 p-2 rounded transition-colors">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
                   {index + 1}
                 </div>
                 <div className="flex-1 min-w-0 mt-1.5">
-                  <p className="text-sm font-medium leading-relaxed">
-                    {suggestion}
-                  </p>
+                  <p className="text-sm font-medium leading-relaxed">{suggestion}</p>
                 </div>
               </li>
             ))}
@@ -81,203 +305,65 @@ export function TabHistory({
         </div>
       )}
 
-      {spotifySongs.length > 0 && (
-        <div className="bg-card rounded-lg p-4 border border-green-500/20">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-green-500">
-            <Music2 className="h-5 w-5" />
-            {t('hotSpotify')}
-          </h2>
-          <ul className="space-y-1">
-            {spotifySongs.map((song, index) => (
-              <li
-                key={index}
-                className="flex items-center gap-3 pr-2 rounded transition-colors"
-              >
-                <button
-                  type="button"
-                  className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
-                  onClick={() => onSuggestionClick(decode(song.title), song.artist)}
-                >
-                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md">
-                    {song.coverUrl ? (
-                      <Image
-                        src={song.coverUrl}
-                        alt={song.title}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-muted flex items-center justify-center text-xs">
-                        {index + 1}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{decode(song.title)}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {song.artist}
-                    </p>
-                  </div>
-                </button>
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="h-6 w-6 shadow-xl flex-shrink-0"
-                  aria-label={`Search for ${song.title}`}
-                  onClick={() => onSuggestionClick(decode(song.title), song.artist)}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </li>
-            ))}
-          </ul>
+      {showCarousel ? (
+        <div 
+          className="w-full overflow-hidden touch-pan-y select-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+           <div 
+             className="flex transition-transform duration-300 ease-in-out"
+             style={{ transform: `translateX(-${slide * 100}%)` }}
+           >
+              <div className="w-full flex-shrink-0 px-1">
+                <SpotifySection 
+                    songs={spotifySongs} 
+                    onSuggestionClick={onSuggestionClick} 
+                />
+              </div>
+              
+              <div className="w-full flex-shrink-0 px-1">
+                <TopPlayedSection 
+                    isLoading={isLoadingStats}
+                    stats={stats as StatsData | undefined} 
+                    mode={topPlayedMode}
+                    setMode={setTopPlayedMode}
+                    onSuggestionClick={onSuggestionClick}
+                />
+              </div>
+           </div>
+           
+           <div className="flex justify-center gap-2 mt-3">
+              <button 
+                 onClick={() => setSlide(0)}
+                 className={cn("h-2 w-2 rounded-full transition-all", slide === 0 ? "bg-primary w-4" : "bg-black/40 hover:bg-black/60")}
+              />
+              <button 
+                 onClick={() => setSlide(1)}
+                 className={cn("h-2 w-2 rounded-full transition-all", slide === 1 ? "bg-primary w-4" : "bg-black/40 hover:bg-black/60")}
+              />
+           </div>
         </div>
+      ) : (
+        <TopPlayedSection 
+            isLoading={isLoadingStats}
+            stats={stats as StatsData | undefined} 
+            mode={topPlayedMode}
+            setMode={setTopPlayedMode}
+            onSuggestionClick={onSuggestionClick}
+        />
       )}
 
-      <div className="bg-card rounded-lg p-4 border">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Flame className="h-5 w-5 text-orange-500" />
-          {t('topPlayed')}
-        </h2>
+      <FunStatsCarousel 
+         playlist={fullPlaylistHistory} 
+         participants={participants.map(p => ({
+             name: p.name,
+             applauseCount: p.applauseCount,
+             avatar: p.avatar,
+             joinedAt: p.joinedAt ? new Date(p.joinedAt) : new Date() 
+         }))} 
+      />
 
-        {isLoadingStats ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : stats?.topSongs && stats.topSongs.length > 0 ? (
-          <ul className="space-y-1">
-            {stats.topSongs.map((song, index) => (
-              <li
-                key={song.id}
-                className="flex items-center gap-3 pr-2 rounded transition-colors"
-              >
-                <button
-                  type="button"
-                  className="flex flex-1 items-center gap-3 p-2 min-w-0 text-left"
-                  onClick={() =>
-                    onSuggestionClick(decode(song.title), song.artist ?? "")
-                  }
-                >
-                  <div className="relative h-8 w-8 rounded-md bg-orange-500 text-white flex items-center justify-center font-semibold text-sm overflow-hidden">
-                    {song.coverUrl ? (
-                      <Image
-                        src={song.coverUrl}
-                        alt={song.title}
-                        fill
-                        className="object-cover"
-                        sizes="32px"
-                      />
-                    ) : (
-                      <span>{index + 1}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {decode(song.title)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Played {song.count} time{song.count !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </button>
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="h-6 w-6 shadow-xl flex-shrink-0"
-                  aria-label={`Search for ${song.title}`}
-                  onClick={() =>
-                    onSuggestionClick(decode(song.title), song.artist ?? "")
-                  }
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            {t('noSongs')}
-          </p>
-        )}
-      </div>
-
-      <div className="bg-card rounded-lg p-4 border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            {t('topSingers')}
-          </h2>
-          
-          <div className="flex items-center bg-muted rounded-md p-1">
-            <button
-              onClick={() => setSortBy("songs")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-sm transition-all",
-                sortBy === "songs" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t('sortBySongs')}
-            </button>
-            <button
-              onClick={() => setSortBy("applause")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-sm transition-all",
-                sortBy === "applause" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t('sortByClaps')}
-            </button>
-          </div>
-        </div>
-
-        {isLoadingStats ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : currentTopSingers && currentTopSingers.length > 0 ? (
-          <ul className="">
-            {(currentTopSingers as TopSinger[]).map((singer, index) => ( 
-              <li
-                key={singer.name}
-                className="flex items-center gap-3 py-1.5 px-2 rounded transition-colors"
-              >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-500 text-black flex items-center justify-center font-semibold text-sm">
-                  {index + 1}
-                </div>
-
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
-                  <p className="font-medium text-sm truncate">{singer.name}</p>
-                  <div className="flex flex-shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                    <span className={cn(
-                        "flex items-center gap-1.5 transition-opacity",
-                        sortBy === "songs" ? "opacity-100 font-medium text-primary" : "opacity-70"
-                    )}>
-                        <Music className="h-3 w-3" />
-                        <span>{singer.count}</span>
-                    </span>
-                    <span className={cn(
-                        "flex items-center gap-1.5 transition-opacity",
-                        sortBy === "applause" ? "opacity-100 font-medium text-primary" : "opacity-70"
-                    )}>
-                        👏
-                        <span>{formatCompactNumber(singer.applauseCount)}</span>
-                    </span>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            {t('noSingers')}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

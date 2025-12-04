@@ -54,7 +54,10 @@ export default async function PartyHashPage({ params }: Props) {
     played: [], 
     settings: { 
         orderByFairness: true,
-        spotifyPlaylistId: null
+        spotifyPlaylistId: null,
+        disablePlayback: false,
+        spotifyLink: null,
+        isManualSortActive: false
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
