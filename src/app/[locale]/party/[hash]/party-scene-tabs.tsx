@@ -217,7 +217,6 @@ export function PartySceneTabs({
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        // Use flex/overflow-hidden here to manage the overall layout area
         className="flex-1 flex flex-col overflow-hidden min-h-0 mt-4"
       >
         <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
@@ -242,7 +241,6 @@ export function PartySceneTabs({
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Player - Normal Scroll */}
         <TabsContent value="player" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabPlayer
             currentSong={currentSong}
@@ -252,7 +250,6 @@ export function PartySceneTabs({
           />
         </TabsContent>
 
-        {/* Tab 2: Add - Normal Scroll */}
         <TabsContent value="add" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabAddSong
             playlist={[
@@ -269,7 +266,6 @@ export function PartySceneTabs({
           />
         </TabsContent>
 
-        {/* Tab 3: Singers - LOCKED Header (No Scroll on container, flex-col to pass down height) */}
         <TabsContent value="singers" className="flex-1 overflow-hidden min-h-0 mt-0 w-full flex flex-col data-[state=inactive]:hidden">
           <TabSingers
             currentSong={currentSong}
@@ -284,7 +280,6 @@ export function PartySceneTabs({
           />
         </TabsContent>
 
-        {/* Tab 4: History - Normal Scroll */}
         <TabsContent value="history" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabHistory
             themeSuggestions={themeSuggestions}

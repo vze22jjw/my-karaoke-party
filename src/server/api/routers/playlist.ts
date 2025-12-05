@@ -202,12 +202,10 @@ export const playlistRouter = createTRPCRouter({
   getGlobalStats: publicProcedure.query(async ({ ctx }) => {
     const hasSpotify = !!(env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET);
     
-    // --- TOP SONGS ---
     let topSongs;
-    let rareGemSongs; // Bottom 5 songs
+    let rareGemSongs;
 
     if (hasSpotify) {
-      // Top 5
       const topSpotifyTracks = await ctx.db.playlistItem.groupBy({
         by: ["spotifyId"],
         where: {
@@ -219,7 +217,6 @@ export const playlistRouter = createTRPCRouter({
         take: 5,
       });
 
-      // Rare Gems (Bottom 5)
       const rareSpotifyTracks = await ctx.db.playlistItem.groupBy({
         by: ["spotifyId"],
         where: {
@@ -254,7 +251,6 @@ export const playlistRouter = createTRPCRouter({
       rareGemSongs = await fetchSpotifyDetails(rareSpotifyTracks);
 
     } else {
-      // Top 5 (No Spotify)
       const rawTopSongs = await ctx.db.playlistItem.groupBy({
         by: ["videoId", "title", "coverUrl"],
         where: { playedAt: { not: null } },
@@ -263,7 +259,6 @@ export const playlistRouter = createTRPCRouter({
         take: 5,
       });
 
-      // Rare Gems (No Spotify)
       const rawRareSongs = await ctx.db.playlistItem.groupBy({
         by: ["videoId", "title", "coverUrl"],
         where: { playedAt: { not: null } },
@@ -285,7 +280,6 @@ export const playlistRouter = createTRPCRouter({
       rareGemSongs = formatRawSongs(rawRareSongs);
     }
 
-    // --- TOP ARTISTS ---
     const getArtistStats = async (orderBy: "asc" | "desc") => {
         const raw = await ctx.db.playlistItem.groupBy({
             by: ["artist"],
@@ -302,8 +296,6 @@ export const playlistRouter = createTRPCRouter({
 
     const topArtists = await getArtistStats("desc");
     const rareGemArtists = await getArtistStats("asc");
-
-    // --- Global Aggregations ---
 
     // 1. Total Global Songs Played
     const totalGlobalSongs = await ctx.db.playlistItem.count({
@@ -438,9 +430,9 @@ export const playlistRouter = createTRPCRouter({
 
     return {
       topSongs,
-      rareGemSongs, // NEW
+      rareGemSongs,
       topArtists,
-      rareGemArtists, // NEW
+      rareGemArtists,
       topSingersBySongs,
       topSingersByApplause,
       topSingers: topSingersBySongs, 

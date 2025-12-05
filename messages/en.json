@@ -12,7 +12,8 @@
     "leave": "Leave",
     "viewHistory": "View History",
     "terms": "Terms of Service",
-    "readOnly": "Read-Only"
+    "readOnly": "Read-Only",
+    "you": "You"
   },
   "home": {
     "joinParty": "Join Party",
@@ -135,6 +136,9 @@
         "synced": "Synced!",
         "limitError": "You have reached your message creation limit.",
         "info": "Select messages to display on the TV. You can select up to 20.",
+        "infoLabel": "How it works",
+        "featureDetails": "These messages cycle on the Player screen when the party is paused or the queue is empty. Select up to 20 messages from the library to sync.",
+        "formatTip": "💡 Tip: Use 'Message @ Author' to display as a quote. (e.g. 'Hello World @ Host')",
         "yourCreations": "Your creations:",
         "selected": "Selected to sync:",
         "emptyLib": "The shared library is empty.",
@@ -398,7 +402,7 @@
       "restoreSuccess": "Restored: {success} parties. Skipped: {skipped}.",
       "restoreFailed": "Failed to restore backup.",
       "maxSelected": "Max 20 messages selected for sync.",
-      "creationLimit": "You have reached your 20 message creation limit.",
+      "creationLimit": "You have reached your message creation limit.",
       "messageAdded": "Message added to library. Check it to sync.",
       "syncSuccess": "Synced {count} messages to the player!"
     },

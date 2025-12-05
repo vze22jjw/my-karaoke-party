@@ -292,7 +292,6 @@ export function FunStatsCarousel({ stats }: Props) {
                 </div>
             </div>
 
-            {/* Matches TabHistory dot style exactly: gap-3, p-2 target, internal transition */}
             <div className="flex justify-center gap-3 mt-3 shrink-0 h-5 items-center">
                 {activeStats.map((_, idx) => (
                     <button

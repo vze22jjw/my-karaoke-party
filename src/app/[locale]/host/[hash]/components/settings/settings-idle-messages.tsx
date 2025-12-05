@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Input } from "~/components/ui/ui/input";
 import { 
-  Plus, X, Check, Globe, Square, CheckSquare, Search, Library, ChevronLeft, ChevronRight 
+  Plus, X, Check, Globe, Square, CheckSquare, Search, Library, ChevronLeft, ChevronRight, Info 
 } from "lucide-react";
 import {
   Drawer,
@@ -17,6 +17,7 @@ import {
 } from "~/components/ui/ui/drawer";
 import type { IdleMessage } from "@prisma/client";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/ui/alert";
 import { cn } from "~/lib/utils";
 import { useLocalStorage } from "@mantine/hooks";
 import { useTranslations } from "next-intl";
@@ -45,6 +46,7 @@ export function SettingsIdleMessages({
   const tCommon = useTranslations('common');
   
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showDrawerInfo, setShowDrawerInfo] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -167,17 +169,46 @@ export function SettingsIdleMessages({
             <DrawerContent className="h-[90vh] flex flex-col">
                 <div className="mx-auto w-full max-w-2xl flex-1 flex flex-col overflow-hidden">
                     <DrawerHeader>
-                        <DrawerTitle>{t('title')}</DrawerTitle>
+                        <div className="flex items-center justify-between">
+                           <DrawerTitle>{t('title')}</DrawerTitle>
+                           <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="gap-2 text-primary"
+                              onClick={() => setShowDrawerInfo(!showDrawerInfo)}
+                           >
+                             <Info className="h-4 w-4" />
+                             {t('infoLabel')}
+                           </Button>
+                        </div>
                         <DrawerDescription>
                             {t('drawerDesc')}
                         </DrawerDescription>
                     </DrawerHeader>
 
+                    {/* DETAILED INFO SECTION INSIDE DRAWER */}
+                    {showDrawerInfo && (
+                      <div className="px-4 pb-2 animate-in fade-in slide-in-from-top-2">
+                        <Alert className="bg-muted/50 border-primary/20">
+                          <AlertTitle className="flex items-center gap-2 text-primary font-bold">
+                            <Info className="h-4 w-4" />
+                            {t('infoLabel')}
+                          </AlertTitle>
+                          <AlertDescription className="mt-2 space-y-2 text-xs sm:text-sm">
+                            <p>{t('featureDetails')}</p>
+                            <p className="font-medium text-foreground bg-background p-2 rounded border border-border/50">
+                              {t('formatTip')}
+                            </p>
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    )}
+
                     {/* CREATION & SEARCH AREA */}
                     <div className="px-4 py-2 space-y-4 shrink-0">
                         <div className="flex gap-2">
                             <Input
-                                placeholder={t('addPlaceholder')}
+                                placeholder={t('placeholder')}
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 disabled={(isPartyClosed ?? false) || creationLimitRemaining <= 0}
@@ -218,16 +249,16 @@ export function SettingsIdleMessages({
                                     <div
                                         key={msg.id}
                                         className={cn(
-                                            "flex items-center gap-3 rounded-lg p-3 border transition-all",
+                                            "flex items-center gap-3 rounded-lg p-3 border transition-all cursor-pointer",
                                             isSelected 
                                                 ? "bg-primary/10 border-primary/40 shadow-sm" 
                                                 : "bg-card border-border hover:border-primary/20"
                                         )}
                                         onClick={() => toggleSelection(msg.id)}
                                     >
-                                        <button className="text-primary shrink-0">
+                                        <div className="text-primary shrink-0">
                                             {isSelected ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5 text-muted-foreground" />}
-                                        </button>
+                                        </div>
                                         
                                         <div className="flex-1 min-w-0">
                                             <p className={cn("text-sm font-medium truncate", isSelected && "text-primary")}>

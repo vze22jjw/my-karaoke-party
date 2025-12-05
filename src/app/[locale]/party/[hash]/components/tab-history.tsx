@@ -11,7 +11,6 @@ import { useTranslations } from "next-intl";
 import { FunStatsCarousel } from "./fun-stats-carousel";
 import type { VideoInPlaylist } from "~/types/app-types";
 
-// --- Types ---
 type SpotifySong = {
   title: string;
   artist: string;
@@ -60,13 +59,10 @@ type Props = {
   themeSuggestions: string[];
   spotifyPlaylistId?: string | null;
   onSuggestionClick: (title: string, artist: string) => void;
-  // Prefix unused props with underscore to fix linter warning
   participants: Participant[]; 
   playlist: VideoInPlaylist[]; 
   playedPlaylist: VideoInPlaylist[];
 };
-
-// --- SUB-COMPONENTS ---
 
 function SpotifySection({ 
   songs, 
@@ -86,7 +82,6 @@ function SpotifySection({
       <ul className="space-y-1">
         {songs.map((song, index) => (
           <li key={index} className="flex items-center gap-3 pr-0 rounded transition-colors group">
-            {/* Reduced tap area: Left side is text only */}
             <div className="flex flex-1 items-center gap-3 p-2 min-w-0">
               <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md">
                 {song.coverUrl ? (
@@ -100,7 +95,6 @@ function SpotifySection({
                 <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
               </div>
             </div>
-            {/* Right side is the interactive button */}
             <Button
               variant="default"
               size="icon"
@@ -146,7 +140,6 @@ function SongStatsCard({
                     {title}
                 </h2>
                 
-                {/* Toggle Switch */}
                 <button
                     onClick={() => setShowRare(!showRare)}
                     className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-muted rounded hover:bg-muted/80 transition-colors"
@@ -275,8 +268,6 @@ function ArtistStatsCard({
     );
 }
 
-// --- MAIN COMPONENT ---
-
 export function TabHistory({
   themeSuggestions,
   spotifyPlaylistId,
@@ -303,18 +294,15 @@ export function TabHistory({
   const spotifySongs = (spotifyData ?? []) as SpotifySong[];
   const hasSpotify = spotifySongs.length > 0;
 
-  // Determine slides based on content availability
   const slides = [];
   if (hasSpotify) slides.push("spotify");
   slides.push("songs");
   slides.push("artists");
 
-  // Ensure index is valid when slides change
   if (slide >= slides.length && slides.length > 0) {
       setSlide(0);
   }
 
-  // Swipe Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches[0]) {
         touchStartRef.current = e.touches[0].clientX;
@@ -327,10 +315,8 @@ export function TabHistory({
       
       if (Math.abs(diff) > 50) {
           if (diff > 0) {
-              // Next
               setSlide((prev) => (prev + 1) % slides.length);
           } else {
-              // Prev
               setSlide((prev) => (prev - 1 + slides.length) % slides.length);
           }
       }
@@ -338,9 +324,7 @@ export function TabHistory({
   };
 
   return (
-    <div className="space-y-4 pb-6">
-      
-      {/* Host Suggestions - Always Visible */}
+    <div className="space-y-4 pb-6">  
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
           <Lightbulb className="h-5 w-5 text-yellow-500" />
@@ -364,7 +348,6 @@ export function TabHistory({
         )}
       </div>
 
-      {/* Main Suggestions Carousel */}
       <div 
         className="w-full overflow-hidden touch-pan-y select-none"
         onTouchStart={handleTouchStart}
@@ -419,7 +402,6 @@ export function TabHistory({
            </div>
       </div>
 
-      {/* Fun Stats Carousel (No changes to styles, width matches parent) */}
       <FunStatsCarousel stats={stats as StatsData | undefined} />
 
     </div>
