@@ -186,7 +186,7 @@ function SongStatsCard({
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">{t('noSongs')}</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">{t('emptyData')}</p>
                 )}
             </div>
         </div>

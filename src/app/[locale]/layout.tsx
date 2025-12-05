@@ -11,6 +11,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from "next/navigation";
 import { env } from "~/env";
 import { GlobalFooter } from "~/components/global-footer";
+import { PwaAutoReload } from "~/components/pwa-auto-reload";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -94,7 +95,10 @@ export default async function RootLayout({
       </head>
       <body className="bg-gradient min-h-screen">
         <NextIntlClientProvider messages={messages}>
-            <TRPCReactProvider>{children}</TRPCReactProvider>
+            <TRPCReactProvider>
+              {children}
+              <PwaAutoReload />
+            </TRPCReactProvider>
             <Analytics />
             <SpeedInsights />
             <AxiomWebVitals />

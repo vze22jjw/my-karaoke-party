@@ -6,6 +6,8 @@ import { Alert, AlertDescription } from "~/components/ui/ui/alert";
 import { Info, Download, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { api } from "~/trpc/react";
+import { useRouter } from "~/navigation";
 
 export function SettingsBackup() {
   const t = useTranslations('host.settings.backup');
@@ -14,6 +16,9 @@ export function SettingsBackup() {
   const [isImporting, setIsImporting] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const utils = api.useUtils();
+  const router = useRouter();
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -83,6 +88,10 @@ export function SettingsBackup() {
       }
 
       toast.success(tCommon('success'));
+      
+      await utils.playlist.getGlobalStats.invalidate();
+      router.refresh();
+
     } catch (error) {
       toast.error(tCommon('error'));
       console.error(error);

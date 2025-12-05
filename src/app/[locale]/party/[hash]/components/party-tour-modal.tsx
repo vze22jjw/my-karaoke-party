@@ -22,7 +22,7 @@ type Props = {
 
 export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
   const t = useTranslations('tour.party');
-  const tTour = useTranslations('tour'); // Moved to top level
+  const tTour = useTranslations('tour');
   const [step, setStep] = useState(0);
 
   const steps = [

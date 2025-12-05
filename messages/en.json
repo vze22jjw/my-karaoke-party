@@ -264,7 +264,8 @@
       "sortBySongs": "Songs",
       "sortByClaps": "Claps",
       "sortByArtists": "Artists",
-      "playedTimes": "{count, plural, =1 {1 play} other {# plays}}"
+      "playedTimes": "{count, plural, =1 {1 play} other {# plays}}",
+      "emptyData": "No global data yet. Be the first to sing!"
     },
     "singers": {
       "title": "Singers",
@@ -283,7 +284,8 @@
       }
     },
     "funStats": {
-      "waitingData": "Waiting for party data...",
+      "loading": "Loading global stats...",
+      "empty": "No global history yet. Play songs to generate stats!",
       "mostEager": "Most Eager",
       "encore": "Encore!",
       "divas": "Divas",

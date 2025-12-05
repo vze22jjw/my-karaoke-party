@@ -163,6 +163,10 @@ export function HostScene({ party, initialData, hostName }: Props) {
     setTimeout(fireConfetti, 300);
   };
 
+  const handleStartParty = () => {
+    statusMutation.mutate({ hash: party.hash!, status: "STARTED" });
+  };
+
   const handleToggleIntermission = () => {
     const statusToSend = partyStatus === "OPEN" ? "STARTED" : "OPEN";
     statusMutation.mutate({ hash: party.hash!, status: statusToSend });
@@ -244,7 +248,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
         playedSongCount={playedPlaylist.length}
         unplayedSongCount={unplayedPlaylist.length}
         partyStatus={partyStatus}
-        onStartParty={socketActions.startParty}
+        onStartParty={handleStartParty}
         onToggleIntermission={handleToggleIntermission}
         
         hostIdleMessages={sharedIdleMessages ?? []} 

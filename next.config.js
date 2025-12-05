@@ -1,6 +1,7 @@
 import { withAxiom } from "next-axiom";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { createRequire } from "module"; 
+import withSerwistInit from "@serwist/next";
 
 const require = createRequire(import.meta.url);
 const pkg = require("./package.json");
@@ -8,6 +9,11 @@ const pkg = require("./package.json");
 await import("./src/env.js");
 
 const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/sw.ts",
+  swDest: "public/sw.js",
+});
 
 /** @type {import("next").NextConfig} */
 const config = {
@@ -30,4 +36,4 @@ const config = {
   }
 };
 
-export default withAxiom(withNextIntl(config));
+export default withAxiom(withNextIntl(withSerwist(config)));
