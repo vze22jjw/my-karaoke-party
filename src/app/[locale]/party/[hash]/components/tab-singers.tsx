@@ -77,10 +77,8 @@ export function TabSingers({
   };
 
   return (
-    // Outer container: Flex column, full height, NO SCROLL here.
     <div className="bg-card rounded-lg border h-full flex flex-col overflow-hidden relative">
       
-      {/* HEADER: Fixed at top. Kept p-4 here for the header spacing. */}
       <div className="flex-shrink-0 p-4 border-b border-border/10 bg-card z-10">
         <div className="flex items-center justify-between h-12 gap-1">
           
@@ -129,7 +127,6 @@ export function TabSingers({
         </div>
       </div>
 
-      {/* LIST: Scrollable area. Reduced padding to px-2 to restore tile width. */}
       <div className="flex-1 overflow-y-auto min-h-0 px-2 pb-4">
         {participants.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">No singers yet</p>
