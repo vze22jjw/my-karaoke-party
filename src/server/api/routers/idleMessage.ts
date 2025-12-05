@@ -39,9 +39,6 @@ export const idleMessageRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Delete an idle message by its ID.
-   */
   delete: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
