@@ -5,6 +5,7 @@ import { spotifyService } from "~/server/lib/spotify";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import { cookies } from "next/headers";
+import { parseISO8601Duration } from "~/utils/string";
 
 export const playlistRouter = createTRPCRouter({
   getPlaylist: publicProcedure
@@ -202,6 +203,7 @@ export const playlistRouter = createTRPCRouter({
     const hasSpotify = !!(env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET);
     
     let topSongs;
+    let rareGemSongs;
 
     if (hasSpotify) {
       const topSpotifyTracks = await ctx.db.playlistItem.groupBy({
@@ -210,83 +212,158 @@ export const playlistRouter = createTRPCRouter({
           playedAt: { not: null },
           spotifyId: { not: null },
         },
-        _count: {
-          spotifyId: true,
-        },
-        orderBy: {
-          _count: {
-            spotifyId: "desc",
-          },
-        },
+        _count: { spotifyId: true },
+        orderBy: { _count: { spotifyId: "desc" } },
         take: 5,
       });
 
-      topSongs = await Promise.all(
-        topSpotifyTracks.map(async (group) => {
-          const details = await ctx.db.playlistItem.findFirst({
-            where: { spotifyId: group.spotifyId },
-            orderBy: { playedAt: "desc" },
-            select: { title: true, coverUrl: true, artist: true }
-          });
+      const rareSpotifyTracks = await ctx.db.playlistItem.groupBy({
+        by: ["spotifyId"],
+        where: {
+          playedAt: { not: null },
+          spotifyId: { not: null },
+        },
+        _count: { spotifyId: true },
+        orderBy: { _count: { spotifyId: "asc" } }, // Ascending for rare
+        take: 5,
+      });
 
-          return {
-            id: group.spotifyId!,
-            title: details?.title ?? "Unknown",
-            coverUrl: details?.coverUrl ?? "",
-            count: group._count.spotifyId,
-            artist: details?.artist ?? null,
-          };
-        })
-      );
+      const fetchSpotifyDetails = async (tracks: typeof topSpotifyTracks) => {
+        return await Promise.all(
+          tracks.map(async (group) => {
+            const details = await ctx.db.playlistItem.findFirst({
+              where: { spotifyId: group.spotifyId },
+              orderBy: { playedAt: "desc" },
+              select: { title: true, coverUrl: true, artist: true }
+            });
+            return {
+              id: group.spotifyId!,
+              title: details?.title ?? "Unknown",
+              coverUrl: details?.coverUrl ?? "",
+              count: group._count.spotifyId,
+              artist: details?.artist ?? null,
+            };
+          })
+        );
+      };
+
+      topSongs = await fetchSpotifyDetails(topSpotifyTracks);
+      rareGemSongs = await fetchSpotifyDetails(rareSpotifyTracks);
+
     } else {
       const rawTopSongs = await ctx.db.playlistItem.groupBy({
         by: ["videoId", "title", "coverUrl"],
-        where: {
-          playedAt: { not: null },
-        },
-        _count: {
-          videoId: true,
-        },
-        orderBy: {
-          _count: {
-            videoId: "desc",
-          },
-        },
+        where: { playedAt: { not: null } },
+        _count: { videoId: true },
+        orderBy: { _count: { videoId: "desc" } },
         take: 5,
       });
 
-      topSongs = rawTopSongs.map(s => ({
-        id: s.videoId,
-        title: s.title,
-        coverUrl: s.coverUrl,
-        count: s._count.videoId,
-        artist: null,
-      }));
+      const rawRareSongs = await ctx.db.playlistItem.groupBy({
+        by: ["videoId", "title", "coverUrl"],
+        where: { playedAt: { not: null } },
+        _count: { videoId: true },
+        orderBy: { _count: { videoId: "asc" } },
+        take: 5,
+      });
+
+      const formatRawSongs = (songs: typeof rawTopSongs) => 
+        songs.map(s => ({
+          id: s.videoId,
+          title: s.title,
+          coverUrl: s.coverUrl,
+          count: s._count.videoId,
+          artist: null,
+        }));
+
+      topSongs = formatRawSongs(rawTopSongs);
+      rareGemSongs = formatRawSongs(rawRareSongs);
     }
 
-    const topArtistsRaw = await ctx.db.playlistItem.groupBy({
-        by: ["artist"],
-        where: {
-            playedAt: { not: null },
-            AND: [
-                { artist: { not: null } },
-                { artist: { not: "" } }
-            ]
-        },
-        _count: {
-            artist: true,
-        },
-        orderBy: {
-            _count: {
-                artist: "desc",
+    const getArtistStats = async (orderBy: "asc" | "desc") => {
+        const raw = await ctx.db.playlistItem.groupBy({
+            by: ["artist"],
+            where: {
+                playedAt: { not: null },
+                AND: [{ artist: { not: null } }, { artist: { not: "" } }]
             },
-        },
-        take: 5,
+            _count: { artist: true },
+            orderBy: { _count: { artist: orderBy } },
+            take: 5,
+        });
+        return raw.map(a => ({ name: a.artist!, count: a._count.artist }));
+    };
+
+    const topArtists = await getArtistStats("desc");
+    const rareGemArtists = await getArtistStats("asc");
+
+    // 1. Total Global Songs Played
+    const totalGlobalSongs = await ctx.db.playlistItem.count({
+        where: { playedAt: { not: null } }
     });
 
-    const topArtists = topArtistsRaw.map(a => ({
-        name: a.artist!,
-        count: a._count.artist,
+    // 2. Total Global Applause
+    const totalApplauseAgg = await ctx.db.partyParticipant.aggregate({
+        _sum: { applauseCount: true }
+    });
+    const totalGlobalApplause = totalApplauseAgg._sum.applauseCount ?? 0;
+
+    // 3. Best Dressed
+    const topAvatarRaw = await ctx.db.partyParticipant.groupBy({
+        by: ["avatar"],
+        where: { avatar: { not: null } },
+        _count: { avatar: true },
+        orderBy: { _count: { avatar: "desc" } },
+        take: 1
+    });
+    const bestDressed = topAvatarRaw[0] ? {
+        avatar: topAvatarRaw[0].avatar,
+        count: topAvatarRaw[0]._count.avatar
+    } : null;
+
+    // 4. Marathon Runner (Global)
+    const allPlayedItems = await ctx.db.playlistItem.findMany({
+        where: { playedAt: { not: null }, duration: { not: null } },
+        select: { singerName: true, duration: true }
+    });
+
+    const singerDurationMap = new Map<string, number>();
+    allPlayedItems.forEach(item => {
+        if (item.duration) {
+            const ms = parseISO8601Duration(item.duration) ?? 0;
+            const current = singerDurationMap.get(item.singerName) ?? 0;
+            singerDurationMap.set(item.singerName, current + ms);
+        }
+    });
+
+    let maxDurationMs = 0;
+    let marathonSingerName: string | null = null;
+    for (const [singer, duration] of singerDurationMap.entries()) {
+        if (duration > maxDurationMs) {
+            maxDurationMs = duration;
+            marathonSingerName = singer;
+        }
+    }
+
+    const marathonRunner = marathonSingerName ? {
+        name: marathonSingerName,
+        totalDurationMs: maxDurationMs
+    } : null;
+
+    // 5. Top Songs by Applause ("Encore")
+    const topApplauseSongsRaw = await ctx.db.playlistItem.groupBy({
+        by: ["title", "singerName"],
+        where: { applauseCount: { gt: 0 } },
+        _sum: { applauseCount: true },
+        orderBy: { _sum: { applauseCount: "desc" } },
+        take: 5
+    });
+    
+    const topSongsByApplause = topApplauseSongsRaw.map((s, i) => ({
+        rank: i + 1,
+        title: s.title,
+        applause: s._sum.applauseCount ?? 0,
+        singer: s.singerName
     }));
 
     const topSingersRaw = await ctx.db.playlistItem.groupBy({
@@ -311,17 +388,31 @@ export const playlistRouter = createTRPCRouter({
       }
     });
 
-    const applauseMap = new Map(participants.map(p => [p.name, p.applauseCount]));
-
-    const allSingers = topSingersRaw.map(s => {
-      const songsSung = s._count.singerName;
-      const applause = applauseMap.get(s.singerName) ?? 0;
-      return {
-        name: s.singerName,
-        count: songsSung,
-        applauseCount: applause, 
-      };
+    const applauseMap = new Map<string, number>();
+    participants.forEach(p => {
+        const current = applauseMap.get(p.name) ?? 0;
+        applauseMap.set(p.name, current + p.applauseCount);
     });
+
+    const allSingers = topSingersRaw.map(s => ({
+        name: s.singerName,
+        count: s._count.singerName,
+        applauseCount: applauseMap.get(s.singerName) ?? 0, 
+    }));
+
+    // One Hit Wonder (Least hits, most applause)
+    const sortedForOneHit = [...allSingers].sort((a, b) => {
+        if (a.count !== b.count) {
+            return a.count - b.count; 
+        }
+        return b.applauseCount - a.applauseCount;
+    });
+
+    const oneHitWonderRaw = sortedForOneHit[0];
+    const oneHitWonder = oneHitWonderRaw ? {
+        name: oneHitWonderRaw.name,
+        applauseCount: oneHitWonderRaw.applauseCount
+    } : null;
 
     const topSingersBySongs = [...allSingers].sort((a, b) => {
       if (b.count !== a.count) {
@@ -339,10 +430,20 @@ export const playlistRouter = createTRPCRouter({
 
     return {
       topSongs,
+      rareGemSongs,
       topArtists,
+      rareGemArtists,
       topSingersBySongs,
       topSingersByApplause,
       topSingers: topSingersBySongs, 
+      topSongsByApplause,
+      globalStats: {
+          totalSongs: totalGlobalSongs,
+          totalApplause: totalGlobalApplause,
+          bestDressed,
+          oneHitWonder,
+          marathonRunner 
+      }
     };
   }),
 });

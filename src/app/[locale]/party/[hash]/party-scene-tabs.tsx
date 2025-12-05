@@ -217,7 +217,7 @@ export function PartySceneTabs({
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex-1 flex flex-col overflow-hidden mt-4"
+        className="flex-1 flex flex-col overflow-hidden min-h-0 mt-4"
       >
         <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
           <TabsTrigger value="player" className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export function PartySceneTabs({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="player" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="player" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabPlayer
             currentSong={currentSong}
             playlist={unplayedPlaylist}
@@ -250,7 +250,7 @@ export function PartySceneTabs({
           />
         </TabsContent>
 
-        <TabsContent value="add" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="add" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabAddSong
             playlist={[
               ...(currentSong ? [currentSong] : []),
@@ -266,7 +266,7 @@ export function PartySceneTabs({
           />
         </TabsContent>
 
-        <TabsContent value="singers" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="singers" className="flex-1 overflow-hidden min-h-0 mt-0 w-full flex flex-col data-[state=inactive]:hidden">
           <TabSingers
             currentSong={currentSong}
             unplayedPlaylist={unplayedPlaylist}
@@ -279,7 +279,8 @@ export function PartySceneTabs({
             onReplayTour={handleReplayTour}
           />
         </TabsContent>
-        <TabsContent value="history" className="flex-1 overflow-y-auto mt-0">
+
+        <TabsContent value="history" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabHistory
             themeSuggestions={themeSuggestions}
             spotifyPlaylistId={settings.spotifyPlaylistId}
