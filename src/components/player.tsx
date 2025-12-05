@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { type VideoInPlaylist } from "~/types/app-types";
 import { decode } from "html-entities";
@@ -51,6 +51,51 @@ export function Player({
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
+  
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const interact = useCallback(() => {
+    setShowControls(true);
+    
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+
+    if (internalIsPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000); // Hide after 3 seconds of inactivity
+    }
+  }, [internalIsPlaying]);
+
+  useEffect(() => {
+    const handleActivity = () => interact();
+    
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+
+    interact();
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, [interact]);
+
+  useEffect(() => {
+    if (!internalIsPlaying) {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    } else {
+      interact();
+    }
+  }, [internalIsPlaying, interact]);
 
   useEffect(() => {
     setIsReady(false);
@@ -169,7 +214,7 @@ export function Player({
         </div>
       )}
 
-      <div className={cn("transition-opacity duration-500", internalIsPlaying && isFullscreen ? "opacity-0 hover:opacity-100" : "opacity-100")}>
+      <div className={cn("transition-opacity duration-500", showControls ? "opacity-100" : "opacity-0")}>
          <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
          <div className="absolute bottom-20 right-24 z-20">
             <Button

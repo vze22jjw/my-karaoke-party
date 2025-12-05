@@ -83,15 +83,12 @@ export default function JoinScene({
     defaultValue: AVATARS[0]!,
   });
 
-  // --- Randomize Avatars on Client Mount ---
   const [avatarOptions, setAvatarOptions] = useState(AVATARS);
 
   useEffect(() => {
-    // Simple shuffle
     const shuffled = [...AVATARS].sort(() => Math.random() - 0.5);
     setAvatarOptions(shuffled);
   }, []);
-  // -----------------------------------------
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -121,7 +118,6 @@ export default function JoinScene({
 
   return (
     <main className="flex min-h-screen flex-col items-center text-white">
-      {/* ADDED justify-center to vertically align the entire block */}
       <div className="container flex flex-1 flex-col items-center justify-center gap-2 px-4 pt-4 pb-12">
         <Image
           src={logo}
