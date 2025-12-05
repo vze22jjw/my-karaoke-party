@@ -244,15 +244,23 @@
       "errorDesc": "Houve um erro inesperado ao buscar vídeos. Tente novamente."
     },
     "history": {
-      "suggestions": "Sugestões de Música",
+      "suggestions": "Sugestões do Anfitrião",
+      "hostPlaceholder": "Seu Anfitrião Sabe..",
       "hotSpotify": "Karaokê Quente do Spotify",
       "topPlayed": "Mais Tocadas",
+      "topArtists": "Top Artistas",
+      "rareGems": "Jóias Raras",
+      "rareArtists": "Artistas Raros",
       "topSingers": "Top Cantores",
+      "showTop": "Mostrar Top 5",
+      "showRare": "Mostrar Raros",
       "noSongs": "Nenhuma música tocada ainda.",
       "noSingers": "Nenhum cantor ainda.",
+      "noArtists": "Nenhum artista tocou ainda.",
       "sortBySongs": "Músicas",
       "sortByClaps": "Palmas",
-      "sortByArtists": "Artistas"
+      "sortByArtists": "Artistas",
+      "playedTimes": "{count, plural, =1 {1 vez} other {# vezes}}"
     },
     "singers": {
       "title": "Cantores",
@@ -329,7 +337,7 @@
         "step7Title": "7. Spotify e Busca",
         "step7Desc": "Adicione um **ID de Playlist Spotify** ou Link.",
         "step8Title": "8. Ferramentas de Dados",
-        "step8Desc": "**Exporte** músicas ou faça **Backup** do histórico da festa.",
+        "step8Desc": "**Export** músicas ou faça **Backup** do histórico da festa.",
         "step9Title": "9. Configurações de Idioma",
         "step9Desc": "Você pode alternar entre **Inglês** e **Português** usando o botão no rodapé (se configurado).",
         "finish": "Entendi, vamos começar!"

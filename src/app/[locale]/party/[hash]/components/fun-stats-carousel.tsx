@@ -66,12 +66,10 @@ const CARD_DURATION = 10000;
 export function FunStatsCarousel({ stats }: Props) {
     const t = useTranslations('guest.funStats');
     
-    // Hooks must be called unconditionally at the top
     const [activeIndex, setActiveIndex] = useState(0);
     const touchStartRef = useRef<number | null>(null);
     const autoRotateRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Prepare data safely (defaults if stats is undefined)
     const topSingersBySongs = stats?.topSingersBySongs ?? [];
     const topSingersByApplause = stats?.topSingersByApplause ?? [];
     const topSongsByApplause = stats?.topSongsByApplause ?? [];
@@ -84,7 +82,6 @@ export function FunStatsCarousel({ stats }: Props) {
         marathonRunner: null
     };
 
-    // Build Cards Logic (always runs)
     const rawGridItems: (GridItem | null)[] = [
         {
             label: t('loyalFans'),
@@ -210,7 +207,7 @@ export function FunStatsCarousel({ stats }: Props) {
 
     if (!stats) {
         return (
-            <div className="bg-card rounded-lg p-8 border text-center text-muted-foreground h-[340px] flex items-center justify-center">
+            <div className="bg-card rounded-lg p-3 border text-center text-muted-foreground h-[300px] flex items-center justify-center">
                 {t('waitingData')}
             </div>
         );
@@ -218,14 +215,13 @@ export function FunStatsCarousel({ stats }: Props) {
 
     if (activeStats.length === 0) {
         return (
-            <div className="bg-card rounded-lg p-8 border text-center text-muted-foreground h-[340px] flex items-center justify-center">
+            <div className="bg-card rounded-lg p-3 border text-center text-muted-foreground h-[300px] flex items-center justify-center">
                 {t('waitingData')}
             </div>
         );
     }
 
     const currentCard = activeStats[activeIndex];
-    // Ensure currentCard exists (handles index out of bounds if data changes)
     if (!currentCard) return null;
     
     const Icon = currentCard.icon;
@@ -236,7 +232,7 @@ export function FunStatsCarousel({ stats }: Props) {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
-            <div className="bg-card rounded-lg p-4 border h-[340px] flex flex-col relative overflow-hidden transition-all duration-300">
+            <div className="bg-card rounded-lg p-3 border h-[300px] flex flex-col relative overflow-hidden transition-all duration-300">
                 <div className="flex items-center gap-2 mb-3 shrink-0">
                     <Icon className={cn("h-5 w-5", currentCard.color)} />
                     <h2 className="text-lg font-semibold">{currentCard.title}</h2>
@@ -245,32 +241,28 @@ export function FunStatsCarousel({ stats }: Props) {
                 <div className="flex-1 overflow-y-hidden">
                     {currentCard.type === "list" ? (
                         <div className="space-y-1.5 animate-in fade-in slide-in-from-right-4 duration-300 key={activeIndex}">
-                            {currentCard.data.length > 0 ? (
-                                currentCard.data.map((item, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-white/5 h-[42px]">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className={cn(
-                                                "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs",
-                                                item.rank === 1 ? "bg-yellow-500 text-black" : 
-                                                item.rank === 2 ? "bg-slate-300 text-black" : 
-                                                item.rank === 3 ? "bg-orange-700 text-white" : 
-                                                "bg-muted text-muted-foreground"
-                                            )}>
-                                                {item.rank}
-                                            </div>
-                                            <div className="min-w-0 flex flex-col justify-center">
-                                                <p className="font-medium truncate text-sm leading-tight">{item.label}</p>
-                                                {item.subValue && <p className="text-[10px] text-muted-foreground truncate leading-tight">{item.subValue}</p>}
-                                            </div>
+                            {currentCard.data.map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-white/5 h-[42px]">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className={cn(
+                                            "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs",
+                                            item.rank === 1 ? "bg-yellow-500 text-black" : 
+                                            item.rank === 2 ? "bg-slate-300 text-black" : 
+                                            item.rank === 3 ? "bg-orange-700 text-white" : 
+                                            "bg-muted text-muted-foreground"
+                                        )}>
+                                            {item.rank}
                                         </div>
-                                        <span className={cn("font-bold font-mono text-xs whitespace-nowrap ml-2", currentCard.color)}>
-                                            {item.value}
-                                        </span>
+                                        <div className="min-w-0 flex flex-col justify-center">
+                                            <p className="font-medium truncate text-sm leading-tight">{item.label}</p>
+                                            {item.subValue && <p className="text-[10px] text-muted-foreground truncate leading-tight">{item.subValue}</p>}
+                                        </div>
                                     </div>
-                                ))
-                            ) : (
-                                <p className="text-center text-muted-foreground text-sm pt-10">{t('waitingData')}</p>
-                            )}
+                                    <span className={cn("font-bold font-mono text-xs whitespace-nowrap ml-2", currentCard.color)}>
+                                        {item.value}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-1.5 animate-in fade-in slide-in-from-right-4 duration-300 key={activeIndex}">
@@ -300,21 +292,20 @@ export function FunStatsCarousel({ stats }: Props) {
                 </div>
             </div>
 
-            <div className="flex justify-center gap-2 mt-3 shrink-0 h-5 items-center">
+            {/* Matches TabHistory dot style exactly: gap-3, p-2 target, internal transition */}
+            <div className="flex justify-center gap-3 mt-3 shrink-0 h-5 items-center">
                 {activeStats.map((_, idx) => (
                     <button
                         key={idx}
                         onClick={() => setActiveIndex(idx)}
-                        className="w-8 h-8 flex items-center justify-center focus:outline-none group"
-                        aria-label={`Slide ${idx + 1}`}
-                    >
-                        <div className={cn(
-                            "h-2 rounded-full transition-all duration-300",
-                            idx === activeIndex 
-                                ? "bg-primary w-6"
-                                : "bg-muted-foreground w-2 group-hover:bg-primary/70"
-                        )} />
-                    </button>
+                        className={cn(
+                            "h-2 rounded-full transition-all duration-300 p-2 focus:outline-none", 
+                            activeIndex === idx 
+                                ? "bg-primary w-6" 
+                                : "bg-black/40 hover:bg-black/60 w-2"
+                        )}
+                        aria-label={`Go to slide ${idx + 1}`}
+                    />
                 ))}
             </div>
         </div>

@@ -202,93 +202,106 @@ export const playlistRouter = createTRPCRouter({
   getGlobalStats: publicProcedure.query(async ({ ctx }) => {
     const hasSpotify = !!(env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET);
     
+    // --- TOP SONGS ---
     let topSongs;
+    let rareGemSongs; // Bottom 5 songs
 
     if (hasSpotify) {
+      // Top 5
       const topSpotifyTracks = await ctx.db.playlistItem.groupBy({
         by: ["spotifyId"],
         where: {
           playedAt: { not: null },
           spotifyId: { not: null },
         },
-        _count: {
-          spotifyId: true,
-        },
-        orderBy: {
-          _count: {
-            spotifyId: "desc",
-          },
-        },
+        _count: { spotifyId: true },
+        orderBy: { _count: { spotifyId: "desc" } },
         take: 5,
       });
 
-      topSongs = await Promise.all(
-        topSpotifyTracks.map(async (group) => {
-          const details = await ctx.db.playlistItem.findFirst({
-            where: { spotifyId: group.spotifyId },
-            orderBy: { playedAt: "desc" },
-            select: { title: true, coverUrl: true, artist: true }
-          });
-
-          return {
-            id: group.spotifyId!,
-            title: details?.title ?? "Unknown",
-            coverUrl: details?.coverUrl ?? "",
-            count: group._count.spotifyId,
-            artist: details?.artist ?? null,
-          };
-        })
-      );
-    } else {
-      const rawTopSongs = await ctx.db.playlistItem.groupBy({
-        by: ["videoId", "title", "coverUrl"],
+      // Rare Gems (Bottom 5)
+      const rareSpotifyTracks = await ctx.db.playlistItem.groupBy({
+        by: ["spotifyId"],
         where: {
           playedAt: { not: null },
+          spotifyId: { not: null },
         },
-        _count: {
-          videoId: true,
-        },
-        orderBy: {
-          _count: {
-            videoId: "desc",
-          },
-        },
+        _count: { spotifyId: true },
+        orderBy: { _count: { spotifyId: "asc" } }, // Ascending for rare
         take: 5,
       });
 
-      topSongs = rawTopSongs.map(s => ({
-        id: s.videoId,
-        title: s.title,
-        coverUrl: s.coverUrl,
-        count: s._count.videoId,
-        artist: null,
-      }));
+      const fetchSpotifyDetails = async (tracks: typeof topSpotifyTracks) => {
+        return await Promise.all(
+          tracks.map(async (group) => {
+            const details = await ctx.db.playlistItem.findFirst({
+              where: { spotifyId: group.spotifyId },
+              orderBy: { playedAt: "desc" },
+              select: { title: true, coverUrl: true, artist: true }
+            });
+            return {
+              id: group.spotifyId!,
+              title: details?.title ?? "Unknown",
+              coverUrl: details?.coverUrl ?? "",
+              count: group._count.spotifyId,
+              artist: details?.artist ?? null,
+            };
+          })
+        );
+      };
+
+      topSongs = await fetchSpotifyDetails(topSpotifyTracks);
+      rareGemSongs = await fetchSpotifyDetails(rareSpotifyTracks);
+
+    } else {
+      // Top 5 (No Spotify)
+      const rawTopSongs = await ctx.db.playlistItem.groupBy({
+        by: ["videoId", "title", "coverUrl"],
+        where: { playedAt: { not: null } },
+        _count: { videoId: true },
+        orderBy: { _count: { videoId: "desc" } },
+        take: 5,
+      });
+
+      // Rare Gems (No Spotify)
+      const rawRareSongs = await ctx.db.playlistItem.groupBy({
+        by: ["videoId", "title", "coverUrl"],
+        where: { playedAt: { not: null } },
+        _count: { videoId: true },
+        orderBy: { _count: { videoId: "asc" } },
+        take: 5,
+      });
+
+      const formatRawSongs = (songs: typeof rawTopSongs) => 
+        songs.map(s => ({
+          id: s.videoId,
+          title: s.title,
+          coverUrl: s.coverUrl,
+          count: s._count.videoId,
+          artist: null,
+        }));
+
+      topSongs = formatRawSongs(rawTopSongs);
+      rareGemSongs = formatRawSongs(rawRareSongs);
     }
 
-    const topArtistsRaw = await ctx.db.playlistItem.groupBy({
-        by: ["artist"],
-        where: {
-            playedAt: { not: null },
-            AND: [
-                { artist: { not: null } },
-                { artist: { not: "" } }
-            ]
-        },
-        _count: {
-            artist: true,
-        },
-        orderBy: {
-            _count: {
-                artist: "desc",
+    // --- TOP ARTISTS ---
+    const getArtistStats = async (orderBy: "asc" | "desc") => {
+        const raw = await ctx.db.playlistItem.groupBy({
+            by: ["artist"],
+            where: {
+                playedAt: { not: null },
+                AND: [{ artist: { not: null } }, { artist: { not: "" } }]
             },
-        },
-        take: 5,
-    });
+            _count: { artist: true },
+            orderBy: { _count: { artist: orderBy } },
+            take: 5,
+        });
+        return raw.map(a => ({ name: a.artist!, count: a._count.artist }));
+    };
 
-    const topArtists = topArtistsRaw.map(a => ({
-        name: a.artist!,
-        count: a._count.artist,
-    }));
+    const topArtists = await getArtistStats("desc");
+    const rareGemArtists = await getArtistStats("asc");
 
     // --- Global Aggregations ---
 
@@ -425,7 +438,9 @@ export const playlistRouter = createTRPCRouter({
 
     return {
       topSongs,
+      rareGemSongs, // NEW
       topArtists,
+      rareGemArtists, // NEW
       topSingersBySongs,
       topSingersByApplause,
       topSingers: topSingersBySongs, 
