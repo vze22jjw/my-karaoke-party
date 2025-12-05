@@ -208,7 +208,7 @@ export function FunStatsCarousel({ stats }: Props) {
     if (!stats) {
         return (
             <div className="bg-card rounded-lg p-3 border text-center text-muted-foreground h-[300px] flex items-center justify-center">
-                {t('waitingData')}
+                {t('loading')}
             </div>
         );
     }
@@ -216,7 +216,7 @@ export function FunStatsCarousel({ stats }: Props) {
     if (activeStats.length === 0) {
         return (
             <div className="bg-card rounded-lg p-3 border text-center text-muted-foreground h-[300px] flex items-center justify-center">
-                {t('waitingData')}
+                {t('empty')}
             </div>
         );
     }
@@ -303,7 +303,7 @@ export function FunStatsCarousel({ stats }: Props) {
                                 ? "bg-primary w-6" 
                                 : "bg-black/40 hover:bg-black/60 w-2"
                         )}
-                        aria-label={`Go to slide ${idx + 1}`}
+                        aria-label={`Slide ${idx + 1}`}
                     />
                 ))}
             </div>

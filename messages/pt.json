@@ -264,7 +264,8 @@
       "sortBySongs": "Músicas",
       "sortByClaps": "Palmas",
       "sortByArtists": "Artistas",
-      "playedTimes": "{count, plural, =1 {1 vez} other {# vezes}}"
+      "playedTimes": "{count, plural, =1 {1 vez} other {# vezes}}",
+      "emptyData": "Sem dados globais. Seja o primeiro a cantar!"
     },
     "singers": {
       "title": "Cantores",
@@ -283,7 +284,8 @@
       }
     },
     "funStats": {
-      "waitingData": "Aguardando dados...",
+      "loading": "Carregando estatísticas...",
+      "empty": "Sem histórico global. Toque músicas para gerar dados!",
       "mostEager": "Mais Empolgados",
       "encore": "Bis!",
       "divas": "Divas",
