@@ -51,13 +51,15 @@ services:
       NEXT_PUBLIC_VERCEL_URL: ${NEXT_PUBLIC_VERCEL_URL}
       NODE_ENV: ${NODE_ENV}
       NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED}
+      ## Used for Auhtentication
       ADMIN_TOKEN: ${ADMIN_TOKEN}
+      ## DEBUG logging optional
       EVENT_DEBUG: ${EVENT_DEBUG}
       NEXT_PUBLIC_EVENT_DEBUG: ${NEXT_PUBLIC_EVENT_DEBUG}
       ## Spotify API Credentials Optional
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
-      ## Optional links to extranl applause sounds
+      ## Optional links to extrnal applause sounds
       NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: ${NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL}
       # Default Language (en or pt)
       NEXT_PUBLIC_DEFAULT_LOCALE: ${NEXT_PUBLIC_DEFAULT_LOCALE}
