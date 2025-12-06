@@ -1,4 +1,4 @@
-name: Build and Push to ECR Public
+name: Build and Push (Hybrid Fallback)
 
 on:
   pull_request:
@@ -6,101 +6,155 @@ on:
     types: [ closed ]
   workflow_dispatch:
   schedule:
-    - cron: '12 9 3 * *' ## Monthly run at 9:12 AM UTC
+    - cron: '12 9 3 * *' # Monthly run
 
 env:
   VERSION: "1.0b"
+  FINAL_TAG: "app-latest"
+  # Base for the temporary tags: app-0.3b-build<RUN_NUMBER>
+  IMAGE_TAG_BASE: "app-1.0b-build${{ github.run_number }}"
 
 jobs:
-  build-and-push:
-    timeout-minutes: 30
-    if: >
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
-    runs-on: [my-karaoke-runner]
-    
+  # -----------------------------------------------------------------
+  # JOB 1: AMD64 (Critical - Must Succeed)
+  # Runs on your Self-Hosted Runner
+  # -----------------------------------------------------------------
+  build-amd64:
+    name: Build AMD64 (Stable)
+    runs-on: [self-hosted, my-karaoke-runner]
     permissions:
       contents: read
-      id-token: write 
-
+      id-token: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Needed for git rev-parse in your script
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=moby/buildkit:latest
-
-      - name: Configure AWS credentials
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # ECR Public requires us-east-1
+          aws-region: us-east-1
 
-      - name: Setup AWS Profile for Script
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} --profile default
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile default
-          aws configure set region us-east-1 --profile default
-
-      - name: Create Build Environment Config
+      - name: Create Config
         run: |
           mkdir -p docker-builds
-          cat <<EOF > docker-builds/.env-build
-          AWS_PROFILE=default
-          AWS_REGION=us-east-1
-          ECR_REGISTRY=${{ vars.ECR_REGISTRY }}
-          ECR_REPOSITORY=${{ vars.ECR_REPOSITORY }}
-          EOF
+          echo "AWS_PROFILE=default" > docker-builds/.env-build
+          echo "AWS_REGION=us-east-1" >> docker-builds/.env-build
+          echo "ECR_REGISTRY=${{ vars.ECR_REGISTRY }}" >> docker-builds/.env-build
+          echo "ECR_REPOSITORY=${{ vars.ECR_REPOSITORY }}" >> docker-builds/.env-build
 
-      - name: Build and Push
-        id: build_script
+      - name: Build & Push
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          chmod +x docker-builds/docker-build.sh
-          bash docker-builds/docker-build.sh --build-type release --deploy
+          chmod +x docker-builds/docker-build-ci.sh
+          bash docker-builds/docker-build-ci.sh --build-type release --deploy --platform linux/amd64
+
+  # -----------------------------------------------------------------
+  # JOB 2: ARM64 (Optional - Allowed to Fail)
+  # Runs on GitHub Public Runner
+  # -----------------------------------------------------------------
+  build-arm64:
+    name: Build ARM64 (Experimental)
+    runs-on: ubuntu-latest
+    continue-on-error: true # <--- This prevents the workflow from stopping if this fails
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create Config
+        run: |
+          mkdir -p docker-builds
+          echo "AWS_PROFILE=default" > docker-builds/.env-build
+          echo "AWS_REGION=us-east-1" >> docker-builds/.env-build
+          echo "ECR_REGISTRY=${{ vars.ECR_REGISTRY }}" >> docker-builds/.env-build
+          echo "ECR_REPOSITORY=${{ vars.ECR_REPOSITORY }}" >> docker-builds/.env-build
+
+      - name: Build & Push (Retry Enabled)
+        id: build
+        uses: nick-fields/retry@v3
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          shell: bash
+          command: |
+            chmod +x docker-builds/docker-build-ci.sh
+            bash docker-builds/docker-build-ci.sh --build-type release --deploy --platform linux/arm64
+
+  # -----------------------------------------------------------------
+  # JOB 3: Finalize (Merge or Retag)
+  # -----------------------------------------------------------------
+  finalize-deployment:
+    name: Finalize Tags
+    needs: [build-amd64, build-arm64]
+    runs-on: [self-hosted, my-karaoke-runner]
+    # Run only if AMD64 succeeded. We don't care if ARM64 failed/cancelled.
+    if: always() && needs.build-amd64.result == 'success'
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin ${{ vars.ECR_REGISTRY }}
+
+      - name: Create and Push 'latest' Tag
+        run: |
+          # Define full image paths
+          REPO="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY }}"
           
-          # Export variables for the summary step
-          echo "VERSION=${{ env.VERSION }}.${{ github.run_number }}" >> $GITHUB_ENV
-          echo "REGISTRY=${{ vars.ECR_REGISTRY }}" >> $GITHUB_ENV
-          echo "REPO=${{ vars.ECR_REPOSITORY }}" >> $GITHUB_ENV
-      
-      - name: Trigger Portainer Re-Deploy Webhook
-        if: success()
-        run: |
-          echo "Triggering Portainer redeploy..."
-          curl -s -X POST ${{ secrets.PORTAINER_WEBHOOK_URL }}
-          echo "Webhook trigger complete."
-      
-      - name: Generate Build Summary
-        if: always()
-        run: |
-          echo "## 🚀 Build Success!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 ECR Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "| Type | Tag | Image URI |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Versioned** | \`app-$VERSION\` | \`$REGISTRY/$REPO:app-$VERSION\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Latest** | \`app-latest\` | \`$REGISTRY/$REPO:app-latest\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [View in Amazon ECR Public Gallery](https://gallery.ecr.aws/$(echo $REGISTRY | cut -d'/' -f2)/$REPO)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ℹ️ Build Info" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          # The tags that were pushed by the previous jobs
+          AMD_REF="${REPO}:${{ env.IMAGE_TAG_BASE }}_linux-amd64"
+          ARM_REF="${REPO}:${{ env.IMAGE_TAG_BASE }}_linux-arm64"
+          
+          LATEST_TAG="${REPO}:${{ env.FINAL_TAG }}"
+          VERSIONED_TAG="${REPO}:app-v${{ env.VERSION }}-${{ github.run_number }}"
 
-  # --- NEW JOB: CALL PRUNE WORKFLOW ---
-  trigger-prune:
-    needs: build-and-push
-    if: success() # Only prune if the build/push was successful
-    uses: ./.github/workflows/prune-ecr-images.yml
-    secrets: inherit
+          echo "Checking ARM64 status..."
+          
+          if [ "${{ needs.build-arm64.result }}" == "success" ]; then
+            echo "✅ ARM64 Build Succeeded! Creating Multi-Arch Manifest..."
+            
+            # Create manifest list combining both
+            docker buildx imagetools create -t $LATEST_TAG -t $VERSIONED_TAG \
+              $AMD_REF \
+              $ARM_REF
+              
+          else
+            echo "⚠️ ARM64 Build Failed or Skipped. Fallback to AMD64 only."
+            
+            # Create manifest pointing ONLY to AMD64 (effectively retagging it)
+            docker buildx imagetools create -t $LATEST_TAG -t $VERSIONED_TAG \
+              $AMD_REF
+          fi
+
+      - name: Trigger Portainer Webhook
+        run: curl -X POST ${{ secrets.PORTAINER_WEBHOOK_URL }}
+
+      - name: Summary
+        run: |
+          echo "### 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ needs.build-arm64.result == 'success' && 'Multi-Arch (Best)' || 'AMD64 Only (Stable)' }}" >> $GITHUB_STEP_SUMMARY
