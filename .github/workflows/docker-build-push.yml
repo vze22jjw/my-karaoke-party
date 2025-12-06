@@ -9,7 +9,7 @@ on:
     - cron: '12 9 3 * *' ## Monthly run at 9:12 AM UTC
 
 env:
-  VERSION: "0.3b"
+  VERSION: "1.0b"
 
 jobs:
   build-and-push:
@@ -18,7 +18,7 @@ jobs:
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
-    runs-on: ubuntu-latest
+    runs-on: [my-karaoke-runner]
     
     permissions:
       contents: read
