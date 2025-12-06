@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script for CI/CD environment to build and push a single-arch image to ECR.
-# Requires AWS_PROFILE, ECR_REGISTRY, ECR_REPOSITORY, and GITHUB_RUN_NUMBER environment variables to be set externally.
+# Requires AWS_PROFILE (optional), ECR_REGISTRY, ECR_REPOSITORY, and GITHUB_RUN_NUMBER environment variables.
 # Requires the Docker Buildx context to be available.
 
 set -e
@@ -59,8 +59,15 @@ fi
 GIT_SHA=$(git rev-parse HEAD)
 BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Version configuration
-export VERSION="1.0b"
+if [ -z "$VERSION" ]; then
+  if [ -f "package.json" ]; then
+    VERSION=$(grep -m1 '"version":' package.json | cut -d'"' -f4)
+  else
+    VERSION="1.0b"
+  fi
+fi
+
+export VERSION
 export ECR_BUILD="true"
 export BUILD_NODE_ENV="production"
 echo "Deployment build version: $VERSION"
@@ -79,20 +86,22 @@ fi
 
 # --- ECR TAGGING ---
 # The tag must be unique per architecture: app-0.3b-build<RUN_NUMBER>_linux-amd64
+# Replace slashes in platform (linux/amd64 -> linux-amd64)
 ARCH_TAG=${PLATFORMS//\//-}
 IMMUTABLE_TAG="app-${VERSION}-build${GITHUB_RUN_NUMBER}_${ARCH_TAG}" 
 
 # --- PRE-BUILD SETUP ---
 
-# Login to AWS ECR (requires AWS_PROFILE, AWS_REGION set from env-build)
+# Login to AWS ECR
 echo "Logging into AWS ECR Public..."
-aws ecr-public get-login-password --region $AWS_REGION --profile ${AWS_PROFILE} | \
+
+# FIX: Removed '--profile ${AWS_PROFILE}' to allow using env vars set by GitHub Actions
+aws ecr-public get-login-password --region $AWS_REGION | \
     docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
 # --- BUILD AND PUSH ---
 echo "Building and pushing single-arch image: ${IMMUTABLE_TAG} for ${PLATFORMS}"
 
-# Use Buildx (assumes builder context is set up by workflow)
 docker buildx build \
     --build-arg ECR_BUILD=${ECR_BUILD} \
     --build-arg VERSION=${VERSION} \

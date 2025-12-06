@@ -1,8 +1,8 @@
 {
   "name": "mykaraoke-party",
-  "version": "0.5.0",
+  "version": "1.0b",
   "author": "EMPZ",
-  "repository": "https://github.com/empz/my-karaoke-party",
+  "repository": "https://github.com/vze22jjw/my-karaoke-party",
   "type": "module",
   "scripts": {
     "build": "next build",
