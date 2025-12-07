@@ -14,7 +14,7 @@ on:
 env:
   ECR_PUBLIC_REPO_NAME: "vze22jjw/my-karaoke-party"
   AWS_REGION: "us-east-1"
-  IMAGES_TO_KEEP: 50
+  IMAGES_TO_KEEP: 150
 
 jobs:
   prune-images:
@@ -55,7 +55,7 @@ jobs:
           # Get the digest for the 'latest' tag
           LATEST_DIGEST=$(echo "$IMAGE_DETAILS" | jq -r '.[] | select(.imageTags[]? == "latest") | .imageDigest')
           
-          # Get the digests of the 10 most recent images
+          # Get the digests of the most recent images
           RECENT_DIGESTS=$(echo "$IMAGE_DETAILS" | jq -r ".[0:${{ env.IMAGES_TO_KEEP }}] | .[] | .imageDigest")
 
           # Combine them, remove any 'null' values, and get a unique list
@@ -90,6 +90,6 @@ jobs:
           echo "$DELETE_IDS" | xargs -n 100 aws ecr-public batch-delete-image \
             --repository-name ${{ env.ECR_PUBLIC_REPO_NAME }} \
             --region ${{ env.AWS_REGION }} \
-            --image-ids
+            --image-ids || true
             
           echo "🎉 Pruning complete."
