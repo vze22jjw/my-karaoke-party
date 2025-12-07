@@ -49,3 +49,8 @@ yarn-error.log*
 
 # PWA
 /public/sw.js
+
+## playwright
+/test-results/
+/playwright-report/
+/tests/screenshots/

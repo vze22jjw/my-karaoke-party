@@ -72,7 +72,7 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
             </button>
         </div>
 
-        <div className="mx-auto w-full max-w-sm">
+        <div className="mx-auto w-full max-w-sm pb-20">
           <DrawerHeader>
             <DrawerTitle className="text-2xl font-bold text-center">
                 {step === 0 ? t('title') : steps[step]?.title}

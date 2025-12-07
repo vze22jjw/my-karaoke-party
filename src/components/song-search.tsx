@@ -122,6 +122,7 @@ export function SongSearch({
                 required
                 minLength={3}
                 autoComplete="off"
+                data-testid="song-search-input"
                 />
 
                 {videoInputValue.length > 0 && (
@@ -240,6 +241,7 @@ export function SongSearch({
                       type="button"
                       variant={"default"}
                       size="icon"
+                      data-testid={`add-video-${video.id.videoId}`}
                       className="shadow-xl animate-in spin-in"
                       disabled={isDisabled}
                       onClick={() => {
