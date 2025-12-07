@@ -21,7 +21,7 @@ jobs:
   # -----------------------------------------------------------------
   build-amd64:
     name: Build AMD64 (Stable)
-    runs-on: [self-hosted, my-karaoke-runner]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -104,7 +104,7 @@ jobs:
   finalize-deployment:
     name: Finalize Tags
     needs: [build-amd64, build-arm64]
-    runs-on: [self-hosted, my-karaoke-runner]
+    runs-on: ubuntu-latest
     # Run only if AMD64 succeeded. We don't care if ARM64 failed/cancelled.
     if: always() && needs.build-amd64.result == 'success'
     

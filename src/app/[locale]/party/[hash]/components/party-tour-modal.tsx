@@ -62,6 +62,7 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
                 className="p-2 text-muted-foreground hover:text-primary transition-colors animate-bounce focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full"
                 aria-label="Skip Tour"
                 title="Skip Tour"
+                data-testid="party-tour-skip"
             >
                 <ChevronDown className="h-6 w-6" />
             </button>
@@ -92,11 +93,19 @@ export function PartyTourModal({ isOpen, onClose, onFireConfetti }: Props) {
           </div>
 
           <DrawerFooter className="grid grid-cols-2 gap-4">
-            <Button variant="outline" onClick={handlePrev} disabled={step === 0}>
+            <Button 
+                variant="outline" 
+                onClick={handlePrev} 
+                disabled={step === 0}
+                data-testid="party-tour-prev"
+            >
               <ChevronLeft className="mr-2 h-4 w-4" />
               {tTour('prev')}
             </Button>
-            <Button onClick={handleNext}>
+            <Button 
+                onClick={handleNext}
+                data-testid="party-tour-next"
+            >
               {step === steps.length - 1 ? (
                   <>
                     {t('finish')}

@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { FunStatsCarousel } from "./fun-stats-carousel";
 import type { VideoInPlaylist } from "~/types/app-types";
 
+// --- Types (unchanged) ---
 type SpotifySong = {
   title: string;
   artist: string;
@@ -64,6 +65,8 @@ type Props = {
   playedPlaylist: VideoInPlaylist[];
 };
 
+// --- SUB-COMPONENTS ---
+
 function SpotifySection({ 
   songs, 
   onSuggestionClick 
@@ -100,6 +103,8 @@ function SpotifySection({
               size="icon"
               className="h-8 w-8 shadow-sm flex-shrink-0"
               aria-label={`Add ${song.title}`}
+              // Added stable ID
+              data-testid={`add-spotify-${index}`}
               onClick={(e) => {
                   e.stopPropagation();
                   onSuggestionClick(decode(song.title), song.artist);
@@ -143,6 +148,8 @@ function SongStatsCard({
                 <button
                     onClick={() => setShowRare(!showRare)}
                     className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-muted rounded hover:bg-muted/80 transition-colors"
+                    // Added stable ID
+                    data-testid="toggle-stats-songs"
                 >
                     {showRare ? t('showTop') : t('showRare')}
                 </button>
@@ -175,6 +182,8 @@ function SongStatsCard({
                                     size="icon"
                                     className="h-8 w-8 shadow-sm flex-shrink-0"
                                     aria-label={`Add ${song.title}`}
+                                    // Added stable ID
+                                    data-testid={`add-song-${index}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onSuggestionClick(decode(song.title), song.artist ?? "");
@@ -186,7 +195,7 @@ function SongStatsCard({
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">{t('emptyData')}</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">{t('noSongs')}</p>
                 )}
             </div>
         </div>
@@ -222,6 +231,7 @@ function ArtistStatsCard({
                 <button
                     onClick={() => setShowRare(!showRare)}
                     className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-muted rounded hover:bg-muted/80 transition-colors"
+                    data-testid="toggle-stats-artists"
                 >
                      {showRare ? t('showTop') : t('showRare')}
                 </button>
@@ -250,6 +260,7 @@ function ArtistStatsCard({
                                     size="icon"
                                     className="h-8 w-8 shadow-sm flex-shrink-0"
                                     aria-label={`Search for ${artist.name}`}
+                                    data-testid={`add-artist-${idx}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onSuggestionClick(artist.name, "");
@@ -324,7 +335,7 @@ export function TabHistory({
   };
 
   return (
-    <div className="space-y-4 pb-6">  
+    <div className="space-y-4 pb-6">
       <div className="bg-card rounded-lg p-4 border">
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-foreground">
           <Lightbulb className="h-5 w-5 text-yellow-500" />
@@ -397,6 +408,7 @@ export function TabHistory({
                             : "bg-black/40 hover:bg-black/60 w-2"
                     )}
                     aria-label={`Go to slide ${idx + 1}`}
+                    data-testid={`history-dot-${idx}`}
                   />
               ))}
            </div>
