@@ -3,7 +3,7 @@ FROM node:22-bookworm-slim AS base
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
-RUN apt-get update && apt-get install -y openssl \
+RUN apt-get update && apt-get install -y openssl wget \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
