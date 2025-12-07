@@ -38,8 +38,8 @@ jobs:
       - name: Create Config
         run: |
           mkdir -p docker-builds
-          echo "AWS_PROFILE=default" > docker-builds/.env-build
-          echo "AWS_REGION=us-east-1" >> docker-builds/.env-build
+          #echo "AWS_PROFILE=default" > docker-builds/.env-build
+          echo "AWS_REGION=us-east-1" > docker-builds/.env-build
           echo "ECR_REGISTRY=${{ vars.ECR_REGISTRY }}" >> docker-builds/.env-build
           echo "ECR_REPOSITORY=${{ vars.ECR_REPOSITORY }}" >> docker-builds/.env-build
 
