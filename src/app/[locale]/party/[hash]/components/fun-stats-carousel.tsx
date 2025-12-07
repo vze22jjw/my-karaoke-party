@@ -304,6 +304,7 @@ export function FunStatsCarousel({ stats }: Props) {
                                 : "bg-black/40 hover:bg-black/60 w-2"
                         )}
                         aria-label={`Slide ${idx + 1}`}
+                        data-testid={`fun-stats-dot-${idx}`}
                     />
                 ))}
             </div>

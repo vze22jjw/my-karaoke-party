@@ -102,6 +102,7 @@ function JoinPartyDrawer() {
             type="button" 
             variant="secondary"
             className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
+            data-testid="open-parties-trigger"
           >
             {t('joinParty')}
             <Mic className="ml-3 h-6 w-6 text-cyan-400" />
@@ -146,7 +147,11 @@ function JoinPartyDrawer() {
             {!loading && !error && parties.length > 0 && (
               <div className="max-h-[400px] space-y-3 overflow-y-auto">
                 {parties.map((party) => (
-                  <div key={party.hash} className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent">
+                  <div 
+                    key={party.hash} 
+                    className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+                    data-testid={`party-row-${party.hash}`}
+                  >
                     <div className="space-y-1">
                       <h3 className="font-semibold uppercase">{party.name}</h3>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -164,7 +169,11 @@ function JoinPartyDrawer() {
                         </span>
                       </div>
                     </div>
-                    <Button onClick={() => handleJoinParty(party.hash)} variant="default">
+                    <Button 
+                      onClick={() => handleJoinParty(party.hash)} 
+                      variant="default"
+                      data-testid={`join-party-btn-${party.hash}`}
+                    >
                       {t('enter')}
                     </Button>
                   </div>

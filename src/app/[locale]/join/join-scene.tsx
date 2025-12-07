@@ -25,15 +25,25 @@ import { FitText } from "~/components/fit-text";
 import { useTranslations } from "next-intl";
 
 // AVATAR COMPONENTS ---
-const AVATARS = [
-  "🎤", "🎧", "🥁", "🧑‍🎤", "👩‍🎤",
-  "🔥", "🍺", "😎", "🕺", "💃",
-];
+const AVATAR_MAP: Record<string, string> = {
+  "🎤": "mic",
+  "🎧": "headphones",
+  "🥁": "drum",
+  "🧑‍🎤": "singer-m",
+  "👩‍🎤": "singer-f",
+  "🔥": "fire",
+  "🍺": "beer",
+  "😎": "cool",
+  "🕺": "dance-m",
+  "💃": "dance-f",
+};
+
+const AVATARS = Object.keys(AVATAR_MAP);
 
 const AvatarPicker = ({
   value,
   onChange,
-  options, 
+  options,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -51,6 +61,7 @@ const AvatarPicker = ({
             ? "bg-primary ring-2 ring-primary-foreground"
             : "sm:hover:bg-muted-foreground/20",
         )}
+        data-testid={`avatar-select-${AVATAR_MAP[avatar] ?? 'unknown'}`}
       >
         {avatar}
       </button>
@@ -83,8 +94,8 @@ export default function JoinScene({
     defaultValue: AVATARS[0]!,
   });
 
+  // Randomize avatars on mount to ensure variety
   const [avatarOptions, setAvatarOptions] = useState(AVATARS);
-
   useEffect(() => {
     const shuffled = [...AVATARS].sort(() => Math.random() - 0.5);
     setAvatarOptions(shuffled);
@@ -154,6 +165,7 @@ export default function JoinScene({
                           placeholder={t('enterCode')}
                           className="input input-bordered w-full"
                           {...field}
+                          data-testid="join-party-code-input"
                         />
                       </FormControl>
                     </FormItem>
@@ -186,6 +198,8 @@ export default function JoinScene({
                         maxLength={20}
                         required
                         {...field}
+                        // Stable ID for testing (Fixes your timeout error)
+                        data-testid="join-name-input"
                       />
                     </FormControl>
                     <FormDescription className="text-white/70">
@@ -200,6 +214,7 @@ export default function JoinScene({
                 className="w-full h-14 text-xl font-bold shadow-sm border border-primary/20"
                 variant="secondary"
                 disabled={form.formState.isSubmitting}
+                data-testid="join-submit-button"
               >
                 {form.formState.isSubmitting ? (
                   t('joining')
