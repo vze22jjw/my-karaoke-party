@@ -2,7 +2,9 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 import { getErrorMessage } from "~/utils/string";
 import { customAlphabet } from "nanoid";
-import { TRPCError } from "@trpc/server"; 
+import { TRPCError } from "@trpc/server";
+import { cookies } from "next/headers";
+import { env } from "~/env";
 
 const generatePartyCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789", 4);
 
@@ -194,5 +196,20 @@ export const partyRouter = createTRPCRouter({
             }
         });
         return { success: true };
-    })
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ hash: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const token = cookies().get("admin_token")?.value;
+      if (token !== env.ADMIN_TOKEN) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
+      }
+
+      await ctx.db.party.delete({
+        where: { hash: input.hash },
+      });
+
+      return { success: true };
+    }),
 });
