@@ -4,11 +4,13 @@ import { useState, useMemo } from "react";
 import { useRouter, Link } from "~/navigation";
 import { Button } from "~/components/ui/ui/button";
 import { Input } from "~/components/ui/ui/input";
-import { ArrowLeft, Clock, Music, Users, Activity, Lock, Calendar, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Clock, Music, Users, Activity, Lock, Calendar, ChevronLeft, ChevronRight, X, Trash2 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { FitText } from "~/components/fit-text";
 import { useTranslations } from "next-intl";
+import { api } from "~/trpc/react";
+import { toast } from "sonner";
 
 type PartyData = {
   id: number;
@@ -34,10 +36,29 @@ export function HostDashboardClient({ parties, locale }: Props) {
   const router = useRouter();
   const t = useTranslations('host');
   const tCommon = useTranslations('common');
+  
+  const utils = api.useUtils();
 
   const [activeTab, setActiveTab] = useState("active");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [currentPage, setCurrentPage] = useState(1);
+
+  const deleteMutation = api.party.delete.useMutation({
+    onSuccess: () => {
+      toast.success(tCommon('success'));
+      router.refresh();
+      void utils.party.getAll.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`${tCommon('error')}: ${err.message}`);
+    }
+  });
+
+  const handleDelete = (hash: string, name: string) => {
+    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+        deleteMutation.mutate({ hash });
+    }
+  };
 
   const { activeParties, historyParties } = useMemo(() => {
     const active = [];
@@ -138,19 +159,34 @@ export function HostDashboardClient({ parties, locale }: Props) {
                     <span className="font-medium">{party._count.participants}</span>
                 </div>
                 
-                <Button 
-                    variant={isHistory ? "outline" : "default"} 
-                    size="sm"
-                    className={cn(
-                        "ml-auto h-8 px-4",
-                        !isHistory && "bg-primary hover:bg-primary/90"
-                    )}
-                    asChild
-                >
-                    <Link href={`/host/${party.hash}`}>
-                        {isHistory ? t('card.history') : t('card.manage')}
-                    </Link>
-                </Button>
+                <div className="ml-auto flex items-center gap-2">
+                    <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                        title="Delete Party"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (party.hash) handleDelete(party.hash, party.name);
+                        }}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+
+                    <Button 
+                        variant={isHistory ? "outline" : "default"} 
+                        size="sm"
+                        className={cn(
+                            "h-8 px-4",
+                            !isHistory && "bg-primary hover:bg-primary/90"
+                        )}
+                        asChild
+                    >
+                        <Link href={`/host/${party.hash}`}>
+                            {isHistory ? t('card.history') : t('card.manage')}
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </div>
       </div>
