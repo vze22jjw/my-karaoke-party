@@ -116,7 +116,12 @@ function SortableItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="w-full mb-2 touch-manipulation relative overflow-hidden">
+    <div 
+        ref={setNodeRef} 
+        style={style} 
+        className="w-full mb-2 touch-manipulation relative overflow-hidden"
+        data-testid={`playlist-item-${video.singerName}`}
+    >
       <div className={cn(
           "flex items-center w-full p-2 rounded-lg border transition-colors bg-card border-border/50 shadow-sm"
       )}>
@@ -181,6 +186,7 @@ function SortableItem({
                             size="icon"
                             variant="ghost"
                             className="h-9 w-9 rounded-full shrink-0 text-red-500 bg-card border border-white/10 hover:bg-red-500/10 z-10"
+                            data-testid="item-remove-btn"
                             onClick={(e) => { e.stopPropagation(); onRemove(video.id); }}
                         >
                             <Trash2 className="h-4 w-4" />
@@ -191,6 +197,7 @@ function SortableItem({
                         size="icon"
                         variant="ghost"
                         className={cn("h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground transition-transform", isMenuOpen && "rotate-90 text-primary")}
+                        data-testid="item-menu-btn"
                         onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
                     >
                         {isMenuOpen ? <X className="h-5 w-5" /> : <MoreVertical className="h-5 w-5" />}

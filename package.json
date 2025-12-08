@@ -15,6 +15,8 @@
     "postinstall": "prisma generate",
     "lint": "next lint",
     "start": "next start",
+    "test:e2e": "npx playwright test",
+    "test:codegen": "npx playwright codegen http://localhost:3000",
     "vercel-build": "prisma generate && prisma migrate deploy && next build"
   },
   "dependencies": {
@@ -77,6 +79,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@tailwindcss/typography": "^0.5.13",
     "@types/eslint": "^8.56.2",
     "@types/node": "^20.11.20",

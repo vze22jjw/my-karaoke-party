@@ -51,3 +51,8 @@ build/docker-build.sh
 # OS
 .DS_Store
 Thumbs.db
+
+## playwright
+/test-results/
+/playwright-report/
+/tests/screenshots/
