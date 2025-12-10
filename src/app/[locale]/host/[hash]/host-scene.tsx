@@ -118,7 +118,8 @@ export function HostScene({ party, initialData, hostName }: Props) {
     onSuccess: async () => {
       toast.success(tToasts('closed'));
       
-      await fetch("/api/auth/logout", { method: "POST" });
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      await fetch(`${baseUrl}/api/auth/logout`, { method: "POST" });
 
       if (typeof window !== "undefined") {
         Object.keys(window.localStorage).forEach((key) => {

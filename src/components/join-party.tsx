@@ -55,7 +55,8 @@ function JoinPartyDrawer() {
     setError(null);
     
     try {
-      const res = await fetch("/api/parties/list", {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const res = await fetch(`${baseUrl}/api/parties/list`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",

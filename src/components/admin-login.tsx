@@ -23,7 +23,8 @@ export function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const res = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),

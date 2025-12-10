@@ -145,7 +145,8 @@ export function HostControlPanel({
 
   const handleHostLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      await fetch(`${baseUrl}/api/auth/logout`, { method: "POST" });
 
       if (typeof window !== "undefined") {
         Object.keys(window.localStorage).forEach((key) => {
