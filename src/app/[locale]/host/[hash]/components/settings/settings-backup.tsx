@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { useRouter } from "~/navigation";
+import { env } from "~/env";
 
 export function SettingsBackup() {
   const t = useTranslations('host.settings.backup');
@@ -23,7 +24,7 @@ export function SettingsBackup() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       const response = await fetch(`${baseUrl}/api/admin/backup/export`);
       if (!response.ok) throw new Error("Export failed");
       
@@ -76,7 +77,7 @@ export function SettingsBackup() {
   const uploadBackup = async (data: unknown) => {
     setIsImporting(true);
     try {
-       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       const res = await fetch(`${baseUrl}/api/admin/backup/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

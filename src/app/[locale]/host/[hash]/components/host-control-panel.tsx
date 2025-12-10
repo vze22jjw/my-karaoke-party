@@ -12,6 +12,7 @@ import { FitText } from "~/components/fit-text";
 import { useRouter } from "~/navigation"; 
 import { toast } from "sonner";
 import { useTranslations } from "next-intl"; 
+import { env } from "~/env";
 
 type Props = {
   party: Party;
@@ -145,7 +146,7 @@ export function HostControlPanel({
 
   const handleHostLogout = async () => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       await fetch(`${baseUrl}/api/auth/logout`, { method: "POST" });
 
       if (typeof window !== "undefined") {
