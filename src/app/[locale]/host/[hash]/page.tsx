@@ -76,9 +76,7 @@ export default async function HostPage({ params }: Props) {
   };
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
-    ? process.env.NEXT_PUBLIC_APP_URL 
-    : "http://localhost:3000";
+    const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {

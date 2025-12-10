@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { env } from "~/env";
 import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
 import { api } from "~/trpc/server";
 import { getTranslations } from "next-intl/server";
@@ -67,8 +68,8 @@ export default async function PartyHashPage({ params }: Props) {
   };
   
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
+    const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
         revalidate: 0, 

@@ -14,6 +14,7 @@ import type { Party } from "@prisma/client";
 import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
 import { useRouter } from "~/navigation";
 import { useTranslations } from "next-intl";
+import { env } from "~/env";
 
 const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 
@@ -118,7 +119,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
     onSuccess: async () => {
       toast.success(tToasts('closed'));
       
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       await fetch(`${baseUrl}/api/auth/logout`, { method: "POST" });
 
       if (typeof window !== "undefined") {

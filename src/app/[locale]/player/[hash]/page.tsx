@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
 import PlayerScene from "./player-scene";
 import { getTranslations } from "next-intl/server";
+import { env } from "~/env";
 
 type Props = {
   params: { hash: string; locale: string };
@@ -67,8 +68,8 @@ export default async function PartyPage({ params }: Props) {
   };
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
+    const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
         revalidate: 0, 

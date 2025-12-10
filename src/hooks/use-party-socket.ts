@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 import { useLocalStorage } from "@mantine/hooks";
 import { useTranslations } from "next-intl";
+import { env } from "~/env";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => boolean;
@@ -138,7 +139,7 @@ export function usePartySocket(
   useEffect(() => {
     const socketInitializer = async () => {
       if (socketRef.current) return;
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       try { await fetch(`${baseUrl}/api/socket`); } catch (e) { console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); }
 
       const newSocket = io({
@@ -256,7 +257,7 @@ export function usePartySocket(
 
   const sendApplauseHttp = useCallback(async (singer: string) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       const response = await fetch(`${baseUrl}/api/applause`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
