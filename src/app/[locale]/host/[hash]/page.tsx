@@ -1,3 +1,4 @@
+import { env } from "~/env";
 import { api } from "~/trpc/server";
 import { notFound } from "next/navigation";
 import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
@@ -75,8 +76,10 @@ export default async function HostPage({ params }: Props) {
   };
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const playlistRes = await fetch(`${appUrl}/api/playlist/${partyHash}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
+    ? process.env.NEXT_PUBLIC_APP_URL 
+    : "http://localhost:3000";
+    const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
         revalidate: 0,

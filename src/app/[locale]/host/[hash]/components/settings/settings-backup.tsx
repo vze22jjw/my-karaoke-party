@@ -23,7 +23,8 @@ export function SettingsBackup() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch("/api/admin/backup/export");
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const response = await fetch(`${baseUrl}/api/admin/backup/export`);
       if (!response.ok) throw new Error("Export failed");
       
       const blob = await response.blob();
@@ -75,7 +76,8 @@ export function SettingsBackup() {
   const uploadBackup = async (data: unknown) => {
     setIsImporting(true);
     try {
-      const res = await fetch("/api/admin/backup/import", {
+       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const res = await fetch(`${baseUrl}/api/admin/backup/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

@@ -138,7 +138,8 @@ export function usePartySocket(
   useEffect(() => {
     const socketInitializer = async () => {
       if (socketRef.current) return;
-      try { await fetch("/api/socket"); } catch (e) { console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); }
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      try { await fetch(`${baseUrl}/api/socket`); } catch (e) { console.error(`${LOG_TAG} Failed initial fetch for socket server:`, e); }
 
       const newSocket = io({
         path: "/socket.io",
@@ -255,7 +256,8 @@ export function usePartySocket(
 
   const sendApplauseHttp = useCallback(async (singer: string) => {
     try {
-      const response = await fetch("/api/applause", {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+      const response = await fetch(`${baseUrl}/api/applause`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ partyHash, singerName: singer }),
