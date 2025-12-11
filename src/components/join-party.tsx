@@ -17,7 +17,6 @@ import { Button } from "~/components/ui/ui/button";
 import { Music, Clock, Users, Mic } from "lucide-react";
 import { Skeleton } from "~/components/ui/ui/skeleton";
 import { useTranslations } from "next-intl";
-import { env } from "~/env";
 
 type Party = {
   hash: string;
@@ -56,8 +55,7 @@ function JoinPartyDrawer() {
     setError(null);
     
     try {
-      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      const res = await fetch(`${baseUrl}/api/parties/list`, {
+      const res = await fetch(`/api/parties/list`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",

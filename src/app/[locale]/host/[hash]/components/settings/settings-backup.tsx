@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useRef } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
@@ -8,7 +7,6 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { useRouter } from "~/navigation";
-import { env } from "~/env";
 
 export function SettingsBackup() {
   const t = useTranslations('host.settings.backup');
@@ -24,8 +22,7 @@ export function SettingsBackup() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      const response = await fetch(`${baseUrl}/api/admin/backup/export`);
+      const response = await fetch(`/api/admin/backup/export`);
       if (!response.ok) throw new Error("Export failed");
       
       const blob = await response.blob();
@@ -77,8 +74,7 @@ export function SettingsBackup() {
   const uploadBackup = async (data: unknown) => {
     setIsImporting(true);
     try {
-      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      const res = await fetch(`${baseUrl}/api/admin/backup/import`, {
+      const res = await fetch(`/api/admin/backup/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

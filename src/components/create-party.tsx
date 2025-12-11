@@ -26,7 +26,6 @@ import {
 import { toast } from "sonner";
 import { Loader2, PartyPopper } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { env } from "~/env";
 
 // Note: Zod schema messages are hardcoded here for simplicity, 
 // but you can use z.errorMap or pass t function if needed for validation errors.
@@ -79,8 +78,7 @@ export function CreateParty() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      const res = await fetch(`${baseUrl}/api/auth/login`, {
+      const res = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: values.adminPassword }),

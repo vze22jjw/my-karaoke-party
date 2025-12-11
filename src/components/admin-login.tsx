@@ -8,7 +8,6 @@ import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "~/navigation";
 import { useTranslations } from "next-intl";
-import { env } from "~/env";
 
 export function AdminLogin() {
   const router = useRouter();
@@ -24,8 +23,7 @@ export function AdminLogin() {
     setLoading(true);
 
     try {
-      const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      const res = await fetch(`${baseUrl}/api/auth/login`, {
+        const res = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
