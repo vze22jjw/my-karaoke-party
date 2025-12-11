@@ -9,15 +9,17 @@ services:
     ipc: host
     environment:
       - BASE_URL=http://mykaraoke-app:3000
-      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - ADMIN_TOKEN=change-this
       - CI=true
     volumes:
       - ..:/app
       - /app/node_modules
+      - /app/.pnpm-store
     networks:
       - my-karaoke-party_mykaraokenetwork
     command: >
       /bin/sh -c "
+      env && 
       npm install -g pnpm &&
       pnpm install &&
       npx playwright test"

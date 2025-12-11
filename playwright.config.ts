@@ -1,25 +1,25 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as path from 'path';
 
-const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-const finalReportDir = path.join('playwright-report', timestamp);
-const tempArtifactsDir = '/tmp/test-artifacts';
+const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+
+const runDir = path.join('playwright-report', `run-${timestamp}`);
+
+process.env.PLAYWRIGHT_REPORT_DIR = runDir;
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: 0, 
+  retries: 0,
   workers: process.env.CI ? 2 : undefined,
-  
-  reporter: [['html', { outputFolder: finalReportDir, open: 'never' }]],
-  
-  outputDir: tempArtifactsDir,
-  
-  timeout: 600000,
-  expect: {
-    timeout: 10000,
-  },
+
+  reporter: [['html', { outputFolder: path.join(runDir, 'report'), open: 'never' }]],
+
+  outputDir: path.join(runDir, 'trace'),
+
+  timeout: 120000,
+  expect: { timeout: 10000 },
 
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
@@ -27,7 +27,7 @@ export default defineConfig({
     video: 'retain-on-failure', 
     screenshot: 'only-on-failure', 
   },
-  
+
   projects: [
     {
       name: 'chromium',
