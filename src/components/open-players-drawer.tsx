@@ -28,7 +28,6 @@ import {
   FormMessage,
 } from "./ui/ui/form";
 import { useTranslations } from "next-intl";
-import { env } from "~/env";
 
 type Party = {
   hash: string;
@@ -58,9 +57,7 @@ function ConnectToPlayerForm({ parties }: { parties: Party[] | null }) {
             // SECURITY CHECK: User must enter hash backwards
             // e.g. If party is ABCD, user enters DCBA. We reverse it back to ABCD here.
             const realHash = values.hash.split("").reverse().join("");
-            const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-            const res = await fetch(`${baseUrl}/api/playlist/${realHash}`);
+            const res = await fetch(`/api/playlist/${realHash}`);
             
             if (!res.ok) {
                  setStatusError(t('notFoundError'));
@@ -164,8 +161,7 @@ function OpenPlayersDrawerComponent() {
         setLoading(true);
         setError(null);
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
-            const response = await fetch(`${baseUrl}/api/parties/list`);
+            const response = await fetch(`/api/parties/list`);
             if (!response.ok) throw new Error("Failed to fetch parties list");
             const data = await response.json() as Party[];
             setParties(data);
