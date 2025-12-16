@@ -217,3 +217,9 @@ pnpm cleanup:all
 
 # Delete all parties (with confirmation)
 pnpm cleanup:all --confirm
+```
+
+## 🤖 AI Assistance Disclaimer
+
+Please note that recent updates and refinements to this project were developed with the assistance of **Google Gemini**. The AI provided guidance on code structure, editing, and documentation to help improve the application. I absolutely appriecate the fork of this project and ensured the spirit of this project remained the same but adpated to my karaoke party needs. Good luck.
+
