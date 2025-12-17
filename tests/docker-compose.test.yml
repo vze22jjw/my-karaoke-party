@@ -19,10 +19,12 @@ services:
       - my-karaoke-party_mykaraokenetwork
     command: >
       /bin/sh -c "
-      env && 
+      env &&
       npm install -g pnpm &&
       pnpm install &&
       npx playwright test"
+      ### use this line to run 30 user load test file
+      #npx playwright test tests/load-test.spec.ts --workers=1"
 
 networks:
   my-karaoke-party_mykaraokenetwork:

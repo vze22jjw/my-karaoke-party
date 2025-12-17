@@ -61,3 +61,13 @@ Ensure your local app is running (usually on port 3000).
 ```bash
 # Run the test suite
 npx playwright test
+
+
+```bash
+# Run in docker changing your sit url in compose file prior to running.
+docker compose -f tests/docker-compose.test.yml up --build --abort-on-container-exit
+
+
+```bash
+# Run load 30 user test by changing docker compose and running same command
+docker compose -f tests/docker-compose.test.yml up --build --abort-on-container-exit
