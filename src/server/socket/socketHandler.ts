@@ -151,12 +151,14 @@ export function registerSocketEvents(io: Server) {
       }
     });
 
-    socket.on("remove-song", async (data: { partyHash: string; videoId: string }) => {
+    socket.on("remove-song", async (data: { partyHash: string; playlistItemId: number }) => {
       if (!ensureHost(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party) return;
-        await db.playlistItem.deleteMany({ where: { partyId: party.id, videoId: data.videoId, playedAt: null } });
+        
+        await db.playlistItem.deleteMany({ where: { partyId: party.id, id: data.playlistItemId } });
+        
         await updateAndEmitPlaylist(io, data.partyHash, "remove-song");
       } catch (error) { console.error("Error removing song:", error); }
     });

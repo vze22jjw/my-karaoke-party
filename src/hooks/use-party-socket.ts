@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => boolean;
-  removeSong: (videoId: string) => void;
+  removeSong: (playlistItemId: number) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
   togglePlayback: (disablePlayback: boolean) => void;
@@ -281,7 +281,7 @@ export function usePartySocket(
         socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName });
         return true;
     },
-    removeSong: (videoId) => socketRef.current?.emit("remove-song", { partyHash, videoId }),
+    removeSong: (playlistItemId) => socketRef.current?.emit("remove-song", { partyHash, playlistItemId }),
     markAsPlayed: () => socketRef.current?.emit("mark-as-played", { partyHash }),
     toggleRules: (orderByFairness) => socketRef.current?.emit("toggle-rules", { partyHash, orderByFairness }),
     togglePlayback: (disablePlayback) => socketRef.current?.emit("toggle-playback", { partyHash, disablePlayback }),
