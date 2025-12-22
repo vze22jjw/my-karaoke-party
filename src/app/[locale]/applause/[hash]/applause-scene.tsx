@@ -9,7 +9,7 @@ import useSound from "use-sound";
 import { decode } from "html-entities";
 import { useLocalStorage } from "@mantine/hooks";
 import { env } from "~/env"; 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 
 const APPLAUSE_EMOJI = "\ud83d\udc4f\ud83c\udffe"; 
@@ -50,9 +50,9 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   const playFuncsRef = useRef<Array<() => void>>([]);
   const playIndexRef = useRef(0); 
 
-  const registerSound = (index: number, playFn: () => void) => {
+  const registerSound = useCallback((index: number, playFn: () => void) => {
       playFuncsRef.current[index] = playFn;
-  };
+  }, []);
 
   const { socketActions, currentSong, unplayedPlaylist } = usePartySocket(
     partyHash,
@@ -80,10 +80,11 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
   const currentSingerName = activeSong?.singerName;
 
   const handleApplause = () => {
-    const funcs = playFuncsRef.current;
-    if (funcs.length > 0) {
-        const idx = playIndexRef.current % funcs.length;
-        const play = funcs[idx];
+    const validFuncs = playFuncsRef.current.filter(fn => typeof fn === 'function');
+    
+    if (validFuncs.length > 0) {
+        const idx = playIndexRef.current % validFuncs.length;
+        const play = validFuncs[idx];
         if (play) play();
         playIndexRef.current = idx + 1; 
     }
