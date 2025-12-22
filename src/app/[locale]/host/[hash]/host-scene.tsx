@@ -115,8 +115,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
   const closePartyMutation = api.party.toggleStatus.useMutation({
     onSuccess: async () => {
-      toast.success(tToasts('closed'));      
-      await fetch(`/api/auth/logout`, { method: "POST" });
+      toast.success(tToasts('closed'));
 
       if (typeof window !== "undefined") {
         Object.keys(window.localStorage).forEach((key) => {
@@ -126,7 +125,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
         });
       }
 
-      router.push("/");
+      router.push("/host");
       router.refresh();
     },
     onError: () => {
