@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => boolean;
-  removeSong: (videoId: string) => void;
+  removeSong: (playlistItemId: number) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
   togglePlayback: (disablePlayback: boolean) => void;
@@ -20,6 +20,7 @@ interface SocketActions {
   startSkipTimer: () => void;
   startParty: () => void;
   refreshParty: () => void;
+  setPartyStatus: (status: string) => void; // <-- Added
   updateIdleMessages: (messages: string[]) => void;
   updateThemeSuggestions: (suggestions: string[]) => void;
   sendApplause: (singerName: string) => Promise<void>; 
@@ -281,7 +282,7 @@ export function usePartySocket(
         socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName });
         return true;
     },
-    removeSong: (videoId) => socketRef.current?.emit("remove-song", { partyHash, videoId }),
+    removeSong: (playlistItemId) => socketRef.current?.emit("remove-song", { partyHash, playlistItemId }),
     markAsPlayed: () => socketRef.current?.emit("mark-as-played", { partyHash }),
     toggleRules: (orderByFairness) => socketRef.current?.emit("toggle-rules", { partyHash, orderByFairness }),
     togglePlayback: (disablePlayback) => socketRef.current?.emit("toggle-playback", { partyHash, disablePlayback }),
@@ -292,6 +293,7 @@ export function usePartySocket(
     startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
     refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }), 
+    setPartyStatus: (status) => socketRef.current?.emit("set-party-status", { partyHash, status }), // <-- New Action
     updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
     updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
     sendApplause: sendApplauseHttp,

@@ -28,6 +28,7 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist, spotifyLink }
   const songsToShowPlayed = showAllPlayedSongs
     ? playedVideos 
     : playedVideos.slice(0, 5); 
+  const queueStartIndex = nextVideo ? 2 : 1;
 
   return (
     <div className="space-y-4">
@@ -96,7 +97,7 @@ export function TabPlayer({ currentSong, playlist, playedPlaylist, spotifyLink }
                 className="flex items-start gap-3 p-2 rounded transition-colors"
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                  {index + 2} {/* +2 because +1 is playing */}
+                  {index + queueStartIndex}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">

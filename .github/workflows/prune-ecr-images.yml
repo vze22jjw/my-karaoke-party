@@ -18,7 +18,7 @@ env:
 
 jobs:
   prune-images:
-    runs-on: [self-hosted, linux, self-hosted-docker]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     permissions:

@@ -19,6 +19,7 @@ function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
     isPriority: item.isPriority,
     isManual: item.isManual,
     applauseCount: item.applauseCount,
+    playlistItemId: item.id,
   };
 }
 

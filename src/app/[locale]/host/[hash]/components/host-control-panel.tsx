@@ -20,7 +20,7 @@ type Props = {
   currentSong: VideoInPlaylist | null; 
   playlist: KaraokeParty["playlist"]; 
   playedPlaylist: VideoInPlaylist[];
-  onRemoveSong: (videoId: string) => void;
+  onRemoveSong: (playlistItemId: number) => void;
   onMarkAsPlayed: () => void;
   useQueueRules: boolean;
   onToggleRules: () => void;
@@ -272,7 +272,8 @@ export function HostControlPanel({
                   isManual: false,
                   playedAt: null,
                   spotifyId: null,
-                  applauseCount: 0
+                  applauseCount: 0,
+                  playlistItemId: 0
               }}
               playlist={playlist}
               onRemoveSong={onRemoveSong}

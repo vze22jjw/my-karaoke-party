@@ -16,6 +16,7 @@ export type VideoInPlaylist = {
     isPriority: boolean;
     isManual: boolean;
     applauseCount: number;
+    playlistItemId: number;
 };
 
 /**
@@ -27,7 +28,7 @@ export type KaraokeParty = {
 		orderByFairness: boolean;
 		disablePlayback?: boolean;
         spotifyPlaylistId?: string | null;
-        spotifyLink?: string | null; // <-- NEW
+        spotifyLink?: string | null;
         isManualSortActive?: boolean;
 	};
 };

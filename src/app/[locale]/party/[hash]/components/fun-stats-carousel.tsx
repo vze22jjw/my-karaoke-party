@@ -67,6 +67,7 @@ export function FunStatsCarousel({ stats }: Props) {
     const t = useTranslations('guest.funStats');
     
     const [activeIndex, setActiveIndex] = useState(0);
+    const [autoRotate, setAutoRotate] = useState(true);
     const touchStartRef = useRef<number | null>(null);
     const autoRotateRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -183,14 +184,18 @@ export function FunStatsCarousel({ stats }: Props) {
     }, [activeStats.length]);
 
     useEffect(() => {
-        if (activeStats.length <= 1) return;
+        if (activeStats.length <= 1 || !autoRotate) {
+            if (autoRotateRef.current) clearInterval(autoRotateRef.current);
+            return;
+        }
+        
         const resetTimer = () => {
             if (autoRotateRef.current) clearInterval(autoRotateRef.current);
             autoRotateRef.current = setInterval(nextSlide, CARD_DURATION);
         };
         resetTimer();
         return () => { if (autoRotateRef.current) clearInterval(autoRotateRef.current); };
-    }, [nextSlide, activeStats.length]);
+    }, [nextSlide, activeStats.length, autoRotate]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (e.touches[0]) touchStartRef.current = e.touches[0].clientX;
@@ -200,9 +205,15 @@ export function FunStatsCarousel({ stats }: Props) {
         if (touchStartRef.current === null || !e.changedTouches[0]) return;
         const diff = touchStartRef.current - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 50) {
+            setAutoRotate(false);
             if (diff > 0) nextSlide(); else prevSlide();
         }
         touchStartRef.current = null;
+    };
+
+    const handleDotClick = (index: number) => {
+        setAutoRotate(false);
+        setActiveIndex(index);
     };
 
     if (!stats) {
@@ -296,7 +307,7 @@ export function FunStatsCarousel({ stats }: Props) {
                 {activeStats.map((_, idx) => (
                     <button
                         key={idx}
-                        onClick={() => setActiveIndex(idx)}
+                        onClick={() => handleDotClick(idx)}
                         className={cn(
                             "h-2 rounded-full transition-all duration-300 p-2 focus:outline-none", 
                             activeIndex === idx 

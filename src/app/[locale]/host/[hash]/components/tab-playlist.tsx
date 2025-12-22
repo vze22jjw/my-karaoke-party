@@ -32,7 +32,7 @@ type Props = {
   currentSong: VideoInPlaylist | null;
   playlist: KaraokeParty["playlist"];
   playedPlaylist: VideoInPlaylist[];
-  onRemoveSong: (videoId: string) => void;
+  onRemoveSong: (playlistItemId: number) => void;
   onSkip: () => void;
   isSkipping: boolean; 
   isPlaying: boolean; 
@@ -89,7 +89,7 @@ function SortableItem({
 }: { 
     video: VideoInPlaylist, 
     index: number, 
-    onRemove: (id: string) => void, 
+    onRemove: (id: number) => void, 
     onTogglePriority: (id: string) => void,
     isSorting: boolean,
     isMenuOpen: boolean,
@@ -187,7 +187,7 @@ function SortableItem({
                             variant="ghost"
                             className="h-9 w-9 rounded-full shrink-0 text-red-500 bg-card border border-white/10 hover:bg-red-500/10 z-10"
                             data-testid="item-remove-btn"
-                            onClick={(e) => { e.stopPropagation(); onRemove(video.id); }}
+                            onClick={(e) => { e.stopPropagation(); onRemove(video.playlistItemId); }}
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
