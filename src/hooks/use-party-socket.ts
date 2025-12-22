@@ -20,6 +20,7 @@ interface SocketActions {
   startSkipTimer: () => void;
   startParty: () => void;
   refreshParty: () => void;
+  setPartyStatus: (status: string) => void; // <-- Added
   updateIdleMessages: (messages: string[]) => void;
   updateThemeSuggestions: (suggestions: string[]) => void;
   sendApplause: (singerName: string) => Promise<void>; 
@@ -292,6 +293,7 @@ export function usePartySocket(
     startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
     refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }), 
+    setPartyStatus: (status) => socketRef.current?.emit("set-party-status", { partyHash, status }), // <-- New Action
     updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
     updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
     sendApplause: sendApplauseHttp,

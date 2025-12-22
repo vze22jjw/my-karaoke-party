@@ -202,7 +202,29 @@ export function registerSocketEvents(io: Server) {
       } catch (error) { console.error("Error marking as played:", error); }
     });
 
+    socket.on("set-party-status", async (data: { partyHash: string; status: string }) => {
+      if (!ensureHost(socket)) return;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updateData: any = { status: data.status, lastActivityAt: new Date() };
+        
+        // If going to OPEN (Intermission/Pause), clear playback state
+        if (data.status === "OPEN") {
+             updateData.currentSongStartedAt = null;
+             updateData.currentSongRemainingDuration = null;
+        }
+
+        await db.party.update({ where: { hash: data.partyHash }, data: updateData });
+        
+        // If status is CLOSED, we might want to emit 'party-closed'
+        // But this function handles OPEN/STARTED. 'close-party' is separate.
+        
+        await updateAndEmitPlaylist(io, data.partyHash, "set-party-status");
+      } catch (error) { console.error("Error setting party status:", error); }
+    });
+
     socket.on("start-party", async (data: { partyHash: string }) => {
+      // Kept for backward compatibility or direct calls
       if (!ensureHost(socket)) return;
       try {
         await db.party.update({ where: { hash: data.partyHash }, data: { status: "STARTED", lastActivityAt: new Date() } });

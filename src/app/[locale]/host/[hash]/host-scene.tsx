@@ -115,7 +115,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
 
   const closePartyMutation = api.party.toggleStatus.useMutation({
     onSuccess: async () => {
-      toast.success(tToasts('closed'));
+      toast.success(tToasts('closed'));      
 
       if (typeof window !== "undefined") {
         Object.keys(window.localStorage).forEach((key) => {
@@ -133,20 +133,6 @@ export function HostScene({ party, initialData, hostName }: Props) {
     }
   });
 
-  const statusMutation = api.party.toggleStatus.useMutation({
-    onSuccess: (data, variables) => {
-        if (variables.status === "OPEN") {
-             socketActions.playbackPause();
-             socketActions.refreshParty();
-             toast.info(tToasts('intermission'));
-        } else {
-             socketActions.startParty(); 
-             toast.success(tToasts('resumed'));
-        }
-    },
-    onError: () => toast.error(tCommon('error'))
-  });
-
   const idleMessageMutation = api.idleMessage.add.useMutation({
     onSuccess: () => { void refetchIdleMessages(); }
   });
@@ -161,12 +147,19 @@ export function HostScene({ party, initialData, hostName }: Props) {
   };
 
   const handleStartParty = () => {
-    statusMutation.mutate({ hash: party.hash!, status: "STARTED" });
+    socketActions.setPartyStatus("STARTED");
+    toast.success(tToasts('resumed'));
   };
 
   const handleToggleIntermission = () => {
     const statusToSend = partyStatus === "OPEN" ? "STARTED" : "OPEN";
-    statusMutation.mutate({ hash: party.hash!, status: statusToSend });
+    socketActions.setPartyStatus(statusToSend);
+    if (statusToSend === "OPEN") {
+       socketActions.playbackPause();
+       toast.info(tToasts('intermission'));
+    } else {
+       toast.success(tToasts('resumed'));
+    }
   };
 
   const handleToggleManualSort = () => {
