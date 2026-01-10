@@ -85,6 +85,11 @@ export default async function PartyHashPage({ params }: Props) {
   }
   
   return (
-    <PartySceneTabs key={party.hash} party={party} initialData={initialData} />
+    <PartySceneTabs 
+      key={party.hash} 
+      party={party} 
+      initialData={initialData} 
+      locale={params.locale} 
+    />
   );
 }

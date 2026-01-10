@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { Search, Check, Loader2, Frown, X, Plus } from "lucide-react";
+import { Search, Loader2, Frown, X, Plus, Check } from "lucide-react";
 import type { KaraokeParty } from "~/types/app-types";
 import { PreviewPlayer } from "./preview-player";
 import { decode } from "html-entities";
@@ -25,6 +25,7 @@ type Props = {
   initialSearchQuery?: string;
   onSearchQueryConsumed?: () => void;
   hasReachedQueueLimit?: boolean;
+  searchPlaceholder: string;
   children?: React.ReactNode;
 };
 
@@ -39,6 +40,7 @@ export function SongSearch({
   initialSearchQuery,
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
+  searchPlaceholder,
   children,
 }: Props) {
   const t = useTranslations('guest.addSong');
@@ -111,7 +113,7 @@ export function SongSearch({
                 <Input
                 type="text"
                 name="video-url"
-                placeholder={t('searchPlaceholder')}
+                placeholder={searchPlaceholder}
                 className="w-full pr-10"
                 value={videoInputValue}
                 onChange={(e) => {

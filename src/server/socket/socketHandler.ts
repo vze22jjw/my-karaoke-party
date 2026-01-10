@@ -7,16 +7,18 @@ import { type Server, type Socket } from "socket.io";
 import { db } from "~/server/db";
 import { spotifyService } from "~/server/lib/spotify";
 import {
-  getRandomDurationISO,
   registerParticipant,
   updateAndEmitPlaylist,
   updateAndEmitSingers,
   LOG_TAG,
+  getRandomDurationISO,
 } from "./socketUtils";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import { type PlaylistItem } from "@prisma/client";
 import youtubeAPI from "~/utils/youtube-data-api";
 import { parseISO8601Duration } from "~/utils/string";
+import { getFreshPlaylist } from "~/server/lib/playlist-service";
+import { debugLog } from "~/utils/debug-logger";
 
 const addSongRateLimit = new Map<string, number>();
 const RATE_LIMIT_WINDOW = 2000; // 2 seconds
@@ -32,7 +34,7 @@ function ensureHost(socket: Socket): boolean {
 
 export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
-    console.log(`${LOG_TAG} New Socket Connection Accepted: ${socket.id}`);
+    debugLog(LOG_TAG, `New Socket Connection Accepted: ${socket.id}`);
 
     socket.on("request-open-parties", async () => {
       try {
@@ -57,7 +59,7 @@ export function registerSocketEvents(io: Server) {
     socket.on("join-party", async (data: { partyHash: string; singerName: string; avatar: string | null }) => {
       const { partyHash, singerName, avatar } = data;
       void socket.join(partyHash);
-      console.log(`${LOG_TAG} Socket ${socket.id} joined room ${partyHash} as ${singerName}`);
+      debugLog(LOG_TAG, `Socket ${socket.id} joined room ${partyHash} as ${singerName}`);
       
       const party = await db.party.findUnique({ where: { hash: partyHash } });
       if (party) {
@@ -86,7 +88,6 @@ export function registerSocketEvents(io: Server) {
         const lastRequest = addSongRateLimit.get(socket.id) ?? 0;
         const now = Date.now();
         if (now - lastRequest < RATE_LIMIT_WINDOW) {
-            // TRANSLATION FIX: Send code
             socket.emit("error", { message: "rateLimit" });
             return;
         }
@@ -163,6 +164,92 @@ export function registerSocketEvents(io: Server) {
       } catch (error) { console.error("Error removing song:", error); }
     });
 
+    socket.on("delete-my-song", async (data: { partyHash: string; videoId: string; singerName: string }) => {
+      try {
+        const fresh = await getFreshPlaylist(data.partyHash);
+        
+        if (fresh.status === "STARTED") {
+           const currentSinger = fresh.currentSong?.singerName;
+           const nextSinger = fresh.unplayed[0]?.singerName;
+           
+           if (data.singerName === currentSinger || data.singerName === nextSinger) {
+               socket.emit("error", { message: "cannotModifyQueueNow" });
+               return;
+           }
+        }
+
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party) return;
+
+        await db.playlistItem.deleteMany({ 
+            where: { 
+                partyId: party.id, 
+                videoId: data.videoId,
+                singerName: data.singerName,
+                playedAt: null
+            } 
+        });
+
+        debugLog(LOG_TAG, `Guest ${data.singerName} deleted own song ${data.videoId} in ${data.partyHash}`);
+        await updateAndEmitPlaylist(io, data.partyHash, "delete-my-song");
+      } catch (e) {
+        console.error("Error deleting own song:", e);
+      }
+    });
+
+    socket.on("reorder-my-queue", async (data: { partyHash: string; singerName: string; newOrderIds: string[] }) => {
+        try {
+            const fresh = await getFreshPlaylist(data.partyHash);
+            if (fresh.status === "STARTED") {
+                const currentSinger = fresh.currentSong?.singerName;
+                const nextSinger = fresh.unplayed[0]?.singerName;
+                
+                if (data.singerName === currentSinger || data.singerName === nextSinger) {
+                    socket.emit("error", { message: "cannotModifyQueueNow" });
+                    return;
+                }
+            }
+
+            const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+            if (!party) return;
+
+            const userItems = await db.playlistItem.findMany({
+                where: { 
+                    partyId: party.id, 
+                    singerName: data.singerName,
+                    playedAt: null 
+                },
+                orderBy: { addedAt: "asc" }
+            });
+
+            const dbIds = userItems.map(i => i.videoId).sort();
+            const reqIds = [...data.newOrderIds].sort();
+            if (JSON.stringify(dbIds) !== JSON.stringify(reqIds)) {
+                return;
+            }
+
+            const updates = [];
+            for (let i = 0; i < data.newOrderIds.length; i++) {
+                const videoId = data.newOrderIds[i];
+                const targetTimestamp = userItems[i]!.addedAt;
+                
+                updates.push(
+                    db.playlistItem.updateMany({
+                        where: { partyId: party.id, singerName: data.singerName, videoId: videoId, playedAt: null },
+                        data: { addedAt: targetTimestamp }
+                    })
+                );
+            }
+
+            await db.$transaction(updates);
+            debugLog(LOG_TAG, `Guest ${data.singerName} reordered queue in ${data.partyHash}`);
+            await updateAndEmitPlaylist(io, data.partyHash, "reorder-my-queue");
+
+        } catch (e) {
+            console.error("Error reordering own queue:", e);
+        }
+    });
+
     socket.on("mark-as-played", async (data: { partyHash: string }) => {
       if (!ensureHost(socket)) return;
       try {
@@ -205,26 +292,19 @@ export function registerSocketEvents(io: Server) {
     socket.on("set-party-status", async (data: { partyHash: string; status: string }) => {
       if (!ensureHost(socket)) return;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updateData: any = { status: data.status, lastActivityAt: new Date() };
         
-        // If going to OPEN (Intermission/Pause), clear playback state
         if (data.status === "OPEN") {
              updateData.currentSongStartedAt = null;
              updateData.currentSongRemainingDuration = null;
         }
 
         await db.party.update({ where: { hash: data.partyHash }, data: updateData });
-        
-        // If status is CLOSED, we might want to emit 'party-closed'
-        // But this function handles OPEN/STARTED. 'close-party' is separate.
-        
         await updateAndEmitPlaylist(io, data.partyHash, "set-party-status");
       } catch (error) { console.error("Error setting party status:", error); }
     });
 
     socket.on("start-party", async (data: { partyHash: string }) => {
-      // Kept for backward compatibility or direct calls
       if (!ensureHost(socket)) return;
       try {
         await db.party.update({ where: { hash: data.partyHash }, data: { status: "STARTED", lastActivityAt: new Date() } });

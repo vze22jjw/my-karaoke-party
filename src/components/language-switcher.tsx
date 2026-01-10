@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from '~/navigation';
+import { usePathname } from '~/navigation';
 import { Button } from './ui/ui/button';
 import { useState, useRef, useEffect } from 'react';
 import { Check, Globe, ChevronUp } from 'lucide-react';
@@ -16,7 +16,6 @@ type Locale = typeof LANGUAGES[number]['code'];
 
 export function LanguageSwitcher() {
   const locale = useLocale();
-  const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +31,11 @@ export function LanguageSwitcher() {
   }, []);
 
   const switchLanguage = (code: Locale) => {
-    router.replace(pathname, { locale: code });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user-locale-preference', code);
+    }
+    const newPath = `/${code}${pathname}`;
+    window.location.href = newPath;
     setIsOpen(false);
   };
 

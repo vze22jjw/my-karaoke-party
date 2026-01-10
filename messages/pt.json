@@ -239,6 +239,12 @@
       "queueFull": "Fila Cheia! Cante uma, depois adicione mais.",
       "queueLocked": "Fila Bloqueada: O anfitrião está reordenando.",
       "myQueue": "Minhas Músicas na Fila",
+      "manage": "Gerenciar",
+      "saveOrder": "Salvar Ordem",
+      "confirmDelete": "Tem certeza que deseja deletar esta música?",
+      "cannotEdit": "Bloqueado",
+      "waitTurn": "Você é o próximo a cantar! Não pode modificar a fila agora.",
+      "restrictedMessage": "Modificação da fila desativada enquanto você está na vez.",
       "emptyHistory": "Você ainda não adicionou músicas.",
       "added": "Música adicionada à fila!",
       "playingNow": "(Tocando Agora)",
@@ -302,7 +308,7 @@
     }
   },
   "applause": {
-    "title": "Aplausos para",
+    "title": "Applausos para",
     "waiting": "Aguardando Cantores...",
     "instruction": "Clique repetidamente! Cada aplauso adiciona Amizade ao cantor.",
     "back": "Voltar para Festa"
@@ -420,7 +426,8 @@
       "rateLimit": "Aguarde alguns segundos antes de adicionar outra música.",
       "unauthorized": "Não autorizado: Acesso de anfitrião necessário.",
       "videoTooLong": "Vídeo muito longo! Duração máxima é 10 minutos.",
-      "addFailed": "Falha ao adicionar música."
+      "addFailed": "Falha ao adicionar música.",
+      "cannotModifyQueueNow": "Não é possível modificar a fila enquanto você está cantando ou é o próximo."
     }
   }
 }
