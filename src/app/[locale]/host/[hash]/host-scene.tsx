@@ -19,13 +19,14 @@ const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 type Props = {
   party: Party;
   initialData: InitialPartyData;
-  hostName: string;
+  hostName: string | null;
 };
 
-export function HostScene({ party, initialData, hostName }: Props) {
+export function HostScene({ party, initialData, hostName: initialHostName }: Props) {
   const router = useRouter();
-  const tCommon = useTranslations('common');
   const tToasts = useTranslations('toasts.host');
+  const [localName] = useLocalStorage<string>({ key: "name", defaultValue: "" });
+  const effectiveHostName = localName || (initialHostName ?? "Host");
 
   const {
     currentSong,
@@ -38,7 +39,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
     remainingTime,
     settings,
     themeSuggestions,
-  } = usePartySocket(party.hash!, initialData, hostName);
+  } = usePartySocket(party.hash!, initialData, effectiveHostName);
 
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: getScopedKey(party.hash!, "manual-sort"),
@@ -233,7 +234,7 @@ export function HostScene({ party, initialData, hostName }: Props) {
         remainingTime={remainingTime}
         onPlay={(t) => socketActions.playbackPlay(t)}
         onPause={() => socketActions.playbackPause()}
-        hostName={participants.find((p) => p.role === "Host")?.name ?? hostName}
+        hostName={participants.find((p) => p.role === "Host")?.name ?? effectiveHostName}
         singerCount={participants.filter((p) => p.role === "Guest").length}
         playedSongCount={playedPlaylist.length}
         unplayedSongCount={unplayedPlaylist.length}

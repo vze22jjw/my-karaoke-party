@@ -6,10 +6,13 @@ import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 import { useLocalStorage } from "@mantine/hooks";
 import { useTranslations } from "next-intl";
+import { debugLog } from "~/utils/debug-logger";
 
 interface SocketActions {
   addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => boolean;
   removeSong: (playlistItemId: number) => void;
+  deleteMySong: (partyHash: string, videoId: string, singerName: string) => void;
+  reorderMyQueue: (partyHash: string, singerName: string, newOrderIds: string[]) => void;
   markAsPlayed: () => void;
   toggleRules: (orderByFairness: boolean) => void;
   togglePlayback: (disablePlayback: boolean) => void;
@@ -20,7 +23,7 @@ interface SocketActions {
   startSkipTimer: () => void;
   startParty: () => void;
   refreshParty: () => void;
-  setPartyStatus: (status: string) => void; // <-- Added
+  setPartyStatus: (status: string) => void; 
   updateIdleMessages: (messages: string[]) => void;
   updateThemeSuggestions: (suggestions: string[]) => void;
   sendApplause: (singerName: string) => Promise<void>; 
@@ -76,6 +79,12 @@ export function usePartySocket(
 ): UsePartySocketReturn {
   const router = useRouter();
   const tToasts = useTranslations('toasts.socket');
+  
+  const tToastsRef = useRef(tToasts);
+  useEffect(() => {
+    tToastsRef.current = tToasts;
+  }, [tToasts]);
+
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [avatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "🎤" });
@@ -200,7 +209,7 @@ export function usePartySocket(
       newSocket.on("singers-updated", (list: Participant[]) => setParticipants(list));
       
       newSocket.on("new-singer-joined", (name: string) => {
-        if (name && name !== singerName) toast.info(tToasts('joined', { name }));
+        if (name && name !== singerName) toast.info(tToastsRef.current('joined', { name }));
       });
 
       newSocket.on("party-closed", () => {
@@ -209,18 +218,22 @@ export function usePartySocket(
       });
       
       newSocket.on("error", (data: { message: string }) => {
+        const t = tToastsRef.current;
         switch (data.message) {
           case 'rateLimit':
-            toast.error(tToasts('rateLimit'));
+            toast.error(t('rateLimit'));
             break;
           case 'unauthorized':
-            toast.error(tToasts('unauthorized'));
+            toast.error(t('unauthorized'));
             break;
           case 'videoTooLong':
-            alert(tToasts('videoTooLong')); 
+            alert(t('videoTooLong')); 
             break;
           case 'addFailed':
-            toast.error(tToasts('addFailed'));
+            toast.error(t('addFailed'));
+            break;
+          case 'cannotModifyQueueNow':
+            toast.error(t('cannotModifyQueueNow'));
             break;
           default:
             toast.error(data.message);
@@ -252,7 +265,7 @@ export function usePartySocket(
       clearInterval(heartbeatInterval);
       stopCountdown();
     };
-  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar, initialData.currentSongStartedAt, initialData.currentSongRemainingDuration, tToasts]);
+  }, [partyHash, singerName, router, startSyncedCountdown, resetCountdown, stopCountdown, avatar, initialData.currentSongStartedAt, initialData.currentSongRemainingDuration]);
 
   const sendApplauseHttp = useCallback(async (singer: string) => {
     try {
@@ -275,7 +288,7 @@ export function usePartySocket(
     addSong: (videoId, title, coverUrl, singerName) => {
         const now = Date.now();
         if (now - lastAddRef.current < CLIENT_RATE_LIMIT_MS) {
-            toast.error(tToasts('rateLimit'));
+            toast.error(tToastsRef.current('rateLimit'));
             return false;
         }
         lastAddRef.current = now;
@@ -283,6 +296,8 @@ export function usePartySocket(
         return true;
     },
     removeSong: (playlistItemId) => socketRef.current?.emit("remove-song", { partyHash, playlistItemId }),
+    deleteMySong: (ph, videoId, sName) => socketRef.current?.emit("delete-my-song", { partyHash: ph, videoId, singerName: sName }),
+    reorderMyQueue: (ph, sName, newOrderIds) => socketRef.current?.emit("reorder-my-queue", { partyHash: ph, singerName: sName, newOrderIds }),
     markAsPlayed: () => socketRef.current?.emit("mark-as-played", { partyHash }),
     toggleRules: (orderByFairness) => socketRef.current?.emit("toggle-rules", { partyHash, orderByFairness }),
     togglePlayback: (disablePlayback) => socketRef.current?.emit("toggle-playback", { partyHash, disablePlayback }),
@@ -293,18 +308,18 @@ export function usePartySocket(
     startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
     refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }), 
-    setPartyStatus: (status) => socketRef.current?.emit("set-party-status", { partyHash, status }), // <-- New Action
+    setPartyStatus: (status) => socketRef.current?.emit("set-party-status", { partyHash, status }), 
     updateIdleMessages: (messages) => socketRef.current?.emit("update-idle-messages", { partyHash, messages }),
     updateThemeSuggestions: (suggestions) => socketRef.current?.emit("update-theme-suggestions", { partyHash, suggestions }),
     sendApplause: sendApplauseHttp,
     songEnded: async (id: string) => { 
-        console.log("Song ended: " + id); 
+        debugLog(LOG_TAG, "Song ended: " + id); 
         socketRef.current?.emit("mark-as-played", { partyHash }); 
     },
     toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
     saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
     togglePriority: (videoId) => socketRef.current?.emit("toggle-priority", { partyHash, videoId }),
-  }), [partyHash, singerName, avatar, sendApplauseHttp, tToasts]);
+  }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {
     currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions,

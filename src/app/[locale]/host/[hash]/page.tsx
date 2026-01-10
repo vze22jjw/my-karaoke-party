@@ -1,60 +1,52 @@
-import { env } from "~/env";
+import { notFound, redirect } from "next/navigation";
 import { api } from "~/trpc/server";
-import { notFound } from "next/navigation";
-import { type VideoInPlaylist, type KaraokeParty } from "~/types/app-types";
-import { HostScene } from "./host-scene"; 
-import { cookies } from "next/headers";
-import { AdminLogin } from "~/components/admin-login";
 import { getTranslations } from "next-intl/server";
+import { HostScene } from "./host-scene";
+import { env } from "~/env";
+import type { InitialPartyData } from "~/types/app-types";
+import { cookies, headers } from "next/headers";
 
 type Props = {
   params: { hash: string; locale: string };
 };
 
-type InitialPartyData = {
-  currentSong: VideoInPlaylist | null;
-  unplayed: VideoInPlaylist[];
-  played: VideoInPlaylist[];
-  settings: KaraokeParty["settings"];
-  currentSongStartedAt: Date | null;
-  currentSongRemainingDuration: number | null;
-  status: string;
-  idleMessages: string[];
-  themeSuggestions: string[]; 
-};
-
 export async function generateMetadata({ params }: Props) {
-  const t = await getTranslations({ locale: params.locale, namespace: 'host' });
+  const t = await getTranslations({ locale: params.locale, namespace: 'common' });
   const partyHash = params.hash;
   
   try {
     const party = await api.party.getByHash({ hash: partyHash });
-    if (!party) return { title: 'My Karaoke Party' };
+    if (!party) return { title: t('appName') };
     
     return {
-      title: `${party.name} - ${t('dashboardTitle')}`,
+      title: `Host: ${party.name} - ${t('appName')}`,
     };
   } catch (e) {
-    return { title: 'My Karaoke Party' };
+    return { title: t('appName') };
   }
 }
 
-export default async function HostPage({ params }: Props) {
-  const cookieStore = cookies();
-  const isAuthenticated = cookieStore.get("admin_token_verified")?.value === "true";
+export default async function HostPartyPage({ params }: Props) {
+  const headersList = headers();
+  const cookiesList = cookies();  
+  const authHeader = headersList.get("authorization");
+  const hasAuthHeader = authHeader === `Bearer ${env.ADMIN_TOKEN}`;
+  const hasCookie = cookiesList.has("admin_token");
 
-  if (!isAuthenticated) {
-    return <AdminLogin />;
+  if (!hasCookie && !hasAuthHeader) {
+    redirect("/api/auth/login");
   }
 
   const partyHash = params.hash;
-  const [party, hostName] = await Promise.all([
-    api.party.getByHash({ hash: partyHash }),
-    api.party.getHostName({ hash: partyHash }),
-  ]);
+  const party = await api.party.getByHash({ hash: partyHash });
 
   if (!party) {
     notFound();
+  }
+
+  if (party.status === "CLOSED") {
+    // Optional: Redirect to summary
+    // redirect("/host");
   }
 
   let initialData: InitialPartyData = { 
@@ -62,11 +54,11 @@ export default async function HostPage({ params }: Props) {
     unplayed: [], 
     played: [], 
     settings: { 
-      orderByFairness: true,
-      spotifyPlaylistId: null,
-      disablePlayback: false,
-      spotifyLink: null,
-      isManualSortActive: false
+        orderByFairness: true, 
+        disablePlayback: false, 
+        spotifyPlaylistId: null, 
+        spotifyLink: null,
+        isManualSortActive: false
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
@@ -74,13 +66,13 @@ export default async function HostPage({ params }: Props) {
     idleMessages: [],
     themeSuggestions: [],
   };
-
+  
   try {
     const baseUrl = env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const playlistRes = await fetch(`${baseUrl}/api/playlist/${partyHash}`, {
       method: "GET",
       next: {
-        revalidate: 0,
+        revalidate: 0, 
       },
     });
 
@@ -92,5 +84,12 @@ export default async function HostPage({ params }: Props) {
     console.warn("Failed to fetch initial playlist for host page", error);
   }
 
-  return <HostScene party={party} initialData={initialData} hostName={hostName ?? "Host"} />;
+  return (
+    <HostScene 
+      key={params.locale} 
+      party={party} 
+      initialData={initialData} 
+      hostName={null} 
+    />
+  );
 }

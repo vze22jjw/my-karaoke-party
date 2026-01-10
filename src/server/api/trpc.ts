@@ -13,6 +13,7 @@ import { ZodError } from "zod";
 import { db } from "~/server/db";
 import youtube from "~/utils/youtube-data-api";
 import { cache } from "../cache";
+import { env } from "~/env";
 
 /**
  * 1. CONTEXT
@@ -96,8 +97,11 @@ export const publicProcedure = t.procedure;
  */
 const isAuthenticated = t.middleware(async ({ ctx, next }) => {
   const cookieHeader = ctx.headers.get("cookie") ?? "";
-  // Check for the admin cookie set by the login route
-  if (!cookieHeader.includes("admin_token_verified=true")) {
+  const authHeader = ctx.headers.get("authorization") ?? "";
+  const hasCookie = cookieHeader.includes("admin_token_verified=true");
+  const hasValidHeader = authHeader === `Bearer ${env.ADMIN_TOKEN}`;
+
+  if (!hasCookie && !hasValidHeader) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({

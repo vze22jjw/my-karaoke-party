@@ -28,9 +28,11 @@ const MAX_QUEUE_PER_SINGER = 9;
 export function PartySceneTabs({
   party,
   initialData,
+  locale,
 }: {
   party: Party;
   initialData: InitialPartyData;
+  locale: string;
 }) {
   const tGuest = useTranslations('guest');
   const tHost = useTranslations('host');
@@ -252,6 +254,10 @@ export function PartySceneTabs({
 
         <TabsContent value="add" className="flex-1 overflow-y-auto min-h-0 mt-0 w-full data-[state=inactive]:hidden">
           <TabAddSong
+            key={`add-song-${locale}`}
+            partyHash={party.hash!}
+            socketActions={socketActions}
+            partyStatus={partyStatus}
             playlist={[
               ...(currentSong ? [currentSong] : []),
               ...unplayedPlaylist,
@@ -263,6 +269,7 @@ export function PartySceneTabs({
             hasReachedQueueLimit={hasReachedQueueLimit}
             maxQueuePerSinger={MAX_QUEUE_PER_SINGER}
             isManualSortActive={settings.isManualSortActive}
+            searchPlaceholder={tGuest('addSong.searchPlaceholder')}
           />
         </TabsContent>
 

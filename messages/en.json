@@ -239,6 +239,12 @@
       "queueFull": "Queue Full! Sing one, then add more.",
       "queueLocked": "Queue Locked: Host is reordering.",
       "myQueue": "My Queued Songs",
+      "manage": "Manage",
+      "saveOrder": "Save Order",
+      "confirmDelete": "Are you sure you want to delete this song?",
+      "cannotEdit": "Locked",
+      "waitTurn": "You are singing next! You cannot modify your queue right now.",
+      "restrictedMessage": "Queue modification disabled while you are on deck.",
       "emptyHistory": "You haven't added any songs yet.",
       "added": "Song added to queue!",
       "playingNow": "(Playing Now)",
@@ -420,7 +426,8 @@
       "rateLimit": "Please wait a few seconds before adding another song.",
       "unauthorized": "Unauthorized: Host access required.",
       "videoTooLong": "Video too long! Max duration is 10 minutes.",
-      "addFailed": "Failed to add song."
+      "addFailed": "Failed to add song.",
+      "cannotModifyQueueNow": "Cannot modify queue while singing or up next."
     }
   }
 }
