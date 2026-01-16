@@ -57,7 +57,8 @@ model PartyParticipant {
     role      String        @default("Guest") 
     applauseCount Int       @default(0)
     avatar    String?
-
+    lastQueueEntryAt DateTime?
+    
     @@unique([partyId, name])
     @@index([partyId])
 }

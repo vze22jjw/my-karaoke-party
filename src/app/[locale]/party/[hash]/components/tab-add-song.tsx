@@ -53,7 +53,7 @@ type Props = {
   hasReachedQueueLimit: boolean;
   maxQueuePerSinger: number;
   isManualSortActive?: boolean;
-  searchPlaceholder: string; // <-- Translated prop
+  searchPlaceholder: string;
 };
 
 type SortableItemData = VideoInPlaylist & { _sortId: string };
@@ -95,6 +95,7 @@ function SortableItem({ video, index, onDelete }: { video: SortableItemData, ind
             size="icon" 
             className="h-8 w-8 text-red-400 hover:bg-red-900/20 hover:text-red-300"
             onClick={() => onDelete(video.id)}
+            data-testid="delete-song-btn"
         >
             <Trash2 className="h-4 w-4" />
         </Button>
@@ -123,7 +124,9 @@ export function TabAddSong({
   const [items, setItems] = useState<SortableItemData[]>([]);
   
   const playingNow = playlist[0];
-  const isMySongPlaying = !!playingNow && playingNow.singerName === name && !playingNow.playedAt;
+  
+  const isMySongPlaying = partyStatus === "STARTED" && !!playingNow && playingNow.singerName === name && !playingNow.playedAt;
+  
   const myPlayingSong: VideoInPlaylist | null = isMySongPlaying ? playingNow : null;
 
   const myUpcomingSongs = playlist

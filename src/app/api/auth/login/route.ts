@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { env } from "~/env";
 
 export async function POST(req: Request) {
@@ -46,4 +46,8 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
+}
+
+export function GET(req: NextRequest) {
+  return NextResponse.redirect(new URL("/", req.url));
 }
