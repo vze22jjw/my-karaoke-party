@@ -178,7 +178,6 @@ test.describe('Queue Fairness & Stability', () => {
     await addSong(guestPages[2], 'Song F', 'user3-add-song2', testInfo); 
     await takeScreenshot(hostPage, 'host-queue-after-user3-2', testInfo);
 
-    // Final Sync Check
     await hostPage.waitForTimeout(1000);
     const singers = await getHostQueueSingers(hostPage);
     console.log('Final Queue Singers:', singers);
@@ -199,12 +198,10 @@ test.describe('Queue Fairness & Stability', () => {
     
     u2Page.on('dialog', d => d.accept());
     
-    // Use the named selector (delete-song-btn)
     const deleteBtn = u2Page.getByTestId('delete-song-btn').first();
     await expect(deleteBtn).toBeVisible({ timeout: 5000 });
     await deleteBtn.click();
     
-    // Wait for update
     await u2Page.waitForTimeout(1500);
     await takeScreenshot(u2Page, 'user2-deleted-song', testInfo);
 
