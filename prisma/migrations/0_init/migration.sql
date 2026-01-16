@@ -121,3 +121,6 @@ ALTER TABLE "Party" ADD COLUMN "spotifyLink" TEXT;
 
 -- AlterTable
 ALTER TABLE "PlaylistItem" ADD COLUMN "applauseCount" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "PartyParticipant" ADD COLUMN "lastQueueEntryAt" TIMESTAMP(3);

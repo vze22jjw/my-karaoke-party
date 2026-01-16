@@ -34,7 +34,7 @@ export default async function HostPartyPage({ params }: Props) {
   const hasCookie = cookiesList.has("admin_token");
 
   if (!hasCookie && !hasAuthHeader) {
-    redirect("/api/auth/login");
+    redirect("/");
   }
 
   const partyHash = params.hash;
@@ -45,8 +45,7 @@ export default async function HostPartyPage({ params }: Props) {
   }
 
   if (party.status === "CLOSED") {
-    // Optional: Redirect to summary
-    // redirect("/host");
+    redirect("/host");
   }
 
   let initialData: InitialPartyData = { 

@@ -61,7 +61,6 @@ export interface FairnessPlaylistItem {
   randomBreaker: number | null;
 }
 
-// Helper to calculate required stats per singer for fairness sorting.
 function getSingerStats(
   playlist: FairnessPlaylistItem[],
 ) {
@@ -99,14 +98,15 @@ function getSingerStats(
  * @param allItems - (used for accurate stats calculation)
  * @param itemsToSort - (remaining queue)
  * @param singerToDeprioritize - (for anti-consecutive rule)
+ * @param singerEntryTimes - (Map of singerName -> lastQueueEntryAt for persistent ordering)
  **/
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export function orderByRoundRobin<T extends FairnessPlaylistItem>(
   allItems: T[],
   itemsToSort: T[],
   singerToDeprioritize: string | null,
+  singerEntryTimes: Record<string, Date | null> = {},
 ): T[] {
-  // Calculate stats based on the ENTIRE playlist history
   const stats = getSingerStats(allItems);
 
   const playedSingers = allItems
@@ -117,7 +117,6 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
   // eslint-disable-next-line prefer-const
   let resultByUser = [...playedSingers];
   
-  // Add the singer of the current song to history for anti-consecutive rule
   if (singerToDeprioritize) {
     resultByUser.push(singerToDeprioritize);
   }
@@ -142,7 +141,6 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
     const allUnplayedSingers = Array.from(singerMap.keys());
 
     for (const singerId of allUnplayedSingers) {
-      // Find the position of the singer's last played/queued song in the history array
       const idx = resultByUser.lastIndexOf(singerId);
       
       // Distance: index of the singer + 1 (position) compared to the end of the history array
@@ -152,26 +150,30 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
         maxDistance = distance;
         maxSingerId = singerId;
       } else if (distance === maxDistance) {
-        // Tie-breaker 1: Fewest Unsung Songs
-        const statsA = stats[singerId]!;
-        const statsB = stats[maxSingerId!]!;
+        
+        // Priority 1: Queue Entry Time (Turn Persistence)
+        const entryTimeA = singerEntryTimes[singerId] ?? singerMap.get(singerId)![0]!.addedAt;
+        const entryTimeB = singerEntryTimes[maxSingerId!] ?? singerMap.get(maxSingerId!)![0]!.addedAt;
 
-        if (statsA.nextCount !== statsB.nextCount) {
-            if (statsA.nextCount < statsB.nextCount) {
+        if (entryTimeA.getTime() !== entryTimeB.getTime()) {
+            if (entryTimeA.getTime() < entryTimeB.getTime()) {
                 maxSingerId = singerId;
             }
         } else {
-            // Tie-breaker 2: Random Breaker
-            const nextSongA = singerMap.get(singerId)![0]!;
-            const nextSongB = singerMap.get(maxSingerId!)![0]!;
+            // Priority 2: Fewest Unplayed Songs
+            const statsA = stats[singerId]!;
+            const statsB = stats[maxSingerId!]!;
 
-            if (nextSongA.randomBreaker !== nextSongB.randomBreaker) {
-                if (nextSongA.randomBreaker! < nextSongB.randomBreaker!) {
+            if (statsA.nextCount !== statsB.nextCount) {
+                if (statsA.nextCount < statsB.nextCount) {
                     maxSingerId = singerId;
                 }
             } else {
-                // Final Tie-breaker: Fallback to earliest added song
-                if (nextSongA.addedAt.getTime() < nextSongB.addedAt.getTime()) {
+                // Priority 3: Random Breaker (session-based luck fallback)
+                const nextSongA = singerMap.get(singerId)![0]!;
+                const nextSongB = singerMap.get(maxSingerId!)![0]!;
+
+                if ((nextSongA.randomBreaker ?? 0) < (nextSongB.randomBreaker ?? 0)) {
                     maxSingerId = singerId;
                 }
             }
@@ -181,14 +183,12 @@ export function orderByRoundRobin<T extends FairnessPlaylistItem>(
 
     if (maxSingerId === null) break; 
 
-    // Take the next song for the maxSingerId (FIFO order maintained by the initial sort of itemsToSort)
     const userItems = singerMap.get(maxSingerId)!;
     const nextSong = userItems.shift()!;
     upcoming.push(nextSong);
 
     resultByUser.push(maxSingerId);
 
-    // Remove singer from map if their queue is now empty
     if (userItems.length === 0) {
       singerMap.delete(maxSingerId);
     }

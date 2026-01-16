@@ -32,6 +32,19 @@ function ensureHost(socket: Socket): boolean {
   return true;
 }
 
+async function checkAndResetQueueEntry(partyId: number, singerName: string) {
+    const remaining = await db.playlistItem.count({
+        where: { partyId, singerName, playedAt: null }
+    });
+    
+    if (remaining === 0) {
+        await db.partyParticipant.updateMany({
+            where: { partyId, name: singerName },
+            data: { lastQueueEntryAt: null }
+        });
+    }
+}
+
 export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
     debugLog(LOG_TAG, `New Socket Connection Accepted: ${socket.id}`);
@@ -103,6 +116,17 @@ export function registerSocketEvents(io: Server) {
         const { isNew } = await registerParticipant(party.id, data.singerName, participant?.avatar ?? null);
         if (isNew) socket.broadcast.to(data.partyHash).emit("new-singer-joined", data.singerName);
 
+        const unplayedCount = await db.playlistItem.count({
+            where: { partyId: party.id, singerName: data.singerName, playedAt: null }
+        });
+
+        if (unplayedCount === 0) {
+            await db.partyParticipant.updateMany({
+                where: { partyId: party.id, name: data.singerName },
+                data: { lastQueueEntryAt: new Date() }
+            });
+        }
+
         const existing = await db.playlistItem.findFirst({
           where: { partyId: party.id, videoId: data.videoId, singerName: data.singerName, playedAt: null },
         });
@@ -158,7 +182,11 @@ export function registerSocketEvents(io: Server) {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party) return;
         
-        await db.playlistItem.deleteMany({ where: { partyId: party.id, id: data.playlistItemId } });
+        const item = await db.playlistItem.findUnique({ where: { id: data.playlistItemId } });
+        if (item) {
+            await db.playlistItem.delete({ where: { id: data.playlistItemId } });
+            await checkAndResetQueueEntry(party.id, item.singerName);
+        }
         
         await updateAndEmitPlaylist(io, data.partyHash, "remove-song");
       } catch (error) { console.error("Error removing song:", error); }
@@ -189,6 +217,8 @@ export function registerSocketEvents(io: Server) {
                 playedAt: null
             } 
         });
+
+        await checkAndResetQueueEntry(party.id, data.singerName);
 
         debugLog(LOG_TAG, `Guest ${data.singerName} deleted own song ${data.videoId} in ${data.partyHash}`);
         await updateAndEmitPlaylist(io, data.partyHash, "delete-my-song");
@@ -255,7 +285,10 @@ export function registerSocketEvents(io: Server) {
       try {
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
-          include: { playlistItems: { orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }] } },
+          include: { 
+              playlistItems: { orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }] },
+              participants: true 
+          },
         });
         if (!party || party.status === "OPEN") return;
 
@@ -268,9 +301,19 @@ export function registerSocketEvents(io: Server) {
 
         const lastPlayedSong = playedItems.length > 0 ? playedItems.reduce((l, c) => (l.playedAt! > c.playedAt! ? l : c)) : null;
 
+        const singerEntryTimes: Record<string, Date | null> = {};
+        party.participants.forEach(p => {
+            singerEntryTimes[p.name] = p.lastQueueEntryAt;
+        });
+
         let sortedStandard: PlaylistItem[] = [];
         if (party.orderByFairness) {
-            sortedStandard = orderByRoundRobin(allItems as FairnessPlaylistItem[], standardItems as FairnessPlaylistItem[], lastPlayedSong?.singerName ?? null) as PlaylistItem[];
+            sortedStandard = orderByRoundRobin(
+                allItems as FairnessPlaylistItem[], 
+                standardItems as FairnessPlaylistItem[], 
+                lastPlayedSong?.singerName ?? null,
+                singerEntryTimes
+            ) as PlaylistItem[];
         } else {
             sortedStandard = standardItems;
         }
@@ -281,6 +324,9 @@ export function registerSocketEvents(io: Server) {
         if (!currentSong) return;
 
         await db.playlistItem.update({ where: { id: currentSong.id }, data: { playedAt: new Date() } });
+        
+        await checkAndResetQueueEntry(party.id, currentSong.singerName);
+
         await db.party.update({
           where: { id: party.id },
           data: { lastActivityAt: new Date(), currentSongId: null, currentSongStartedAt: null, currentSongRemainingDuration: null },
@@ -320,7 +366,10 @@ export function registerSocketEvents(io: Server) {
     socket.on("playback-play", async (data: { partyHash: string; currentTime?: number }) => {
       if (!ensureHost(socket)) return;
       try {
-        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        const party = await db.party.findUnique({ 
+            where: { hash: data.partyHash },
+            include: { participants: true }
+        });
         if (!party || party.status === "OPEN") return;
 
         const allDbItems = await db.playlistItem.findMany({ where: { partyId: party.id }, orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }] });
@@ -330,10 +379,19 @@ export function registerSocketEvents(io: Server) {
         const priorityItems = unplayed.filter(i => i.isPriority);
         const standardItems = unplayed.filter(i => !i.isPriority);
         const lastPlayed = played.length > 0 ? played.reduce((l, c) => (l.playedAt! > c.playedAt! ? l : c)) : null;
+        const singerEntryTimes: Record<string, Date | null> = {};
+        party.participants.forEach(p => {
+            singerEntryTimes[p.name] = p.lastQueueEntryAt;
+        });
 
         let sortedStandard: PlaylistItem[] = [];
         if (party.orderByFairness) {
-            sortedStandard = orderByRoundRobin(allDbItems as FairnessPlaylistItem[], standardItems as FairnessPlaylistItem[], lastPlayed?.singerName ?? null) as PlaylistItem[];
+            sortedStandard = orderByRoundRobin(
+                allDbItems as FairnessPlaylistItem[], 
+                standardItems as FairnessPlaylistItem[], 
+                lastPlayed?.singerName ?? null,
+                singerEntryTimes
+            ) as PlaylistItem[];
         } else {
             sortedStandard = standardItems;
         }
@@ -482,6 +540,11 @@ export function registerSocketEvents(io: Server) {
         } catch (error) {
             console.error("Error toggling priority:", error);
         }
+    });
+
+    socket.on("song-ended", async (data: { partyHash: string, id: string }) => {
+      if (!ensureHost(socket)) return;
+      socket.emit("mark-as-played", { partyHash: data.partyHash });
     });
   });
 }

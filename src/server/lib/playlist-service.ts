@@ -40,6 +40,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       playlistItems: {
         orderBy: [{ playedAt: "asc" }, { addedAt: "asc" }],
       },
+      participants: true,
     },
   });
 
@@ -76,10 +77,16 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       : null;
     const singerToDeprioritize = lastPlayedSong?.singerName ?? null;
 
+    const singerEntryTimes: Record<string, Date | null> = {};
+    party.participants.forEach(p => {
+        singerEntryTimes[p.name] = p.lastQueueEntryAt;
+    });
+
     const sortedFloating = orderByRoundRobin(
       allItems as FairnessPlaylistItem[],
       floatingItems as FairnessPlaylistItem[], 
       singerToDeprioritize,
+      singerEntryTimes
     ) as PlaylistItem[];
 
     const merged: PlaylistItem[] = [];
