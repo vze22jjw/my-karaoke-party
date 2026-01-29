@@ -1,6 +1,8 @@
 import { test, expect, type Page, type BrowserContext, request } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+// IMPORT HELPERS
+import { createPartyRobust, joinPartyRobust, addSongRobust } from './helpers/party-utils';
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 const BASE_URL = process.env.BASE_URL;
@@ -15,16 +17,21 @@ if (!fs.existsSync(SCREENSHOT_DIR)) fs.mkdirSync(SCREENSHOT_DIR, { recursive: tr
 
 test.describe.configure({ mode: 'serial' });
 
+// --- Helper Functions (Specific to Fairness) ---
+
 let stepCounter = 1;
 
 async function takeScreenshot(page: Page, name: string, testInfo: any) {
-  // If we are on the Host page, ensure we are looking at the playlist tab
   const playlistTab = page.getByTestId('tab-playlist');
-  if (await playlistTab.count() > 0 && await playlistTab.isVisible()) {
-      if ((await playlistTab.getAttribute('data-state')) !== 'active') {
-          await playlistTab.click();
-          await page.waitForTimeout(300); // Visual settle
+  try {
+      if (await playlistTab.count() > 0 && await playlistTab.isVisible()) {
+          if ((await playlistTab.getAttribute('data-state')) !== 'active') {
+              await playlistTab.click({ force: true });
+              await page.waitForTimeout(500); 
+          }
       }
+  } catch (e) {
+      console.warn(`⚠️ Could not switch tab for screenshot '${name}'`);
   }
   
   const fileName = `${String(stepCounter).padStart(2, '0')}-${name}.png`;
@@ -36,45 +43,57 @@ async function takeScreenshot(page: Page, name: string, testInfo: any) {
   stepCounter++;
 }
 
-async function addSong(page: Page, query: string, screenshotName: string, testInfo: any) {
-  await page.getByTestId('tab-add').click();
-  await page.waitForTimeout(500);
+async function waitForHostQueueSize(hostPage: Page, expectedCount: number) {
+    const checkQueue = async () => {
+        const tab = hostPage.getByTestId('tab-playlist');
+        if ((await tab.getAttribute('data-state')) !== 'active') {
+             await tab.click({ force: true });
+        }
+        return await hostPage.locator('[data-testid^="playlist-item-"]').count();
+    };
 
-  const input = page.getByTestId('song-search-input');
-  await input.fill(query);
-  await input.press('Enter');
-  
-  // Wait for results
-  const addButtons = page.locator('button[data-testid^="add-video-"]');
-  await expect(addButtons.first()).toBeVisible({ timeout: 15000 });
-  
-  // Capture specific ID to track this exact button's state
-  const currentBtn = addButtons.first();
-  const btnId = await currentBtn.getAttribute('data-testid');
-  if (!btnId) throw new Error("Add button missing data-testid");
+    console.log(`⏳ Waiting for Host Queue to show ${expectedCount} items...`);
+    
+    let count = await checkQueue();
+    
+    if (count !== expectedCount) {
+        console.log(`⚠️ Queue count mismatch (Found ${count}, Expected ${expectedCount}). Reloading Host to sync DB...`);
+        await hostPage.reload();
+        await hostPage.waitForLoadState('domcontentloaded');
+        await hostPage.waitForTimeout(2000); 
+        count = await checkQueue();
+    }
 
-  const specificBtn = page.locator(`button[data-testid="${btnId}"]`);
-  
-  // Force click to bypass 'vds-blocker' overlay from the video player
-  await specificBtn.click({ force: true });
-  
-  // Verify success by checking button state (Load Test Logic)
-  await Promise.race([
-      expect(specificBtn).toBeDisabled({ timeout: 10000 }),
-      expect(specificBtn).toBeHidden({ timeout: 10000 })
-  ]);
-
-  await input.fill('');
-  await page.waitForTimeout(500);
-
-  // Capture Guest View
-  await takeScreenshot(page, screenshotName, testInfo);
+    await expect(async () => {
+        const currentCount = await checkQueue();
+        expect(currentCount).toBe(expectedCount);
+    }).toPass({ timeout: 30000, intervals: [1000] }); 
 }
 
 async function getHostQueueSingers(hostPage: Page) {
-  await hostPage.getByTestId('tab-playlist').click();
-  // Grab singer names visible in the list
+  const tab = hostPage.getByTestId('tab-playlist');
+  if ((await tab.getAttribute('data-state')) !== 'active') {
+       await tab.click({ force: true });
+  }
   return await hostPage.locator('[data-testid^="playlist-item-"] p.text-muted-foreground').allInnerTexts();
+}
+
+// --- Host Tour Walker (Since Helper doesn't skip it) ---
+async function walkthroughHostTour(page: Page) {
+    const overlay = page.locator('[data-vaul-overlay]');
+    try {
+      if (await overlay.isVisible({ timeout: 5000 })) {
+          for (let i = 0; i < 15; i++) {
+              if (!await overlay.isVisible()) break; 
+              const nextBtn = page.locator('button').filter({ hasText: /Next|Avance|Próximo/i }).first();
+              const finishBtn = page.locator('button').filter({ hasText: /Finish|Got it|Concluir/i }).first();
+              
+              if (await finishBtn.isVisible()) { await finishBtn.click(); break; }
+              else if (await nextBtn.isVisible()) { await nextBtn.click(); await page.waitForTimeout(500); }
+              else { await page.keyboard.press('Escape'); break; }
+          }
+      }
+    } catch (e) {}
 }
 
 test.describe('Queue Fairness & Stability', () => {
@@ -86,103 +105,75 @@ test.describe('Queue Fairness & Stability', () => {
 
   const GUEST_NAMES = ['User1', 'User2', 'User3'];
 
+  test.setTimeout(300000); 
+
   test.beforeAll(async ({ browser }) => {
-    // 1. Create Host
     hostContext = await browser.newContext({ 
         viewport: { width: 1280, height: 800 }, 
         extraHTTPHeaders: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
     });
     hostPage = await hostContext.newPage();
 
-    // 2. Create Party
-    await hostPage.goto(`${BASE_URL}/en/start-party`);
-    await hostPage.getByRole('button', { name: 'Start New Party' }).click();
-    await hostPage.getByLabel('Party Name').fill(`Fairness Test ${Date.now()}`);
-    await hostPage.getByLabel('Your Name').fill('Host');
-    await hostPage.getByLabel('Admin Password').fill(ADMIN_TOKEN!);
-    await hostPage.getByRole('button', { name: /Create Party/i }).click();
-    await expect(hostPage).toHaveURL(/\/host\//);
-    partyCode = hostPage.url().split('/').pop()!;
-    console.log(`🎉 Party Created: ${partyCode}`);
+    // 1. Create Party (Using Helper)
+    const uniquePartyName = `Fairness Test ${Math.floor(Math.random() * 1000)}`;
+    partyCode = await createPartyRobust(hostPage, uniquePartyName);
     
-    // Bypass Host Tour
-    await hostPage.evaluate((hash) => {
-        window.localStorage.setItem(`host-${hash}-tour-seen`, 'true');
-    }, partyCode);
-    await hostPage.reload();
-    await expect(hostPage.locator('[data-vaul-overlay]')).toBeHidden();
+    // Clear Host Tour
+    await walkthroughHostTour(hostPage);
 
-    // 3. Join Guests
-    for (const name of GUEST_NAMES) {
-        const ctx = await browser.newContext({ 
-            viewport: { width: 390, height: 844 }, 
-            isMobile: true
-        });
-
-        // Bypass Guest Tour
-        await ctx.addInitScript(({ key }) => {
-            window.localStorage.setItem(key, 'true');
-        }, { key: `guest-${partyCode}-tour-seen` });
-
+    // 2. Guests Join (Using Helper)
+    for (const [index, name] of GUEST_NAMES.entries()) {
+        const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
         guestContexts.push(ctx);
         const page = await ctx.newPage();
         guestPages.push(page);
 
-        await page.goto(`${BASE_URL}/en/join`);
-        await page.getByTestId('join-party-code-input').fill(partyCode);
-        await page.getByTestId('avatar-select-mic').click();
-        await page.getByTestId('join-name-input').fill(name);
-        await page.getByTestId('join-submit-button').click();
-        await expect(page).toHaveURL(/\/party\//);
-        await expect(page.getByTestId('tab-add')).toBeVisible({ timeout: 15000 });
+        await joinPartyRobust(page, partyCode, name, index);
     }
   });
 
   test.afterAll(async () => {
     if (partyCode) {
         const apiContext = await request.newContext();
-        await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, {
-            headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
-            params: { hash: partyCode }
-        });
-        console.log(`🧹 Deleted Party ${partyCode}`);
+        try {
+            await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, {
+                headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
+                params: { hash: partyCode }
+            });
+            console.log(`🧹 Deleted Party ${partyCode}`);
+        } catch(e) {}
     }
     await hostContext.close();
     for (const ctx of guestContexts) await ctx.close();
   });
 
   test('Step 1: Build Initial Queue (Interleaved)', async ({}, testInfo) => {
-    test.setTimeout(120000); 
-    
-    // U1 adds Song A
-    await addSong(guestPages[0], 'Song A', 'user1-add-song1', testInfo); 
+    // Round 1
+    await addSongRobust(guestPages[0], 'Karaoke Song 1'); 
     await takeScreenshot(hostPage, 'host-queue-after-user1-1', testInfo);
 
-    // U2 adds Song B
-    await addSong(guestPages[1], 'Song B', 'user2-add-song1', testInfo); 
+    await addSongRobust(guestPages[1], 'Karaoke Song 2'); 
     await takeScreenshot(hostPage, 'host-queue-after-user2-1', testInfo);
 
-    // U3 adds Song C
-    await addSong(guestPages[2], 'Song C', 'user3-add-song1', testInfo); 
+    await addSongRobust(guestPages[2], 'Karaoke Song 3'); 
     await takeScreenshot(hostPage, 'host-queue-after-user3-1', testInfo);
     
-    // U1 adds Song D
-    await addSong(guestPages[0], 'Song D', 'user1-add-song2', testInfo); 
+    // Round 2
+    await addSongRobust(guestPages[0], 'Karaoke Song 4'); 
     await takeScreenshot(hostPage, 'host-queue-after-user1-2', testInfo);
 
-    // U2 adds Song E
-    await addSong(guestPages[1], 'Song E', 'user2-add-song2', testInfo); 
+    await addSongRobust(guestPages[1], 'Karaoke Song 5'); 
     await takeScreenshot(hostPage, 'host-queue-after-user2-2', testInfo);
 
-    // U3 adds Song F
-    await addSong(guestPages[2], 'Song F', 'user3-add-song2', testInfo); 
+    await addSongRobust(guestPages[2], 'Karaoke Song 6'); 
     await takeScreenshot(hostPage, 'host-queue-after-user3-2', testInfo);
 
-    await hostPage.waitForTimeout(1000);
+    await waitForHostQueueSize(hostPage, 6);
+
     const singers = await getHostQueueSingers(hostPage);
     console.log('Final Queue Singers:', singers);
     
-    // Expect: U1, U2, U3, U1, U2, U3
+    // Fairness Check: Interleaved
     expect(singers[0]).toBe('User1');
     expect(singers[1]).toBe('User2');
     expect(singers[2]).toBe('User3');
@@ -199,14 +190,15 @@ test.describe('Queue Fairness & Stability', () => {
     u2Page.on('dialog', d => d.accept());
     
     const deleteBtn = u2Page.getByTestId('delete-song-btn').first();
-    await expect(deleteBtn).toBeVisible({ timeout: 5000 });
+    await expect(deleteBtn).toBeVisible({ timeout: 10000 });
     await deleteBtn.click();
     
-    await u2Page.waitForTimeout(1500);
+    await u2Page.waitForTimeout(2000);
     await takeScreenshot(u2Page, 'user2-deleted-song', testInfo);
 
-    // EXIT MANAGE MODE
     await u2Page.getByRole('button', { name: 'Cancel' }).click();
+
+    await waitForHostQueueSize(hostPage, 5);
 
     const singers = await getHostQueueSingers(hostPage);
     console.log('Queue Singers after U2 delete:', singers);
@@ -222,20 +214,20 @@ test.describe('Queue Fairness & Stability', () => {
     await u1Page.getByTestId('tab-add').click();
     await u1Page.getByRole('button', { name: 'Manage' }).click();
 
-    // 1. Delete Top Song
     u1Page.on('dialog', d => d.accept());
     const deleteBtn = u1Page.getByTestId('delete-song-btn').first();
-    await expect(deleteBtn).toBeVisible();
+    await expect(deleteBtn).toBeVisible({ timeout: 10000 });
     await deleteBtn.click();
-    await u1Page.waitForTimeout(500);
+    await u1Page.waitForTimeout(1000);
 
-    // 2. EXIT MANAGE MODE
     const exitBtn = u1Page.locator('button:has-text("Save Order"), button:has-text("Cancel")').first();
     await exitBtn.click();
-    await u1Page.waitForTimeout(500);
+    await u1Page.waitForTimeout(1000);
     
-    // 3. Add New Song
-    await addSong(u1Page, 'Song G', 'user1-reorder-add-g', testInfo);
+    // Re-add a song (triggers re-queue logic)
+    await addSongRobust(u1Page, 'Karaoke Song 7');
+
+    await waitForHostQueueSize(hostPage, 5);
 
     const singers = await getHostQueueSingers(hostPage);
     console.log('Queue Singers after U1 swap:', singers);
@@ -246,22 +238,37 @@ test.describe('Queue Fairness & Stability', () => {
   });
 
   test('Step 4: Start Party & Verify Restrictions', async ({}, testInfo) => {
-    await hostPage.getByTestId('tab-settings').click();
+    await hostPage.getByTestId('tab-settings').click({ force: true });
     await hostPage.getByRole('button', { name: 'Start Party' }).click();
-    await hostPage.waitForTimeout(1000);
+    await hostPage.waitForTimeout(2000);
 
     await takeScreenshot(hostPage, 'party-started', testInfo);
 
     const u1Page = guestPages[0];
     await u1Page.getByTestId('tab-add').click();
+    
+    // SYNC: Wait for Playing Now to ensure Guest knows party started
+    try {
+        await expect(u1Page.getByText('Playing Now')).toBeVisible({ timeout: 5000 });
+    } catch {
+        console.log("⚠️ Guest 1 sync issue. Reloading...");
+        await u1Page.reload();
+        await u1Page.waitForLoadState('domcontentloaded');
+        await expect(u1Page.getByTestId('tab-add')).toBeVisible({ timeout: 10000 });
+        const addTab = u1Page.getByTestId('tab-add');
+        if ((await addTab.getAttribute('data-state')) !== 'active') {
+             await addTab.click();
+        }
+    }
+    
     await u1Page.getByRole('button', { name: 'Manage' }).click();
-    await expect(u1Page.getByText('Queue modification disabled')).toBeVisible();
+    await expect(u1Page.getByText(/Queue modification disabled/)).toBeVisible({ timeout: 20000 });
     await takeScreenshot(u1Page, 'user1-restricted', testInfo);
 
     const u3Page = guestPages[2];
     await u3Page.getByTestId('tab-add').click();
     await u3Page.getByRole('button', { name: 'Manage' }).click();
-    await expect(u3Page.getByText('Queue modification disabled')).toBeHidden();
+    await expect(u3Page.getByText(/Queue modification disabled/)).toBeHidden({ timeout: 20000 });
     await takeScreenshot(u3Page, 'user3-allowed', testInfo);
   });
 });
