@@ -6,10 +6,11 @@ services:
     image: mcr.microsoft.com/playwright:v1.57.0-jammy
     container_name: mykaraoke-e2e
     working_dir: /app
-    ipc: host
+    #ipc: host
+    shm_size: '4gb'
     environment:
-      - BASE_URL=http://mykaraoke-app:3000
-      - ADMIN_TOKEN=change-this
+      - BASE_URL=${BASE_URL}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
       - CI=true
     volumes:
       - ..:/app
@@ -17,18 +18,13 @@ services:
       - /app/.pnpm-store
     networks:
       - my-karaoke-party_mykaraokenetwork
+    # The command is now dynamic based on an environment variable
     command: >
       /bin/sh -c "
-      env &&
       npm install -g pnpm &&
       pnpm install &&
-      npx playwright test"
-      ### use this line to run 30 user load test file
-      #npx playwright test tests/load-test.spec.ts --workers=1"
+      ${TEST_COMMAND:-npx playwright test}"
 
 networks:
   my-karaoke-party_mykaraokenetwork:
     external: true
-    # Update this name if your main project folder isn't 'my-karaoke-party'
-    # Run `docker network ls` to check the actual name.
-    # name: my-karaoke-party_mykaraokenetwork
