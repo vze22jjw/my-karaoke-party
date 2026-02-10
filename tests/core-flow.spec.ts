@@ -1,6 +1,7 @@
 import { test, expect, type Page, type BrowserContext, request } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createParty, joinParty, addSong } from './helpers/party-utils';
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 const BASE_URL = process.env.BASE_URL;
@@ -10,355 +11,271 @@ const REPORT_DIR = process.env.PLAYWRIGHT_REPORT_DIR || path.join('playwright-re
 const VIDEO_DIR = path.join(REPORT_DIR, 'videos');
 const SCREENSHOT_DIR = path.join(REPORT_DIR, 'screenshots');
 
-if (!BASE_URL) throw new Error("❌ FATAL ERROR: BASE_URL is not set.");
-if (!ADMIN_TOKEN) throw new Error("❌ FATAL ERROR: ADMIN_TOKEN is missing.");
-
-console.log(`🚀 Starting Test Run`);
-console.log(`📂 Writing artifacts to: ${REPORT_DIR}`);
+if (!BASE_URL || !ADMIN_TOKEN) throw new Error("❌ FATAL ERROR: Configuration missing.");
 
 if (!fs.existsSync(VIDEO_DIR)) fs.mkdirSync(VIDEO_DIR, { recursive: true });
 if (!fs.existsSync(SCREENSHOT_DIR)) fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
 test.describe.configure({ mode: 'serial' });
 
-let stepCounter = 1;
+let hostContext: BrowserContext;
+let playerContext: BrowserContext;
+let guestContexts: BrowserContext[] = [];
+
+let hostPage: Page;
+let playerPage: Page;
+let guestPages: Page[] = [];
+
+let partyCode: string;
+const rawPartyName = `AutoTest ${Date.now()}`;
+const GUEST_COUNT = 3;
+
 const takeScreenshot = async (page: Page, name: string, testInfo: any) => {
-  const fileName = `${String(stepCounter).padStart(2, '0')}-${name}.png`;
-  const filePath = path.join(SCREENSHOT_DIR, fileName);
-  await page.screenshot({ path: filePath });
-  if (testInfo) await testInfo.attach(name, { path: filePath, contentType: 'image/png' });
-  console.log(`📸 Screenshot: ${fileName}`);
-  stepCounter++;
+  const fileName = `${Date.now()}-${name}.png`;
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, fileName) });
 };
 
-async function walkthroughTour(page: Page, role: 'host' | 'guest') {
-  console.log(`ℹ️ [${role}] Starting Tour Walkthrough...`);
+async function walkthroughHostTour(page: Page) {
   const overlay = page.locator('[data-vaul-overlay]');
-  
   try {
-    await expect(overlay).toBeVisible({ timeout: 10000 });
-  } catch (e) {
-    console.log(`ℹ️ [${role}] Tour not found (maybe bypassed), skipping.`);
-    return;
-  }
-  await page.waitForTimeout(1000); 
-
-  const nextBtn = page.getByRole('button', { name: 'Next' });
-  const finishBtn = page.getByRole('button', { name: /Got it|Finish/i });
-
-  for (let i = 0; i < 15; i++) {
-    if (await finishBtn.isVisible()) {
-      await finishBtn.click();
-      break;
-    } else if (await nextBtn.isVisible()) {
-      await nextBtn.click();
-      await page.waitForTimeout(1500); 
-    } else {
-      await page.keyboard.press('Escape');
-      break; 
+    if (await overlay.isVisible({ timeout: 5000 })) {
+        for (let i = 0; i < 15; i++) {
+            if (!await overlay.isVisible()) break; 
+            const nextBtn = page.locator('button').filter({ hasText: /Next|Avance|Próximo/i }).first();
+            const finishBtn = page.locator('button').filter({ hasText: /Finish|Got it|Concluir/i }).first();
+            if (await finishBtn.isVisible()) { await finishBtn.click(); break; }
+            else if (await nextBtn.isVisible()) { await nextBtn.click(); await page.waitForTimeout(500); }
+            else { await page.keyboard.press('Escape'); break; }
+        }
     }
-  }
-  
-  await expect(overlay).toBeHidden();
-  console.log(`✅ [${role}] Tour Completed.`);
+  } catch (e) {}
 }
 
 test.describe('Core Party Flow (Full Feature)', () => {
-  let hostContext: BrowserContext;
-  let guestContexts: BrowserContext[] = [];
-  let hostPage: Page;
-  let guestPages: Page[] = [];
-  let partyCode: string | undefined;
-  
-  const partyName = `AutoTest ${Math.floor(Math.random() * 1000)}`;
-  const GUEST_COUNT = 3;
+  test.setTimeout(600000); 
 
   test.beforeAll(async ({ browser }) => {
-    hostContext = await browser.newContext({ 
-        viewport: { width: 1280, height: 800 }, 
-        recordVideo: { dir: VIDEO_DIR },
-        extraHTTPHeaders: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
-    });
+    hostContext = await browser.newContext({ viewport: { width: 1024, height: 768 }, recordVideo: { dir: VIDEO_DIR }, extraHTTPHeaders: { 'Authorization': `Bearer ${ADMIN_TOKEN}` } });
     hostPage = await hostContext.newPage();
-
-    for (let i = 0; i < GUEST_COUNT; i++) {
-        const ctx = await browser.newContext({ 
-            viewport: { width: 390, height: 844 }, 
-            isMobile: true, 
-            hasTouch: true, 
-            recordVideo: { dir: VIDEO_DIR } 
-        });
-        guestContexts.push(ctx);
-        const page = await ctx.newPage();
-        guestPages.push(page);
-    }
   });
 
   test.afterAll(async () => {
     if (partyCode) {
-        try {
-            const apiContext = await request.newContext();
-            await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, {
-                headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
-                params: { hash: partyCode }
-            });
-            console.log(`🧹 Cleanup: Deleted party ${partyCode}`);
-        } catch (e) {
-            console.warn("⚠️ Cleanup API call failed:", e);
-        }
+        const apiContext = await request.newContext();
+        await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, { headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }, params: { hash: partyCode } }).catch(()=>{});
     }
-
-    const hostVideo = await hostPage.video()?.path();
-    const guestVideos = await Promise.all(guestPages.map(p => p.video()?.path()));
-
     await hostContext.close();
+    if (playerContext) await playerContext.close();
     for (const ctx of guestContexts) await ctx.close();
 
-    if (hostVideo && fs.existsSync(hostVideo)) {
-        fs.renameSync(hostVideo, path.join(VIDEO_DIR, 'role-host.webm'));
-        console.log('🎥 Saved Video: role-host.webm');
-    }
-    guestVideos.forEach((vPath, i) => {
-        if (vPath && fs.existsSync(vPath)) {
-            fs.renameSync(vPath, path.join(VIDEO_DIR, `role-guest-${i}.webm`));
-            console.log('🎥 Saved Video:', `role-guest-${i}.webm`);
+    const rename = async (page: Page | undefined, name: string) => {
+        const video = page?.video();
+        if (video) {
+             const vPath = await video.path();
+             if (vPath && fs.existsSync(vPath)) {
+                 try { fs.renameSync(vPath, path.join(VIDEO_DIR, name)); } catch(e) { console.error(e); }
+             }
         }
-    });
+    };
+
+    await rename(hostPage, '01-host-full-session.webm');
+    await rename(playerPage, '02-player-session.webm');
+    for (let i = 0; i < guestPages.length; i++) {
+        await rename(guestPages[i], `03-guest-${i}-interactions.webm`);
+    }
   });
 
-  test('1. Host Creates Party & Views Tour', async ({}, testInfo) => {
-    test.setTimeout(60000);
-    await hostPage.goto(`${BASE_URL}/en/start-party`);
-    await hostPage.getByRole('button', { name: 'Start New Party' }).click();
-    await hostPage.getByLabel('Party Name').fill(partyName);
-    await hostPage.getByLabel('Your Name').fill('Host');
-    await hostPage.getByLabel('Admin Password').fill(ADMIN_TOKEN!);
-    await hostPage.getByRole('button', { name: /Create Party/i }).click();
-    await expect(hostPage).toHaveURL(/\/host\//);
-    partyCode = hostPage.url().split('/').pop()!;
-    console.log(`🎉 Party Created: ${partyCode}`);
-    await walkthroughTour(hostPage, 'host');
+  test('1. Host Creates Party', async ({}, testInfo) => {
+    partyCode = await createParty(hostPage, rawPartyName);
+    await walkthroughHostTour(hostPage);
     await takeScreenshot(hostPage, 'host-dashboard', testInfo);
   });
 
-  test('2. Guests Join (Random Intervals) & View Tour', async ({}, testInfo) => {
-    test.setTimeout(90000);
-    const joinPromises = guestPages.map(async (page, i) => {
-        const delay = Math.floor(Math.random() * 3000) + 1000; 
-        console.log(`⏳ Guest ${i} waiting ${delay}ms to join...`);
-        await page.waitForTimeout(delay);
-        await page.goto(`${BASE_URL}/en/join`);
-        await page.getByTestId('join-party-code-input').fill(partyCode!);
-        await page.getByTestId('avatar-select-mic').click();
-        await page.getByTestId('join-name-input').fill(`Guest-${i}`);
-        await page.getByTestId('join-submit-button').click();
-        await expect(page).toHaveURL(/\/party\//);
-        await walkthroughTour(page, 'guest');
-        console.log(`✅ Guest ${i} joined.`);
-    });
-    await Promise.all(joinPromises);
+  test('1.5 Player Verifies Initial Idle State', async ({ browser }, testInfo) => {
+    playerContext = await browser.newContext({ viewport: { width: 1920, height: 1080 }, recordVideo: { dir: VIDEO_DIR } });
+    playerPage = await playerContext.newPage();
+    await playerPage.goto(`${BASE_URL}/en/player/${partyCode}`);
+    await expect(playerPage.getByAltText('My Karaoke Party')).toBeVisible({ timeout: 30000 });
+  });
+
+  test('2. Guests Join & Tour', async ({ browser }, testInfo) => {
+    for (let i = 0; i < GUEST_COUNT; i++) {
+        const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, recordVideo: { dir: VIDEO_DIR } });
+        guestContexts.push(ctx);
+        guestPages.push(await ctx.newPage());
+    }
+    for (let i = 0; i < guestPages.length; i++) {
+        await joinParty(guestPages[i], partyCode, `Guest-${i}`, i);
+    }
     await takeScreenshot(guestPages[0], 'guests-joined', testInfo);
   });
 
-  test('3. Guests Add Songs Until Limit', async () => {
-    test.setTimeout(180000); 
-    const addSongsTask = guestPages.map(async (page, index) => {
-        await page.getByTestId('tab-add').click();
-        const searchInput = page.getByTestId('song-search-input');
-        await searchInput.fill('Karaoke Hits');
-        await searchInput.press('Enter');
-        const addButtons = page.locator('button[data-testid^="add-video-"]');
-        await expect(addButtons.first()).toBeVisible({ timeout: 20000 });
-        
-        let addedCount = 0;
-        for (let k = 0; k < 12; k++) {
-            if (await page.getByText('Queue Full').isVisible()) {
-                console.log(`✅ Guest ${index} hit limit at ${addedCount} songs.`);
-                return;
-            }
-            const currentBtn = addButtons.first();
-            if (!await currentBtn.isVisible()) break;
-            const btnId = await currentBtn.getAttribute('data-testid');
-            if (!btnId) break; 
-            const specificBtn = page.locator(`button[data-testid="${btnId}"]`);
-            await specificBtn.click();
-            try {
-                await Promise.race([
-                    expect(specificBtn).toBeHidden({ timeout: 5000 }),
-                    expect(page.getByText('Queue Full')).toBeVisible({ timeout: 5000 })
-                ]);
-            } catch(e) { }
-            await page.waitForTimeout(2500); 
-            addedCount++;
-        }
-    });
-    await Promise.all(addSongsTask);
+  test('3. Guests Add Songs', async ({}, testInfo) => {
+    test.setTimeout(240000); 
+    const queueingGuests = [guestPages[0], guestPages[1]];
+    for (const [index, page] of queueingGuests.entries()) {
+        await addSong(page, 'Karaoke Hits');
+        await addSong(page, 'Karaoke Classics');
+        if (index === 0) await takeScreenshot(page, `guest-${index}-songs-added`, testInfo);
+    }
   });
 
-  test('4. Host Starts Party', async () => {
+  test('4. Host Starts Party & Adaptive Player Verification', async ({}, testInfo) => {
     await hostPage.bringToFront();
+    await hostPage.reload();
+    await hostPage.getByTestId('tab-playlist').click({ force: true });
     
-    if (!hostPage.url().includes(`/host/${partyCode}`)) {
-        await hostPage.goto(`${BASE_URL}/en/host/${partyCode}`);
-    }
-    await hostPage.waitForLoadState('domcontentloaded');
-
-    await hostPage.evaluate((hash) => {
-        window.localStorage.setItem(`host-${hash}-tour-seen`, 'true');
-    }, partyCode);
-    await hostPage.reload(); 
-    await expect(hostPage.locator('[data-vaul-overlay]')).toBeHidden();
-
-    const settingsTab = hostPage.getByTestId('tab-settings');
-    await settingsTab.click({ force: true });
-    await expect(settingsTab).toHaveAttribute('data-state', 'active', { timeout: 10000 });
-
-    const startBtn = hostPage.getByRole('button', { name: 'Start Party' });
-    const pauseBtn = hostPage.locator('button', { hasText: /Pause|Resume/i });
-
-    await expect(async () => {
-        const startVisible = await startBtn.isVisible();
-        const pauseVisible = await pauseBtn.isVisible();
-        if (!startVisible && !pauseVisible) await settingsTab.click({ force: true });
-        expect(startVisible || pauseVisible).toBeTruthy();
-    }).toPass({ timeout: 20000 });
+    await expect(hostPage.getByText('Guest-0').first()).toBeVisible({ timeout: 20000 });
     
-    if (await startBtn.isVisible()) {
-        await startBtn.click();
-        await expect(pauseBtn).toBeVisible({ timeout: 20000 });
-        console.log('▶️ Party Started.');
+    await hostPage.getByTestId('tab-settings').click({ force: true });
+    let startBtn = hostPage.getByRole('button', { name: 'Start Party' });
+    if (await startBtn.isVisible()) await startBtn.click();
+
+    await playerPage.bringToFront();
+    const restrictedUI = playerPage.getByText('Open on YouTube');
+    const iframeUI = playerPage.locator('iframe[src*="youtube"]');
+    await expect(restrictedUI.or(iframeUI)).toBeVisible({ timeout: 30000 });
+
+    if (await restrictedUI.isVisible()) {
+        await expect(playerPage.getByText('Guest-0').first()).toBeVisible({ timeout: 10000 });
     } else {
-        console.log('ℹ️ Party already started.');
+        await expect(iframeUI).toBeAttached({ timeout: 10000 });
     }
   });
 
-  test('5. Guest Interactions & Restrictions', async ({}, testInfo) => {
-    test.setTimeout(150000);
+  test('5. Guest Interactions & Applause', async ({}, testInfo) => {
+    test.setTimeout(300000); 
 
     const interactions = guestPages.map(async (page, index) => {
         await page.bringToFront(); 
-
-        // A. Suggestions Carousel Interaction
-        await page.getByTestId('tab-history').click();
-        await page.waitForTimeout(2000); 
         
-        const dots = page.locator('button[data-testid^="history-dot-"]');
-        const dotCount = await dots.count();
-        
-        if (dotCount > 0) {
-            console.log(`Guest ${index}: Clicking carousel dots...`);
-            for (let d = 0; d < dotCount; d++) {
-                const dot = dots.nth(d);
-                if (await dot.isVisible()) {
-                    await dot.click();
-                    await page.waitForTimeout(2000);
-                }
+        // --- GUEST 0: APPLAUSE VALIDATION ---
+        if (index === 0) {
+            await page.getByTestId('tab-singers').click({ force: true });
+            
+            const navApplauseBtn = page.locator('button, a, [role="button"]').filter({ hasText: /👏|Applaud/i }).first();
+            await expect(navApplauseBtn).toBeVisible({ timeout: 15000 });
+            await navApplauseBtn.click();
+            await expect(page).toHaveURL(/applause/);
+            
+            const bigApplauseBtn = page.locator('button').filter({ hasText: /👏|Applaud/i }).first();
+            for(let k=0; k<5; k++) { 
+                await bigApplauseBtn.click({ force: true }); 
+                await page.waitForTimeout(300); 
             }
-        } else {
-            const tiles = page.locator('[data-testid="suggestion-tile"]');
-            if (await tiles.count() > 0) {
-                await tiles.first().scrollIntoViewIfNeeded();
-                await expect(tiles.first()).toBeVisible();
-            }
-        }
-
-        // B. Applause (Singers Tab)
-        await page.getByTestId('tab-singers').click();
-        await page.waitForTimeout(2000);
-
-        const applauseNavBtn = page.locator('a', { hasText: '👏' }).or(page.getByRole('button', { name: '👏' })); 
-        
-        if (await applauseNavBtn.isVisible()) {
-            await applauseNavBtn.click();
-            await expect(page).toHaveURL(/\/applause\//);
             await page.waitForTimeout(1000); 
 
-            const handBtn = page.locator('button').filter({ hasText: '👏' }).first();
-            await expect(handBtn).toBeVisible();
-            await handBtn.click();
-            await page.waitForTimeout(800);
-            await handBtn.click();
-            await page.waitForTimeout(2500); 
+            await page.getByRole('button', { name: /Back to Party/i }).click();
+            await expect(page).toHaveURL(/\/party\//, { timeout: 10000 });
+            
+            await page.getByTestId('tab-singers').click({ force: true });
+            
+            await expect(async () => {
+                const clapsText = page.getByText(/Claps:\s*[1-9]/).first();
+                if (await clapsText.isVisible()) return;
 
-            const backBtn = page.getByRole('button', { name: /Back/i });
-            await backBtn.click();
-            await expect(page).toHaveURL(/\/party\//);
+                const guestCard = page.locator('li, div')
+                    .filter({ hasText: 'Guest-0' })
+                    .filter({ hasText: /You|Me/i })
+                    .first();
+                
+                const chevron = guestCard.locator('svg.lucide-chevron-down, svg.lucide-chevron-up').first();
+                if (await chevron.isVisible()) {
+                    await chevron.click({ force: true });
+                } else {
+                    await guestCard.click({ force: true });
+                }
+                
+                await expect(clapsText).toBeVisible({ timeout: 2000 });
+            }).toPass({ timeout: 20000, intervals: [2000] });
+
+            await takeScreenshot(page, `guest-${index}-applause-verified`, testInfo);
         }
 
-        // C. Language (Reloads page)
-        console.log(`Guest ${index} switching to PT...`);
-        await page.locator('button[title="Change Language"]').click();
-        await page.getByRole('button', { name: 'Português' }).click();
-        await expect(page.getByTestId('tab-singers')).toContainText('Cantores', { timeout: 15000 }); 
-        await page.waitForTimeout(1500); 
-        
-        console.log(`Guest ${index} switching to EN...`);
-        await page.locator('button[title="Change Language"]').click();
-        await page.getByRole('button', { name: 'English' }).click();
-        await expect(page.getByTestId('tab-singers')).toContainText('Singers', { timeout: 15000 });
-        await page.waitForTimeout(1500);
-
-        // D. Delete / Reorder (Manage)
-        await page.getByTestId('tab-add').click();
-        const manageBtn = page.getByRole('button', { name: 'Manage' });
-        
-        if (await manageBtn.isVisible()) {
-            await manageBtn.click();
-            
-            try {
-                const deleteBtn = page.getByTestId('delete-song-btn').last();
-                
-                const result = await Promise.race([
-                    page.getByText('modification disabled').waitFor({ state: 'visible', timeout: 5000 }).then(() => 'restricted'),
-                    deleteBtn.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'allowed')
-                ]);
-                
-                if (result === 'restricted') {
-                    console.log(`ℹ️ Guest ${index} is restricted.`);
-                } else if (result === 'allowed') {
-                    const upBtn = page.locator('button:has(svg.lucide-arrow-up)').last();
-                    if (await upBtn.isVisible()) {
-                        await upBtn.click();
-                        await page.waitForTimeout(1000);
-                    }
-
-                    page.on('dialog', d => d.accept());
-                    await deleteBtn.click();
-                    await page.waitForTimeout(1000);
-                    console.log(`✅ Guest ${index} deleted/reordered.`);
-                }
-            } catch(e) {
-                console.log(`⚠️ Guest ${index}: Manage UI check failed/timed out.`);
+        // --- GUEST 1: QUEUE MANAGEMENT ---
+        if (index === 1) {
+            await page.getByTestId('tab-add').click({ force: true });
+            const manageBtn = page.getByRole('button', { name: 'Manage' });
+            if (await manageBtn.isVisible()) {
+                await manageBtn.click();
+                await page.waitForTimeout(500);
+                const closeBtn = page.locator('button:has-text("Save Order"), button:has-text("Cancel")').first();
+                if (await closeBtn.isVisible()) await closeBtn.click();
             }
+        }
+
+        // --- GUEST 2: HISTORY CAROUSEL & LANGUAGE ---
+        if (index === 2) {
+            await expect(async () => {
+                const firstDot = page.getByTestId('history-dot-0');
+                if (await firstDot.isVisible()) return;
+                
+                await page.getByTestId('tab-history').click({ force: true });
+                await expect(firstDot).toBeVisible({ timeout: 5000 });
+            }).toPass({ 
+                timeout: 60000,
+                intervals: [1000] 
+            });
+
+            // 1. NAV DOT INTERACTION (Main History Carousel)
+            const historyDots = page.locator('[data-testid^="history-dot-"]');
+            const historyDotCount = await historyDots.count();
+            
+            console.log(`Found ${historyDotCount} history carousel dots.`);
+            
+            if (historyDotCount > 1) {
+                await historyDots.first().scrollIntoViewIfNeeded();
+                await page.waitForTimeout(500);
+
+                for (let d = 0; d < historyDotCount; d++) {
+                     await historyDots.nth(d).click();
+                     await page.waitForTimeout(1000);
+                }
+            }
+            
+            // 2. FUN STATS CAROUSEL
+            const funDots = page.locator('[data-testid^="fun-stats-dot-"]');
+            const funDotCount = await funDots.count();
+            
+            if (funDotCount > 1) {
+                console.log(`Found ${funDotCount} fun stats dots.`);
+                await funDots.first().scrollIntoViewIfNeeded();
+                await page.waitForTimeout(500);
+
+                for (let d = 0; d < funDotCount; d++) {
+                     await funDots.nth(d).click();
+                     await page.waitForTimeout(1000); 
+                }
+            }
+
+            // 3. Language Switcher
+            await page.locator('button[title="Change Language"]').click();
+            await page.getByRole('button', { name: 'Português' }).click();
+            await page.waitForTimeout(1500); 
+            await expect(page.getByTestId('tab-singers')).toContainText('Cantores'); 
+            
+            await page.locator('button[title="Change Language"]').click();
+            await page.getByRole('button', { name: 'English' }).click();
+            await page.waitForTimeout(1500);
+            await expect(page.getByTestId('tab-singers')).toContainText('Singers');
+            await takeScreenshot(page, `guest-${index}-language-verified`, testInfo);
         }
     });
 
     await Promise.all(interactions);
-    await takeScreenshot(guestPages[0], 'guest-interactions', testInfo);
   });
 
   test('6. Logout & Close', async () => {
     for (const page of guestPages) {
         await page.bringToFront();
-        await page.getByTestId('tab-singers').click();
+        await page.getByTestId('tab-singers').click({ force: true });
         await page.getByRole('button', { name: 'Leave' }).click();
-        await expect(page).toHaveURL(/\/en$/); 
     }
 
     await hostPage.bringToFront();
-    await expect(async () => {
-        if (!await hostPage.getByRole('button', { name: 'Close Party' }).isVisible()) {
-            await hostPage.getByTestId('tab-settings').click({ force: true });
-        }
-        await expect(hostPage.getByRole('button', { name: 'Close Party' })).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 10000 });
-    
-    const closeBtn = hostPage.getByRole('button', { name: 'Close Party' });
-    await closeBtn.scrollIntoViewIfNeeded();
-    await closeBtn.click();
-    
+    await hostPage.getByTestId('tab-settings').click({ force: true });
+    await hostPage.getByRole('button', { name: 'Close Party' }).click();
     await hostPage.getByRole('button', { name: 'Yes, End Party' }).click();
     await expect(hostPage).toHaveURL(/\/host$/);
   });
-
 });

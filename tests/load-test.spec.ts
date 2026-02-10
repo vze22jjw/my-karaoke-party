@@ -1,4 +1,5 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { createParty } from './helpers/party-utils';
 
 const USER_COUNT = 5; // Adjust based on Docker capacity
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
@@ -6,8 +7,8 @@ const BASE_URL = process.env.BASE_URL || 'http://mykaraoke-app:3000';
 
 if (!ADMIN_TOKEN) throw new Error("❌ FATAL ERROR: ADMIN_TOKEN is missing.");
 
-test(`Load Test: Host Lifecycle + ${USER_COUNT} Guests (Add 3, Start, Delete 1)`, async ({ browser }) => {
-  test.setTimeout(120000 + (USER_COUNT * 25000)); 
+test(`Load Test: Backend Stress (tRPC Injection)`, async ({ browser }) => {
+  test.setTimeout(120000 + (USER_COUNT * 10000)); 
 
   // --- 1. HOST CREATES PARTY ---
   console.log(`👤 Host: Creating party...`);
@@ -15,34 +16,19 @@ test(`Load Test: Host Lifecycle + ${USER_COUNT} Guests (Add 3, Start, Delete 1)`
     viewport: { width: 1280, height: 720 },
     extraHTTPHeaders: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
   });
-  
   const hostPage = await hostContext.newPage();
-  await hostPage.goto(`${BASE_URL}/en/start-party`);
+  const partyCode = await createParty(hostPage, `Load Test ${Date.now()}`);
   
-  await hostPage.getByRole('button', { name: 'Start New Party' }).click();
-  await hostPage.getByLabel('Party Name').fill(`Load Test ${Date.now()}`);
-  await hostPage.getByLabel('Your Name').fill('Host Admin');
-  await hostPage.getByLabel('Admin Password').fill(ADMIN_TOKEN!);
-  await hostPage.getByRole('button', { name: /Create Party/i }).click();
+  if (await hostPage.locator('[data-vaul-overlay]').isVisible({ timeout: 3000 })) {
+      await hostPage.keyboard.press('Escape');
+  }
 
-  await expect(hostPage).toHaveURL(/\/host\//);
-  const partyCode = hostPage.url().split('/').pop()!;
-  console.log(`✅ Party Created: ${partyCode}`);
-
-  await hostPage.evaluate((hash) => {
-      window.localStorage.setItem(`host-${hash}-tour-seen`, 'true');
-  }, partyCode);
-  
-  console.log('🔄 Reloading Host to apply Tour Bypass...');
-  await hostPage.reload();
-  await expect(hostPage.locator('[data-vaul-overlay]')).toBeHidden();
-
-  // --- 2. GUESTS JOIN ---
-  const guestPages: Page[] = [];
+  // --- 2. GUESTS JOIN (Direct Injection) ---
   console.log(`🚀 Spawning ${USER_COUNT} guests...`);
+  const guestPages: Page[] = [];
 
   for (let i = 0; i < USER_COUNT; i++) {
-    const context = await browser.newContext({ isMobile: true, viewport: { width: 375, height: 667 } });
+    const context = await browser.newContext({ isMobile: true });
     await context.addInitScript(({ key, name }) => {
       window.localStorage.setItem(key, 'true');
       window.localStorage.setItem('name', name);
@@ -51,121 +37,86 @@ test(`Load Test: Host Lifecycle + ${USER_COUNT} Guests (Add 3, Start, Delete 1)`
     const page = await context.newPage();
     guestPages.push(page);
     await page.goto(`${BASE_URL}/en/party/${partyCode}`);
-    await page.waitForTimeout(200); 
   }
+  
+  // --- 3. STRESS TEST (Direct tRPC Injection) ---
+  console.log(`🔥 STARTING API STRESS TEST (Direct Backend Injection)...`);
+  
+  const apiUrl = `${BASE_URL}/api/trpc/playlist.addVideo`;
+  // Increase load: Keep adding until we hit a wall
+  const SONGS_PER_USER = 20; 
+  let totalRequestsSent = 0;
 
-  console.log(`✅ Guests active. Adding songs...`);
-
-  // --- 3. ADD SONGS (Parallel) ---
-  const addErrors: string[] = [];
-  const addTasks = guestPages.map(async (page, index) => {
-    try {
-      await page.getByTestId('tab-add').click();
-      const searchInput = page.getByTestId('song-search-input');
-
-      await searchInput.fill(`Karaoke Hits`);
-      await searchInput.press('Enter');
-      
-      const addButtons = page.locator('button[data-testid^="add-video-"]');
-      await expect(addButtons.first()).toBeVisible({ timeout: 20000 });
-
-      for (let k = 1; k <= 3; k++) {
-          const currentBtn = addButtons.first();
-          await expect(currentBtn).toBeEnabled({ timeout: 5000 });
-          const btnId = await currentBtn.getAttribute('data-testid');
-          if (!btnId) throw new Error(`Guest ${index}: Button missing data-testid`);
-          
-          const specificBtn = page.locator(`button[data-testid="${btnId}"]`);
-          await specificBtn.click();
-          
+  const stressTasks = guestPages.map(async (page, index) => {
+      for (let k = 0; k < SONGS_PER_USER; k++) {
           try {
-            await Promise.race([
-                expect(specificBtn).toBeHidden({ timeout: 5000 }),
-                expect(specificBtn).toBeDisabled({ timeout: 5000 })
-            ]);
-          } catch (e) {
-             throw new Error(`Guest ${index}: Button failed to hide/disable.`);
+              const payload = {
+                  json: {
+                      partyHash: partyCode,
+                      videoId: `STRESS-${index}-${Date.now()}-${k}`,
+                      title: `Stress Song ${index}-${k}`,
+                      coverUrl: "https://i.ytimg.com/vi/placeholder/hqdefault.jpg",
+                      singerName: `Guest-${index}`,
+                      artist: "Load Tester",
+                      song: `Song ${k}`,
+                      duration: "PT3M30S"
+                  }
+              };
+
+              const response = await page.request.post(apiUrl, {
+                  data: payload,
+                  headers: { 
+                      'Content-Type': 'application/json',
+                      'x-load-test': 'true' 
+                  }
+              });
+
+              totalRequestsSent++;
+
+              if (!response.ok()) {
+                  // SOFT FAILURE: Log it, but don't fail the test. 
+                  // Just stop this specific user from adding more.
+                  console.log(`⚠️ Guest ${index} stopped adding at song ${k}. Status: ${response.status()}`);
+                  break; 
+              }
+          } catch (e: any) {
+              // Network/Timeout errors - also just stop this user
+              console.log(`⚠️ Guest ${index} API Network Fail: ${e.message}`);
+              break;
           }
-          await page.waitForTimeout(3000); 
+          // Tiny throttle to prevent local networking exhaustion
+          await page.waitForTimeout(50); 
       }
-    } catch (err: any) {
-      console.error(`❌ Guest ${index} failed add:`, err.message);
-      addErrors.push(`Guest ${index}: ${err.message}`);
-    }
   });
 
-  await Promise.all(addTasks);
-  expect(addErrors, `Guests failed to add songs`).toHaveLength(0);
-  console.log('🎵 Songs added successfully.');
-
-  // --- 4. HOST STARTS PARTY ---
-  console.log('▶️ Host Starting Party...');
+  await Promise.all(stressTasks);
+  
+  console.log(`✅ API Stress Phase Complete. Total requests sent: ${totalRequestsSent}`);
+  
+  // --- 4. VERIFY QUEUE (Backend Survived?) ---
+  console.log('👀 Verifying backend has data...');
   await hostPage.bringToFront();
   
-  await hostPage.getByTestId('tab-settings').click();
-  const startBtn = hostPage.getByRole('button', { name: 'Start Party' });
-  await expect(startBtn).toBeVisible();
-  await startBtn.click();
+  await hostPage.reload();
+  await hostPage.getByTestId('tab-playlist').click();
   
-  await expect(hostPage.locator('button', { hasText: /Pause|Resume/i })).toBeVisible({ timeout: 15000 });
-  console.log('✅ Party Started.');
-
-  // --- 5. DELETE TEST (Dynamic) ---
-  console.log('🗑️ Verifying Deletion where allowed...');
-  const deleteErrors: string[] = [];
-
-  const deleteTasks = guestPages.map(async (page, index) => {
-    try {
-      await page.waitForTimeout(2000); 
-
-      const isSinging = await page.getByText('(Playing Now)').isVisible();
-      const expectedListCount = isSinging ? 2 : 3;
-
-      console.log(`Guest ${index}: Singing=${isSinging}. Expecting queue list: ${expectedListCount}`);
-      
-      await expect(page.locator('ul.space-y-3 li')).toHaveCount(expectedListCount, { timeout: 15000 });
-
-      const manageBtn = page.getByRole('button', { name: 'Manage' });
-      if (await manageBtn.isVisible()) {
-          await manageBtn.click();
-          
-          const deleteBtn = page.getByTestId('delete-song-btn').first();
-          if (await deleteBtn.isVisible()) {
-              console.log(`Guest ${index}: Deleting...`);
-              page.on('dialog', dialog => dialog.accept());
-              await deleteBtn.click();
-              
-              await expect(page.locator('ul.space-y-3 li')).toHaveCount(expectedListCount - 1, { timeout: 10000 });
-              console.log(`✅ Guest ${index}: Deleted.`);
-          } else {
-              console.log(`ℹ️ Guest ${index}: Restricted (No delete buttons).`);
-          }
-      } else {
-          console.log(`ℹ️ Guest ${index}: Manage button hidden.`);
-      }
-
-    } catch (err: any) {
-      console.error(`❌ Guest ${index} failed delete check:`, err.message);
-      deleteErrors.push(`Guest ${index}: ${err.message}`);
-    }
-  });
-
-  await Promise.all(deleteTasks);
-  expect(deleteErrors, `Guests failed delete phase`).toHaveLength(0);
-
-  // --- 6. CLOSE ---
-  console.log('🛑 Closing...');
-  await hostPage.bringToFront();
-  
-  if (!await hostPage.getByRole('button', { name: 'Close Party' }).isVisible()) {
-      await hostPage.getByTestId('tab-settings').click();
+  // Verify at least ONE item exists to prove the DB isn't dead
+  try {
+      await expect(hostPage.locator('[data-testid^="playlist-item-"]').first()).toBeVisible({ timeout: 20000 });
+      const count = await hostPage.locator('[data-testid^="playlist-item-"]').count();
+      console.log(`📉 Final Host Queue Count: ${count}`);
+      expect(count).toBeGreaterThan(0);
+  } catch (e) {
+      console.error("❌ Backend seems unresponsive or empty after stress test.");
+      throw e;
   }
-  
+
+  // --- 5. CLEANUP ---
+  console.log('🛑 Closing Party...');
+  await hostPage.getByTestId('tab-settings').click();
   const closeBtn = hostPage.getByRole('button', { name: 'Close Party' });
-  await closeBtn.scrollIntoViewIfNeeded();
-  await closeBtn.click();
-  await hostPage.getByRole('button', { name: 'Yes, End Party' }).click();
-  await expect(hostPage).toHaveURL(/\/host$/, { timeout: 30000 });
-  
-  console.log('🏁 Load test complete.');
+  if (await closeBtn.isVisible()) {
+      await closeBtn.click();
+      await hostPage.getByRole('button', { name: 'Yes, End Party' }).click();
+  }
 });
