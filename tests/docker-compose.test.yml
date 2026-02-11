@@ -6,7 +6,6 @@ services:
     image: mcr.microsoft.com/playwright:v1.57.0-jammy
     container_name: mykaraoke-e2e
     working_dir: /app
-    #ipc: host
     shm_size: '4gb'
     environment:
       - BASE_URL=${BASE_URL}
@@ -18,7 +17,6 @@ services:
       - /app/.pnpm-store
     networks:
       - my-karaoke-party_mykaraokenetwork
-    # The command is now dynamic based on an environment variable
     command: >
       /bin/sh -c "
       npm install -g pnpm &&
