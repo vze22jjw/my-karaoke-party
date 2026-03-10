@@ -34,7 +34,7 @@ export type SpotifyRecommendation = {
 
 const LOG_TAG = "[SpotifyService]";
 
-// ⚠️ NEW SPOTIFY REQUIREMENT: 
+// ⚠️ NEW SPOTIFY REQUIREMENT 03/2026: 
 // You MUST own or collaborate on this playlist ID using your Premium Developer account.
 // If you do not own the playlist, the API will successfully authenticate but return NO items.
 const DEFAULT_KARAOKE_PLAYLIST_ID = "1NXdf9sRWYkgfuHVU3LKUi"; 
@@ -68,7 +68,6 @@ export const spotifyService = {
         `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
       ).toString("base64");
 
-      // RESTORED: Real Spotify Accounts Token URL
       const res = await axios.post<SpotifyTokenResponse>(
         "https://accounts.spotify.com/api/token",
         "grant_type=client_credentials",
@@ -125,7 +124,6 @@ export const spotifyService = {
         if (process.env.NODE_ENV === 'development') {
             console.log(`${LOG_TAG} Searching Spotify with: "${q}"`);
         }
-        // RESTORED: Real Spotify API Search URL
         return await axios.get<{ tracks: { items: SpotifyTrack[] } }>(
             "https://api.spotify.com/v1/search", 
             {
@@ -181,7 +179,6 @@ export const spotifyService = {
     const token = await this.getAccessToken();
     if (!token) return [];
 
-    // FIX: Using Nullish Coalescing (??) instead of Logical OR (||)
     const idToUse = playlistId ?? DEFAULT_KARAOKE_PLAYLIST_ID;
     const CACHE_KEY = `spotify:top_tracks:${idToUse}`;
     
@@ -195,7 +192,6 @@ export const spotifyService = {
     try {
       debugLog(LOG_TAG, `Fetching items from playlist: ${idToUse}`);
       
-      // RESTORED: Real Spotify API Playlist Items URL
       const tracksRes = await axios.get<{ items?: { item?: SpotifyTrack; track?: SpotifyTrack }[] }>(
         `https://api.spotify.com/v1/playlists/${idToUse}/items`,
         {
@@ -210,7 +206,6 @@ export const spotifyService = {
       }
 
       const tracks: SpotifyRecommendation[] = tracksRes.data.items
-        // FIX: Using Nullish Coalescing (??) instead of Logical OR (||)
         .map((entry) => entry.item ?? entry.track) 
         .filter((trackData): trackData is SpotifyTrack => !!trackData)
         .map((trackData) => ({

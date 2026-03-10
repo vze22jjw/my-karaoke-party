@@ -158,11 +158,9 @@ export function Player({
 
   const handlePlayerEnd: YouTubeProps["onEnd"] = (event) => {
     const player = event.target;
-    // Cast to number to ensure TypeScript knows we are doing math
     const duration = player.getDuration() as number;
     const currentTime = player.getCurrentTime() as number;
     
-    // FIX: iOS Safari suspension / False End safeguard
     if (duration > 0 && (duration - currentTime > 5)) {
       console.log("Ignored false onEnd event from iOS suspension.");
       player.playVideo(); 
@@ -216,7 +214,6 @@ export function Player({
         {!isReady && <div className="mt-20"><Spinner size={"large"} /></div>}
       </div>
 
-      {/* COMPACT REDESIGNED OVERLAY BOX */}
       {isReady && !isPlaying && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-[90%] max-w-lg">
           <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-4">
