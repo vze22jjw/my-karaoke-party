@@ -12,7 +12,7 @@ export function PlayerQrCode({ joinPartyUrl, className }: Props) {
   return (
     <div 
       className={cn(
-        "absolute bottom-28 left-8 z-20 flex items-end", 
+        "absolute bottom-28 left-8 z-20 flex items-end w-fit pointer-events-none", 
         className
       )}
     >
@@ -21,7 +21,7 @@ export function PlayerQrCode({ joinPartyUrl, className }: Props) {
         href={joinPartyUrl}
         target="_blank"
         rel="noreferrer"
-        className="font-mono text-xl text-white pl-4 text-outline"
+        className="font-mono text-xl text-white pl-4 text-outline pointer-events-auto"
       >
         {joinPartyUrl.split("//")[1]}
       </a>

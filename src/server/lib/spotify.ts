@@ -1,4 +1,3 @@
-/* eslint-disable */
 import axios, { AxiosError } from "axios";
 import { env } from "~/env";
 import { cache } from "../cache";
@@ -34,6 +33,10 @@ export type SpotifyRecommendation = {
 };
 
 const LOG_TAG = "[SpotifyService]";
+
+// ⚠️ NEW SPOTIFY REQUIREMENT 03/2026: 
+// You MUST own or collaborate on this playlist ID using your Premium Developer account.
+// If you do not own the playlist, the API will successfully authenticate but return NO items.
 const DEFAULT_KARAOKE_PLAYLIST_ID = "1NXdf9sRWYkgfuHVU3LKUi"; 
 
 // Helper to normalize strings for comparison (remove punctuation, lowercase)
@@ -44,7 +47,7 @@ const normalize = (str: string) =>
 const cleanString = (str: string) => {
   return str
     .replace(/\b(official video|lyrics|karaoke|instrumental|hd|4k|version|karafun|sing king)\b/gi, "")
-    .replace(/[\(\[\{].*?[\)\]\}]/g, "") // Remove things in brackets/parens as they are usually noise in this context
+    .replace(/[\(\[\{].*?[\)\]\}]/g, "") // Remove things in brackets/parens as they are usually noise
     .replace(/[-|]/g, " ") // Replace separators with spaces
     .replace(/\s+/g, " ")
     .trim();
@@ -55,6 +58,7 @@ export const spotifyService = {
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) return null;
 
     const CACHE_KEY = "spotify:access_token";
+    
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const cachedToken = await cache.get<string>(CACHE_KEY);
     if (cachedToken && typeof cachedToken === "string") return cachedToken;
@@ -88,25 +92,21 @@ export const spotifyService = {
     const token = await this.getAccessToken();
     if (!token) return null;
 
-    // Trusted channel signature BEFORE cleaning
     const isKaraFun = /\bkarafun\b/i.test(query);
     const isSingKing = /\bsing\s*king\b/i.test(query);
 
     let spotifyQuery = "";
     const parts = query.split("-");
 
-    // PARSING: Apply specific logic if we detected a known channel format
     if (parts.length >= 2) {
         if (isKaraFun) {
-            // KaraFun Convention: "Title - Artist"
             const titlePart = cleanString(parts[0] ?? "");
-            const artistPart = cleanString(parts.slice(1).join(" ")); // Join rest in case of extra dashes
+            const artistPart = cleanString(parts.slice(1).join(" "));
             
             if (titlePart && artistPart) {
                 spotifyQuery = `track:${titlePart} artist:${artistPart}`;
             }
         } else if (isSingKing) {
-            // Sing King Convention: "Artist - Title"
             const artistPart = cleanString(parts[0] ?? "");
             const titlePart = cleanString(parts.slice(1).join(" "));
             
@@ -116,7 +116,6 @@ export const spotifyService = {
         }
     }
 
-    // Fallback: If no special logic applied (or parsing failed), use "Bag of Words"
     if (!spotifyQuery) {
         spotifyQuery = cleanString(query);
     }
@@ -135,24 +134,17 @@ export const spotifyService = {
     };
 
     try {
-      // First Attempt: Try the constructed query (Structured or Clean)
       let res = await performSearch(spotifyQuery);
       let track = res.data.tracks.items[0];
 
-      // VALIDATION
-      // If we found a track, we must validate it against the ORIGINAL query
-      // This ensures that "Blue" doesn't match "Blue Suede Shoes" just because of a lucky keyword.
       const isValid = (t: SpotifyTrack | undefined, originalQuery: string) => {
           if (!t) return false;
           const youtubeNorm = normalize(originalQuery);
           const spotifyTitleNorm = normalize(t.name);
-          // Check if Spotify Title exists inside the YouTube string
           return youtubeNorm.includes(spotifyTitleNorm);
       };
 
       if (!isValid(track, query)) {
-          // If the specific/structured search failed validation...
-          // And if we used a special query (contains "track:"), try falling back to generic cleaning
           if (spotifyQuery.includes("track:")) {
               debugLog(LOG_TAG, `Structured query "${spotifyQuery}" failed validation. Retrying with generic search.`);
               const fallbackQuery = cleanString(query);
@@ -163,7 +155,6 @@ export const spotifyService = {
           }
       }
 
-      // Final check after fallback
       if (!isValid(track, query)) {
           debugLog(LOG_TAG, `Validation Failed: Spotify track "${track?.name}" not found in YouTube title "${query}"`);
           return null; 
@@ -188,8 +179,7 @@ export const spotifyService = {
     const token = await this.getAccessToken();
     if (!token) return [];
 
-    const idToUse = playlistId || DEFAULT_KARAOKE_PLAYLIST_ID;
-    
+    const idToUse = playlistId ?? DEFAULT_KARAOKE_PLAYLIST_ID;
     const CACHE_KEY = `spotify:top_tracks:${idToUse}`;
     
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -200,23 +190,31 @@ export const spotifyService = {
     }
 
     try {
-      debugLog(LOG_TAG, `Fetching tracks from playlist: ${idToUse}`);
+      debugLog(LOG_TAG, `Fetching items from playlist: ${idToUse}`);
       
-      const tracksRes = await axios.get<{ items: { track: SpotifyTrack }[] }>(
-        `https://api.spotify.com/v1/playlists/${idToUse}/tracks`,
+      const tracksRes = await axios.get<{ items?: { item?: SpotifyTrack; track?: SpotifyTrack }[] }>(
+        `https://api.spotify.com/v1/playlists/${idToUse}/items`,
         {
           params: { limit: 5 },
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      const tracks: SpotifyRecommendation[] = tracksRes.data.items.map((item) => ({
-        title: item.track.name,
-        artist: item.track.artists[0]?.name ?? "Unknown",
-        coverUrl: item.track.album.images[0]?.url ?? "",
-      }));
+      if (!tracksRes.data.items) {
+         console.warn(`${LOG_TAG} Playlist contents hidden by Spotify API. You must be the owner of the playlist ID: ${idToUse}`);
+         return [];
+      }
 
-      await cache.set(CACHE_KEY, tracks, 60 * 60 * 24); // Cache for 24h
+      const tracks: SpotifyRecommendation[] = tracksRes.data.items
+        .map((entry) => entry.item ?? entry.track) 
+        .filter((trackData): trackData is SpotifyTrack => !!trackData)
+        .map((trackData) => ({
+          title: trackData.name,
+          artist: trackData.artists[0]?.name ?? "Unknown",
+          coverUrl: trackData.album.images[0]?.url ?? "",
+        }));
+
+      await cache.set(CACHE_KEY, tracks, 60 * 60 * 24); 
       return tracks;
     } catch (error) {
       if (error instanceof AxiosError) {
