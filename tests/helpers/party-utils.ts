@@ -27,6 +27,7 @@ export async function createParty(page: Page, partyName: string): Promise<string
     await expect(async () => {
         await page.getByLabel('Party Name').fill(partyName);
         await page.getByLabel('Your Name').fill('Host');
+        await page.locator('button[data-testid^="avatar-select-"]').first().click();
         await page.getByLabel('Admin Password').fill(ADMIN_TOKEN!);
     }).toPass({ timeout: 15_000 });
     

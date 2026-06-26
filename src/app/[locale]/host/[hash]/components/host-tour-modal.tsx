@@ -35,6 +35,7 @@ export function HostTourModal({ isOpen, onClose, onFireConfetti }: Props) {
     { title: t('step7Title'), desc: t('step7Desc') },
     { title: t('step8Title'), desc: t('step8Desc') },
     { title: t('step9Title'), desc: t('step9Desc') },
+    { title: t('step10Title'), desc: t('step10Desc') },
   ];
 
   const handleNext = () => {

@@ -328,7 +328,9 @@
       "step8Title": "8. Outils de données",
       "step8Desc": "**Exportez** les chansons ou effectuez une **Sauvegarde** de l'historique de votre party.",
       "step9Title": "9. Réglages de Langue",
-      "step9Desc": "Modifiez la langue via le bouton dans le pied de page.",
+      "step9Desc": "Modifiez la langue via le bouton dans le pied de page (Anglais, Portugais, Espagnol, Français, Japonais, Chinois).",
+      "step10Title": "10. Avatar de l'Hôte",
+      "step10Desc": "Personnalisez l'émoji de l'hôte dans l'onglet Paramètres. Les modifications sont enregistrées automatiquement en temps réel.",
       "finish": "Compris, c'est parti !"
     }
   },

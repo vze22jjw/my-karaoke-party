@@ -356,7 +356,9 @@
       "step8Title": "8. Ferramentas de Dados",
       "step8Desc": "**Export** músicas ou faça **Backup** do histórico da festa.",
       "step9Title": "9. Configurações de Idioma",
-      "step9Desc": "Você pode alternar entre **Inglês** e **Português** usando o botão no rodapé (se configurado).",
+      "step9Desc": "Você pode alternar entre vários idiomas (Inglês, Português, Espanhol, Francês, Japonês, Chinês) usando o botão no rodapé (se configurado).",
+      "step10Title": "10. Avatar do Host",
+      "step10Desc": "Personalize o emoji do host na aba de Configurações. As alterações são salvas automaticamente em tempo real.",
       "finish": "Entendi, vamos começar!"
     }
   },

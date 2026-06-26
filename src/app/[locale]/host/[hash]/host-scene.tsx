@@ -41,7 +41,7 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, effectiveHostName);
 
-  const [_, setLocalAvatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "👑" });
+  const [, setLocalAvatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "👑" });
   const hostParticipant = participants.find((p) => p.role === "Host");
   const hostAvatar = hostParticipant?.avatar ?? "👑";
 

@@ -72,7 +72,7 @@ Allows hosts to export a list of Spotify URIs to instantly create a playlist.
 
 ## 🌍 Internationalization (i18n)
 
-The application supports multiple languages (currently English and Portuguese).
+The application supports multiple languages (currently English, Portuguese, Spanish, French, Japanese, and Chinese).
 
 * **Auto-Detection:** The app attempts to detect the user's browser language automatically.
 * **Manual Toggle:** A language switcher is available in the footer of every page (except the Player view).

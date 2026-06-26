@@ -355,7 +355,9 @@
       "step8Title": "8. Herramientas de Datos",
       "step8Desc": "**Exporta** canciones o haz una **Copia de Seguridad** de tu historial de fiesta.",
       "step9Title": "9. Ajustes de Idioma",
-      "step9Desc": "Puedes alternar entre **Inglés** y **Portugués** usando el botón en el pie de página (si está configurado).",
+      "step9Desc": "Puedes alternar entre varios idiomas (Inglés, Portugués, Español, Francés, Japonés, Chino) usando el botón en el pie de página (si está configurado).",
+      "step10Title": "10. Avatar del Anfitrión",
+      "step10Desc": "Personaliza el emoji del anfitrión en la pestaña de Ajustes. Los cambios se guardan automáticamente en tiempo real.",
       "finish": "¡Entendido, a comenzar!"
     }
   },

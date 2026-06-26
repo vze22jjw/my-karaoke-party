@@ -85,13 +85,34 @@ export function CreateParty() {
   const t = useTranslations('create');
   const tJoin = useTranslations('join');
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
-  const [avatar, setAvatar] = useLocalStorage({ key: "avatar", defaultValue: "👑" });
+  const [, setAvatar] = useLocalStorage({ key: "avatar", defaultValue: "👑" });
 
   const [yourAvatar, setYourAvatar] = useState("👑");
   const [hostAvatarOptions, setHostAvatarOptions] = useState(HOST_AVATARS);
 
   useEffect(() => {
-    setHostAvatarOptions([...HOST_AVATARS].sort(() => Math.random() - 0.5));
+    const shuffled = [...HOST_AVATARS].sort(() => Math.random() - 0.5);
+    setHostAvatarOptions(shuffled);
+
+    const stored = window.localStorage.getItem("avatar");
+    if (!stored || stored === '""' || stored === 'null') {
+      const randomHostAvatar = HOST_AVATARS[Math.floor(Math.random() * HOST_AVATARS.length)]!;
+      setYourAvatar(randomHostAvatar);
+    } else {
+      let parsed = stored;
+      try {
+        const val: unknown = JSON.parse(stored);
+        if (typeof val === "string") {
+          parsed = val;
+        }
+      } catch (e) {}
+      if (HOST_AVATARS.includes(parsed)) {
+        setYourAvatar(parsed);
+      } else {
+        const randomHostAvatar = HOST_AVATARS[Math.floor(Math.random() * HOST_AVATARS.length)]!;
+        setYourAvatar(randomHostAvatar);
+      }
+    }
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({

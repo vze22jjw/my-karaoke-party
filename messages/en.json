@@ -356,7 +356,9 @@
       "step8Title": "8. Data Tools",
       "step8Desc": "**Export** songs or **Backup** your party history.",
       "step9Title": "9. Language Settings",
-      "step9Desc": "You can toggle between **English** and **Portuguese** using the button in the footer (if configured).",
+      "step9Desc": "You can toggle between multiple languages (English, Portuguese, Spanish, French, Japanese, Chinese) using the button in the footer (if configured).",
+      "step10Title": "10. Host Avatar",
+      "step10Desc": "Customize your host emoji in the Settings tab. Changes save automatically and apply in real-time.",
       "finish": "Got it, let's start!"
     }
   },

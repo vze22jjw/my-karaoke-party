@@ -100,6 +100,26 @@ export default function JoinScene({
   useEffect(() => {
     const shuffled = [...GUEST_AVATARS].sort(() => Math.random() - 0.5);
     setAvatarOptions(shuffled);
+
+    const stored = window.localStorage.getItem("avatar");
+    if (!stored || stored === '""' || stored === 'null') {
+      const randomGuestAvatar = GUEST_AVATARS[Math.floor(Math.random() * GUEST_AVATARS.length)]!;
+      setAvatar(randomGuestAvatar);
+    } else {
+      let parsed = stored;
+      try {
+        const val: unknown = JSON.parse(stored);
+        if (typeof val === "string") {
+          parsed = val;
+        }
+      } catch (e) {}
+      if (GUEST_AVATARS.includes(parsed)) {
+        setAvatar(parsed);
+      } else {
+        const randomGuestAvatar = GUEST_AVATARS[Math.floor(Math.random() * GUEST_AVATARS.length)]!;
+        setAvatar(randomGuestAvatar);
+      }
+    }
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
