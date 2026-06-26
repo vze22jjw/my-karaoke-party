@@ -261,17 +261,44 @@ test.describe('Core Party Flow (Full Feature)', () => {
                 }
             }
 
-            // 3. Language Switcher
+            // 3. Language Switcher - Multi-language verification and screenshot capture
+            // A. English layout screenshot
+            await expect(page.getByTestId('tab-singers')).toContainText('Singers');
+            await takeScreenshot(page, 'lang-en-active', testInfo);
+
+            // B. Open dropdown and screenshot dropdown list
             await page.locator('button[title="Change Language"]').click();
+            await page.waitForTimeout(500);
+            await takeScreenshot(page, 'lang-switcher-dropdown', testInfo);
+
+            // C. Switch to Português
             await page.getByRole('button', { name: 'Português' }).click();
             await page.waitForTimeout(1500); 
             await expect(page.getByTestId('tab-singers')).toContainText('Cantores'); 
+            await takeScreenshot(page, 'lang-pt-active', testInfo);
             
+            // D. Switch to Español
             await page.locator('button[title="Change Language"]').click();
+            await page.waitForTimeout(500);
+            await page.getByRole('button', { name: 'Español' }).click();
+            await page.waitForTimeout(1500);
+            await expect(page.getByTestId('tab-singers')).toContainText('Cantantes');
+            await takeScreenshot(page, 'lang-es-active', testInfo);
+
+            // E. Switch to 简体中文
+            await page.locator('button[title="Change Language"]').click();
+            await page.waitForTimeout(500);
+            await page.getByRole('button', { name: '简体中文' }).click();
+            await page.waitForTimeout(1500);
+            await expect(page.getByTestId('tab-singers')).toContainText('歌手列表');
+            await takeScreenshot(page, 'lang-zh-active', testInfo);
+
+            // F. Switch back to English to leave guest session in English
+            await page.locator('button[title="Change Language"]').click();
+            await page.waitForTimeout(500);
             await page.getByRole('button', { name: 'English' }).click();
             await page.waitForTimeout(1500);
             await expect(page.getByTestId('tab-singers')).toContainText('Singers');
-            await takeScreenshot(page, `guest-${index}-language-verified`, testInfo);
         }
     });
 
