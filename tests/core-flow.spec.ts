@@ -138,8 +138,21 @@ test.describe('Core Party Flow (Full Feature)', () => {
 
     if (await restrictedUI.isVisible()) {
         await expect(playerPage.getByText('Guest-0').first()).toBeVisible({ timeout: 10000 });
+        await takeScreenshot(playerPage, 'player-restricted-view', testInfo);
     } else {
         await expect(iframeUI).toBeAttached({ timeout: 10000 });
+        
+        // Verify 16:9 player container aspect ratio and layout
+        const container = playerPage.getByTestId('player-aspect-video-container');
+        await expect(container).toBeVisible({ timeout: 10000 });
+        const box = await container.boundingBox();
+        expect(box).not.toBeNull();
+        if (box) {
+            const ratio = box.width / box.height;
+            console.log(`Verified 16:9 player container: ${box.width}x${box.height} (ratio: ${ratio.toFixed(4)})`);
+            expect(ratio).toBeCloseTo(16 / 9, 1);
+        }
+        await takeScreenshot(playerPage, 'player-aspect-ratio-verified', testInfo);
     }
   });
 

@@ -102,5 +102,14 @@
   },
   "prisma": {
     "seed": "pnpm dlx tsx prisma/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "@vercel/speed-insights",
+      "prisma",
+      "sharp"
+    ]
   }
 }

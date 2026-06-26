@@ -31,7 +31,7 @@ ENV NEXT_PUBLIC_BUILD_DATE=$BUILD_DATE
 ENV NEXT_PUBLIC_GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 COPY prisma ./prisma/
 
 # Install ALL dependencies
@@ -74,6 +74,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-workspace.yaml* ./
 
 ## clean up runner image
 RUN pnpm add prisma@5.22.0 --prod && rm -rf /home/nextjs/.{cache,npm} /root/.cache /root/.local/share/pnpm
