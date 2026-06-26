@@ -78,7 +78,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  if (!['en', 'pt'].includes(locale)) {
+  if (!['en', 'pt', 'es', 'zh'].includes(locale)) {
     notFound();
   }
 

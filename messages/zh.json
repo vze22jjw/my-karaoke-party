@@ -244,7 +244,14 @@
       "confirmDelete": "你确定要删除这首歌吗？",
       "cannotEdit": "已锁定",
       "waitTurn": "你是下一位歌手！目前无法修改你的点歌列表。",
-      "restrictedMessage": "当你即将上台时，点歌列表编辑功能将被禁用。"
+      "restrictedMessage": "当你即将上台时，点歌列表编辑功能将被禁用。",
+      "emptyHistory": "你还没有添加任何歌曲。",
+      "added": "歌曲已添加到队列！",
+      "playingNow": "(正在播放)",
+      "notFoundTitle": "未找到任何内容！",
+      "notFoundDesc": "未找到关于 {query} 的卡拉OK视频",
+      "errorTitle": "错误！",
+      "errorDesc": "搜索视频时发生意外错误。请稍后重试。"
     },
     "history": {
       "suggestions": "管理员主题建议",
