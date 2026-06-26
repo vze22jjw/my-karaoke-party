@@ -12,6 +12,7 @@ import { SettingsSearch } from "./settings/settings-search";
 import { SettingsExport } from "./settings/settings-export";
 import { SettingsDangerZone } from "./settings/settings-danger-zone";
 import { SettingsBackup } from "./settings/settings-backup"; 
+import { SettingsHostAvatar } from "./settings/settings-host-avatar";
 
 type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
 
@@ -35,6 +36,8 @@ type Props = {
   onStartParty: () => void;
   onToggleIntermission: () => void;
   hostName: string | null;
+  hostAvatar: string | null;
+  onChangeHostAvatar: (avatar: string) => void;
   hostIdleMessages: IdleMessage[];
   onAddIdleMessage: (vars: { hostName: string; message: string }) => void;
   onDeleteIdleMessage: (vars: { id: number }) => void;
@@ -66,6 +69,8 @@ export function TabSettings({
   onStartParty,
   onToggleIntermission,
   hostName,
+  hostAvatar,
+  onChangeHostAvatar,
   hostIdleMessages,
   onAddIdleMessage,
   onDeleteIdleMessage,
@@ -83,6 +88,12 @@ export function TabSettings({
       <SettingsLinks 
         partyHash={partyHash} 
         isPartyClosed={isPartyClosed} 
+      />
+
+      <SettingsHostAvatar
+        hostAvatar={hostAvatar}
+        onChangeHostAvatar={onChangeHostAvatar}
+        isPartyClosed={isPartyClosed}
       />
 
       <SettingsStatus

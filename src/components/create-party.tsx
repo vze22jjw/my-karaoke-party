@@ -26,6 +26,46 @@ import {
 import { toast } from "sonner";
 import { Loader2, PartyPopper } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { cn } from "~/lib/utils";
+
+const HOST_AVATAR_MAP: Record<string, string> = {
+  "👑": "crown",
+  "🧠": "brain",
+  "🧑‍🚀": "astronaut",
+  "🎩": "tophat",
+  "🍾": "cork-bottle",
+};
+const HOST_AVATARS = Object.keys(HOST_AVATAR_MAP);
+
+const AvatarPicker = ({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) => (
+  <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border bg-muted/50 p-3">
+    {options.map((avatar) => (
+      <button
+        key={avatar}
+        type="button"
+        onClick={() => onChange(avatar)}
+        className={cn(
+          "flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-all",
+          value === avatar
+            ? "bg-primary ring-2 ring-primary-foreground"
+            : "sm:hover:bg-muted-foreground/20",
+        )}
+        data-testid={`avatar-select-${HOST_AVATAR_MAP[avatar] ?? 'unknown'}`}
+      >
+        {avatar}
+      </button>
+    ))}
+  </div>
+);
 
 // Note: Zod schema messages are hardcoded here for simplicity, 
 // but you can use z.errorMap or pass t function if needed for validation errors.
@@ -43,7 +83,16 @@ const formSchema = z.object({
 export function CreateParty() {
   const router = useRouter();
   const t = useTranslations('create');
+  const tJoin = useTranslations('join');
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
+  const [avatar, setAvatar] = useLocalStorage({ key: "avatar", defaultValue: "👑" });
+
+  const [yourAvatar, setYourAvatar] = useState("👑");
+  const [hostAvatarOptions, setHostAvatarOptions] = useState(HOST_AVATARS);
+
+  useEffect(() => {
+    setHostAvatarOptions([...HOST_AVATARS].sort(() => Math.random() - 0.5));
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,6 +107,7 @@ export function CreateParty() {
     onSuccess: (data) => {
       if (data.hash) {
         setName(form.getValues("yourName"));
+        setAvatar(yourAvatar);
         
         if (typeof window !== "undefined") {
             window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
@@ -92,7 +142,7 @@ export function CreateParty() {
         return;
       }
 
-      createParty.mutate({ name: values.partyName, singerName: values.yourName });
+      createParty.mutate({ name: values.partyName, singerName: values.yourName, avatar: yourAvatar });
 
     } catch (error) {
       toast.error(t('authFailed'));
@@ -148,6 +198,18 @@ export function CreateParty() {
                 </FormItem>
               )}
             />
+            
+            <FormItem>
+              <FormLabel>{tJoin('chooseIcon')}</FormLabel>
+              <FormControl>
+                <AvatarPicker 
+                  value={yourAvatar} 
+                  onChange={setYourAvatar} 
+                  options={hostAvatarOptions} 
+                />
+              </FormControl>
+            </FormItem>
+
             <FormField
               control={form.control}
               name="adminPassword"

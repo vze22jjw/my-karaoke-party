@@ -311,7 +311,12 @@ export const playlistRouter = createTRPCRouter({
     // 3. Best Dressed
     const topAvatarRaw = await ctx.db.partyParticipant.groupBy({
         by: ["avatar"],
-        where: { avatar: { not: null } },
+        where: { 
+            avatar: { 
+                not: null,
+                notIn: ["👑", "🧠", "🧑‍🚀", "🎩", "🍾"]
+            } 
+        },
         _count: { avatar: true },
         orderBy: { _count: { avatar: "desc" } },
         take: 1

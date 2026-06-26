@@ -59,7 +59,8 @@
     "chooseIcon": "Choose Your Icon",
     "joining": "Joining...",
     "nameTip": "Tip: Your name is case-sensitive. Use the exact same name to keep your history!",
-    "backToList": "Back to parties list"
+    "backToList": "Back to parties list",
+    "hostNameReserved": "The host name is reserved. Please choose a different name."
   },
   "create": {
     "title": "Create a New Party",
@@ -106,6 +107,10 @@
       "noHistory": "No songs were played during this party."
     },
     "settings": {
+      "avatar": {
+        "title": "Host Avatar",
+        "info": "Choose your host emoji. This emoji represents you as the host, is excluded from guest picker, and won't count in party statistics."
+      },
       "status": {
         "title": "Party Status",
         "open": "Party is OPEN",

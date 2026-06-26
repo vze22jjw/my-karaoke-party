@@ -59,7 +59,8 @@
     "chooseIcon": "Escolha seu Ícone",
     "joining": "Entrando...",
     "nameTip": "Dica: Seu nome diferencia maiúsculas. Use o mesmo nome para manter seu histórico!",
-    "backToList": "Voltar para lista de festas"
+    "backToList": "Voltar para lista de festas",
+    "hostNameReserved": "O nome do anfitrião está reservado. Por favor, escolha um nome diferente."
   },
   "create": {
     "title": "Criar Nova Festa",
@@ -106,6 +107,10 @@
       "noHistory": "Nenhuma música foi tocada durante esta festa."
     },
     "settings": {
+      "avatar": {
+        "title": "Avatar do Anfitrião",
+        "info": "Escolha o seu emoji de anfitrião. Este emoji representa você como o anfitrião, é excluído do seletor de convidados e não contará nas estatísticas da festa."
+      },
       "status": {
         "title": "Status da Festa",
         "open": "Festa ABERTA",

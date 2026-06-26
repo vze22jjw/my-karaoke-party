@@ -23,9 +23,10 @@ import { Mic } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { FitText } from "~/components/fit-text";
 import { useTranslations } from "next-intl";
+import { api } from "~/trpc/react";
 
 // AVATAR COMPONENTS ---
-const AVATAR_MAP: Record<string, string> = {
+const GUEST_AVATAR_MAP: Record<string, string> = {
   "🎤": "mic",
   "🎧": "headphones",
   "🥁": "drum",
@@ -38,7 +39,7 @@ const AVATAR_MAP: Record<string, string> = {
   "💃": "dance-f",
 };
 
-const AVATARS = Object.keys(AVATAR_MAP);
+const GUEST_AVATARS = Object.keys(GUEST_AVATAR_MAP);
 
 const AvatarPicker = ({
   value,
@@ -61,7 +62,7 @@ const AvatarPicker = ({
             ? "bg-primary ring-2 ring-primary-foreground"
             : "sm:hover:bg-muted-foreground/20",
         )}
-        data-testid={`avatar-select-${AVATAR_MAP[avatar] ?? 'unknown'}`}
+        data-testid={`avatar-select-${GUEST_AVATAR_MAP[avatar] ?? 'unknown'}`}
       >
         {avatar}
       </button>
@@ -91,13 +92,13 @@ export default function JoinScene({
 
   const [avatar, setAvatar] = useLocalStorage({
     key: "avatar",
-    defaultValue: AVATARS[0]!,
+    defaultValue: GUEST_AVATARS[0]!,
   });
 
   // Randomize avatars on mount to ensure variety
-  const [avatarOptions, setAvatarOptions] = useState(AVATARS);
+  const [avatarOptions, setAvatarOptions] = useState(GUEST_AVATARS);
   useEffect(() => {
-    const shuffled = [...AVATARS].sort(() => Math.random() - 0.5);
+    const shuffled = [...GUEST_AVATARS].sort(() => Math.random() - 0.5);
     setAvatarOptions(shuffled);
   }, []);
 
@@ -108,6 +109,26 @@ export default function JoinScene({
       name: name,
     },
   });
+
+  const watchedName = form.watch("name") ?? "";
+  const watchedPartyCode = form.watch("partyCode") ?? "";
+  const currentPartyCode = partyHash || watchedPartyCode;
+
+  const { data: hostName } = api.party.getHostName.useQuery(
+    { hash: currentPartyCode },
+    { enabled: !!currentPartyCode && currentPartyCode.length >= 4 }
+  );
+
+  const nameEntered = watchedName.trim().length >= 2;
+  const isHost = !!hostName && watchedName.trim().toLowerCase() === hostName.trim().toLowerCase();
+
+  useEffect(() => {
+    if (nameEntered && !isHost) {
+      if (!GUEST_AVATARS.includes(avatar)) {
+        setAvatar(avatarOptions[0] || GUEST_AVATARS[0]!);
+      }
+    }
+  }, [nameEntered, isHost, avatar, avatarOptions, setAvatar]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
@@ -173,16 +194,18 @@ export default function JoinScene({
                 />
               )}
 
-              <FormItem>
-                <FormLabel>{t('chooseIcon')}</FormLabel>
-                <FormControl>
-                  <AvatarPicker 
-                    value={avatar} 
-                    onChange={setAvatar} 
-                    options={avatarOptions} 
-                  />
-                </FormControl>
-              </FormItem>
+              {nameEntered && !isHost && (
+                <FormItem>
+                  <FormLabel>{t('chooseIcon')}</FormLabel>
+                  <FormControl>
+                    <AvatarPicker 
+                      value={avatar} 
+                      onChange={setAvatar} 
+                      options={avatarOptions} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
               <FormField
                 control={form.control}
                 name="name"

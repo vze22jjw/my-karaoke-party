@@ -76,8 +76,8 @@ export async function joinParty(page: Page, partyCode: string, name: string, ind
         if (!page.url().includes('/join')) await page.goto(`${BASE_URL}/en/join`);
 
         await page.getByTestId('join-party-code-input').fill(partyCode);
-        await page.locator('button[data-testid^="avatar-select-"]').first().click();
         await page.getByTestId('join-name-input').fill(name);
+        await page.locator('button[data-testid^="avatar-select-"]').first().click();
         
         const joinBtn = page.getByTestId('join-submit-button');
         await expect(joinBtn).toBeEnabled({ timeout: 5000 });

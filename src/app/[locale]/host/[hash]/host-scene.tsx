@@ -41,6 +41,15 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, effectiveHostName);
 
+  const [_, setLocalAvatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "👑" });
+  const hostParticipant = participants.find((p) => p.role === "Host");
+  const hostAvatar = hostParticipant?.avatar ?? "👑";
+
+  const handleChangeHostAvatar = (newAvatar: string) => {
+    socketActions.updateHostAvatar(newAvatar);
+    setLocalAvatar(newAvatar);
+  };
+
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: getScopedKey(party.hash!, "manual-sort"),
     defaultValue: false,
@@ -255,6 +264,8 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
         spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
         spotifyLink={settings.spotifyLink ?? null}
         onReplayTour={() => setIsTourOpen(true)}
+        hostAvatar={hostAvatar}
+        onChangeHostAvatar={handleChangeHostAvatar}
       />
     </>
   );

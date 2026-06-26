@@ -59,7 +59,8 @@
     "chooseIcon": "Choisir ton Icône",
     "joining": "Rejoint...",
     "nameTip": "Astuce : Ton nom est sensible à la casse. Utilise le même nom pour conserver ton historique !",
-    "backToList": "Retour à la liste des parties"
+    "backToList": "Retour à la liste des parties",
+    "hostNameReserved": "Le nom de l'hôte est réservé. Veuillez choisir un autre nom."
   },
   "create": {
     "title": "Créer une Nouvelle Party",
@@ -85,7 +86,7 @@
     "noHistory": "Aucune party archivée trouvée.",
     "noResultsDate": "Aucune party trouvée pour cette date.",
     "page": "Page",
-    "dashboardDesc": "Gérez toutes vos parties de karaoké en un seul endroit.",
+    "dashboardDesc": "Gerez toutes vos parties de karaoké en un seul endroit.",
     "newParty": "Nouvelle Party",
     "noParties": "Aucune party trouvée.",
     "startFirst": "Commencez votre première party pour la voir ici !",
@@ -106,6 +107,10 @@
       "reorder": "Enregistrer l'Ordre"
     },
     "settings": {
+      "avatar": {
+        "title": "Avatar de l'Hôte",
+        "info": "Choisissez votre emoji d'hôte. Cet emoji vous représente en tant qu'hôte, est exclu du sélecteur d'invités et ne sera pas comptabilisé dans les statistiques de la party."
+      },
       "status": {
         "title": "Statut de la Party",
         "open": "Ouverte aux inscriptions",

@@ -31,6 +31,7 @@ interface SocketActions {
   toggleManualSort: (isActive: boolean) => void;
   saveQueueOrder: (newOrderIds: string[]) => void;
   togglePriority: (videoId: string) => void;
+  updateHostAvatar: (avatar: string) => void;
 }
 
 type Participant = {
@@ -319,6 +320,7 @@ export function usePartySocket(
     toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
     saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
     togglePriority: (videoId) => socketRef.current?.emit("toggle-priority", { partyHash, videoId }),
+    updateHostAvatar: (avatar) => socketRef.current?.emit("update-host-avatar", { partyHash, avatar }),
   }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {

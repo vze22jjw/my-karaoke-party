@@ -57,6 +57,8 @@ type Props = {
   spotifyPlaylistId: string | null;
   spotifyLink?: string | null;
   onReplayTour: () => void;
+  hostAvatar: string | null;
+  onChangeHostAvatar: (avatar: string) => void;
 };
 
 function useTimeOpen(createdAt: Date) {
@@ -131,6 +133,8 @@ export function HostControlPanel({
   spotifyPlaylistId,
   spotifyLink,
   onReplayTour,
+  hostAvatar,
+  onChangeHostAvatar,
 }: Props) {
   const router = useRouter();
   const timeOpen = useTimeOpen(party.createdAt);
@@ -316,6 +320,8 @@ export function HostControlPanel({
               onStartParty={onStartParty}
               onToggleIntermission={onToggleIntermission}
               hostName={hostName}
+              hostAvatar={hostAvatar}
+              onChangeHostAvatar={onChangeHostAvatar}
               hostIdleMessages={hostIdleMessages ?? []}
               onAddIdleMessage={onAddIdleMessage}
               onDeleteIdleMessage={onDeleteIdleMessage}

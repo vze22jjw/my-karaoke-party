@@ -13,6 +13,7 @@ export const partyRouter = createTRPCRouter({
     .input(z.object({ 
       name: z.string().min(1),
       singerName: z.string().min(1),
+      avatar: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
@@ -60,6 +61,7 @@ export const partyRouter = createTRPCRouter({
             partyId: party.id,
             name: input.singerName, 
             role: "Host", 
+            avatar: input.avatar ?? "👑",
           },
         });
 

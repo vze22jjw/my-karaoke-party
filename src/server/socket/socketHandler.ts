@@ -542,6 +542,27 @@ export function registerSocketEvents(io: Server) {
         }
     });
 
+    socket.on("update-host-avatar", async (data: { partyHash: string; avatar: string }) => {
+      if (!ensureHost(socket)) return;
+      try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party) return;
+
+        const host = await db.partyParticipant.findFirst({
+          where: { partyId: party.id, role: "Host" }
+        });
+        if (host) {
+          await db.partyParticipant.update({
+            where: { id: host.id },
+            data: { avatar: data.avatar }
+          });
+          await updateAndEmitSingers(io, party.id, data.partyHash);
+        }
+      } catch (error) {
+        console.error("Error updating host avatar:", error);
+      }
+    });
+
     socket.on("song-ended", async (data: { partyHash: string, id: string }) => {
       if (!ensureHost(socket)) return;
       socket.emit("mark-as-played", { partyHash: data.partyHash });
