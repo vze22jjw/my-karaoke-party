@@ -300,7 +300,23 @@ test.describe('Core Party Flow (Full Feature)', () => {
             await expect(page.getByTestId('tab-singers')).toContainText('歌手列表');
             await takeScreenshot(page, 'lang-zh-active', testInfo);
 
-            // F. Switch back to English to leave guest session in English
+            // F. Switch to 日本語
+            await page.locator('button[title="Change Language"]').click();
+            await page.waitForTimeout(500);
+            await page.getByRole('button', { name: '日本語' }).click();
+            await page.waitForTimeout(1500);
+            await expect(page.getByTestId('tab-singers')).toContainText('歌手');
+            await takeScreenshot(page, 'lang-ja-active', testInfo);
+
+            // G. Switch to Français
+            await page.locator('button[title="Change Language"]').click();
+            await page.waitForTimeout(500);
+            await page.getByRole('button', { name: 'Français' }).click();
+            await page.waitForTimeout(1500);
+            await expect(page.getByTestId('tab-singers')).toContainText('Chanteurs');
+            await takeScreenshot(page, 'lang-fr-active', testInfo);
+
+            // H. Switch back to English to leave guest session in English
             await page.locator('button[title="Change Language"]').click();
             await page.waitForTimeout(500);
             await page.getByRole('button', { name: 'English' }).click();
