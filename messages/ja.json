@@ -1,0 +1,405 @@
+{
+  "common": {
+    "appName": "カラオケパーティー",
+    "backToHome": "ホームに戻る",
+    "back": "戻る",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "required": "必須項目",
+    "leave": "退出",
+    "viewHistory": "履歴を表示",
+    "terms": "利用規約",
+    "readOnly": "読み取り専用",
+    "you": "あなた"
+  },
+  "home": {
+    "joinParty": "パーティーに参加する",
+    "startNew": "または新しいパーティーを開始",
+    "openParties": "開催中のパーティー",
+    "noOpenParties": "現在開催中のパーティーはありません",
+    "beTheFirst": "最初のパーティーを作成しましょう！",
+    "chooseParty": "参加するパーティーを選択",
+    "enter": "入室"
+  },
+  "startParty": {
+    "title": "新しいパーティーを開始",
+    "backToOptions": "オプションに戻る",
+    "backToHome": "ホームに戻る",
+    "pageTitle": "パーティー開始 - カラオケパーティー"
+  },
+  "drawers": {
+    "openPlayers": "プレイヤーを開く",
+    "enterHash": "パーティーコードを入力",
+    "hashPlaceholder": "例: DCBA",
+    "connectPlayer": "プレイヤーに接続",
+    "connecting": "接続中...",
+    "openNames": "開催中のパーティー名:",
+    "reconnectHost": "管理者として再接続",
+    "reconnectDesc": "進行中のパーティーを選択するか、履歴を表示します。",
+    "connectHostBtn": "管理者に接続",
+    "noActive": "進行中のパーティーは見つかりませんでした。",
+    "historyDashboard": "パーティー履歴ダッシュボード",
+    "songs": "曲",
+    "singers": "人",
+    "cancel": "キャンセル",
+    "notFoundError": "パーティーが見つからないか、コードが無効です。",
+    "endedError": "パーティーは終了しました。",
+    "genericError": "予期しないエラーが発生しました。",
+    "loadingError": "パーティーの読み込みに失敗しました。再試行してください。"
+  },
+  "join": {
+    "title": "パーティーに参加する",
+    "partyCode": "パーティーコード",
+    "enterCode": "パーティーコードを入力...",
+    "name": "名前",
+    "enterName": "名前を入力...",
+    "chooseIcon": "アイコンを選択",
+    "joining": "参加中...",
+    "nameTip": "ヒント: 名前は大文字と小文字を区別します。同じ名前を使用して履歴を保持してください！",
+    "backToList": "パーティー一覧に戻る"
+  },
+  "create": {
+    "title": "新規パーティー作成",
+    "description": "パーティー名を設定し、管理者パスワードを入力してください。",
+    "partyName": "パーティー名",
+    "placeholderName": "マイ・カラオケ・パーティー",
+    "yourName": "あなたの名前",
+    "placeholderUser": "あなたの名前",
+    "adminPassword": "管理者パスワード",
+    "placeholderPass": "パスワードを入力...",
+    "createButton": "パーティー作成",
+    "creating": "作成中...",
+    "authFailed": "認証に失敗しました",
+    "invalidPassword": "管理者パスワードが無効です",
+    "toastSuccess": "パーティー「{name}」が作成されました！",
+    "toastError": "パーティーの作成に失敗しました"
+  },
+  "host": {
+    "dashboardTitle": "管理者ダッシュボード",
+    "tabsActive": "アクティブ",
+    "tabsHistory": "履歴",
+    "noActiveParties": "アクティブなパーティーはありません。",
+    "noHistory": "アーカイブされたパーティーはありません。",
+    "noResultsDate": "この日付のパーティーは見つかりませんでした。",
+    "page": "ページ",
+    "dashboardDesc": "すべてのカラオケパーティーを1箇所で管理します。",
+    "newParty": "新しいパーティー",
+    "noParties": "パーティーは見つかりませんでした。",
+    "startFirst": "最初のパーティーを開始して、ここに表示させましょう！",
+    "access": {
+      "title": "管理者アクセス",
+      "desc": "このパーティーを管理するには管理者パスワードを入力してください。",
+      "unlock": "コントロールを解除"
+    },
+    "tabs": {
+      "playlist": "プレイリスト",
+      "settings": "設定"
+    },
+    "playback": {
+      "title": "再生コントロール",
+      "play": "再生",
+      "pause": "一時停止",
+      "skip": "スキップ",
+      "reorder": "並べ替え順序を保存"
+    },
+    "settings": {
+      "status": {
+        "title": "パーティーの状態",
+        "open": "参加受付中",
+        "intermission": "休憩中",
+        "closed": "終了",
+        "start": "パーティー開始",
+        "pause": "休憩開始 (一時停止)",
+        "resume": "パーティー再開",
+        "close": "パーティー終了",
+        "confirmClose": "本当にこのパーティーを終了しますか？この操作は取り消せるません。"
+      },
+      "links": {
+        "title": "パーティーリンク",
+        "join": "参加用リンク (歌手向け)",
+        "player": "プレイヤー用リンク (テレビ/プロジェクター向け)",
+        "dashboard": "管理者ダッシュボード"
+      },
+      "suggestions": {
+        "title": "パーティーのテーマ / 提案",
+        "placeholder": "例: 「タイトルに色が含まれる曲」",
+        "noSuggestions": "提案はまだ追加されていません。"
+      },
+      "messages": {
+        "title": "共有メッセージライブラリ",
+        "sync": "プレイヤーに {count} 件のメッセージを同期",
+        "manage": "ライブラリ管理",
+        "addBtn": "メッセージを追加",
+        "addPlaceholder": "スクロール画面に表示するメッセージを入力...",
+        "creationsLeft": "作成可能残数: {count}",
+        "selectionsLeft": "選択可能残数: {count}",
+        "empty": "メッセージがありません。プレイヤーに表示するメッセージを作成してください。",
+        "pageCounter": "ページ {current} / {total}",
+        "saveAndSync": "保存して同期 ({count})"
+      },
+      "rules": {
+        "title": "パーティーのルール",
+        "manualSort": "手動並べ替え: {state}",
+        "fairness": "キュー: 公平モード ({state})",
+        "playback": "再生: アプリ内 ({state})"
+      },
+      "spotify": {
+        "title": "Spotify 連携",
+        "playlistPlaceholder": "例: 37i9dQZF1DXbITwg1ZjkYt",
+        "linkPlaceholder": "https://open.spotify.com/playlist/..."
+      },
+      "search": {
+        "title": "検索設定",
+        "maxResults": "最大検索結果数"
+      },
+      "export": {
+        "title": "歌われた曲のエクスポート",
+        "exportBtn": "{count} 曲が歌われました"
+      },
+      "backup": {
+        "title": "バックアップと復元",
+        "save": "バックアップを保存",
+        "restore": "復元"
+      },
+      "danger": {
+        "title": "危険ゾーン",
+        "closeBtn": "パーティーを終了"
+      }
+    },
+    "card": {
+      "history": "履歴を表示",
+      "createdAt": "{date} {time}",
+      "closedAt": "終了日時 {date}"
+    }
+  },
+  "player": {
+    "waiting": "管理者がパーティーを開始するのを待っています...",
+    "intermission": "ただいま休憩中...",
+    "startSoon": "まもなくパーティーを開始します...",
+    "callToAction": "歌いたい曲はありますか？歌いましょう！",
+    "nextUp": "次の曲:",
+    "startingIn": "開始まであと",
+    "skip": "スキップ",
+    "openYoutube": "YouTubeで開く",
+    "playbackDisabled": "このパーティーでは再生が無効になっています。",
+    "cantEmbed": "この動画はアプリ内で再生できません。"
+  },
+  "guest": {
+    "tabs": {
+      "playing": "再生中",
+      "add": "曲を追加",
+      "suggestions": "おすすめ",
+      "singers": "歌手"
+    },
+    "player": {
+      "playingNow": "現在再生中",
+      "spotify": "Spotify",
+      "noQueued": "待機曲はありません",
+      "nextInLine": "次の待機リスト ({count})",
+      "hideQueue": "キューを非表示",
+      "showAll": "すべて表示 ({count})",
+      "moreNext": "他 {count} 曲...",
+      "alreadyPlayed": "歌い終わった曲 ({count})",
+      "hideHistory": "履歴を非表示",
+      "moreHistory": "履歴に他 {count} 曲あります..."
+    },
+    "addSong": {
+      "title": "曲を追加",
+      "searchPlaceholder": "歌手名または曲名を入力...",
+      "queueFull": "キューが満杯です！1曲歌った後に追加してください。",
+      "queueLocked": "キューがロックされています: 管理者が並べ替え中です。",
+      "myQueue": "マイ点歌リスト",
+      "manage": "管理",
+      "saveOrder": "順序を保存",
+      "confirmDelete": "この曲を削除してもよろしいですか？",
+      "cannotEdit": "ロック中",
+      "waitTurn": "次はあなたの番です！現在リストを編集できません。",
+      "restrictedMessage": "次の順番の間は、キューの編集が無効化されます。",
+      "emptyHistory": "まだ曲を追加していません。",
+      "added": "曲がキューに追加されました！",
+      "playingNow": "(再生中)",
+      "notFoundTitle": "見つかりませんでした！",
+      "notFoundDesc": "{query} のカラオケ動画が見つかりませんでした",
+      "errorTitle": "エラー！",
+      "errorDesc": "動画の検索中に予期しないエラーが発生しました。後でもう一度お試しください。"
+    },
+    "history": {
+      "suggestions": "管理者からのテーマ提案",
+      "hostPlaceholder": "管理者がお勧めするテーマ...",
+      "hotSpotify": "Spotifyの人気カラオケ",
+      "topPlayed": "最も歌われた曲",
+      "topArtists": "人気アーティスト",
+      "rareGems": "隠れた名曲",
+      "rareArtists": "珍しいアーティスト",
+      "topSingers": "麦霸リスト",
+      "showTop": "トップ5を表示",
+      "showRare": "レア曲を表示",
+      "noSongs": "まだ曲は歌われていません。",
+      "noSingers": "参加している歌手はいません。",
+      "noArtists": "歌われたアーティストはいません。",
+      "sortBySongs": "曲数",
+      "sortByClaps": "拍手",
+      "sortByArtists": "歌手名",
+      "playedTimes": "{count} 回再生",
+      "emptyData": "まだ全体のデータはありません。最初の曲を歌いましょう！"
+    },
+    "singers": {
+      "title": "歌手",
+      "leaveParty": "退出",
+      "you": "あなた",
+      "sang": "歌った曲",
+      "next": "次",
+      "inLine": "待機中:",
+      "history": "履歴:",
+      "claps": "拍手:",
+      "countdown": {
+        "serve": "開始まで",
+        "turnUp": "盛り上がろう",
+        "singIn": "歌うまで",
+        "micIn": "マイクオンまで"
+      }
+    },
+    "funStats": {
+      "loading": "グローバル統計を読み込み中...",
+      "empty": "履歴がありません。曲を歌って統計を生成しましょう！",
+      "mostEager": "一番熱心な歌手",
+      "encore": "アンコール！",
+      "divas": "歌姫 / ディーバ",
+      "partyStats": "パーティーハイライト",
+      "loyalFans": "熱心なファン",
+      "totalClaps": "総拍手回数",
+      "marathon": "マラソン",
+      "bestDressed": "ベストドレス",
+      "oneHitWonder": "一発屋",
+      "totalPlayed": "総再生数",
+      "songsCount": "{count} 曲",
+      "clapsValue": "{count} 拍手"
+    }
+  },
+  "applause": {
+    "title": "への拍手",
+    "waiting": "歌手を待っています...",
+    "instruction": "連打しましょう！拍手するたびに、歌手の友好度がアップします。",
+    "back": "パーティーに戻る"
+  },
+  "tour": {
+    "prev": "前へ",
+    "next": "次へ",
+    "party": {
+      "welcome": "パーティーへようこそ！",
+      "intro": "コントロールについて簡単に説明します。",
+      "step1Title": "1. 再生中",
+      "step1Desc": "現在再生中の曲と歌手を確認できます。利用可能な場合は**Spotifyリンク**も表示されます！",
+      "step2Title": "2. 曲を追加",
+      "step2Desc": "YouTubeからカラオケ曲を検索できます。公平ルールにより、全員に順番が回ります！",
+      "step3Title": "3. おすすめ提案",
+      "step3Desc": "管理者のテーマ、**Spotify人気曲**、履歴からインスピレーションを得ましょう。",
+      "step4Title": "4. 歌手と拍手",
+      "step4Desc": "キューを確認します。👏ボタンをタップして拍手を送り、スコアを上げましょう！",
+      "step5Title": "5. 言語",
+      "step5Desc": "他の言語に変更したいですか？フッターの**言語セレクター**を使用してください（有効な場合）。",
+      "finish": "了解、歌いましょう！"
+    },
+    "host": {
+      "title": "管理者コントロール",
+      "desc": "パーティーを管理するためのクイックガイド。",
+      "step1Title": "1. パーティーリンク",
+      "step1Desc": "歌手に**参加用リンク**を共有します。テレビで**プレイヤー用リンク**を開いてください。",
+      "step2Title": "2. ステータス管理",
+      "step2Desc": "**パーティー開始**で始めます。**休憩中**にしてスライドを表示することも可能です。",
+      "step3Title": "3. キューの制御",
+      "step3Desc": "再生、一時停止、スキップ、または**手動並べ替え**でドラッグ＆ドロップできます。",
+      "step4Title": "4. パーティールール",
+      "step4Desc": "**公平モード**や**再生方法**を切り替えられます。",
+      "step5Title": "5. ゲストのエンゲージ",
+      "step5Desc": "曲選びのヒントとなる**テーマ提案**を追加できます。",
+      "step6Title": "6. スクロールメッセージ",
+      "step6Desc": "テレビ画面がアイドル状態のときに表示するカスタムメッセージを作成します。.メッセージ一覧から選択して同期します。",
+      "step7Title": "7. Spotifyと検索",
+      "step7Desc": "**SpotifyプレイリストID**やリンクを追加します。",
+      "step8Title": "8. データツール",
+      "step8Desc": "曲リストの**エクスポート**や、パーティー履歴の**バックアップ**が可能です。",
+      "step9Title": "9. 言語設定",
+      "step9Desc": "フッターのボタンから言語を変更できます。",
+      "finish": "了解、開始しましょう！"
+    }
+  },
+  "about": {
+    "title": "アプリについて",
+    "buildInfo": "ビルド情報",
+    "appVersion": "アプリのバージョン",
+    "buildDate": "ビルド日時",
+    "gitCommit": "Gitコミット",
+    "coreDependencies": "主要依存パッケージ",
+    "nodeEnv": "Node環境",
+    "back": "ホームに戻る"
+  },
+  "notfound": {
+    "title": "404 - ページが見つかりません",
+    "desc": "おっと！お探しのパーティーは存在しないか、終了しています。",
+    "home": "ホームに戻る"
+  },
+  "terms": {
+    "title": "利用規約",
+    "introTitle": "はじめに",
+    "introText": "「カラオケパーティー」へようこそ！本規約は、当アプリの利用条件を定めるものです。利用することにより、本規約に同意したものとみなされます。",
+    "personalUseTitle": "個人利用のみ",
+    "nonCommercialTitle": "非営利目的での利用",
+    "nonCommercialText": "私的な非営利の娯楽目的でのみアプリを使用することに同意するものとします。",
+    "privateLocTitle": "プライベート空間",
+    "privateLocText": "アプリは自宅などのプライベートな空間で使用するように設計されています。",
+    "rightsTitle": "演奏権とライセンス",
+    "rightsText": "カラオケトラックを公に演奏する場合、演奏権に関するライセンスが必要になる場合があることを認識してください。",
+    "liabilityTitle": "免責事項",
+    "liabilityText": "アプリの無断または違法な使用について、当方は一切の責任を負いません。",
+    "contactTitle": "お問い合わせ",
+    "contactText": "ご質問がある場合は、お問い合わせください。",
+    "back": "ホームに戻る"
+  },
+  "toasts": {
+    "adminLogin": {
+      "invalid": "パスワードが無効です",
+      "error": "エラーが発生しました"
+    },
+    "host": {
+      "closed": "パーティーを終了しました",
+      "closeFailed": "パーティーの終了に失敗しました。再試行してください。",
+      "intermission": "休憩を開始しました",
+      "resumed": "パーティーを再開しました！"
+    },
+    "settings": {
+      "spotifyUpdated": "Spotify設定を更新しました！",
+      "spotifyFailed": "設定の更新に失敗しました。",
+      "noSongsCopy": "コピーする曲がありません！",
+      "copySuccess": "{format} 形式でプレイリストをクリップボードにコピーしました！",
+      "copyFailed": "リストのコピーに失敗しました。",
+      "backupDownloaded": "バックアップをダウンロードしました！",
+      "backupFailed": "バックアップのダウンロードに失敗しました。",
+      "invalidJson": "無効なJSONファイルです。",
+      "restoreSuccess": "復元完了: {success} 件のパーティー。スキップ: {skipped} 件。",
+      "restoreFailed": "バックアップからの復元に失敗しました。",
+      "maxSelected": "同期するメッセージは最大20件まで選択できます。",
+      "creationLimit": "メッセージ作成の上限に達しました。",
+      "messageAdded": "メッセージが追加されました。同期するものを選択してください。",
+      "syncSuccess": "{count} 件のメッセージをプレイヤーに同期しました！"
+    },
+    "guest": {
+      "songAdded": "曲がキューに追加されました！",
+      "addError": "曲の追加に失敗しました",
+      "tryAgain": "もう一度お試しください。"
+    },
+    "socket": {
+      "joined": "「{name}」がパーティーに参加しました！",
+      "applauseError": "拍手の登録に失敗しました。",
+      "networkError": "拍手送信中にネットワークエラーが発生しました。",
+      "rateLimit": "連続して曲を追加することはできません。数秒お待ちください。",
+      "unauthorized": "認証エラー: 管理者アクセスが必要です。",
+      "videoTooLong": "動画が長すぎます！最大時間は10分です。",
+      "addFailed": "曲の追加に失敗しました。",
+      "cannotModifyQueueNow": "歌唱中、または次に歌う順番のときはリストを編集できません。"
+    }
+  }
+}

@@ -1,0 +1,432 @@
+{
+  "common": {
+    "appName": "我的卡拉OK派对",
+    "backToHome": "返回首页",
+    "back": "返回",
+    "cancel": "取消",
+    "save": "保存",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "required": "必填",
+    "leave": "离开",
+    "viewHistory": "查看历史记录",
+    "terms": "服务条款",
+    "readOnly": "只读",
+    "you": "你"
+  },
+  "home": {
+    "joinParty": "加入派对",
+    "startNew": "或创建新派对",
+    "openParties": "开启的派对",
+    "noOpenParties": "目前没有正在进行的派对",
+    "beTheFirst": "成为第一个创建派对的人！",
+    "chooseParty": "选择一个派对加入",
+    "enter": "进入"
+  },
+  "startParty": {
+    "title": "创建新派对",
+    "backToOptions": "返回选项",
+    "backToHome": "返回首页",
+    "pageTitle": "创建派对 - 我的卡拉OK派对"
+  },
+  "drawers": {
+    "openPlayers": "打开播放器",
+    "enterHash": "输入派对代码",
+    "hashPlaceholder": "例如: DCBA",
+    "connectPlayer": "连接到播放器",
+    "connecting": "正在连接...",
+    "openNames": "开启的派对名称:",
+    "reconnectHost": "以管理员身份重新连接",
+    "reconnectDesc": "选择一个进行中的派对或查看历史记录。",
+    "connectHostBtn": "连接到管理员",
+    "noActive": "没有找到进行中的派对。",
+    "historyDashboard": "派对历史控制面板",
+    "songs": "首歌曲",
+    "singers": "位歌手",
+    "cancel": "取消",
+    "notFoundError": "未找到派对或代码无效。",
+    "endedError": "派对已结束。",
+    "genericError": "发生未知错误。",
+    "loadingError": "加载派对失败，请重试。"
+  },
+  "join": {
+    "title": "加入派对",
+    "partyCode": "派对代码",
+    "enterCode": "请输入派对代码...",
+    "name": "名字",
+    "enterName": "请输入你的名字...",
+    "chooseIcon": "选择你的头像",
+    "joining": "正在加入...",
+    "nameTip": "提示: 你的名字区分大小写。使用完全相同的名字可以保留你的历史记录！",
+    "backToList": "返回派对列表"
+  },
+  "create": {
+    "title": "创建新派对",
+    "description": "为你的派对命名并输入管理员密码。",
+    "partyName": "派对名称",
+    "placeholderName": "我超级棒的卡拉OK派对",
+    "yourName": "你的名字",
+    "placeholderUser": "你的名字",
+    "adminPassword": "管理员密码",
+    "placeholderPass": "输入管理员令牌...",
+    "createButton": "创建派对",
+    "creating": "正在创建...",
+    "authFailed": "身份验证失败",
+    "invalidPassword": "管理员密码无效",
+    "toastSuccess": "派对 \"{name}\" 已成功创建！",
+    "toastError": "创建派对失败"
+  },
+  "host": {
+    "dashboardTitle": "管理员控制面板",
+    "tabsActive": "活动中",
+    "tabsHistory": "历史记录",
+    "noActiveParties": "没有活动中的派对。",
+    "noHistory": "没有找到已归档的派对。",
+    "noResultsDate": "在该日期没有找到派对。",
+    "page": "页码",
+    "dashboardDesc": "在一个地方管理你所有的卡拉OK派对。",
+    "newParty": "新建派对",
+    "noParties": "没有找到派对。",
+    "startFirst": "创建你的第一个派对，它将显示在这里！",
+    "access": {
+      "title": "管理员访问",
+      "desc": "请输入管理员密码以管理此派对。",
+      "unlock": "解锁控制"
+    },
+    "tabs": {
+      "playlist": "歌单列表",
+      "settings": "派对设置"
+    },
+    "playback": {
+      "noSong": "没有正在播放的歌曲",
+      "emptyQueue": "目前点歌排队为空。",
+      "saveOrder": "保存新顺序",
+      "closedHistory": "派对已结束 • 历史记录视图",
+      "noHistory": "此派对期间未播放任何歌曲。"
+    },
+    "settings": {
+      "status": {
+        "title": "派对状态",
+        "open": "派对已开启",
+        "started": "派对进行中",
+        "intermission": "休息时间 (已暂停)",
+        "closed": "派对已关闭",
+        "start": "开始派对",
+        "resume": "恢复派对",
+        "pause": "开始休息 (暂停)",
+        "info": "使用此设置管理派对流程。开始以播放音乐。休息会暂停点歌排队并显示幻灯片。"
+      },
+      "links": {
+        "title": "派对链接",
+        "join": "加入链接 (供歌手使用)",
+        "player": "播放器链接 (供电视/投影仪使用)",
+        "info": "与宾客分享加入链接。在电视/投影仪上打开播放器链接。点击二维码可放大显示。"
+      },
+      "suggestions": {
+        "title": "派对主题 / 建议选项",
+        "placeholder": "例如: '歌名中带有颜色的歌曲'",
+        "empty": "尚未添加任何建议。",
+        "info": "添加带编号的提示，帮助你的宾客选择歌曲！这些将显示在历史记录标签中。"
+      },
+      "messages": {
+        "title": "共享留言库",
+        "placeholder": "新留言 (例如: 歌词 @ 歌手)",
+        "sync": "同步 {count} 条留言到播放器",
+        "synced": "已同步！",
+        "limitError": "你已达到留言创建上限。",
+        "info": "选择要在电视上显示的留言。你最多可以选择 20 条。",
+        "infoLabel": "工作原理",
+        "featureDetails": "当派对暂停或队列为空时，这些留言会在播放器屏幕上循环播放。从共享库中选择最多 20 条留言进行同步。",
+        "formatTip": "💡 提示: 使用 '留言 @ 作者' 格式以引用形式显示。(例如: '你好世界 @ 主持人')",
+        "yourCreations": "你的创作:",
+        "selected": "已选择同步:",
+        "emptyLib": "共享库目前为空。",
+        "manageLibrary": "管理留言库",
+        "drawerDesc": "选择最多 20 条留言。关闭此窗口将自动同步选择项。",
+        "addPlaceholder": "添加新留言...",
+        "searchPlaceholder": "搜索留言...",
+        "creationsLeft": "剩余创建额度: {count}",
+        "selectionsLeft": "剩余选择额度: {count}",
+        "noMessages": "未找到留言。",
+        "pageCounter": "第 {current} / {total} 页",
+        "saveAndSync": "保存并同步 ({count})"
+      },
+      "rules": {
+        "title": "派对规则",
+        "fairnessOn": "点歌队列: 公平轮流 (开启)",
+        "fairnessOff": "点歌队列: 先到先得 (关闭)",
+        "playbackApp": "播放方式: 应用内播放 (开启)",
+        "playbackYoutube": "播放方式: 弹出YouTube (关闭)",
+        "manualSort": "手动排序",
+        "infoQueue": "队列排序方式: 公平轮流模式会让歌手轮流上台。先到先得是常规FIFO顺序。",
+        "infoSort": "手动队列排序: 开启后可拖拽排序。关闭会保存当前顺序。",
+        "infoPlayback": "播放方式: 应用内播放直接在此处播放视频。YouTube模式会强制使用外部链接。"
+      },
+      "spotify": {
+        "title": "Spotify 整合设置",
+        "playlistId": "热门歌单 ID (用于推荐标签)",
+        "link": "派对歌单链接 (用于宾客头部导航)",
+        "save": "保存设置",
+        "info": "热门ID: 在推荐标签中显示歌曲。派对链接: 在宾客播放器头部添加直接链接。"
+      },
+      "search": {
+        "title": "搜索设置",
+        "maxResults": "最大搜索结果数",
+        "info": "限制宾客搜索时看到的视频数量。较少的结果能加快加载速度。"
+      },
+      "export": {
+        "title": "导出已播放歌曲",
+        "copySpotify": "复制为 Spotify 格式",
+        "copyText": "复制为文本格式",
+        "info": "复制已播放歌曲的列表。'复制为 Spotify 格式'会将其格式化为桌面应用支持的 URI。"
+      },
+      "backup": {
+        "title": "备份与恢复",
+        "download": "下载备份",
+        "upload": "恢复备份",
+        "info": "备份: 将所有数据下载为 JSON。恢复: 上传 JSON 文件以恢复派对数据。"
+      },
+      "danger": {
+        "title": "危险区域",
+        "closeParty": "关闭派对",
+        "confirmTitle": "你确定吗？",
+        "confirmDesc": "这将结束所有人的派对，数据将变为只读状态。",
+        "confirmBtn": "确认，结束派对"
+      }
+    },
+    "card": {
+      "manage": "管理派对",
+      "history": "查看历史记录",
+      "createdAt": "{date} {time}",
+      "closedAt": "已于 {date} 关闭"
+    }
+  },
+  "player": {
+    "waiting": "等待管理员开启派对...",
+    "intermission": "管理员休息中...",
+    "startSoon": "派对即将在几秒内开始...",
+    "callToAction": "点歌了吗？开始歌唱吧！",
+    "nextUp": "下一位歌手:",
+    "startingIn": "即将开始",
+    "skip": "切歌",
+    "openYoutube": "在 YouTube 中打开",
+    "playbackDisabled": "此派对已禁用视频播放。",
+    "cantEmbed": "此视频无法在应用内播放。"
+  },
+  "guest": {
+    "tabs": {
+      "playing": "正在播放",
+      "add": "点歌",
+      "suggestions": "歌单推荐",
+      "singers": "歌手列表"
+    },
+    "player": {
+      "playingNow": "正在播放",
+      "spotify": "Spotify",
+      "noQueued": "目前没有排队歌曲",
+      "nextInLine": "排队候补中 ({count})",
+      "hideQueue": "隐藏排队",
+      "showAll": "显示全部 ({count})",
+      "moreNext": "以及另外 {count} 首歌曲...",
+      "alreadyPlayed": "已播放 ({count})",
+      "hideHistory": "隐藏已播放",
+      "moreHistory": "以及另外 {count} 首已播放歌曲..."
+    },
+    "addSong": {
+      "title": "点歌",
+      "searchPlaceholder": "输入歌手和/或歌曲名称...",
+      "queueFull": "排队已满！唱完一首后再点歌吧。",
+      "queueLocked": "队列已被锁定: 主持人正在调整顺序。",
+      "myQueue": "我的点歌列表",
+      "manage": "管理",
+      "saveOrder": "保存顺序",
+      "confirmDelete": "你确定要删除这首歌吗？",
+      "cannotEdit": "已锁定",
+      "waitTurn": "你是下一位歌手！目前无法修改你的点歌列表。",
+      "restrictedMessage": "当你即将上台时，点歌列表编辑功能将被禁用。",
+      "emptyHistory": "你还没有添加任何歌曲。",
+      "added": "歌曲已添加到队列！",
+      "playingNow": "(正在播放)",
+      "notFoundTitle": "未找到任何内容！",
+      "notFoundDesc": "未找到关于 {query} 的卡拉OK视频",
+      "errorTitle": "错误！",
+      "errorDesc": "搜索视频时发生意外错误。请稍后重试。"
+    },
+    "history": {
+      "suggestions": "管理员主题建议",
+      "hostPlaceholder": "你的管理员知道...",
+      "hotSpotify": "Spotify 热门卡拉OK",
+      "topPlayed": "最常点播",
+      "topArtists": "热门歌手",
+      "rareGems": "冷门金曲",
+      "rareArtists": "冷门歌手",
+      "topSingers": "麦霸榜单",
+      "showTop": "显示前 5",
+      "showRare": "显示冷门",
+      "noSongs": "目前还没有播放任何歌曲。",
+      "noSingers": "目前还没有歌手上台。",
+      "noArtists": "目前还没有点播过歌手。",
+      "sortBySongs": "歌曲数",
+      "sortByClaps": "掌声数",
+      "sortByArtists": "歌手数",
+      "playedTimes": "{count} 次点播",
+      "emptyData": "还没有全局数据，快来当第一个唱歌的人吧！"
+    },
+    "singers": {
+      "title": "歌手列表",
+      "leaveParty": "离开派对",
+      "you": "你",
+      "sang": "唱了",
+      "next": "下一个",
+      "inLine": "排队中:",
+      "history": "已唱歌曲:",
+      "claps": "掌声数:",
+      "countdown": {
+        "serve": "候补中",
+        "turnUp": "准备上台",
+        "singIn": "即将在",
+        "micIn": "接麦时间"
+      }
+    },
+    "funStats": {
+      "loading": "正在加载全局统计...",
+      "empty": "还没有全局历史记录，播放歌曲以生成统计数据！",
+      "mostEager": "最积极点歌",
+      "encore": "安可之王",
+      "divas": "歌剧女王",
+      "partyStats": "派对亮点",
+      "loyalFans": "忠实粉丝",
+      "totalClaps": "掌声总量",
+      "marathon": "马拉松歌手",
+      "bestDressed": "最佳造型",
+      "oneHitWonder": "一曲成名",
+      "totalPlayed": "总播放量",
+      "songsCount": "{count} 首歌曲",
+      "clapsValue": "{count} 次掌声"
+    }
+  },
+  "applause": {
+    "title": "为他喝彩",
+    "waiting": "等待歌手...",
+    "instruction": "狂点鼓掌按钮！每一次鼓掌都会为歌手增加友情值。",
+    "back": "返回派对"
+  },
+  "tour": {
+    "prev": "上一步",
+    "next": "下一步",
+    "party": {
+      "welcome": "欢迎来到派对！",
+      "intro": "这是一个关于控制器的快速导览。",
+      "step1Title": "1. 正在播放",
+      "step1Desc": "查看正在播放的歌曲和谁在唱歌。如果配置了 **Spotify 链接**，可以在此处找到！",
+      "step2Title": "2. 添加歌曲",
+      "step2Desc": "在 YouTube 上搜索任何卡拉OK视频。公平分配规则会确保每个人都有机会上台！",
+      "step3Title": "3. 推荐歌单",
+      "step3Desc": "从管理员建议、**Spotify 热门** 和最常点播中获取点歌灵感。",
+      "step4Title": "4. 歌手与喝彩",
+      "step4Desc": "查看排队候补情况。点击 👏 按钮为台上的歌手鼓掌喝彩！",
+      "step5Title": "5. 语言切换",
+      "step5Desc": "想要使用其他语言？在底部页脚（如果服务器已启用）找到 **语言切换器**。",
+      "finish": "明白，开始唱歌！"
+    },
+    "host": {
+      "title": "管理员控制导览",
+      "desc": "管理你的派对的快速指南。",
+      "step1Title": "1. 派对链接",
+      "step1Desc": "分享 **加入链接** 给歌手。在电视或投影仪上打开 **播放器链接**。",
+      "step2Title": "2. 管理派对状态",
+      "step2Desc": "点击 **开始派对** 开始音乐。使用 **开始休息** 暂停排队并显示休息幻灯片。",
+      "step3Title": "3. 控制队列",
+      "step3Desc": "播放、暂停、切歌，或开启 **手动排序** 进行拖拽排序。",
+      "step4Title": "4. 派对规则",
+      "step4Desc": "切换 **公平排序模式** 或更改 **播放模式**。",
+      "step5Title": "5. 宾客互动",
+      "step5Desc": "添加 **主题建议** 激发宾客点歌灵感。",
+      "step6Title": "6. 休息显示留言",
+      "step6Desc": "在电视屏幕空闲时创建并同步自定义的展示留言。",
+      "step7Title": "7. Spotify 歌单",
+      "step7Desc": "配置 **Spotify 歌单 ID** 或链接。",
+      "step8Title": "8. 数据管理",
+      "step8Desc": "**导出** 歌单或者本地 **备份/恢复** 派对历史记录。",
+      "step9Title": "9. 语言设置",
+      "step9Desc": "可以在底部页脚切换 **英文** 和 **葡萄牙文**（如果支持配置）。",
+      "finish": "明白，开始派对！"
+    }
+  },
+  "about": {
+    "title": "关于应用",
+    "buildInfo": "构建信息",
+    "appVersion": "应用版本",
+    "buildDate": "构建日期",
+    "gitCommit": "Git Commit",
+    "coreDependencies": "核心依赖项",
+    "nodeEnv": "Node 运行环境",
+    "back": "返回首页"
+  },
+  "notfound": {
+    "title": "404 - 页面未找到",
+    "desc": "糟糕！你寻找的派对并不存在或已结束。",
+    "home": "返回首页"
+  },
+  "terms": {
+    "title": "服务条款",
+    "introTitle": "前言说明",
+    "introText": "欢迎使用 \"我的卡拉OK派对\"！这些服务条款约束您对我们网页应用的使用。使用本应用即表示您同意本条款。",
+    "personalUseTitle": "仅限个人使用",
+    "nonCommercialTitle": "非商业性使用",
+    "nonCommercialText": "您同意仅在非商业环境下出于私人娱乐目的使用本应用。",
+    "privateLocTitle": "私人场所使用",
+    "privateLocText": "本应用专为在私人空间（如家庭）中使用而设计。",
+    "rightsTitle": "表演权与许可",
+    "rightsText": "您了解在公共场合使用卡拉OK曲目可能涉及表演版权问题。",
+    "liabilityTitle": "免责与责任限制",
+    "liabilityText": "我们对任何未经授权或非法使用本应用的行为概不负责。",
+    "contactTitle": "联系我们",
+    "contactText": "如果您有任何疑问，请与我们联系。",
+    "back": "返回首页"
+  },
+  "toasts": {
+    "adminLogin": {
+      "invalid": "密码无效",
+      "error": "发生了一些错误"
+    },
+    "host": {
+      "closed": "派对已成功关闭",
+      "closeFailed": "关闭派对失败，请重试。",
+      "intermission": "已进入休息状态",
+      "resumed": "派对已恢复！"
+    },
+    "settings": {
+      "spotifyUpdated": "Spotify 设置已更新！",
+      "spotifyFailed": "更新设置失败。",
+      "noSongsCopy": "没有要复制的歌曲！",
+      "copySuccess": "已成功复制 {format} 格式列表到剪贴板！",
+      "copyFailed": "复制列表失败。",
+      "backupDownloaded": "备份文件已成功下载！",
+      "backupFailed": "下载备份失败。",
+      "invalidJson": "无效的 JSON 文件格式。",
+      "restoreSuccess": "恢复成功：导入 {success} 个派对，跳过 {skipped} 个。",
+      "restoreFailed": "恢复备份失败。",
+      "maxSelected": "最多只能选择 20 条留言进行同步。",
+      "creationLimit": "你已达到留言创建上限。",
+      "messageAdded": "留言已成功添加到库中，勾选以进行同步。",
+      "syncSuccess": "成功同步 {count} 条留言到播放器！"
+    },
+    "guest": {
+      "songAdded": "歌曲已成功添加到点歌队列！",
+      "addError": "点歌失败",
+      "tryAgain": "请重试。"
+    },
+    "socket": {
+      "joined": "{name} 已加入派对！",
+      "applauseError": "发送喝彩失败。",
+      "networkError": "发送喝彩时发生网络错误。",
+      "rateLimit": "请等待几秒钟后再添加下一首歌曲。",
+      "unauthorized": "未授权：需要管理员权限。",
+      "videoTooLong": "视频太长！最大限制为 10 分钟。",
+      "addFailed": "点歌失败。",
+      "cannotModifyQueueNow": "当你上台或即将上台时，无法修改列表。"
+    }
+  }
+}
