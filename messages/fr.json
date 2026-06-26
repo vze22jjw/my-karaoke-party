@@ -1,0 +1,405 @@
+{
+  "common": {
+    "appName": "Mon Karaoké Party",
+    "backToHome": "Retour à l'Accueil",
+    "back": "Retour",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "required": "Requis",
+    "leave": "Quitter",
+    "viewHistory": "Voir l'Historique",
+    "terms": "Conditions d'Utilisation",
+    "readOnly": "Lecture seule",
+    "you": "Toi"
+  },
+  "home": {
+    "joinParty": "Rejoindre la Party",
+    "startNew": "ou Commencer une Nouvelle Party",
+    "openParties": "Parties Ouvertes",
+    "noOpenParties": "Aucune party ouverte pour le moment",
+    "beTheFirst": "Soyez le premier à créer une party !",
+    "chooseParty": "Choisissez une party à rejoindre",
+    "enter": "Entrer"
+  },
+  "startParty": {
+    "title": "Commencer une Nouvelle Party",
+    "backToOptions": "Retour aux Options",
+    "backToHome": "Retour à l'Accueil",
+    "pageTitle": "Lancer une Party - Mon Karaoké Party"
+  },
+  "drawers": {
+    "openPlayers": "Ouvrir les Lecteurs",
+    "enterHash": "Entrer le Code de la Party",
+    "hashPlaceholder": "ex., DCBA",
+    "connectPlayer": "Se Connecter au Lecteur",
+    "connecting": "Connexion...",
+    "openNames": "Parties Actives :",
+    "reconnectHost": "Se reconnecter en tant qu'Hôte",
+    "reconnectDesc": "Sélectionnez une party en cours ou consultez votre historique.",
+    "connectHostBtn": "Se Connecter à l'Hôte",
+    "noActive": "Aucune party active trouvée.",
+    "historyDashboard": "Historique des Parties",
+    "songs": "chansons",
+    "singers": "chanteurs",
+    "cancel": "Annuler",
+    "notFoundError": "Party non trouvée ou code invalide.",
+    "endedError": "La party est terminée.",
+    "genericError": "Une erreur inattendue est survenue.",
+    "loadingError": "Erreur lors du chargement des parties. Veuillez réessayer."
+  },
+  "join": {
+    "title": "Rejoindre la Party",
+    "partyCode": "Code de la Party",
+    "enterCode": "Saisir le code...",
+    "name": "Nom",
+    "enterName": "Saisir ton nom...",
+    "chooseIcon": "Choisir ton Icône",
+    "joining": "Rejoint...",
+    "nameTip": "Astuce : Ton nom est sensible à la casse. Utilise le même nom pour conserver ton historique !",
+    "backToList": "Retour à la liste des parties"
+  },
+  "create": {
+    "title": "Créer une Nouvelle Party",
+    "description": "Donnez un nom à votre party et saisissez le mot de passe administrateur.",
+    "partyName": "Nom de la Party",
+    "placeholderName": "MA SUPER PARTY DE KARAOKÉ",
+    "yourName": "Votre Nom",
+    "placeholderUser": "Votre nom",
+    "adminPassword": "Mot de passe Administrateur",
+    "placeholderPass": "Saisir le mot de passe...",
+    "createButton": "Créer la Party",
+    "creating": "Création...",
+    "authFailed": "Échec de l'authentification",
+    "invalidPassword": "Mot de passe administrateur invalide",
+    "toastSuccess": "Party \"{name}\" créée !",
+    "toastError": "Erreur lors de la création de la party"
+  },
+  "host": {
+    "dashboardTitle": "Tableau de Bord Hôte",
+    "tabsActive": "Active",
+    "tabsHistory": "Historique",
+    "noActiveParties": "Aucune party active.",
+    "noHistory": "Aucune party archivée trouvée.",
+    "noResultsDate": "Aucune party trouvée pour cette date.",
+    "page": "Page",
+    "dashboardDesc": "Gérez toutes vos parties de karaoké en un seul endroit.",
+    "newParty": "Nouvelle Party",
+    "noParties": "Aucune party trouvée.",
+    "startFirst": "Commencez votre première party pour la voir ici !",
+    "access": {
+      "title": "Accès Hôte",
+      "desc": "Veuillez saisir le mot de passe administrateur pour gérer cette party.",
+      "unlock": "Déverrouiller les Contrôles"
+    },
+    "tabs": {
+      "playlist": "File d'attente",
+      "settings": "Paramètres"
+    },
+    "playback": {
+      "title": "Contrôles de Lecture",
+      "play": "Lecture",
+      "pause": "Pause",
+      "skip": "Passer",
+      "reorder": "Enregistrer l'Ordre"
+    },
+    "settings": {
+      "status": {
+        "title": "Statut de la Party",
+        "open": "Ouverte aux inscriptions",
+        "intermission": "Entracte",
+        "closed": "Terminée",
+        "start": "Lancer la Party",
+        "pause": "Lancer l'Entracte (Pause)",
+        "resume": "Reprendre la Party",
+        "close": "Terminer la Party",
+        "confirmClose": "Êtes-vous sûr de vouloir terminer cette party ? Cette action est irréversible."
+      },
+      "links": {
+        "title": "Liens de la Party",
+        "join": "Lien d'Inscription (pour les chanteurs)",
+        "player": "Lien du Lecteur (pour la TV/projecteur)",
+        "dashboard": "Tableau de Bord Hôte"
+      },
+      "suggestions": {
+        "title": "Thème de la Party / Suggestions",
+        "placeholder": "ex., « Chansons avec une couleur dans le titre »",
+        "noSuggestions": "Aucune suggestion ajoutée pour le moment."
+      },
+      "messages": {
+        "title": "Bibliothèque de Messages Partagés",
+        "sync": "Synchroniser {count} messages sur la TV",
+        "manage": "Gérer la bibliothèque",
+        "addBtn": "Ajouter un message",
+        "addPlaceholder": "Saisir un message à faire défiler sur l'écran...",
+        "creationsLeft": "Créations restantes : {count}",
+        "selectionsLeft": "Sélections restantes : {count}",
+        "empty": "Aucun message. Créez des messages à faire défiler sur l'écran du lecteur.",
+        "pageCounter": "Page {current} / {total}",
+        "saveAndSync": "Enregistrer & Synchro ({count})"
+      },
+      "rules": {
+        "title": "Règles de la Party",
+        "manualSort": "Tri manuel : {state}",
+        "fairness": "File d'attente équitable : {state}",
+        "playback": "Lecture intégrée : {state}"
+      },
+      "spotify": {
+        "title": "Intégration Spotify",
+        "playlistPlaceholder": "ex., 37i9dQZF1DXbITwg1ZjkYt",
+        "linkPlaceholder": "https://open.spotify.com/playlist/..."
+      },
+      "search": {
+        "title": "Paramètres de Recherche",
+        "maxResults": "Résultats Max"
+      },
+      "export": {
+        "title": "Exporter les Chansons Chantées",
+        "exportBtn": "{count} chansons chantées"
+      },
+      "backup": {
+        "title": "Sauvegarde & Restauration",
+        "save": "Sauvegarder",
+        "restore": "Restaurer"
+      },
+      "danger": {
+        "title": "Zone de Danger",
+        "closeBtn": "Fermer la Party"
+      }
+    },
+    "card": {
+      "history": "Voir l'Historique",
+      "createdAt": "{date} à {time}",
+      "closedAt": "Terminée le {date}"
+    }
+  },
+  "player": {
+    "waiting": "En attente du lancement de la party par l'hôte...",
+    "intermission": "Votre hôte fait une pause...",
+    "startSoon": "La party va commencer dans un instant...",
+    "callToAction": "Une chanson en tête ? C'est parti !",
+    "nextUp": "À suivre :",
+    "startingIn": "Commence dans",
+    "skip": "Passer",
+    "openYoutube": "Ouvrir sur YouTube",
+    "playbackDisabled": "La lecture est désactivée pour cette party.",
+    "cantEmbed": "Cette vidéo ne peut pas être lue dans l'application."
+  },
+  "guest": {
+    "tabs": {
+      "playing": "En cours",
+      "add": "Ajouter",
+      "suggestions": "Suggestions",
+      "singers": "Chanteurs"
+    },
+    "player": {
+      "playingNow": "En cours de lecture",
+      "spotify": "Spotify",
+      "noQueued": "Aucune chanson en attente",
+      "nextInLine": "Suivants sur la liste ({count})",
+      "hideQueue": "Masquer la file",
+      "showAll": "Tout afficher ({count})",
+      "moreNext": "Et {count} autre(s) chanson(s)...",
+      "alreadyPlayed": "Déjà chantées ({count})",
+      "hideHistory": "Masquer l'historique",
+      "moreHistory": "Et {count} autre(s) chanson(s) dans l'historique..."
+    },
+    "addSong": {
+      "title": "Ajouter des Chansons",
+      "searchPlaceholder": "Saisir l'artiste et/ou le titre de la chanson...",
+      "queueFull": "File d'attente pleine ! Chante d'abord, réajoute ensuite.",
+      "queueLocked": "File d'attente verrouillée : L'hôte réorganise la liste.",
+      "myQueue": "Mes chansons en attente",
+      "manage": "Gérer",
+      "saveOrder": "Enregistrer l'Ordre",
+      "confirmDelete": "Es-tu sûr de vouloir supprimer cette chanson ?",
+      "cannotEdit": "Verrouillé",
+      "waitTurn": "Tu chantes juste après ! Tu ne peux pas modifier ta file d'attente pour le moment.",
+      "restrictedMessage": "Modification de file d'attente désactivée lorsque tu es sur le point de passer.",
+      "emptyHistory": "Tu n'as pas encore ajouté de chansons.",
+      "added": "Chanson ajoutée à la file !",
+      "playingNow": "(En cours de lecture)",
+      "notFoundTitle": "Rien de trouvé !",
+      "notFoundDesc": "Aucune vidéo de karaoké trouvée pour {query}",
+      "errorTitle": "Erreur !",
+      "errorDesc": "Une erreur inattendue est survenue lors de la recherche. Réessaye plus tard."
+    },
+    "history": {
+      "suggestions": "Suggestions de l'Hôte",
+      "hostPlaceholder": "Votre Hôte conseille...",
+      "hotSpotify": "Karaoké Tendance sur Spotify",
+      "topPlayed": "Les Plus Chantées",
+      "topArtists": "Artistes Populaires",
+      "rareGems": "Perles Rares",
+      "rareArtists": "Artistes Rares",
+      "topSingers": "Chanteurs Vedettes",
+      "showTop": "Afficher le Top 5",
+      "showRare": "Afficher les Rares",
+      "noSongs": "Aucune chanson jouée pour le moment.",
+      "noSingers": "Aucun chanteur pour le moment.",
+      "noArtists": "Aucun artiste joué pour le moment.",
+      "sortBySongs": "Chansons",
+      "sortByClaps": "Claps",
+      "sortByArtists": "Artistes",
+      "playedTimes": "{count, plural, =1 {1 lecture} other {# lectures}}",
+      "emptyData": "Aucune donnée globale pour le moment. Sois le premier à chanter !"
+    },
+    "singers": {
+      "title": "Chanteurs",
+      "leaveParty": "Quitter",
+      "you": "Toi",
+      "sang": "a chanté",
+      "next": "prochain",
+      "inLine": "Dans la file :",
+      "history": "Historique :",
+      "claps": "Claps :",
+      "countdown": {
+        "serve": "Passe dans",
+        "turnUp": "Prépare-toi",
+        "singIn": "Chante dans",
+        "micIn": "Micro dans"
+      }
+    },
+    "funStats": {
+      "loading": "Chargement des statistiques globales...",
+      "empty": "Aucun historique. Jouez des chansons pour générer les statistiques !",
+      "mostEager": "Le Plus Impatient",
+      "encore": "Bis !",
+      "divas": "Divas",
+      "partyStats": "Moments Forts",
+      "loyalFans": "Fans Fidèles",
+      "totalClaps": "Total des Claps",
+      "marathon": "Marathonien",
+      "bestDressed": "Mieux Habillé",
+      "oneHitWonder": "Succès Éphémère",
+      "totalPlayed": "Total Joué",
+      "songsCount": "{count} Chansons",
+      "clapsValue": "{count} Claps"
+    }
+  },
+  "applause": {
+    "title": "Claps pour",
+    "waiting": "En attente des chanteurs...",
+    "instruction": "Clique à répétition ! Chaque clap apporte de l'amitié au chanteur.",
+    "back": "Retour à la Party"
+  },
+  "tour": {
+    "prev": "Précédent",
+    "next": "Suivant",
+    "party": {
+      "welcome": "Bienvenue dans la Party !",
+      "intro": "Voici un aperçu rapide des commandes.",
+      "step1Title": "1. En cours de lecture",
+      "step1Desc": "Regardez ce qui passe et qui chante. Cherchez le **Lien Spotify** si disponible !",
+      "step2Title": "2. Ajouter une chanson",
+      "step2Desc": "Recherchez sur YouTube n'importe quelle vidéo de karaoké. Les règles équitables garantissent que chacun a son tour !",
+      "step3Title": "3. Suggestions",
+      "step3Desc": "Laissez-vous inspirer par les thèmes de l'hôte, le **Top Spotify**, et les titres les plus joués.",
+      "step4Title": "4. Chanteurs et Claps",
+      "step4Desc": "Consultez la file d'attente. Appuyez sur 👏 pour envoyer des claps et booster les scores !",
+      "step5Title": "5. Langue",
+      "step5Desc": "Besoin d'une autre langue ? Utilisez le **Sélecteur de Langue** dans le pied de page (si activé par le serveur).",
+      "finish": "Compris, chantons !"
+    },
+    "host": {
+      "title": "Commandes Hôte",
+      "desc": "Un guide rapide pour gérer votre party.",
+      "step1Title": "1. Liens de la Party",
+      "step1Desc": "Partagez le **Lien d'Inscription** avec les chanteurs. Ouvrez le **Lien du Lecteur** sur votre TV.",
+      "step2Title": "2. Gérer le statut",
+      "step2Desc": "Utilisez **Lancer la Party** pour démarrer. Appuyez sur **Entracte** pour faire une pause et afficher des diapositives.",
+      "step3Title": "3. Contrôler la file",
+      "step3Desc": "Lecture, pause, saut, ou activez le **Tri Manuel** pour glisser-déposer les chansons.",
+      "step4Title": "4. Règles de la Party",
+      "step4Desc": "Activez le **Mode Équitable** ou changez les modes de **Lecture**.",
+      "step5Title": "5. Inspirer vos invités",
+      "step5Desc": "Ajoutez des **Suggestions de Thèmes** pour orienter le choix des chansons.",
+      "step6Title": "6. Messages défilants",
+      "step6Desc": "Créez des messages personnalisés à afficher sur la TV lorsque celle-ci est inactive.",
+      "step7Title": "7. Spotify et Recherche",
+      "step7Desc": "Ajoutez un **ID de playlist Spotify** ou un lien.",
+      "step8Title": "8. Outils de données",
+      "step8Desc": "**Exportez** les chansons ou effectuez une **Sauvegarde** de l'historique de votre party.",
+      "step9Title": "9. Réglages de Langue",
+      "step9Desc": "Modifiez la langue via le bouton dans le pied de page.",
+      "finish": "Compris, c'est parti !"
+    }
+  },
+  "about": {
+    "title": "À propos",
+    "buildInfo": "Informations de Compilation",
+    "appVersion": "Version de l'App",
+    "buildDate": "Date de Compilation",
+    "gitCommit": "Commit Git",
+    "coreDependencies": "Dépendances Principales",
+    "nodeEnv": "Environnement Node",
+    "back": "Retour à l'Accueil"
+  },
+  "notfound": {
+    "title": "404 - Page Non Trouvée",
+    "desc": "Oups ! La party que vous recherchez n'existe pas ou s'est terminée.",
+    "home": "Retour à l'Accueil"
+  },
+  "terms": {
+    "title": "Conditions d'Utilisation",
+    "introTitle": "Introduction",
+    "introText": "Bienvenue sur \"Mon Karaoké Party\" ! Ces Conditions d'Utilisation régissent votre utilisation de notre application. En l'utilisant, vous acceptez ces Conditions.",
+    "personalUseTitle": "Usage Personnel Uniquement",
+    "nonCommercialTitle": "Usage Non Commercial",
+    "nonCommercialText": "Vous acceptez d'utiliser l'App exclusivement pour votre plaisir privé, dans un cadre non commercial.",
+    "privateLocTitle": "Lieux Privés",
+    "privateLocText": "L'App est conçue pour être utilisée dans des espaces privés, comme votre domicile.",
+    "rightsTitle": "Droits de Représentation et Licences",
+    "rightsText": "Vous reconnaissez que la diffusion de pistes de karaoké en public peut être soumise à des droits de représentation.",
+    "liabilityTitle": "Limitation de Responsabilité",
+    "liabilityText": "Nous ne saurions être tenus responsables de toute utilisation non autorisée ou illégale de l'application.",
+    "contactTitle": "Contact",
+    "contactText": "Si vous avez des questions, veuillez nous contacter.",
+    "back": "Retour à l'Accueil"
+  },
+  "toasts": {
+    "adminLogin": {
+      "invalid": "Mot de passe invalide",
+      "error": "Une erreur est survenue"
+    },
+    "host": {
+      "closed": "Party fermée avec succès",
+      "closeFailed": "Erreur lors de la fermeture de la party. Veuillez réessayer.",
+      "intermission": "Entracte Lancé",
+      "resumed": "Party Reprise !"
+    },
+    "settings": {
+      "spotifyUpdated": "Paramètres Spotify mis à jour !",
+      "spotifyFailed": "Échec de la mise à jour des paramètres.",
+      "noSongsCopy": "Aucune chanson à copier !",
+      "copySuccess": "Liste copiée au format {format} dans le presse-papiers !",
+      "copyFailed": "Échec de la copie de la liste.",
+      "backupDownloaded": "Sauvegarde téléchargée !",
+      "backupFailed": "Échec du téléchargement de la sauvegarde.",
+      "invalidJson": "Fichier JSON invalide.",
+      "restoreSuccess": "Restaurées : {success} parties. Ignorées : {skipped}.",
+      "restoreFailed": "Échec de la restauration de la sauvegarde.",
+      "maxSelected": "Maximum 20 messages sélectionnés pour synchronisation.",
+      "creationLimit": "Limite de création de messages atteinte.",
+      "messageAdded": "Message ajouté. Sélectionnez-le pour synchroniser.",
+      "syncSuccess": "{count} messages synchronisés sur le lecteur !"
+    },
+    "guest": {
+      "songAdded": "Chanson ajoutée à la file d'attente !",
+      "addError": "Erreur lors de l'ajout de la chanson",
+      "tryAgain": "Veuillez réessayer."
+    },
+    "socket": {
+      "joined": "{name} a rejoint la party !",
+      "applauseError": "Erreur lors de l'enregistrement du clap.",
+      "networkError": "Erreur réseau lors de l'envoi du clap.",
+      "rateLimit": "Veuillez patienter quelques secondes avant d'ajouter une autre chanson.",
+      "unauthorized": "Non autorisé : Accès hôte requis.",
+      "videoTooLong": "Vidéo trop longue ! La durée maximale est de 10 minutes.",
+      "addFailed": "Erreur lors de l'ajout de la chanson.",
+      "cannotModifyQueueNow": "Vous ne pouvez pas modifier votre file d'attente pendant que vous chantez ou passez juste après."
+    }
+  }
+}

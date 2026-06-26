@@ -12,6 +12,8 @@ const LANGUAGES = [
   { code: 'pt', label: 'Português', flags: ['https://flagcdn.com/br.svg'] },
   { code: 'es', label: 'Español', flags: ['https://flagcdn.com/es.svg'] },
   { code: 'zh', label: '简体中文', flags: ['https://flagcdn.com/cn.svg'] },
+  { code: 'ja', label: '日本語', flags: ['https://flagcdn.com/jp.svg'] },
+  { code: 'fr', label: 'Français', flags: ['https://flagcdn.com/fr.svg'] },
 ] as const;
 
 type Locale = typeof LANGUAGES[number]['code'];
