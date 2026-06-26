@@ -109,7 +109,7 @@
     "settings": {
       "avatar": {
         "title": "Host Avatar",
-        "info": "Choose your host emoji. This emoji represents you as the host, is excluded from guest picker, and won't count in party statistics."
+        "info": "Choose your host emoji. Changes are saved automatically and updated in real-time. This emoji represents you as the host, is excluded from guest picker, and won't count in party statistics."
       },
       "status": {
         "title": "Party Status",

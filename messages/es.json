@@ -109,7 +109,7 @@
     "settings": {
       "avatar": {
         "title": "Avatar de Anfitrión",
-        "info": "Elige tu emoji de anfitrión. Este emoji te representa como el anfitrión, está excluido del selector de invitados y no se contará en las estadísticas de la fiesta."
+        "info": "Elige tu emoji de anfitrión. Los cambios se guardan automáticamente y se actualizan en tiempo real. Este emoji te representa como el anfitrión, está excluido del selector de invitados y no se contará en las estadísticas de la fiesta."
       },
       "status": {
         "title": "Estado de la Fiesta",

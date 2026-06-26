@@ -109,7 +109,7 @@
     "settings": {
       "avatar": {
         "title": "Avatar de l'Hôte",
-        "info": "Choisissez votre emoji d'hôte. Cet emoji vous représente en tant qu'hôte, est exclu du sélecteur d'invités et ne sera pas comptabilisé dans les statistiques de la party."
+        "info": "Choisissez votre emoji d'hôte. Les modifications sont enregistrées automatiquement et mises à jour en temps réel. Cet emoji vous représente en tant qu'hôte, est exclu du sélecteur d'invités et ne sera pas comptabilisé dans les statistiques de la party."
       },
       "status": {
         "title": "Statut de la Party",
