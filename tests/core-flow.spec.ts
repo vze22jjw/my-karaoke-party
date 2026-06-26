@@ -57,6 +57,8 @@ test.describe('Core Party Flow (Full Feature)', () => {
   test.beforeAll(async ({ browser }) => {
     hostContext = await browser.newContext({ viewport: { width: 1024, height: 768 }, recordVideo: { dir: VIDEO_DIR }, extraHTTPHeaders: { 'Authorization': `Bearer ${ADMIN_TOKEN}` } });
     hostPage = await hostContext.newPage();
+    hostPage.on('console', msg => console.log(`[Host Console] ${msg.text()}`));
+    hostPage.on('pageerror', err => console.error(`[Host Error] ${err.message}`));
   });
 
   test.afterAll(async () => {
@@ -94,6 +96,8 @@ test.describe('Core Party Flow (Full Feature)', () => {
   test('1.5 Player Verifies Initial Idle State', async ({ browser }, testInfo) => {
     playerContext = await browser.newContext({ viewport: { width: 1920, height: 1080 }, recordVideo: { dir: VIDEO_DIR } });
     playerPage = await playerContext.newPage();
+    playerPage.on('console', msg => console.log(`[Player Console] ${msg.text()}`));
+    playerPage.on('pageerror', err => console.error(`[Player Error] ${err.message}`));
     await playerPage.goto(`${BASE_URL}/en/player/${partyCode}`);
     await expect(playerPage.getByAltText('My Karaoke Party')).toBeVisible({ timeout: 30000 });
   });
@@ -102,7 +106,10 @@ test.describe('Core Party Flow (Full Feature)', () => {
     for (let i = 0; i < GUEST_COUNT; i++) {
         const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, recordVideo: { dir: VIDEO_DIR } });
         guestContexts.push(ctx);
-        guestPages.push(await ctx.newPage());
+        const p = await ctx.newPage();
+        p.on('console', msg => console.log(`[Guest-${i} Console] ${msg.text()}`));
+        p.on('pageerror', err => console.error(`[Guest-${i} Error] ${err.message}`));
+        guestPages.push(p);
     }
     for (let i = 0; i < guestPages.length; i++) {
         await joinParty(guestPages[i], partyCode, `Guest-${i}`, i);
