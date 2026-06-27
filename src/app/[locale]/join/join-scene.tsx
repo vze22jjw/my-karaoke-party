@@ -57,7 +57,7 @@ const AvatarPicker = ({
         type="button"
         onClick={() => onChange(avatar)}
         className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-all",
+          "flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none select-none transition-all",
           value === avatar
             ? "bg-primary ring-2 ring-primary-foreground"
             : "sm:hover:bg-muted-foreground/20",

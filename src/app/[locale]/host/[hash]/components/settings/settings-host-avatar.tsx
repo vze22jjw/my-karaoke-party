@@ -69,7 +69,7 @@ export function SettingsHostAvatar({
             disabled={isPartyClosed}
             onClick={() => !isPartyClosed && onChangeHostAvatar(avatar)}
             className={cn(
-              "flex h-12 w-12 items-center justify-center rounded-full text-3xl transition-all",
+              "flex h-12 w-12 items-center justify-center rounded-full text-3xl leading-none select-none transition-all",
               activeAvatar === avatar
                 ? "bg-primary ring-2 ring-primary-foreground"
                 : "sm:hover:bg-muted-foreground/20",
