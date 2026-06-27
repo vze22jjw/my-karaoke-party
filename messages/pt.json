@@ -59,8 +59,7 @@
     "chooseIcon": "Escolha seu Ícone",
     "joining": "Entrando...",
     "nameTip": "Dica: Seu nome diferencia maiúsculas. Use o mesmo nome para manter seu histórico!",
-    "backToList": "Voltar para lista de festas",
-    "hostNameReserved": "O nome do anfitrião está reservado. Por favor, escolha um nome diferente."
+    "backToList": "Voltar para lista de festas"
   },
   "create": {
     "title": "Criar Nova Festa",

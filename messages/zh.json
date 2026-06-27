@@ -59,8 +59,7 @@
     "chooseIcon": "选择你的头像",
     "joining": "正在加入...",
     "nameTip": "提示: 你的名字区分大小写。使用完全相同的名字可以保留你的历史记录！",
-    "backToList": "返回派对列表",
-    "hostNameReserved": "主人的名字已被预留，请选择其他名字。"
+    "backToList": "返回派对列表"
   },
   "create": {
     "title": "创建新派对",

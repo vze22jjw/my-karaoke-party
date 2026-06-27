@@ -59,8 +59,7 @@
     "chooseIcon": "Choisir ton Icône",
     "joining": "Rejoint...",
     "nameTip": "Astuce : Ton nom est sensible à la casse. Utilise le même nom pour conserver ton historique !",
-    "backToList": "Retour à la liste des parties",
-    "hostNameReserved": "Le nom de l'hôte est réservé. Veuillez choisir un autre nom."
+    "backToList": "Retour à la liste des parties"
   },
   "create": {
     "title": "Créer une Nouvelle Party",

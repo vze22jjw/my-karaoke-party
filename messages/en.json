@@ -59,8 +59,7 @@
     "chooseIcon": "Choose Your Icon",
     "joining": "Joining...",
     "nameTip": "Tip: Your name is case-sensitive. Use the exact same name to keep your history!",
-    "backToList": "Back to parties list",
-    "hostNameReserved": "The host name is reserved. Please choose a different name."
+    "backToList": "Back to parties list"
   },
   "create": {
     "title": "Create a New Party",
