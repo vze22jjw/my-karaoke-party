@@ -10,13 +10,15 @@ services:
     environment:
       - BASE_URL=${BASE_URL}
       - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
       - CI=true
     volumes:
       - ..:/app
       - /app/node_modules
       - /app/.pnpm-store
     networks:
-      - my-karaoke-party_mykaraokenetwork
+      - mykaraokenetwork
     command: >
       /bin/sh -c "
       npm install -g pnpm &&
@@ -24,5 +26,5 @@ services:
       ${TEST_COMMAND:-npx playwright test}"
 
 networks:
-  my-karaoke-party_mykaraokenetwork:
+  mykaraokenetwork:
     external: true

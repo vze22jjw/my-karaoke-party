@@ -25,10 +25,10 @@ services:
   mk-app:
     #image: public.ecr.aws/m0d1e8s8/vze22jjw/my-karaoke-party:app-0.0.1-B_2536
     image: my-karaoke-party:app-latest # Use this line for local builds
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runner
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   target: runner
     container_name: mykaraoke-app
     restart: always
     depends_on:

@@ -237,6 +237,28 @@ test.describe('Core Party Flow (Full Feature)', () => {
                 intervals: [1000] 
             });
 
+            // Verify Spotify Carousel if credentials are configured
+            const spotifyClientId = process.env.SPOTIFY_CLIENT_ID;
+            const isSpotifyConfigured = spotifyClientId && spotifyClientId !== 'your_spotify_client_id_here' && spotifyClientId !== '';
+
+            if (isSpotifyConfigured) {
+                console.log("🟢 Spotify credentials detected. Verifying Spotify Carousel...");
+                const firstSpotifyAddBtn = page.getByTestId('add-spotify-0');
+                await expect(firstSpotifyAddBtn).toBeVisible({ timeout: 20000 });
+                console.log("🟢 Spotify Carousel loaded successfully (Spotify API is working).");
+
+                // Click to add suggestion, which should switch to the Add tab
+                await firstSpotifyAddBtn.click();
+                await page.waitForTimeout(1000);
+                await expect(page.getByTestId('tab-add')).toHaveAttribute('data-state', 'active');
+                
+                // Switch back to History to continue standard tests
+                await page.getByTestId('tab-history').click({ force: true });
+                await page.waitForTimeout(500);
+            } else {
+                console.log("⚪ Spotify credentials not configured. Skipping Spotify Carousel verification.");
+            }
+
             // 1. NAV DOT INTERACTION (Main History Carousel)
             const historyDots = page.locator('[data-testid^="history-dot-"]');
             const historyDotCount = await historyDots.count();
