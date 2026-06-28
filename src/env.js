@@ -11,6 +11,7 @@ export const env = createEnv({
     SPOTIFY_CLIENT_SECRET: z.string().optional(),
     PORT: z.string().optional(),
     ADMIN_TOKEN: z.string(),
+    SERVE_PLAYWRIGHT_REPORTS: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
@@ -23,6 +24,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SHOW_FOOTER: z.string().default("true"),
     NEXT_PUBLIC_NEXT_VERSION: z.string().default("Unknown"),
     NEXT_PUBLIC_PRISMA_VERSION: z.string().default("Unknown"),
+    NEXT_PUBLIC_EMOJI_SET: z.string().default("native"),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -43,6 +45,8 @@ export const env = createEnv({
     NEXT_PUBLIC_SHOW_FOOTER: process.env.NEXT_PUBLIC_SHOW_FOOTER,
     NEXT_PUBLIC_NEXT_VERSION: process.env.NEXT_PUBLIC_NEXT_VERSION,
     NEXT_PUBLIC_PRISMA_VERSION: process.env.NEXT_PUBLIC_PRISMA_VERSION,
+    SERVE_PLAYWRIGHT_REPORTS: process.env.SERVE_PLAYWRIGHT_REPORTS,
+    NEXT_PUBLIC_EMOJI_SET: process.env.NEXT_PUBLIC_EMOJI_SET,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

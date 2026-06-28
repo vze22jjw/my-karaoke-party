@@ -1,4 +1,5 @@
 import { expect, type Page, request } from '@playwright/test';
+import * as path from 'path';
 
 const BASE_URL = process.env.BASE_URL;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
@@ -31,6 +32,9 @@ export async function createParty(page: Page, partyName: string): Promise<string
         await page.getByLabel('Admin Password').fill(ADMIN_TOKEN!);
     }).toPass({ timeout: 15_000 });
     
+    // Take screenshot of selection confirmation
+    await page.screenshot({ path: path.join(process.env.PLAYWRIGHT_REPORT_DIR || 'playwright-report', 'host-avatar-selected.png') }).catch(() => {});
+
     await page.getByRole('button', { name: /Create Party/i }).click();
 
     // 3. API Polling
@@ -82,6 +86,10 @@ export async function joinParty(page: Page, partyCode: string, name: string, ind
         
         const joinBtn = page.getByTestId('join-submit-button');
         await expect(joinBtn).toBeEnabled({ timeout: 5000 });
+        
+        // Take screenshot to confirm guest avatar choice selection
+        await page.screenshot({ path: path.join(process.env.PLAYWRIGHT_REPORT_DIR || 'playwright-report', `guest-${index}-avatar-selected.png`) }).catch(() => {});
+
         await joinBtn.click({ force: true });
 
         try {

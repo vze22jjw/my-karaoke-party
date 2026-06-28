@@ -175,3 +175,12 @@
   0% { transform: translateX(0%); }
   100% { transform: translateX(-100%); }
 }
+
+/* Twemoji & Fluent Emoji global image alignment */
+img.emoji, img.msemoji {
+  height: 1.15em;
+  width: 1.15em;
+  margin: 0 .07em;
+  vertical-align: -0.2em;
+  display: inline-block;
+}

@@ -80,6 +80,17 @@ The application supports multiple languages (currently English, Portuguese, Span
     * Set default language: `NEXT_PUBLIC_DEFAULT_LOCALE=en` (in `.env`)
     * Hide/Show footer toggle: `NEXT_PUBLIC_SHOW_FOOTER=true` (in `.env`)
 
+## 🎨 Emojis Integration
+
+To ensure a consistent, cross-platform visual experience, you can customize how emojis are rendered across different operating systems:
+
+*   **Config File ([emoji-map.json](file:///c:/Users/vze22/.gemini/antigravity-ide/scratch/my-karaoke-party/src/config/emoji-map.json)):**
+    *   **`default_style`**: Global fallback style (e.g. `"apple"`).
+    *   **`variables`**: Maps role names to specific emojis (e.g. `"host_emoji_1": "👑"`, `"singer_emoji_7": "🍺"`). Changing these values updates the emoji globally throughout the app without modifying code.
+    *   **`styles`**: Maps variable names to style sets (e.g. `"host_emoji_1": "google"`, `"singer_emoji_7": "whatsapp"`).
+*   **Environment Override:** Set `NEXT_PUBLIC_EMOJI_SET` in your `.env` to override the default style. Supported styles include any of the 30 sets provided by `oddmario/emoji-cdn` (e.g. `apple`, `google`, `whatsapp`, `samsung`, `facebook`, `joypixels-animations`), shorthand keywords (`fluent`, `twemoji`, `noto`), or a custom CDN script/font URL.
+*   **Fail-Safe Native Fallback:** Emojis are loaded dynamically. If the CDN is down, slow, or offline, the browser immediately swaps the failed image out and displays the OS native emoji character, avoiding any layout shift.
+
 💻 100% Cross-Platform: Works on Windows, Linux, and macOS for development and hosting.
 
 💾 Data Retention & Storage
@@ -175,6 +186,7 @@ Based on [T3 App](https://create.t3.gg/)
     Navigate to `http://localhost:3000`
 
 > 📝 **Tip:** Check [SCRIPTS.md](SCRIPTS.md) for more details about the development scripts
+> 🧪 **Testing:** Check [Playwright Tests & Visual Reports Guide](doc/PLAYWRIGHT-TESTS.md) to run E2E test suites and view interactive traces/screenshots directly in your browser.
 
 ### Important Notes
 

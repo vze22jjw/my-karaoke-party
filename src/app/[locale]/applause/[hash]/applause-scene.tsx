@@ -126,11 +126,11 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
         <Button
           type="button"
           onClick={handleApplause}
-          className="w-full text-[250px] p-0 border-none bg-transparent hover:bg-transparent text-white shadow-none transition-all duration-100 active:scale-[0.90] focus:ring-4 focus:ring-yellow-300 leading-[0.8] -my-10"
+          className="w-full text-[250px] p-0 border-none bg-transparent hover:bg-transparent text-white shadow-none transition-all duration-100 active:scale-[0.90] focus:ring-4 focus:ring-yellow-300 leading-[0.8] -my-10 active:[&_.emoji]:[filter:drop-shadow(0_0_20px_rgba(234,179,8,0.85))] hover:[&_.emoji]:[filter:drop-shadow(0_0_12px_rgba(234,179,8,0.5))] [&_.emoji]:transition-all [&_.emoji]:duration-100 flex items-center justify-center"
           style={{ height: 'auto', minHeight: '300px', maxWidth: '300px' }}
           aria-label={buttonText}
         >
-          {APPLAUSE_EMOJI}
+          <span className="emoji flex items-center justify-center w-full h-full select-none">{APPLAUSE_EMOJI}</span>
         </Button>
         
         <p className="text-lg text-white/80 max-w-xs relative z-10">

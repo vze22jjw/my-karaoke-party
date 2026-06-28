@@ -24,19 +24,20 @@ import { cn } from "~/lib/utils";
 import { FitText } from "~/components/fit-text";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
+import emojiMap from "~/config/emoji-map.json";
 
 // AVATAR COMPONENTS ---
 const GUEST_AVATAR_MAP: Record<string, string> = {
-  "🎤": "mic",
-  "🎧": "headphones",
-  "🥁": "drum",
-  "🧑‍🎤": "singer-m",
-  "👩‍🎤": "singer-f",
-  "🔥": "fire",
-  "🍺": "beer",
-  "😎": "cool",
-  "🕺": "dance-m",
-  "💃": "dance-f",
+  [emojiMap.variables.singer_emoji_1]: "mic",
+  [emojiMap.variables.singer_emoji_2]: "headphones",
+  [emojiMap.variables.singer_emoji_3]: "drum",
+  [emojiMap.variables.singer_emoji_4]: "singer-m",
+  [emojiMap.variables.singer_emoji_5]: "singer-f",
+  [emojiMap.variables.singer_emoji_6]: "fire",
+  [emojiMap.variables.singer_emoji_7]: "beer",
+  [emojiMap.variables.singer_emoji_8]: "cool",
+  [emojiMap.variables.singer_emoji_9]: "dance-m",
+  [emojiMap.variables.singer_emoji_10]: "dance-f",
 };
 
 const GUEST_AVATARS = Object.keys(GUEST_AVATAR_MAP);
@@ -57,9 +58,9 @@ const AvatarPicker = ({
         type="button"
         onClick={() => onChange(avatar)}
         className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none select-none transition-all",
+          "flex h-12 w-12 items-center justify-center rounded-full text-2xl leading-none select-none transition-all duration-200",
           value === avatar
-            ? "bg-primary ring-2 ring-primary-foreground"
+            ? "bg-primary/20 ring-2 ring-primary/60 scale-110 [filter:drop-shadow(0_0_6px_rgba(244,63,94,0.65))]"
             : "sm:hover:bg-muted-foreground/20",
         )}
         data-testid={`avatar-select-${GUEST_AVATAR_MAP[avatar] ?? 'unknown'}`}

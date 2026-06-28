@@ -155,7 +155,12 @@ export function TabSingers({
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={cn("w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0", isCurrentSinger && "animate-pulse")}>
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
+                        isCurrentSinger 
+                          ? "bg-primary/20 ring-2 ring-primary/40 [filter:drop-shadow(0_0_8px_rgba(244,63,94,0.75))] animate-pulse" 
+                          : "bg-primary text-primary-foreground"
+                      )}>
                         {participant.avatar ? (
                           <span className="text-2xl leading-none select-none flex items-center justify-center w-full h-full">{participant.avatar}</span>
                         ) : isHost ? (

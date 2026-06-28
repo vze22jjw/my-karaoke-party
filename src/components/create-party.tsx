@@ -28,13 +28,14 @@ import { Loader2, PartyPopper } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
+import emojiMap from "~/config/emoji-map.json";
 
 const HOST_AVATAR_MAP: Record<string, string> = {
-  "👑": "crown",
-  "🧠": "brain",
-  "🧑‍🚀": "astronaut",
-  "🎩": "tophat",
-  "🍾": "cork-bottle",
+  [emojiMap.variables.host_emoji_1]: "crown",
+  [emojiMap.variables.host_emoji_2]: "brain",
+  [emojiMap.variables.host_emoji_3]: "astronaut",
+  [emojiMap.variables.host_emoji_4]: "tophat",
+  [emojiMap.variables.host_emoji_5]: "cork-bottle",
 };
 const HOST_AVATARS = Object.keys(HOST_AVATAR_MAP);
 
@@ -54,9 +55,9 @@ const AvatarPicker = ({
         type="button"
         onClick={() => onChange(avatar)}
         className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none select-none transition-all",
+          "flex h-12 w-12 items-center justify-center rounded-full text-2xl leading-none select-none transition-all duration-200",
           value === avatar
-            ? "bg-primary ring-2 ring-primary-foreground"
+            ? "bg-primary/20 ring-2 ring-primary/60 scale-110 [filter:drop-shadow(0_0_6px_rgba(244,63,94,0.65))]"
             : "sm:hover:bg-muted-foreground/20",
         )}
         data-testid={`avatar-select-${HOST_AVATAR_MAP[avatar] ?? 'unknown'}`}
@@ -85,9 +86,9 @@ export function CreateParty() {
   const t = useTranslations('create');
   const tJoin = useTranslations('join');
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
-  const [, setAvatar] = useLocalStorage({ key: "avatar", defaultValue: "👑" });
+  const [, setAvatar] = useLocalStorage({ key: "avatar", defaultValue: emojiMap.variables.host_emoji_1 });
 
-  const [yourAvatar, setYourAvatar] = useState("👑");
+  const [yourAvatar, setYourAvatar] = useState(emojiMap.variables.host_emoji_1);
   const [hostAvatarOptions, setHostAvatarOptions] = useState(HOST_AVATARS);
 
   useEffect(() => {

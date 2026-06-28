@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { env } from "~/env";
 import { GlobalFooter } from "~/components/global-footer";
 import { PwaAutoReload } from "~/components/pwa-auto-reload";
+import { EmojiProvider } from "~/components/emoji-provider";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -95,6 +96,7 @@ export default async function RootLayout({
       </head>
       <body className="bg-gradient min-h-screen">
         <NextIntlClientProvider messages={messages}>
+          <EmojiProvider>
             <TRPCReactProvider>
               {children}
               <PwaAutoReload />
@@ -104,7 +106,7 @@ export default async function RootLayout({
             <AxiomWebVitals />
             <Toaster />
             {showFooter && <GlobalFooter />}
-
+          </EmojiProvider>
         </NextIntlClientProvider>
       </body>
     </html>

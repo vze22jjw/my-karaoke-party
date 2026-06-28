@@ -54,3 +54,4 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 /tests/screenshots/
+/public/reports/

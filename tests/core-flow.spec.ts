@@ -32,7 +32,14 @@ const GUEST_COUNT = 3;
 
 const takeScreenshot = async (page: Page, name: string, testInfo: any) => {
   const fileName = `${Date.now()}-${name}.png`;
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, fileName) });
+  const screenshotPath = path.join(SCREENSHOT_DIR, fileName);
+  await page.screenshot({ path: screenshotPath });
+  if (testInfo) {
+    await testInfo.attach(name, {
+      path: screenshotPath,
+      contentType: 'image/png',
+    });
+  }
 };
 
 async function walkthroughHostTour(page: Page) {
@@ -100,6 +107,7 @@ test.describe('Core Party Flow (Full Feature)', () => {
     playerPage.on('pageerror', err => console.error(`[Player Error] ${err.message}`));
     await playerPage.goto(`${BASE_URL}/en/player/${partyCode}`);
     await expect(playerPage.getByAltText('My Karaoke Party')).toBeVisible({ timeout: 30000 });
+    await takeScreenshot(playerPage, 'player-idle-state', testInfo);
   });
 
   test('2. Guests Join & Tour', async ({ browser }, testInfo) => {
@@ -114,6 +122,14 @@ test.describe('Core Party Flow (Full Feature)', () => {
     for (let i = 0; i < guestPages.length; i++) {
         await joinParty(guestPages[i], partyCode, `Guest-${i}`, i);
     }
+    
+    // View singers list to verify custom emojis render properly in the active listing
+    await guestPages[0].bringToFront();
+    await guestPages[0].getByTestId('tab-singers').click({ force: true });
+    await guestPages[0].waitForTimeout(1000);
+    await takeScreenshot(guestPages[0], 'guest-0-singers-tab-emojis', testInfo);
+    
+    await guestPages[0].getByTestId('tab-add').click({ force: true });
     await takeScreenshot(guestPages[0], 'guests-joined', testInfo);
   });
 
@@ -173,12 +189,16 @@ test.describe('Core Party Flow (Full Feature)', () => {
         if (index === 0) {
             await page.getByTestId('tab-singers').click({ force: true });
             
-            const navApplauseBtn = page.locator('button, a, [role="button"]').filter({ hasText: /👏|Applaud/i }).first();
+            const navApplauseBtn = page.locator('button, a, [role="button"]').filter({ hasText: /👏|Applaud/i }).or(page.locator('[aria-label="Send applause"]')).first();
             await expect(navApplauseBtn).toBeVisible({ timeout: 15000 });
             await navApplauseBtn.click();
             await expect(page).toHaveURL(/applause/);
+            await page.waitForTimeout(1000);
             
-            const bigApplauseBtn = page.locator('button').filter({ hasText: /👏|Applaud/i }).first();
+            // Visual confirmation of applause page layout and clapping emoji
+            await takeScreenshot(page, 'guest-0-applause-scene', testInfo);
+            
+            const bigApplauseBtn = page.locator('button').filter({ hasText: /👏|Applaud/i }).or(page.locator('button:has(img[alt*="👏"])')).first();
             for(let k=0; k<5; k++) { 
                 await bigApplauseBtn.click({ force: true }); 
                 await page.waitForTimeout(300); 
@@ -246,10 +266,12 @@ test.describe('Core Party Flow (Full Feature)', () => {
                 const firstSpotifyAddBtn = page.getByTestId('add-spotify-0');
                 await expect(firstSpotifyAddBtn).toBeVisible({ timeout: 20000 });
                 console.log("🟢 Spotify Carousel loaded successfully (Spotify API is working).");
+                await takeScreenshot(page, 'spotify-carousel-loaded', testInfo);
 
                 // Click to add suggestion, which should switch to the Add tab
                 await firstSpotifyAddBtn.click();
                 await page.waitForTimeout(1000);
+                await takeScreenshot(page, 'spotify-recommendation-clicked-switched-to-add-tab', testInfo);
                 await expect(page.getByTestId('tab-add')).toHaveAttribute('data-state', 'active');
                 
                 // Switch back to History to continue standard tests
