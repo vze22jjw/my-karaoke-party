@@ -161,7 +161,7 @@
         "manualSort": "Ordenación Manual",
         "infoQueue": "Orden de la Cola: El modo equitativo rota a los cantantes. FIFO es por orden de llegada.",
         "infoSort": "Ordenación Manual de la Cola: Activa para arrastrar y soltar. Desactivar guarda el orden.",
-        "infoPlayback": "Reproducción: En la App reproduce vídeos aquí. YouTube fuerza enlaces externos."
+        "infoPlayback": "Reproducción: En la App filtra la búsqueda a vídeos incrustables y los reproduce aquí. YouTube omite el filtro y abre cada canción en youtube.com."
       },
       "spotify": {
         "title": "Integración con Spotify",
@@ -286,7 +286,8 @@
         "serve": "Servir en",
         "turnUp": "Subir volumen",
         "singIn": "Cantar en",
-        "micIn": "Micro en"
+        "micIn": "Micro en",
+        "micInSeeHost": "Micrófono listo (Ver anfitrión)"
       }
     },
     "funStats": {
@@ -302,6 +303,7 @@
       "bestDressed": "Mejor Vestido",
       "oneHitWonder": "Éxito Único",
       "totalPlayed": "Total Reproducidas",
+      "duration": "Duración",
       "songsCount": "{count} Canciones",
       "clapsValue": "{count} Aplausos"
     }
@@ -426,7 +428,8 @@
       "unauthorized": "No autorizado: Se requiere acceso de anfitrión.",
       "videoTooLong": "¡Vídeo demasiado largo! La duración máxima es de 10 minutos.",
       "addFailed": "Error al añadir la canción.",
-      "cannotModifyQueueNow": "No puedes modificar la cola mientras cantas o eres el siguiente."
+      "cannotModifyQueueNow": "No puedes modificar la cola mientras cantas o eres el siguiente.",
+      "alreadyInQueue": "Esta canción ya está en tu cola."
     }
   }
 }

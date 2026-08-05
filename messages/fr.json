@@ -99,77 +99,104 @@
       "settings": "Paramètres"
     },
     "playback": {
-      "title": "Contrôles de Lecture",
-      "play": "Lecture",
-      "pause": "Pause",
-      "skip": "Passer",
-      "reorder": "Enregistrer l'Ordre"
+      "noSong": "No Song Playing",
+      "emptyQueue": "The queue is currently empty.",
+      "saveOrder": "Save New Order",
+      "closedHistory": "Party Closed • History View",
+      "noHistory": "No songs were played during this party."
     },
     "settings": {
       "status": {
         "title": "Statut de la Party",
         "open": "Ouverte aux inscriptions",
+        "started": "Party in Progress",
         "intermission": "Entracte",
         "closed": "Terminée",
         "start": "Lancer la Party",
-        "pause": "Lancer l'Entracte (Pause)",
         "resume": "Reprendre la Party",
-        "close": "Terminer la Party",
-        "confirmClose": "Êtes-vous sûr de vouloir terminer cette party ? Cette action est irréversible."
+        "pause": "Lancer l'Entracte (Pause)",
+        "info": "Use this to manage the flow. Start to begin music. Intermission pauses the queue and shows the idle slideshow."
       },
       "links": {
         "title": "Liens de la Party",
         "join": "Lien d'Inscription (pour les chanteurs)",
         "player": "Lien du Lecteur (pour la TV/projecteur)",
-        "dashboard": "Tableau de Bord Hôte"
+        "info": "Share the Join Link with guests. Open the Player Link on a TV/Projector. Click the QR code to enlarge."
       },
       "suggestions": {
         "title": "Thème de la Party / Suggestions",
         "placeholder": "ex., « Chansons avec une couleur dans le titre »",
-        "noSuggestions": "Aucune suggestion ajoutée pour le moment."
+        "empty": "No suggestions added yet.",
+        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab."
       },
       "messages": {
         "title": "Bibliothèque de Messages Partagés",
+        "placeholder": "New message (e.g. Lyric @ Artist)",
         "sync": "Synchroniser {count} messages sur la TV",
-        "manage": "Gérer la bibliothèque",
-        "addBtn": "Ajouter un message",
+        "synced": "Synced!",
+        "limitError": "You have reached your message creation limit.",
+        "info": "Select messages to display on the TV. You can select up to 20.",
+        "infoLabel": "How it works",
+        "featureDetails": "These messages cycle on the Player screen when the party is paused or the queue is empty. Select up to 20 messages from the library to sync.",
+        "formatTip": "💡 Tip: Use 'Message @ Author' to display as a quote. (e.g. 'Hello World @ Host')",
+        "yourCreations": "Your creations:",
+        "selected": "Selected to sync:",
+        "emptyLib": "The shared library is empty.",
+        "manageLibrary": "Manage Library",
+        "drawerDesc": "Select up to 20 messages. Closing this drawer will auto-sync selections.",
         "addPlaceholder": "Saisir un message à faire défiler sur l'écran...",
+        "searchPlaceholder": "Search messages...",
         "creationsLeft": "Créations restantes : {count}",
         "selectionsLeft": "Sélections restantes : {count}",
-        "empty": "Aucun message. Créez des messages à faire défiler sur l'écran du lecteur.",
+        "noMessages": "No messages found.",
         "pageCounter": "Page {current} / {total}",
         "saveAndSync": "Enregistrer & Synchro ({count})"
       },
       "rules": {
         "title": "Règles de la Party",
+        "fairnessOn": "Queue: Fairness (ON)",
+        "fairnessOff": "Queue: FIFO (OFF)",
+        "playbackApp": "Playback: In-App (ON)",
+        "playbackYoutube": "Playback: YouTube (OFF)",
         "manualSort": "Tri manuel : {state}",
-        "fairness": "File d'attente équitable : {state}",
-        "playback": "Lecture intégrée : {state}"
+        "infoQueue": "Queue Ordering: Fairness rotates singers. FIFO is first-come, first-served.",
+        "infoSort": "Manual Queue Sort: Enable to drag-and-drop. Disabling saves the order.",
+        "infoPlayback": "Lecture : In-App filtre la recherche sur les vidéos intégrables et les lit ici. YouTube ignore le filtre et ouvre chaque chanson sur youtube.com."
       },
       "spotify": {
         "title": "Intégration Spotify",
-        "playlistPlaceholder": "ex., 37i9dQZF1DXbITwg1ZjkYt",
-        "linkPlaceholder": "https://open.spotify.com/playlist/..."
+        "playlistId": "Trending Playlist ID (Suggestions Tab)",
+        "link": "Party Playlist Link (Guest Header)",
+        "save": "Save Settings",
+        "info": "Trending ID: Shows songs in Suggestions. Party Link: Adds a direct link in Guest Player header."
       },
       "search": {
         "title": "Paramètres de Recherche",
-        "maxResults": "Résultats Max"
+        "maxResults": "Résultats Max",
+        "info": "Limit the number of results guests see when searching. Fewer results speed up loading."
       },
       "export": {
         "title": "Exporter les Chansons Chantées",
-        "exportBtn": "{count} chansons chantées"
+        "copySpotify": "Copy for Spotify",
+        "copyText": "Copy as Text",
+        "info": "Copies the list of played songs. 'Copy for Spotify' formats as URIs for the Desktop App."
       },
       "backup": {
         "title": "Sauvegarde & Restauration",
-        "save": "Sauvegarder",
-        "restore": "Restaurer"
+        "download": "Save Backup",
+        "upload": "Restore",
+        "info": "Backup: Downloads all data to JSON. Restore: Upload JSON to restore parties."
       },
       "danger": {
         "title": "Zone de Danger",
-        "closeBtn": "Fermer la Party"
+        "closeParty": "Close Party",
+        "confirmTitle": "Are you sure?",
+        "confirmDesc": "This will end the party for everyone. It becomes read-only.",
+        "confirmBtn": "Yes, End Party"
       }
     },
     "card": {
+      "manage": "Manage Party",
       "history": "Voir l'Historique",
       "createdAt": "{date} à {time}",
       "closedAt": "Terminée le {date}"
@@ -259,7 +286,8 @@
         "serve": "Passe dans",
         "turnUp": "Prépare-toi",
         "singIn": "Chante dans",
-        "micIn": "Micro dans"
+        "micIn": "Micro dans",
+        "micInSeeHost": "Micro ouvert (Voir hôte)"
       }
     },
     "funStats": {
@@ -275,6 +303,7 @@
       "bestDressed": "Mieux Habillé",
       "oneHitWonder": "Succès Éphémère",
       "totalPlayed": "Total Joué",
+      "duration": "Durée",
       "songsCount": "{count} Chansons",
       "clapsValue": "{count} Claps"
     }
@@ -399,7 +428,8 @@
       "unauthorized": "Non autorisé : Accès hôte requis.",
       "videoTooLong": "Vidéo trop longue ! La durée maximale est de 10 minutes.",
       "addFailed": "Erreur lors de l'ajout de la chanson.",
-      "cannotModifyQueueNow": "Vous ne pouvez pas modifier votre file d'attente pendant que vous chantez ou passez juste après."
+      "cannotModifyQueueNow": "Vous ne pouvez pas modifier votre file d'attente pendant que vous chantez ou passez juste après.",
+      "alreadyInQueue": "Cette chanson est déjà dans votre file."
     }
   }
 }

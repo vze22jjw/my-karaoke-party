@@ -4,8 +4,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { type Server, type Socket } from "socket.io";
+import { env } from "~/env";
 import { db } from "~/server/db";
 import { spotifyService } from "~/server/lib/spotify";
+import youtubeAPI from "~/utils/youtube-data-api";
 import {
   registerParticipant,
   updateAndEmitPlaylist,
@@ -15,7 +17,6 @@ import {
 } from "./socketUtils";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import { type PlaylistItem } from "@prisma/client";
-import youtubeAPI from "~/utils/youtube-data-api";
 import { parseISO8601Duration } from "~/utils/string";
 import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog } from "~/utils/debug-logger";
@@ -23,9 +24,24 @@ import { debugLog } from "~/utils/debug-logger";
 const addSongRateLimit = new Map<string, number>();
 const RATE_LIMIT_WINDOW = 2000; // 2 seconds
 
+function getCookieValue(cookieHeader: string | undefined, cookieName: string): string | undefined {
+  if (!cookieHeader) return undefined;
+  for (const part of cookieHeader.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key === cookieName && rest.length > 0) {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+  return undefined;
+}
+
+function isSocketAdmin(socket: Socket): boolean {
+  const adminCookie = getCookieValue(socket.handshake.headers.cookie, "admin_token");
+  return !!adminCookie && adminCookie === env.ADMIN_TOKEN;
+}
+
 function ensureHost(socket: Socket): boolean {
-  const role = socket.data.role as string | undefined;
-  if (role !== "Host") {
+  if (socket.data.isHost !== true) {
     socket.emit("error", { message: "unauthorized" });
     return false;
   }
@@ -45,9 +61,53 @@ async function checkAndResetQueueEntry(partyId: number, singerName: string) {
     }
 }
 
+async function createPlaylistItem(
+  partyId: number,
+  data: { videoId: string; title: string; coverUrl: string; singerName: string }
+) {
+  const durationISO = await youtubeAPI.getVideoDuration(data.videoId);
+
+  const durationMs = parseISO8601Duration(durationISO);
+  if (durationMs && durationMs > 10 * 60 * 1000) {
+    throw new Error("videoTooLong");
+  }
+
+  let spotifyId: string | undefined;
+  let cleanArtist: string | undefined;
+  let cleanSong: string | undefined;
+
+  try {
+    const match = await spotifyService.searchTrack(data.title);
+    if (match) {
+      spotifyId = match.id;
+      cleanArtist = match.artist;
+      cleanSong = match.title;
+    }
+  } catch (e) {
+    /* ignore */
+  }
+
+  return db.playlistItem.create({
+    data: {
+      partyId,
+      videoId: data.videoId,
+      title: data.title,
+      artist: cleanArtist ?? "",
+      song: cleanSong ?? "",
+      coverUrl: data.coverUrl,
+      duration: durationISO ? durationISO : getRandomDurationISO(),
+      singerName: data.singerName,
+      randomBreaker: Math.random(),
+      spotifyId,
+    },
+  });
+}
+
 export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
     debugLog(LOG_TAG, `New Socket Connection Accepted: ${socket.id}`);
+    socket.data.isHost = isSocketAdmin(socket);
+    socket.data.role = socket.data.isHost ? "Host" : undefined;
 
     socket.on("request-open-parties", async () => {
       try {
@@ -82,12 +142,10 @@ export function registerSocketEvents(io: Server) {
             where: { partyId_name: { partyId: party.id, name: singerName } },
             select: { role: true }
         });
+        socket.data.singerName = singerName;
+
         if (participant) {
             socket.data.role = participant.role;
-        }
-
-        if (singerName === "Player") {
-            socket.data.role = "Host";
         }
 
         if (isNew) socket.broadcast.to(partyHash).emit("new-singer-joined", singerName);
@@ -97,6 +155,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("add-song", async (data: { partyHash: string; videoId: string; title: string; coverUrl: string; singerName: string }) => {
+      console.log(`[SocketServer] add-song received for ${data.partyHash}: ${data.title} (singer=${data.singerName})`);
       try {
         const lastRequest = addSongRateLimit.get(socket.id) ?? 0;
         const now = Date.now();
@@ -131,48 +190,18 @@ export function registerSocketEvents(io: Server) {
           where: { partyId: party.id, videoId: data.videoId, singerName: data.singerName, playedAt: null },
         });
 
-        if (!existing) {
-          const durationISO = await youtubeAPI.getVideoDuration(data.videoId);
-          
-          const durationMs = parseISO8601Duration(durationISO);
-          if (durationMs && durationMs > 10 * 60 * 1000) { 
-             socket.emit("error", { message: "videoTooLong" });
-             return;
-          }
-
-          let spotifyId: string | undefined;
-          let cleanArtist: string | undefined;
-          let cleanSong: string | undefined;
-
-          try {
-            const match = await spotifyService.searchTrack(data.title);
-            if (match) {
-                spotifyId = match.id;
-                cleanArtist = match.artist;
-                cleanSong = match.title;
-            }
-          } catch (e) { /* ignore */ }
-
-          await db.playlistItem.create({
-            data: {
-              partyId: party.id, 
-              videoId: data.videoId, 
-              title: data.title,    
-              artist: cleanArtist ?? "", 
-              song: cleanSong ?? "", 
-              coverUrl: data.coverUrl, 
-              duration: durationISO ? durationISO : getRandomDurationISO(),
-              singerName: data.singerName, 
-              randomBreaker: Math.random(), 
-              spotifyId: spotifyId,
-            },
-          });
+        if (existing) {
+          socket.emit("error", { message: "alreadyInQueue" });
+          return;
         }
+
+        await createPlaylistItem(party.id, data);
         await updateAndEmitPlaylist(io, data.partyHash, "add-song");
         await updateAndEmitSingers(io, party.id, data.partyHash);
       } catch (error) {
         console.error("Error adding song:", error);
-        socket.emit("error", { message: "addFailed" });
+        const msg = error instanceof Error ? error.message : "addFailed";
+        socket.emit("error", { message: msg });
       }
     });
 
@@ -280,7 +309,7 @@ export function registerSocketEvents(io: Server) {
         }
     });
 
-    socket.on("mark-as-played", async (data: { partyHash: string }) => {
+    socket.on("mark-as-played", async (data: { partyHash: string; status?: "COMPLETED" | "SKIPPED" | "ERROR" }) => {
       if (!ensureHost(socket)) return;
       try {
         const party = await db.party.findUnique({
@@ -323,13 +352,29 @@ export function registerSocketEvents(io: Server) {
         
         if (!currentSong) return;
 
-        await db.playlistItem.update({ where: { id: currentSong.id }, data: { playedAt: new Date() } });
+        const playedStatus = data.status ?? "SKIPPED";
+
+        await db.playlistItem.update({
+          where: { id: currentSong.id },
+          data: {
+            playedAt: new Date(),
+            playedStatus,
+            errorCode: playedStatus === "ERROR" ? party.currentSongErrorCode : null,
+          },
+        });
         
         await checkAndResetQueueEntry(party.id, currentSong.singerName);
 
         await db.party.update({
           where: { id: party.id },
-          data: { lastActivityAt: new Date(), currentSongId: null, currentSongStartedAt: null, currentSongRemainingDuration: null },
+          data: {
+            lastActivityAt: new Date(),
+            currentSongId: null,
+            currentSongStartedAt: null,
+            currentSongRemainingDuration: null,
+            currentSongErrorCode: null,
+            currentSongOpenedOnYouTube: false,
+          },
         });
         await updateAndEmitPlaylist(io, data.partyHash, "mark-as-played");
       } catch (error) { console.error("Error marking as played:", error); }
@@ -410,7 +455,13 @@ export function registerSocketEvents(io: Server) {
         const now = new Date();
         await db.party.update({
           where: { id: party.id },
-          data: { currentSongId: current.videoId, currentSongStartedAt: now, currentSongRemainingDuration: remaining },
+          data: {
+            currentSongId: current.videoId,
+            currentSongStartedAt: now,
+            currentSongRemainingDuration: remaining,
+            currentSongErrorCode: null,
+            currentSongOpenedOnYouTube: false,
+          },
         });
         io.to(data.partyHash).emit("playback-started", { startedAt: now.toISOString(), remainingDuration: remaining });
       } catch (error) { console.error("Error starting playback:", error); }
@@ -466,9 +517,33 @@ export function registerSocketEvents(io: Server) {
       io.to(data.partyHash).emit("idle-messages-updated", msgs);
     });
 
-    socket.on("start-skip-timer", (data: { partyHash: string }) => {
+    socket.on("playback-error", async (data: { partyHash: string; errorCode: string }) => {
       if (!ensureHost(socket)) return;
-      socket.broadcast.to(data.partyHash).emit("skip-timer-started");
+      try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party || party.status === "OPEN") return;
+
+        await db.party.update({
+          where: { id: party.id },
+          data: { currentSongStartedAt: null, currentSongRemainingDuration: null, currentSongErrorCode: data.errorCode },
+        });
+        io.to(data.partyHash).emit("playback-errored", { errorCode: data.errorCode });
+        await updateAndEmitPlaylist(io, data.partyHash, "playback-error");
+      } catch (error) { console.error("Error handling playback error:", error); }
+    });
+
+    socket.on("opened-on-youtube", async (data: { partyHash: string }) => {
+      if (!ensureHost(socket)) return;
+      try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party || party.status === "OPEN") return;
+
+        await db.party.update({
+          where: { id: party.id },
+          data: { currentSongOpenedOnYouTube: true },
+        });
+        await updateAndEmitPlaylist(io, data.partyHash, "opened-on-youtube");
+      } catch (error) { console.error("Error handling opened on YouTube:", error); }
     });
 
     socket.on("update-theme-suggestions", async (data: { partyHash: string; suggestions: string[] }) => {

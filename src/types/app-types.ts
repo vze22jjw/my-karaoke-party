@@ -11,6 +11,8 @@ export type VideoInPlaylist = {
     duration: string | undefined;
     singerName: string;
     playedAt: Date | null;
+    playedStatus: string | null;
+    errorCode: string | null;
     spotifyId?: string | null;
     createdAt?: Date; 
     isPriority: boolean;
@@ -40,6 +42,8 @@ export type InitialPartyData = {
     settings: KaraokeParty["settings"]; 
     currentSongStartedAt: Date | null;
     currentSongRemainingDuration: number | null;
+    currentSongErrorCode: string | null;
+    currentSongOpenedOnYouTube: boolean;
     status: string;
     idleMessages: string[];
     themeSuggestions: string[];

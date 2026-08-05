@@ -2,7 +2,7 @@
 FROM node:22-bookworm-slim AS base
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 RUN apt-get update && apt-get install -y openssl wget \
     && rm -rf /var/lib/apt/lists/*
 
@@ -77,7 +77,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-workspace.yaml* ./
 
 ## clean up runner image
-RUN pnpm add prisma@5.22.0 --prod && rm -rf /home/nextjs/.{cache,npm} /root/.cache /root/.local/share/pnpm
+RUN pnpm add -w prisma@5.22.0 --prod && rm -rf /home/nextjs/.{cache,npm} /root/.cache /root/.local/share/pnpm
 
 COPY --chmod=755 --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
 

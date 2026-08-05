@@ -161,7 +161,7 @@
         "manualSort": "手动排序",
         "infoQueue": "队列排序方式: 公平轮流模式会让歌手轮流上台。先到先得是常规FIFO顺序。",
         "infoSort": "手动队列排序: 开启后可拖拽排序。关闭会保存当前顺序。",
-        "infoPlayback": "播放方式: 应用内播放直接在此处播放视频。YouTube模式会强制使用外部链接。"
+        "infoPlayback": "播放方式：应用内模式会筛选可嵌入的搜索结果并在此处播放。YouTube 模式跳过筛选，在 youtube.com 上打开每首歌曲。"
       },
       "spotify": {
         "title": "Spotify 整合设置",
@@ -286,7 +286,8 @@
         "serve": "候补中",
         "turnUp": "准备上台",
         "singIn": "即将在",
-        "micIn": "接麦时间"
+        "micIn": "接麦时间",
+        "micInSeeHost": "麦克风已就绪（请看主持人）"
       }
     },
     "funStats": {
@@ -302,6 +303,7 @@
       "bestDressed": "最佳造型",
       "oneHitWonder": "一曲成名",
       "totalPlayed": "总播放量",
+      "duration": "时长",
       "songsCount": "{count} 首歌曲",
       "clapsValue": "{count} 次掌声"
     }
@@ -426,7 +428,8 @@
       "unauthorized": "未授权：需要管理员权限。",
       "videoTooLong": "视频太长！最大限制为 10 分钟。",
       "addFailed": "点歌失败。",
-      "cannotModifyQueueNow": "当你上台或即将上台时，无法修改列表。"
+      "cannotModifyQueueNow": "当你上台或即将上台时，无法修改列表。",
+      "alreadyInQueue": "这首歌已经在你的队列中。"
     }
   }
 }

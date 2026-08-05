@@ -9,18 +9,19 @@ import { useTranslations } from "next-intl";
 import { debugLog } from "~/utils/debug-logger";
 
 interface SocketActions {
-  addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => boolean;
+  addSong: (videoId: string, title: string, coverUrl: string, singerName: string) => Promise<boolean>;
   removeSong: (playlistItemId: number) => void;
   deleteMySong: (partyHash: string, videoId: string, singerName: string) => void;
   reorderMyQueue: (partyHash: string, singerName: string, newOrderIds: string[]) => void;
-  markAsPlayed: () => void;
+  markAsPlayed: (status?: "COMPLETED" | "SKIPPED" | "ERROR") => void;
   toggleRules: (orderByFairness: boolean) => void;
   togglePlayback: (disablePlayback: boolean) => void;
   closeParty: () => void;
   sendHeartbeat: () => void;
   playbackPlay: (currentTime?: number) => void;
   playbackPause: () => void;
-  startSkipTimer: () => void;
+  playbackError: (errorCode: string) => void;
+  openedOnYouTube: () => void;
   startParty: () => void;
   refreshParty: () => void;
   setPartyStatus: (status: string) => void; 
@@ -45,6 +46,8 @@ interface UsePartySocketReturn {
   unplayedPlaylist: VideoInPlaylist[];
   playedPlaylist: VideoInPlaylist[];
   settings: KaraokeParty["settings"];
+  currentSongErrorCode: string | null;
+  currentSongOpenedOnYouTube: boolean;
   socketActions: SocketActions;
   isConnected: boolean;
   isPlaying: boolean;
@@ -64,6 +67,8 @@ type PartySocketData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  currentSongErrorCode: string | null;
+  currentSongOpenedOnYouTube: boolean;
   status: string;
   idleMessages: string[];
   themeSuggestions: string[];
@@ -93,6 +98,8 @@ export function usePartySocket(
   const [unplayedPlaylist, setUnplayedPlaylist] = useState<VideoInPlaylist[]>(initialData.unplayed);
   const [playedPlaylist, setPlayedPlaylist] = useState<VideoInPlaylist[]>(initialData.played);
   const [settings, setSettings] = useState<KaraokeParty["settings"]>(initialData.settings);
+  const [currentSongErrorCode, setCurrentSongErrorCode] = useState<string | null>(initialData.currentSongErrorCode);
+  const [currentSongOpenedOnYouTube, setCurrentSongOpenedOnYouTube] = useState<boolean>(initialData.currentSongOpenedOnYouTube);
   const [isPlaying, setIsPlaying] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isSkipping, setIsSkipping] = useState(false);
@@ -181,6 +188,8 @@ export function usePartySocket(
         setUnplayedPlaylist(partyData.unplayed);
         setPlayedPlaylist(partyData.played);
         setSettings(partyData.settings);
+        setCurrentSongErrorCode(partyData.currentSongErrorCode);
+        setCurrentSongOpenedOnYouTube(partyData.currentSongOpenedOnYouTube);
         setPartyStatus(partyData.status);
         setIdleMessages(partyData.idleMessages);
         setThemeSuggestions(partyData.themeSuggestions);
@@ -227,10 +236,13 @@ export function usePartySocket(
             toast.error(t('unauthorized'));
             break;
           case 'videoTooLong':
-            alert(t('videoTooLong')); 
+            toast.error(t('videoTooLong'));
             break;
           case 'addFailed':
             toast.error(t('addFailed'));
+            break;
+          case 'alreadyInQueue':
+            toast.info(t('alreadyInQueue'));
             break;
           case 'cannotModifyQueueNow':
             toast.error(t('cannotModifyQueueNow'));
@@ -240,7 +252,12 @@ export function usePartySocket(
         }
       });
 
-      newSocket.on("skip-timer-started", () => setIsSkipping(true));
+      newSocket.on("playback-errored", (data: { errorCode: string }) => {
+        setCurrentSongErrorCode(data.errorCode);
+        setIsPlaying(false);
+        stopCountdown();
+      });
+
       newSocket.on("idle-messages-updated", (msgs: string[]) => setIdleMessages(msgs));
       newSocket.on("theme-suggestions-updated", (suggs: string[]) => setThemeSuggestions(suggs));
     };
@@ -289,23 +306,24 @@ export function usePartySocket(
         const now = Date.now();
         if (now - lastAddRef.current < CLIENT_RATE_LIMIT_MS) {
             toast.error(tToastsRef.current('rateLimit'));
-            return false;
+            return Promise.resolve(false);
         }
         lastAddRef.current = now;
         socketRef.current?.emit("add-song", { partyHash, videoId, title, coverUrl, singerName });
-        return true;
+        return Promise.resolve(true);
     },
     removeSong: (playlistItemId) => socketRef.current?.emit("remove-song", { partyHash, playlistItemId }),
     deleteMySong: (ph, videoId, sName) => socketRef.current?.emit("delete-my-song", { partyHash: ph, videoId, singerName: sName }),
     reorderMyQueue: (ph, sName, newOrderIds) => socketRef.current?.emit("reorder-my-queue", { partyHash: ph, singerName: sName, newOrderIds }),
-    markAsPlayed: () => socketRef.current?.emit("mark-as-played", { partyHash }),
+    markAsPlayed: (status) => socketRef.current?.emit("mark-as-played", { partyHash, status }),
     toggleRules: (orderByFairness) => socketRef.current?.emit("toggle-rules", { partyHash, orderByFairness }),
     togglePlayback: (disablePlayback) => socketRef.current?.emit("toggle-playback", { partyHash, disablePlayback }),
     closeParty: () => socketRef.current?.emit("close-party", { partyHash }),
     sendHeartbeat: () => socketRef.current?.emit("heartbeat", { partyHash, singerName, avatar }),
     playbackPlay: (currentTime) => socketRef.current?.emit("playback-play", { partyHash, currentTime }),
     playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
-    startSkipTimer: () => { setIsSkipping(true); socketRef.current?.emit("start-skip-timer", { partyHash }); },
+    playbackError: (errorCode) => socketRef.current?.emit("playback-error", { partyHash, errorCode }),
+    openedOnYouTube: () => socketRef.current?.emit("opened-on-youtube", { partyHash }),
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
     refreshParty: () => socketRef.current?.emit("refresh-party", { partyHash }), 
     setPartyStatus: (status) => socketRef.current?.emit("set-party-status", { partyHash, status }), 
@@ -314,7 +332,7 @@ export function usePartySocket(
     sendApplause: sendApplauseHttp,
     songEnded: async (id: string) => { 
         debugLog(LOG_TAG, "Song ended: " + id); 
-        socketRef.current?.emit("mark-as-played", { partyHash }); 
+        socketRef.current?.emit("mark-as-played", { partyHash, status: "COMPLETED" }); 
     },
     toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
     saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
@@ -322,7 +340,8 @@ export function usePartySocket(
   }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {
-    currentSong, unplayedPlaylist, playedPlaylist, settings, socketActions,
+    currentSong, unplayedPlaylist, playedPlaylist, settings,
+    currentSongErrorCode, currentSongOpenedOnYouTube, socketActions,
     isConnected, isPlaying, participants, hostName, isSkipping, remainingTime,
     partyStatus, idleMessages, themeSuggestions,
   };

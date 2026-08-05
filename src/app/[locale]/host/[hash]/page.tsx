@@ -40,6 +40,13 @@ export default async function HostPartyPage({ params }: Props) {
   const partyHash = params.hash;
   const party = await api.party.getByHash({ hash: partyHash });
 
+  let hostName: string | null = null;
+  try {
+    hostName = await api.party.getHostName({ hash: partyHash });
+  } catch (e) {
+    console.warn("Failed to fetch host name", e);
+  }
+
   if (!party) {
     notFound();
   }
@@ -61,6 +68,8 @@ export default async function HostPartyPage({ params }: Props) {
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
+    currentSongErrorCode: null,
+    currentSongOpenedOnYouTube: false,
     status: "OPEN",
     idleMessages: [],
     themeSuggestions: [],
@@ -88,7 +97,7 @@ export default async function HostPartyPage({ params }: Props) {
       key={params.locale} 
       party={party} 
       initialData={initialData} 
-      hostName={null} 
+      hostName={hostName} 
     />
   );
 }

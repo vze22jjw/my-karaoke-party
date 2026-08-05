@@ -161,7 +161,7 @@
         "manualSort": "Ordenação Manual",
         "infoQueue": "Ordem da Fila: Justiça alterna os cantores. Chegada é por ordem de pedido.",
         "infoSort": "Ordenação Manual: Ative para arrastar e soltar. Desative para salvar.",
-        "infoPlayback": "Reprodução: No App toca vídeos aqui. YouTube força links externos."
+        "infoPlayback": "Reprodução: No App filtra a busca para vídeos incorporáveis e os reproduz aqui. YouTube ignora o filtro e abre cada música no youtube.com."
       },
       "spotify": {
         "title": "Integração Spotify",
@@ -222,16 +222,16 @@
       "singers": "Cantores"
     },
     "player": {
-        "playingNow": "Tocando Agora",
-        "spotify": "Spotify",
-        "noQueued": "Sem músicas na fila",
-        "nextInLine": "Na Fila ({count})",
-        "hideQueue": "Ocultar Fila",
-        "showAll": "Ver Todos ({count})",
-        "moreNext": "E mais {count} música(s)...",
-        "alreadyPlayed": "Já Tocaram ({count})",
-        "hideHistory": "Ocultar Histórico",
-        "moreHistory": "E mais {count} música(s) no histórico..."
+      "playingNow": "Tocando Agora",
+      "spotify": "Spotify",
+      "noQueued": "Sem músicas na fila",
+      "nextInLine": "Na Fila ({count})",
+      "hideQueue": "Ocultar Fila",
+      "showAll": "Ver Todos ({count})",
+      "moreNext": "E mais {count} música(s)...",
+      "alreadyPlayed": "Já Tocaram ({count})",
+      "hideHistory": "Ocultar Histórico",
+      "moreHistory": "E mais {count} música(s) no histórico..."
     },
     "addSong": {
       "title": "Adicionar Música",
@@ -286,7 +286,8 @@
         "serve": "Prepare-se",
         "turnUp": "Sobe o Som",
         "singIn": "Cante em",
-        "micIn": "Microfone em"
+        "micIn": "Microfone em",
+        "micInSeeHost": "Microfone ligado (Ver anfitrião)"
       }
     },
     "funStats": {
@@ -427,7 +428,8 @@
       "unauthorized": "Não autorizado: Acesso de anfitrião necessário.",
       "videoTooLong": "Vídeo muito longo! Duração máxima é 10 minutos.",
       "addFailed": "Falha ao adicionar música.",
-      "cannotModifyQueueNow": "Não é possível modificar a fila enquanto você está cantando ou é o próximo."
+      "cannotModifyQueueNow": "Não é possível modificar a fila enquanto você está cantando ou é o próximo.",
+      "alreadyInQueue": "Esta música já está na sua fila."
     }
   }
 }

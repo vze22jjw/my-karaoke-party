@@ -120,6 +120,7 @@ export function PartySceneTabs({
     partyStatus,
     themeSuggestions,
     settings,
+    currentSongErrorCode,
   } = usePartySocket(party.hash!, initialData, name);
 
   useEffect(() => {
@@ -143,11 +144,11 @@ export function PartySceneTabs({
     return myCurrentSongs.length >= MAX_QUEUE_PER_SINGER;
   }, [myCurrentSongs.length]);
 
-  const addSong = (videoId: string, title: string, coverUrl: string) => {
+  const addSong = async (videoId: string, title: string, coverUrl: string): Promise<boolean> => {
     if (hasReachedQueueLimit) return false;
 
     try {
-      const success = socketActions.addSong(videoId, title, coverUrl, name);
+      const success = await socketActions.addSong(videoId, title, coverUrl, name);
       
       if (success) {
         socketActions.sendHeartbeat();
@@ -264,6 +265,7 @@ export function PartySceneTabs({
             ]}
             name={name}
             onVideoAdded={addSong}
+            disablePlayback={!!settings.disablePlayback}
             initialSearchQuery={searchQuery}
             onSearchQueryConsumed={handleSearchConsumed}
             hasReachedQueueLimit={hasReachedQueueLimit}
@@ -284,6 +286,8 @@ export function PartySceneTabs({
             isPlaying={isPlaying}
             remainingTime={remainingTime}
             onReplayTour={handleReplayTour}
+            disablePlayback={!!settings.disablePlayback}
+            currentSongErrorCode={currentSongErrorCode}
           />
         </TabsContent>
 

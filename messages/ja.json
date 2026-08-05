@@ -99,77 +99,104 @@
       "settings": "設定"
     },
     "playback": {
-      "title": "再生コントロール",
-      "play": "再生",
-      "pause": "一時停止",
-      "skip": "スキップ",
-      "reorder": "並べ替え順序を保存"
+      "noSong": "No Song Playing",
+      "emptyQueue": "The queue is currently empty.",
+      "saveOrder": "Save New Order",
+      "closedHistory": "Party Closed • History View",
+      "noHistory": "No songs were played during this party."
     },
     "settings": {
       "status": {
         "title": "パーティーの状態",
         "open": "参加受付中",
+        "started": "Party in Progress",
         "intermission": "休憩中",
         "closed": "終了",
         "start": "パーティー開始",
-        "pause": "休憩開始 (一時停止)",
         "resume": "パーティー再開",
-        "close": "パーティー終了",
-        "confirmClose": "本当にこのパーティーを終了しますか？この操作は取り消せるません。"
+        "pause": "休憩開始 (一時停止)",
+        "info": "Use this to manage the flow. Start to begin music. Intermission pauses the queue and shows the idle slideshow."
       },
       "links": {
         "title": "パーティーリンク",
         "join": "参加用リンク (歌手向け)",
         "player": "プレイヤー用リンク (テレビ/プロジェクター向け)",
-        "dashboard": "管理者ダッシュボード"
+        "info": "Share the Join Link with guests. Open the Player Link on a TV/Projector. Click the QR code to enlarge."
       },
       "suggestions": {
         "title": "パーティーのテーマ / 提案",
         "placeholder": "例: 「タイトルに色が含まれる曲」",
-        "noSuggestions": "提案はまだ追加されていません。"
+        "empty": "No suggestions added yet.",
+        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab."
       },
       "messages": {
         "title": "共有メッセージライブラリ",
+        "placeholder": "New message (e.g. Lyric @ Artist)",
         "sync": "プレイヤーに {count} 件のメッセージを同期",
-        "manage": "ライブラリ管理",
-        "addBtn": "メッセージを追加",
+        "synced": "Synced!",
+        "limitError": "You have reached your message creation limit.",
+        "info": "Select messages to display on the TV. You can select up to 20.",
+        "infoLabel": "How it works",
+        "featureDetails": "These messages cycle on the Player screen when the party is paused or the queue is empty. Select up to 20 messages from the library to sync.",
+        "formatTip": "💡 Tip: Use 'Message @ Author' to display as a quote. (e.g. 'Hello World @ Host')",
+        "yourCreations": "Your creations:",
+        "selected": "Selected to sync:",
+        "emptyLib": "The shared library is empty.",
+        "manageLibrary": "Manage Library",
+        "drawerDesc": "Select up to 20 messages. Closing this drawer will auto-sync selections.",
         "addPlaceholder": "スクロール画面に表示するメッセージを入力...",
+        "searchPlaceholder": "Search messages...",
         "creationsLeft": "作成可能残数: {count}",
         "selectionsLeft": "選択可能残数: {count}",
-        "empty": "メッセージがありません。プレイヤーに表示するメッセージを作成してください。",
+        "noMessages": "No messages found.",
         "pageCounter": "ページ {current} / {total}",
         "saveAndSync": "保存して同期 ({count})"
       },
       "rules": {
         "title": "パーティーのルール",
+        "fairnessOn": "Queue: Fairness (ON)",
+        "fairnessOff": "Queue: FIFO (OFF)",
+        "playbackApp": "Playback: In-App (ON)",
+        "playbackYoutube": "Playback: YouTube (OFF)",
         "manualSort": "手動並べ替え: {state}",
-        "fairness": "キュー: 公平モード ({state})",
-        "playback": "再生: アプリ内 ({state})"
+        "infoQueue": "Queue Ordering: Fairness rotates singers. FIFO is first-come, first-served.",
+        "infoSort": "Manual Queue Sort: Enable to drag-and-drop. Disabling saves the order.",
+        "infoPlayback": "再生方法：アプリ内モードは埋め込み可能な動画のみ検索結果に表示し、ここで再生します。YouTube モードはフィルターをスキップし、youtube.com で各曲を開きます。"
       },
       "spotify": {
         "title": "Spotify 連携",
-        "playlistPlaceholder": "例: 37i9dQZF1DXbITwg1ZjkYt",
-        "linkPlaceholder": "https://open.spotify.com/playlist/..."
+        "playlistId": "Trending Playlist ID (Suggestions Tab)",
+        "link": "Party Playlist Link (Guest Header)",
+        "save": "Save Settings",
+        "info": "Trending ID: Shows songs in Suggestions. Party Link: Adds a direct link in Guest Player header."
       },
       "search": {
         "title": "検索設定",
-        "maxResults": "最大検索結果数"
+        "maxResults": "最大検索結果数",
+        "info": "Limit the number of results guests see when searching. Fewer results speed up loading."
       },
       "export": {
         "title": "歌われた曲のエクスポート",
-        "exportBtn": "{count} 曲が歌われました"
+        "copySpotify": "Copy for Spotify",
+        "copyText": "Copy as Text",
+        "info": "Copies the list of played songs. 'Copy for Spotify' formats as URIs for the Desktop App."
       },
       "backup": {
         "title": "バックアップと復元",
-        "save": "バックアップを保存",
-        "restore": "復元"
+        "download": "Save Backup",
+        "upload": "Restore",
+        "info": "Backup: Downloads all data to JSON. Restore: Upload JSON to restore parties."
       },
       "danger": {
         "title": "危険ゾーン",
-        "closeBtn": "パーティーを終了"
+        "closeParty": "Close Party",
+        "confirmTitle": "Are you sure?",
+        "confirmDesc": "This will end the party for everyone. It becomes read-only.",
+        "confirmBtn": "Yes, End Party"
       }
     },
     "card": {
+      "manage": "Manage Party",
       "history": "履歴を表示",
       "createdAt": "{date} {time}",
       "closedAt": "終了日時 {date}"
@@ -259,7 +286,8 @@
         "serve": "開始まで",
         "turnUp": "盛り上がろう",
         "singIn": "歌うまで",
-        "micIn": "マイクオンまで"
+        "micIn": "マイクオンまで",
+        "micInSeeHost": "マイク準備OK（ホストを参照）"
       }
     },
     "funStats": {
@@ -275,6 +303,7 @@
       "bestDressed": "ベストドレス",
       "oneHitWonder": "一発屋",
       "totalPlayed": "総再生数",
+      "duration": "再生時間",
       "songsCount": "{count} 曲",
       "clapsValue": "{count} 拍手"
     }
@@ -399,7 +428,8 @@
       "unauthorized": "認証エラー: 管理者アクセスが必要です。",
       "videoTooLong": "動画が長すぎます！最大時間は10分です。",
       "addFailed": "曲の追加に失敗しました。",
-      "cannotModifyQueueNow": "歌唱中、または次に歌う順番のときはリストを編集できません。"
+      "cannotModifyQueueNow": "歌唱中、または次に歌う順番のときはリストを編集できません。",
+      "alreadyInQueue": "この曲はすでにキューに追加されています。"
     }
   }
 }

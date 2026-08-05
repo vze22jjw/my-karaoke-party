@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext, request } from '@playwright/test';
 import { createParty } from './helpers/party-utils';
 
 const USER_COUNT = 5; // Adjust based on Docker capacity
@@ -7,17 +7,37 @@ const BASE_URL = process.env.BASE_URL || 'http://mykaraoke-app:3000';
 
 if (!ADMIN_TOKEN) throw new Error("❌ FATAL ERROR: ADMIN_TOKEN is missing.");
 
+let hostContext: BrowserContext | undefined;
+let hostPage: Page | undefined;
+let partyCode: string | undefined;
+const guestContexts: BrowserContext[] = [];
+
+test.afterAll(async () => {
+  if (partyCode) {
+    const apiContext = await request.newContext();
+    await apiContext
+      .delete(`${BASE_URL}/api/admin/party/delete`, {
+        headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
+        params: { hash: partyCode },
+      })
+      .catch(() => {});
+    await apiContext.dispose();
+  }
+  if (hostContext) await hostContext.close();
+  for (const ctx of guestContexts) await ctx.close();
+});
+
 test(`Load Test: Backend Stress (tRPC Injection)`, async ({ browser }) => {
   test.setTimeout(120000 + (USER_COUNT * 10000)); 
 
   // --- 1. HOST CREATES PARTY ---
   console.log(`👤 Host: Creating party...`);
-  const hostContext = await browser.newContext({
+  hostContext = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     extraHTTPHeaders: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }
   });
-  const hostPage = await hostContext.newPage();
-  const partyCode = await createParty(hostPage, `Load Test ${Date.now()}`);
+  hostPage = await hostContext.newPage();
+  partyCode = await createParty(hostPage, `Load Test ${Date.now()}`);
   
   if (await hostPage.locator('[data-vaul-overlay]').isVisible({ timeout: 3000 })) {
       await hostPage.keyboard.press('Escape');
@@ -28,13 +48,14 @@ test(`Load Test: Backend Stress (tRPC Injection)`, async ({ browser }) => {
   const guestPages: Page[] = [];
 
   for (let i = 0; i < USER_COUNT; i++) {
-    const context = await browser.newContext({ isMobile: true });
-    await context.addInitScript(({ key, name }) => {
+    const guestContext = await browser.newContext({ isMobile: true });
+    await guestContext.addInitScript(({ key, name }) => {
       window.localStorage.setItem(key, 'true');
       window.localStorage.setItem('name', name);
     }, { key: `guest-${partyCode}-tour-seen`, name: `Guest-${i}` });
 
-    const page = await context.newPage();
+    const page = await guestContext.newPage();
+    guestContexts.push(guestContext);
     guestPages.push(page);
     await page.goto(`${BASE_URL}/en/party/${partyCode}`);
   }
@@ -111,12 +132,5 @@ test(`Load Test: Backend Stress (tRPC Injection)`, async ({ browser }) => {
       throw e;
   }
 
-  // --- 5. CLEANUP ---
-  console.log('🛑 Closing Party...');
-  await hostPage.getByTestId('tab-settings').click();
-  const closeBtn = hostPage.getByRole('button', { name: 'Close Party' });
-  if (await closeBtn.isVisible()) {
-      await closeBtn.click();
-      await hostPage.getByRole('button', { name: 'Yes, End Party' }).click();
-  }
+  // Cleanup is handled by test.afterAll (admin API delete + context close)
 });

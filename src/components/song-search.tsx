@@ -19,9 +19,10 @@ import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
 
 type Props = {
-  onVideoAdded: (videoId: string, title: string, coverUrl: string) => boolean;
+  onVideoAdded: (videoId: string, title: string, coverUrl: string) => Promise<boolean>;
   playlist: KaraokeParty["playlist"];
   name: string;
+  disablePlayback: boolean;
   initialSearchQuery?: string;
   onSearchQueryConsumed?: () => void;
   hasReachedQueueLimit?: boolean;
@@ -37,6 +38,7 @@ export function SongSearch({
   onVideoAdded,
   playlist,
   name,
+  disablePlayback,
   initialSearchQuery,
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
@@ -52,6 +54,7 @@ export function SongSearch({
     [],
   );
   const [fadingOutVideoIds, setFadingOutVideoIds] = useState<string[]>([]);
+  const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
 
   const [maxSearchResults] = useLocalStorage<number>({
     key: MAX_SEARCH_RESULTS_KEY,
@@ -59,7 +62,7 @@ export function SongSearch({
   });
 
   const {
-    data: rawData,
+    data: searchData,
     isError,
     refetch,
     isLoading,
@@ -68,20 +71,23 @@ export function SongSearch({
     {
       keyword: `${videoInputValue} karaoke`,
       maxResults: maxSearchResults,
+      requireEmbeddable: !disablePlayback,
     },
     { refetchOnWindowFocus: false, enabled: false, retry: false },
   );
 
-  const data = rawData as YoutubeSearchItem[] | undefined;
+  const data = searchData as YoutubeSearchItem[] | undefined;
 
   useEffect(() => {
     if (initialSearchQuery) {
       setVideoInputValue(initialSearchQuery);
       setCanFetch(true);
+
       const timer = setTimeout(() => {
         void (async () => {
           setRecentlyAddedVideoIds([]);
           setFadingOutVideoIds([]);
+
           await refetch();
           setCanFetch(false);
           onSearchQueryConsumed?.();
@@ -90,7 +96,7 @@ export function SongSearch({
 
       return () => clearTimeout(timer);
     }
-  }, [initialSearchQuery, refetch, onSearchQueryConsumed]); 
+  }, [initialSearchQuery, refetch, onSearchQueryConsumed]);
 
   return (
     <>
@@ -104,6 +110,7 @@ export function SongSearch({
             onSearchQueryConsumed?.();
             setRecentlyAddedVideoIds([]);
             setFadingOutVideoIds([]);
+
             await refetch();
             setCanFetch(false);
             }}
@@ -209,7 +216,8 @@ export function SongSearch({
 
               const displayTitle = decode(video.snippet.title);
               
-              const isDisabled = alreadyInQueue || isFadingOut || hasReachedQueueLimit;
+              const isLoadingVideo = loadingVideoId === video.id.videoId;
+              const isDisabled = alreadyInQueue || isFadingOut || hasReachedQueueLimit || isLoadingVideo;
 
               return (
                 <div
@@ -246,12 +254,14 @@ export function SongSearch({
                       data-testid={`add-video-${video.id.videoId}`}
                       className="shadow-xl animate-in spin-in"
                       disabled={isDisabled}
-                      onClick={() => {
-                        const success = onVideoAdded(
+                      onClick={async () => {
+                        setLoadingVideoId(video.id.videoId);
+                        const success = await onVideoAdded(
                           video.id.videoId,
                           decode(video.snippet.title), 
                           video.snippet.thumbnails.high.url,
                         );
+                        setLoadingVideoId(null);
 
                         if (success) {
                             setFadingOutVideoIds((prev) => [
@@ -268,7 +278,9 @@ export function SongSearch({
                         }
                       }}
                     >
-                      {alreadyInQueue || isFadingOut ? (
+                      {isLoadingVideo ? (
+                        <Loader2 className="animate-spin" />
+                      ) : alreadyInQueue || isFadingOut ? (
                         <Check stroke="pink" />
                       ) : (
                         <Plus />

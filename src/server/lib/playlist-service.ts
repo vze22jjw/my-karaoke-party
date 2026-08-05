@@ -14,6 +14,8 @@ function formatPlaylistItem(item: PlaylistItem): VideoInPlaylist {
     duration: item.duration ?? undefined,
     singerName: item.singerName,
     playedAt: item.playedAt,
+    playedStatus: item.playedStatus,
+    errorCode: item.errorCode,
     createdAt: item.addedAt,
     spotifyId: item.spotifyId,
     isPriority: item.isPriority,
@@ -30,6 +32,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  currentSongErrorCode: string | null;
+  currentSongOpenedOnYouTube: boolean;
   status: string;
   idleMessages: string[]; 
   themeSuggestions: string[];
@@ -161,6 +165,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       settings,
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
+      currentSongErrorCode: null,
+      currentSongOpenedOnYouTube: false,
       status: party.status,
       idleMessages: party.idleMessages,
       themeSuggestions: party.themeSuggestions,
@@ -173,6 +179,8 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
       settings,
       currentSongStartedAt: party.currentSongStartedAt,
       currentSongRemainingDuration: remainingDuration,
+      currentSongErrorCode: party.currentSongErrorCode,
+      currentSongOpenedOnYouTube: party.currentSongOpenedOnYouTube,
       status: party.status,
       idleMessages: party.idleMessages,
       themeSuggestions: party.themeSuggestions,

@@ -271,6 +271,8 @@ export function HostControlPanel({
                   isPriority: false,
                   isManual: false,
                   playedAt: null,
+                  playedStatus: null,
+                  errorCode: null,
                   spotifyId: null,
                   applauseCount: 0,
                   playlistItemId: 0

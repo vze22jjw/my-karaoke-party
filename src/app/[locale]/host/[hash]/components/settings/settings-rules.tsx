@@ -83,7 +83,7 @@ export function SettingsRules({
   onTogglePlayback,
   isManualSortActive,
   onToggleManualSort,
-  isPartyClosed
+  isPartyClosed,
 }: Props) {
   const t = useTranslations('host.settings.rules');
   const [showRulesInfo, setShowRulesInfo] = useState(false);

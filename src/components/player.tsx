@@ -29,6 +29,7 @@ type Props = {
   onPause: () => void;
   remainingTime: number; 
   onOpenYouTubeAndAutoSkip: () => void;
+  onPlayerError?: (errorCode: string) => void;
 };
 
 export function Player({
@@ -45,15 +46,74 @@ export function Player({
   onPause,
   remainingTime, 
   onOpenYouTubeAndAutoSkip,
+  onPlayerError: onPlayerErrorProp,
 }: Props) {
   const t = useTranslations('player');
   const playerRef = useRef<YouTubePlayer>(null);
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
-  
+
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const endCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasEndedRef = useRef(false);
+  const onPlayerEndRef = useRef(onPlayerEnd);
+
+  useEffect(() => {
+    onPlayerEndRef.current = onPlayerEnd;
+  }, [onPlayerEnd]);
+
+  const clearEndCheck = useCallback(() => {
+    if (endCheckIntervalRef.current) {
+      clearInterval(endCheckIntervalRef.current);
+      endCheckIntervalRef.current = null;
+    }
+  }, []);
+
+  const triggerPlayerEnd = useCallback(() => {
+    if (hasEndedRef.current) return;
+    hasEndedRef.current = true;
+    clearEndCheck();
+    onPlayerEndRef.current();
+  }, [clearEndCheck]);
+
+  const startEndCheck = useCallback(() => {
+    clearEndCheck();
+    endCheckIntervalRef.current = setInterval(() => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      try {
+        const state = player.getPlayerState();
+        const duration = player.getDuration() as number;
+        const currentTime = player.getCurrentTime() as number;
+
+        if (state === 0) {
+          console.log("Safety end check: player reports ENDED state");
+          triggerPlayerEnd();
+          return;
+        }
+
+        const nearEnd = duration > 0 && currentTime > 0 && currentTime >= duration - 1.0;
+        if (nearEnd) {
+          if (state === 1) {
+            // Actively playing and within the last second. Normal end.
+            console.log("Safety end check: currentTime near duration while playing", { currentTime, duration });
+            triggerPlayerEnd();
+          } else if (isPlaying) {
+            // The host/server still expects us to be playing, but the player has
+            // stopped/buffered (likely YouTube end screen or autopause). Treat as ended.
+            console.log("Safety end check: currentTime near duration but player not playing", { state, currentTime, duration });
+            triggerPlayerEnd();
+          }
+          // If !isPlaying, the user/host explicitly paused, so do not auto-advance.
+        }
+      } catch (error) {
+        console.error("Safety end check failed:", error);
+      }
+    }, 1000);
+  }, [clearEndCheck, triggerPlayerEnd, isPlaying]);
 
   const interact = useCallback(() => {
     setShowControls(true);
@@ -98,9 +158,16 @@ export function Player({
   }, [internalIsPlaying, interact]);
 
   useEffect(() => {
+    hasEndedRef.current = false;
+    clearEndCheck();
     setIsReady(false);
     setShowOpenInYouTubeButton(false);
-  }, [video.id]);
+    setInternalIsPlaying(false);
+  }, [video.id, clearEndCheck]);
+
+  useEffect(() => {
+    return () => clearEndCheck();
+  }, [clearEndCheck]);
 
   useEffect(() => {
     if (!playerRef.current || !isReady) return;
@@ -130,9 +197,10 @@ export function Player({
     const playerState = event.target.getPlayerState();
     if (playerState !== -1) {
       setIsReady(true);
+      startEndCheck();
       if (forceAutoplay) {
         event.target.playVideo();
-        onAutoplayed(); 
+        onAutoplayed();
       } else {
         event.target.pauseVideo();
       }
@@ -152,20 +220,24 @@ export function Player({
     if (isPlaying) onPause();
   };
 
-  const onPlayerError: YouTubeProps["onError"] = (_event) => {
+  const onPlayerError: YouTubeProps["onError"] = (event) => {
     setShowOpenInYouTubeButton(true);
+    const errorCode = (event as { data?: number }).data ?? 100;
+    onPlayerErrorProp?.(String(errorCode));
   };
 
   const handlePlayerEnd: YouTubeProps["onEnd"] = (event) => {
+    if (hasEndedRef.current) return;
+
     const player = event.target;
     const duration = player.getDuration() as number;
     const currentTime = player.getCurrentTime() as number;
-    
+
     if (duration > 0 && (duration - currentTime > 5)) {
       console.log("Ignored false onEnd event from iOS suspension.");
-      player.playVideo(); 
+      player.playVideo();
     } else {
-      onPlayerEnd();
+      triggerPlayerEnd();
     }
   };
 

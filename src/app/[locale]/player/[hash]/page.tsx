@@ -16,6 +16,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  currentSongErrorCode: string | null;
+  currentSongOpenedOnYouTube: boolean;
   status: string;
   idleMessages: string[];
   themeSuggestions: string[];
@@ -62,6 +64,8 @@ export default async function PartyPage({ params }: Props) {
     },
     currentSongStartedAt: null,
     currentSongRemainingDuration: null,
+    currentSongErrorCode: null,
+    currentSongOpenedOnYouTube: false,
     status: "OPEN",
     idleMessages: [],
     themeSuggestions: [],
