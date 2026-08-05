@@ -1,13 +1,43 @@
+// @ts-nocheck
 import { test, expect, type Page, type BrowserContext, request } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { createParty, joinParty, addSong } from './helpers/party-utils';
+import { getReportDirName } from '~/lib/report-dir';
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 const BASE_URL = process.env.BASE_URL;
 
-const fallbackTimestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-const REPORT_DIR = process.env.PLAYWRIGHT_REPORT_DIR || path.join('playwright-report', `run-${fallbackTimestamp}`);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const TEST_VIDEOS_PATH = path.join(__dirname, 'test-videos.json');
+
+type TestVideoConfig = {
+  songs?: { query: string; expected?: 'embeddable' | 'restricted' }[];
+  fallbackQueries?: string[];
+};
+
+function loadTestVideoConfig(): TestVideoConfig {
+  if (!fs.existsSync(TEST_VIDEOS_PATH)) return {};
+  try {
+    const raw = fs.readFileSync(TEST_VIDEOS_PATH, 'utf-8');
+    return JSON.parse(raw) as TestVideoConfig;
+  } catch {
+    console.warn('⚠️ Failed to parse test-videos.json, using default search queries.');
+    return {};
+  }
+}
+
+const videoConfig = loadTestVideoConfig();
+const testSongs = videoConfig.songs && videoConfig.songs.length > 0
+  ? videoConfig.songs
+  : [
+      { query: 'Karaoke Hits' },
+      { query: 'Karaoke Classics' },
+    ];
+
+const REPORT_DIR = process.env.PLAYWRIGHT_REPORT_DIR || path.join('playwright-report', getReportDirName('core-flow'));
 const VIDEO_DIR = path.join(REPORT_DIR, 'videos');
 const SCREENSHOT_DIR = path.join(REPORT_DIR, 'screenshots');
 
@@ -121,8 +151,9 @@ test.describe('Core Party Flow (Full Feature)', () => {
     test.setTimeout(240000); 
     const queueingGuests = [guestPages[0], guestPages[1]];
     for (const [index, page] of queueingGuests.entries()) {
-        await addSong(page, 'Karaoke Hits');
-        await addSong(page, 'Karaoke Classics');
+        for (const song of testSongs) {
+            await addSong(page, song.query);
+        }
         if (index === 0) await takeScreenshot(page, `guest-${index}-songs-added`, testInfo);
     }
   });
@@ -142,6 +173,15 @@ test.describe('Core Party Flow (Full Feature)', () => {
     const restrictedUI = playerPage.getByText('Open on YouTube');
     const iframeUI = playerPage.locator('iframe[src*="youtube"]');
     await expect(restrictedUI.or(iframeUI)).toBeVisible({ timeout: 30000 });
+
+    const firstSongExpected = testSongs[0]?.expected;
+    if (firstSongExpected === 'restricted') {
+        await expect(restrictedUI).toBeVisible({ timeout: 10000 });
+        console.log('Verified restricted fallback UI for configured first song');
+    } else if (firstSongExpected === 'embeddable') {
+        await expect(iframeUI).toBeAttached({ timeout: 10000 });
+        console.log('Verified embeddable iframe UI for configured first song');
+    }
 
     if (await restrictedUI.isVisible()) {
         await expect(playerPage.getByText('Guest-0').first()).toBeVisible({ timeout: 10000 });

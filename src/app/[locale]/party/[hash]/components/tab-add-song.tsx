@@ -47,7 +47,8 @@ type Props = {
   partyStatus: string;
   playlist: VideoInPlaylist[];
   name: string;
-  onVideoAdded: (videoId: string, title: string, coverUrl: string) => boolean;
+  onVideoAdded: (videoId: string, title: string, coverUrl: string) => Promise<boolean>;
+  disablePlayback: boolean;
   initialSearchQuery: string;
   onSearchQueryConsumed: () => void;
   hasReachedQueueLimit: boolean;
@@ -111,6 +112,7 @@ export function TabAddSong({
   playlist,
   name,
   onVideoAdded,
+  disablePlayback,
   initialSearchQuery,
   onSearchQueryConsumed,
   hasReachedQueueLimit = false,
@@ -200,6 +202,7 @@ export function TabAddSong({
               onVideoAdded={onVideoAdded}
               playlist={playlist}
               name={name}
+              disablePlayback={disablePlayback}
               initialSearchQuery={initialSearchQuery}
               onSearchQueryConsumed={onSearchQueryConsumed}
               hasReachedQueueLimit={hasReachedQueueLimit || isManualSortActive}

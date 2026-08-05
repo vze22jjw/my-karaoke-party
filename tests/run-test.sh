@@ -45,11 +45,16 @@ export $(grep -v '^#' "$ENV_FILE" | xargs)
 if [ ! -z "$URL_OVERRIDE" ]; then export BASE_URL="$URL_OVERRIDE"; fi
 if [ ! -z "$TOKEN_OVERRIDE" ]; then export ADMIN_TOKEN="$TOKEN_OVERRIDE"; fi
 
+# Name the report folder after the test file and a short timestamp
+TEST_NAME=$(basename "$TEST_FILE" .spec.ts)
+export PLAYWRIGHT_REPORT_DIR="$(pwd)/playwright-report/${TEST_NAME}-$(date +%Y%m%d-%H%M)"
+
 # Construct the Playwright command for the specific test
 export TEST_COMMAND="npx playwright test tests/$TEST_FILE"
 
 echo "🚀 Running test: $TEST_FILE"
 echo "🌐 URL: $BASE_URL"
+echo "📁 Report dir: $PLAYWRIGHT_REPORT_DIR"
 
 # Run Docker Compose
 docker compose -f tests/docker-compose.test.yml up --build --abort-on-container-exit
@@ -58,3 +63,4 @@ docker compose -f tests/docker-compose.test.yml up --build --abort-on-container-
 unset BASE_URL
 unset ADMIN_TOKEN
 unset TEST_COMMAND
+unset PLAYWRIGHT_REPORT_DIR

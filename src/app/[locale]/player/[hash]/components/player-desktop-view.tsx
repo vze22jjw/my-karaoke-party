@@ -26,8 +26,10 @@ type Props = {
   remainingTime: number; 
   onOpenYouTubeAndAutoSkip: () => void;
   isPlaybackDisabled: boolean;
+  currentSongErrorCode: string | null;
   isSkipping: boolean;
   idleMessages: string[]; 
+  onPlayerError?: (errorCode: string) => void;
 };
 
 export function PlayerDesktopView({
@@ -47,8 +49,10 @@ export function PlayerDesktopView({
   remainingTime, 
   onOpenYouTubeAndAutoSkip,
   isPlaybackDisabled,
+  currentSongErrorCode,
   isSkipping,
   idleMessages, 
+  onPlayerError,
 }: Props) {
   
   return (
@@ -57,7 +61,7 @@ export function PlayerDesktopView({
         <div className="relative h-full" ref={playerRef}>
           
           {currentVideo ? (
-            isPlaybackDisabled ? (
+            isPlaybackDisabled || !!currentSongErrorCode ? (
               <PlayerDisabledView
                 video={currentVideo}
                 nextSong={nextSong}
@@ -67,6 +71,7 @@ export function PlayerDesktopView({
                 onSkip={onSkip}
                 isSkipping={isSkipping}
                 remainingTime={remainingTime}
+                message={currentSongErrorCode ? "This video can't be played here" : undefined}
               />
             ) : (
               <Player
@@ -83,6 +88,7 @@ export function PlayerDesktopView({
                 onPause={onPause}
                 remainingTime={remainingTime}
                 onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
+                onPlayerError={onPlayerError}
               />
             )
           ) : (

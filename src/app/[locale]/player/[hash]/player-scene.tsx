@@ -20,6 +20,8 @@ type InitialPartyData = {
   settings: KaraokeParty["settings"];
   currentSongStartedAt: Date | null;
   currentSongRemainingDuration: number | null;
+  currentSongErrorCode: string | null;
+  currentSongOpenedOnYouTube: boolean;
   status: string;
   idleMessages: string[];
   themeSuggestions: string[];
@@ -34,7 +36,7 @@ export default function PlayerScene({ party, initialData }: Props) {
   const router = useRouter();
   const t = useTranslations('player');
   const [forceAutoplay, setForceAutoplay] = useState(false);
-  
+
   if (!party.hash) {
     return <div>Error: Party hash is missing.</div>;
   }
@@ -46,6 +48,8 @@ export default function PlayerScene({ party, initialData }: Props) {
     socketActions, 
     isPlaying,
     settings, 
+    currentSongErrorCode,
+    currentSongOpenedOnYouTube,
     isSkipping, 
     remainingTime, 
     idleMessages,
@@ -53,7 +57,7 @@ export default function PlayerScene({ party, initialData }: Props) {
   } = usePartySocket(
     party.hash,
     initialData,
-    "Player" 
+    "Player",
   );
   
   const desktopScreen = useFullscreen();
@@ -75,37 +79,34 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const displayMessages = [defaultMessage, ...idleMessages];
 
-  const doTheSkip = useCallback(() => {
+  const doTheSkip = useCallback((status: "COMPLETED" | "SKIPPED" | "ERROR") => {
     setForceAutoplay(false); 
-    socketActions.markAsPlayed();
+    socketActions.markAsPlayed(status);
     socketActions.playbackPause();
   }, [socketActions]);
 
-  useEffect(() => {
-    if (isSkipping && remainingTime <= 0) {
-      const durationMs = parseISO8601Duration(currentSong?.duration);
-      if (durationMs && durationMs > 0) {
-        console.log("Auto-skip timer finished, skipping song.");
-        doTheSkip(); 
-      }
-    }
-  }, [isSkipping, remainingTime, currentSong, doTheSkip]);
-
   const handlePlayerEnd = async () => {
-    doTheSkip(); 
+    doTheSkip("COMPLETED"); 
   };
 
   const handleSkip = async () => {
-    socketActions.startSkipTimer(); 
-    doTheSkip(); 
+    let status: "COMPLETED" | "SKIPPED" | "ERROR";
+    if (isPlaybackDisabled) {
+      status = currentSongOpenedOnYouTube ? "COMPLETED" : "SKIPPED";
+    } else {
+      status = currentSongErrorCode ? "ERROR" : "SKIPPED";
+    }
+    doTheSkip(status); 
   };
   
   const handleOpenYouTubeAndAutoSkip = () => {
     if (!currentSong) return; 
-    socketActions.startSkipTimer(); 
-    const durationMs = parseISO8601Duration(currentSong.duration);
-    if (durationMs && durationMs > 0) {
-      socketActions.playbackPlay(); 
+    if (!settings.disablePlayback && currentSongErrorCode) {
+      // In-app error page: just open YouTube, song stays until host skips
+      socketActions.openedOnYouTube();
+    } else if (settings.disablePlayback) {
+      // YouTube-open mode: record that we opened it, but do not skip
+      socketActions.openedOnYouTube();
     }
     window.open(
       `https://www.youtube.com/watch?v=${currentSong.id}#mykaraokeparty`,
@@ -127,6 +128,10 @@ export default function PlayerScene({ party, initialData }: Props) {
 
   const displayedVideo = isIntermissionMode ? undefined : (currentSong ?? undefined);
 
+  const handlePlayerError = useCallback((errorCode: string) => {
+    socketActions.playbackError(errorCode);
+  }, [socketActions]);
+
   const commonPlayerProps = {
     joinPartyUrl: joinPartyUrl,
     onPlayerEnd: handlePlayerEnd,
@@ -139,18 +144,20 @@ export default function PlayerScene({ party, initialData }: Props) {
     remainingTime: remainingTime,
     nextSong: nextSong,
     onOpenYouTubeAndAutoSkip: handleOpenYouTubeAndAutoSkip,
+    onPlayerError: handlePlayerError,
   };
 
   return (
     <div className="w-full h-screen"> 
       <div className="flex h-full flex-col">
-        
+
         <PlayerDesktopView
           playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
           onToggleFullscreen={desktopScreen.toggle}
           isFullscreen={desktopScreen.fullscreen}
           currentVideo={displayedVideo}
           isPlaybackDisabled={isPlaybackDisabled}
+          currentSongErrorCode={currentSongErrorCode}
           isSkipping={isSkipping}          
           idleMessages={displayMessages} 
           {...commonPlayerProps}

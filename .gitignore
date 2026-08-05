@@ -54,3 +54,5 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 /tests/screenshots/
+# Local test video configuration (copy from test-videos.json.example)
+/tests/test-videos.json

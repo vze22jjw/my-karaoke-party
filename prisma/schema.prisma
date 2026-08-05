@@ -30,6 +30,9 @@ model Party {
     orderByFairness Boolean        @default(true)
     disablePlayback Boolean        @default(false)
     isManualSortActive Boolean     @default(false)
+    maxConcurrentProbes Int        @default(3)
+    currentSongErrorCode           String?
+    currentSongOpenedOnYouTube     Boolean @default(false)
     
     playlistItems  PlaylistItem[]
     participants   PartyParticipant[]
@@ -74,9 +77,11 @@ model PlaylistItem {
     coverUrl   String
     duration   String?
     singerName String
-    addedAt    DateTime  @default(now())
-    playedAt   DateTime?
-    orderIndex Int       @default(0)
+    addedAt      DateTime  @default(now())
+    playedAt     DateTime?
+    playedStatus String?
+    errorCode    String?
+    orderIndex   Int       @default(0)
     randomBreaker Float?
     spotifyId  String?
     isPriority Boolean   @default(false)

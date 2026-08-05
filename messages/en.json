@@ -161,7 +161,7 @@
         "manualSort": "Manual Sort",
         "infoQueue": "Queue Ordering: Fairness rotates singers. FIFO is first-come, first-served.",
         "infoSort": "Manual Queue Sort: Enable to drag-and-drop. Disabling saves the order.",
-        "infoPlayback": "Playback: In-App plays videos here. YouTube forces external links."
+        "infoPlayback": "Playback: In-App filters search to embeddable videos and plays them here. YouTube skips the filter and opens every song on youtube.com."
       },
       "spotify": {
         "title": "Spotify Integration",
@@ -286,7 +286,8 @@
         "serve": "Serve In",
         "turnUp": "Turn Up",
         "singIn": "Sing In",
-        "micIn": "Mic In"
+        "micIn": "Mic In",
+        "micInSeeHost": "Mic In (See Host)"
       }
     },
     "funStats": {
@@ -427,7 +428,8 @@
       "unauthorized": "Unauthorized: Host access required.",
       "videoTooLong": "Video too long! Max duration is 10 minutes.",
       "addFailed": "Failed to add song.",
-      "cannotModifyQueueNow": "Cannot modify queue while singing or up next."
+      "cannotModifyQueueNow": "Cannot modify queue while singing or up next.",
+      "alreadyInQueue": "This song is already in your queue."
     }
   }
 }

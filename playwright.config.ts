@@ -1,9 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as path from 'path';
+import { getReportDirName } from './src/lib/report-dir';
 
-const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+function getTestNameFromArgv(): string | null {
+  const specArg = process.argv.slice(2).find((arg) => arg.includes('.spec.ts'));
+  if (!specArg) return null;
+  return path.basename(specArg).replace(/\.spec\.ts$/, '');
+}
 
-const runDir = path.join('playwright-report', `run-${timestamp}`);
+const reportName = process.env.PLAYWRIGHT_REPORT_DIR || getReportDirName(getTestNameFromArgv() ?? 'run');
+const runDir = path.isAbsolute(reportName) ? reportName : path.join('playwright-report', reportName);
 
 process.env.PLAYWRIGHT_REPORT_DIR = runDir;
 

@@ -69,6 +69,8 @@ export default function ApplauseScene({ partyHash, initialCurrentSong, initialUn
       },
       currentSongStartedAt: null,
       currentSongRemainingDuration: null,
+      currentSongErrorCode: null,
+      currentSongOpenedOnYouTube: false,
       status: "STARTED",
       idleMessages: [],
       themeSuggestions: [],

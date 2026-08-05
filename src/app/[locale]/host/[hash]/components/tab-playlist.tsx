@@ -50,7 +50,34 @@ type ClientVideoInPlaylist = VideoInPlaylist & {
     _clientId: string;
 };
 
+function getStatusBadgeClasses(status: string | null) {
+  switch (status) {
+    case "COMPLETED":
+      return "bg-green-500/20 text-green-400 border-green-500/30";
+    case "ERROR":
+      return "bg-red-500/20 text-red-400 border-red-500/30";
+    case "SKIPPED":
+    default:
+      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+  }
+}
+
+function getStatusLabel(status: string | null) {
+  switch (status) {
+    case "COMPLETED":
+      return "Completed";
+    case "ERROR":
+      return "Error";
+    case "SKIPPED":
+      return "Skipped";
+    default:
+      return "";
+  }
+}
+
 function ReadOnlyItem({ video, index }: { video: VideoInPlaylist, index: number }) {
+  const statusLabel = getStatusLabel(video.playedStatus);
+
   return (
     <div className="flex items-center gap-3 p-2 rounded-lg bg-black/30 border border-white/10 w-full overflow-hidden">
       <div className="relative w-12 h-12 flex-shrink-0">
@@ -71,6 +98,12 @@ function ReadOnlyItem({ video, index }: { video: VideoInPlaylist, index: number 
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <p className="text-xs text-white/90 drop-shadow-md truncate font-medium">{video.singerName}</p>
+          {statusLabel && (
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded border", getStatusBadgeClasses(video.playedStatus))}>
+              {statusLabel}
+              {video.errorCode ? ` (${video.errorCode})` : ""}
+            </span>
+          )}
         </div>
       </div>
     </div>

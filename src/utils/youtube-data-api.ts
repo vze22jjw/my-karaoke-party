@@ -19,7 +19,7 @@ interface SearchResultSnippet {
   thumbnails: Thumbnails;
   channelTitle: string;
   liveBroadcastContent: string;
-  publishTime: string;
+  publishTime?: string;
 }
 interface SearchResultItem {
   kind: string;
@@ -89,24 +89,28 @@ class YouTubeDataAPI {
     return null;
   }
 
-  async searchVideo(query: string, maxResults = 10) {
+  async searchVideo(query: string, maxResults = 10, requireEmbeddable = true) {
     let lastError: unknown;
 
     for (const [index, apiKey] of this.apiKeys.entries()) {
       try {
         console.log(`Searching for "${query}" with API key #${index + 1}`);
 
+        const params: Record<string, string | number> = {
+          key: apiKey,
+          part: "snippet",
+          type: "video",
+          q: query,
+          maxResults,
+        };
+
+        if (requireEmbeddable) {
+          params.videoEmbeddable = "true";
+        }
+
         const response = await axios.get<YouTubeSearchResponse>(
           `${this.baseUrl}/search`,
-          {
-            params: {
-              key: apiKey,
-              part: "snippet",
-              type: "video",
-              q: query,
-              maxResults,
-            },
-          },
+          { params },
         );
 
         return response.data.items;

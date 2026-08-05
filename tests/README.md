@@ -7,6 +7,7 @@ This directory contains a robust **Playwright** test suite for **My Karaoke Part
 The suite is divided into specialized test files to cover different aspects of the application:
 
 * **`core-flow.spec.ts`**: A comprehensive "Happy Path" lifecycle. It verifies host creation, guest joining with tour walkthroughs, adding songs, and basic party interactions.
+* **`playback-mode.spec.ts`**: Verifies the two playback modes. In-App mode filters the guest search to embeddable videos and plays them on the host player. YouTube-open mode removes that filter and opens every song on youtube.com.
 * **`queue-fairness.spec.ts`**: Focuses on the "Fair Queue" algorithm. It verifies that songs from different users are interleaved correctly and that manual reordering or deletions do not break the rotation.
 * **`load-test.spec.ts`**: A backend-focused stress test. It uses direct tRPC API injection to rapidly add a large volume of songs across multiple users to stress the server and database without UI overhead.
 
@@ -14,7 +15,7 @@ The suite is divided into specialized test files to cover different aspects of t
 
 Every test run creates a **single, unique timestamped folder** to prevent file clutter.
 
-**Directory Pattern**: `playwright-report/run-YYYY-MM-DD-HH-mm/`
+**Directory Pattern**: `playwright-report/<test-name>-YYYYMMDD-HHMM/`
 
 Inside this folder, you will find:
 

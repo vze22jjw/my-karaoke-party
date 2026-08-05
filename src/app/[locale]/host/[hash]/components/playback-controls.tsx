@@ -80,7 +80,7 @@ export function PlaybackControls({
                 </p>
             </div>
         </div>
-        
+
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <p className="truncate max-w-[120px] text-primary font-medium">{currentSong.singerName}</p>
           <span className="text-border/60">•</span>

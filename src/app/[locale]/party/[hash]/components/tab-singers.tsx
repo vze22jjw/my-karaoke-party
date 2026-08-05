@@ -28,10 +28,12 @@ type Props = {
   isPlaying: boolean;
   remainingTime: number;
   onReplayTour: () => void;
+  disablePlayback: boolean;
+  currentSongErrorCode: string | null;
 };
 
 export function TabSingers({
-  currentSong, unplayedPlaylist, playedPlaylist, participants, name, onLeaveParty: _propLeaveParty, isPlaying, remainingTime, onReplayTour
+  currentSong, unplayedPlaylist, playedPlaylist, participants, name, onLeaveParty: _propLeaveParty, isPlaying, remainingTime, onReplayTour, disablePlayback, currentSongErrorCode
 }: Props) {
   const t = useTranslations('guest.singers');
   const router = useRouter();
@@ -174,11 +176,15 @@ export function TabSingers({
                           
                           {isNextSinger && currentSong && (
                             <div className="text-xs font-mono">
-                              <SongCountdownTimer 
-                                remainingTime={remainingTime} 
-                                className={cn("font-bold", isPlaying ? "text-primary" : "text-muted-foreground")} 
-                                message={nextSingerMessage} 
-                              />
+                              {disablePlayback || currentSongErrorCode ? (
+                                <span className="font-bold text-muted-foreground">{t('micInSeeHost')}</span>
+                              ) : (
+                                <SongCountdownTimer 
+                                  remainingTime={remainingTime} 
+                                  className={cn("font-bold", isPlaying ? "text-primary" : "text-muted-foreground")} 
+                                  message={nextSingerMessage} 
+                                />
+                              )}
                             </div>
                           )}
                         </div>

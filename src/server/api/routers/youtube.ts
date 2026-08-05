@@ -10,15 +10,17 @@ export const youtubeRouter = createTRPCRouter({
       z.object({
         keyword: z.string(),
         maxResults: z.number().optional(),
+        requireEmbeddable: z.boolean().optional().default(true),
       }),
     )
     .query(async ({ input, ctx }) => {
       log.info("Searching for videos", {
         keyword: input.keyword,
         maxResults: input.maxResults,
+        requireEmbeddable: input.requireEmbeddable,
       });
 
-      const cacheKey = `Youtube:${input.keyword}:${input.maxResults ?? 10}`;
+      const cacheKey = `Youtube:${input.keyword}:${input.maxResults ?? 12}:${input.requireEmbeddable}`;
 
       const cachedVideos =
         await ctx.cache.get<ReturnType<typeof ctx.youtube.searchVideo>>(
@@ -34,6 +36,7 @@ export const youtubeRouter = createTRPCRouter({
         const videos = await ctx.youtube.searchVideo(
           input.keyword,
           input.maxResults ?? 12,
+          input.requireEmbeddable,
         );
 
         if (videos) {

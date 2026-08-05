@@ -25,8 +25,7 @@ type Props = {
 export function HostScene({ party, initialData, hostName: initialHostName }: Props) {
   const router = useRouter();
   const tToasts = useTranslations('toasts.host');
-  const [localName] = useLocalStorage<string>({ key: "name", defaultValue: "" });
-  const effectiveHostName = localName || (initialHostName ?? "Host");
+  const effectiveHostName = initialHostName ?? "Host";
 
   const {
     currentSong,
@@ -38,6 +37,8 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
     isPlaying,
     remainingTime,
     settings,
+    currentSongErrorCode,
+    currentSongOpenedOnYouTube,
     themeSuggestions,
   } = usePartySocket(party.hash!, initialData, effectiveHostName);
 
@@ -200,7 +201,13 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
           if (!currentSong) return;
           setIsSkipping(true);
           try {
-            socketActions.markAsPlayed();
+            let status: "COMPLETED" | "SKIPPED" | "ERROR";
+            if (settings.disablePlayback) {
+              status = currentSongOpenedOnYouTube ? "COMPLETED" : "SKIPPED";
+            } else {
+              status = currentSongErrorCode ? "ERROR" : "SKIPPED";
+            }
+            socketActions.markAsPlayed(status);
           } finally {
             setIsSkipping(false);
           }
@@ -220,7 +227,7 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
 
         maxSearchResults={maxSearchResults}
         onSetMaxResults={setMaxSearchResults}
-        
+
         onCloseParty={() => setIsConfirmingClose(true)}
         isConfirmingClose={isConfirmingClose}
         onConfirmClose={() => {
