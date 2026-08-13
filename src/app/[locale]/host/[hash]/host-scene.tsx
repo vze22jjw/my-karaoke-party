@@ -13,6 +13,7 @@ import type { Party } from "@prisma/client";
 import type { InitialPartyData, VideoInPlaylist } from "~/types/app-types";
 import { useRouter } from "~/navigation";
 import { useTranslations } from "next-intl";
+import emojiMap from "~/config/emoji-map.json";
 
 const getScopedKey = (hash: string, key: string) => `host-${hash}-${key}`;
 
@@ -26,6 +27,12 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
   const router = useRouter();
   const tToasts = useTranslations('toasts.host');
   const effectiveHostName = initialHostName ?? "Host";
+  const [hostAvatar, setHostAvatar] = useLocalStorage<string | null>({
+    key: "hostAvatar",
+    defaultValue: null,
+  });
+
+  const initialHostAvatar = hostAvatar ?? emojiMap.variables.host_emoji_1;
 
   const {
     currentSong,
@@ -40,7 +47,15 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
     currentSongErrorCode,
     currentSongOpenedOnYouTube,
     themeSuggestions,
-  } = usePartySocket(party.hash!, initialData, effectiveHostName);
+  } = usePartySocket(party.hash!, initialData, effectiveHostName, initialHostAvatar);
+
+  const hostParticipant = participants.find((p) => p.role === "Host");
+  const currentHostAvatar = hostAvatar ?? hostParticipant?.avatar ?? emojiMap.variables.host_emoji_1;
+
+  const handleChangeHostAvatar = (newAvatar: string) => {
+    setHostAvatar(newAvatar);
+    socketActions.updateHostAvatar(newAvatar);
+  };
 
   const [isManualSortActive, setIsManualSortActive] = useLocalStorage({
     key: getScopedKey(party.hash!, "manual-sort"),
@@ -262,6 +277,8 @@ export function HostScene({ party, initialData, hostName: initialHostName }: Pro
         spotifyPlaylistId={settings.spotifyPlaylistId ?? null}
         spotifyLink={settings.spotifyLink ?? null}
         onReplayTour={() => setIsTourOpen(true)}
+        hostAvatar={currentHostAvatar}
+        onChangeHostAvatar={handleChangeHostAvatar}
       />
     </>
   );

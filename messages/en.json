@@ -59,7 +59,10 @@
     "chooseIcon": "Choose Your Icon",
     "joining": "Joining...",
     "nameTip": "Tip: Your name is case-sensitive. Use the exact same name to keep your history!",
-    "backToList": "Back to parties list"
+    "backToList": "Back to parties list",
+    "changeIcon": "Change Icon",
+    "keepIcon": "Keep Icon",
+    "hostIconHidden": "This name matches the host. Tap below if you want a different icon."
   },
   "create": {
     "title": "Create a New Party",
@@ -193,6 +196,10 @@
         "confirmTitle": "Are you sure?",
         "confirmDesc": "This will end the party for everyone. It becomes read-only.",
         "confirmBtn": "Yes, End Party"
+      },
+      "avatar": {
+        "title": "Host Icon",
+        "info": "Choose the icon that represents you as the host."
       }
     },
     "card": {

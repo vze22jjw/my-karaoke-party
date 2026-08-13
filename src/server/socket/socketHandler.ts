@@ -22,7 +22,9 @@ import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog } from "~/utils/debug-logger";
 
 const addSongRateLimit = new Map<string, number>();
+const avatarUpdateRateLimit = new Map<string, number>();
 const RATE_LIMIT_WINDOW = 2000; // 2 seconds
+const AVATAR_RATE_LIMIT_WINDOW = 2000; // 2 seconds
 
 function getCookieValue(cookieHeader: string | undefined, cookieName: string): string | undefined {
   if (!cookieHeader) return undefined;
@@ -615,6 +617,64 @@ export function registerSocketEvents(io: Server) {
         } catch (error) {
             console.error("Error toggling priority:", error);
         }
+    });
+
+    socket.on("update-host-avatar", async (data: { partyHash: string; avatar: string }) => {
+      if (!ensureHost(socket)) return;
+
+      const lastRequest = avatarUpdateRateLimit.get(socket.id) ?? 0;
+      const now = Date.now();
+      if (now - lastRequest < AVATAR_RATE_LIMIT_WINDOW) {
+        socket.emit("error", { message: "rateLimit" });
+        return;
+      }
+      avatarUpdateRateLimit.set(socket.id, now);
+
+      try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party) return;
+
+        const host = await db.partyParticipant.findFirst({
+          where: { partyId: party.id, role: "Host" }
+        });
+        if (host) {
+          await db.partyParticipant.update({
+            where: { id: host.id },
+            data: { avatar: data.avatar }
+          });
+          await updateAndEmitSingers(io, party.id, data.partyHash);
+        }
+      } catch (error) {
+        console.error("Error updating host avatar:", error);
+      }
+    });
+
+    socket.on("update-my-avatar", async (data: { partyHash: string; avatar: string }) => {
+      const lastRequest = avatarUpdateRateLimit.get(socket.id) ?? 0;
+      const now = Date.now();
+      if (now - lastRequest < AVATAR_RATE_LIMIT_WINDOW) {
+        socket.emit("error", { message: "rateLimit" });
+        return;
+      }
+      avatarUpdateRateLimit.set(socket.id, now);
+
+      try {
+        const party = await db.party.findUnique({ where: { hash: data.partyHash } });
+        if (!party || !socket.data.singerName) return;
+
+        const participant = await db.partyParticipant.findUnique({
+          where: { partyId_name: { partyId: party.id, name: socket.data.singerName } }
+        });
+        if (participant) {
+          await db.partyParticipant.update({
+            where: { id: participant.id },
+            data: { avatar: data.avatar }
+          });
+          await updateAndEmitSingers(io, party.id, data.partyHash);
+        }
+      } catch (error) {
+        console.error("Error updating my avatar:", error);
+      }
     });
 
     socket.on("song-ended", async (data: { partyHash: string, id: string }) => {

@@ -26,6 +26,47 @@ import {
 import { toast } from "sonner";
 import { Loader2, PartyPopper } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useLayoutEffect, useState } from "react";
+import { cn } from "~/lib/utils";
+import emojiMap from "~/config/emoji-map.json";
+
+const HOST_AVATAR_MAP: Record<string, string> = {
+  [emojiMap.variables.host_emoji_1]: "crown",
+  [emojiMap.variables.host_emoji_2]: "brain",
+  [emojiMap.variables.host_emoji_3]: "astronaut",
+  [emojiMap.variables.host_emoji_4]: "tophat",
+  [emojiMap.variables.host_emoji_5]: "cork-bottle",
+};
+const HOST_AVATARS = Object.keys(HOST_AVATAR_MAP);
+
+const AvatarPicker = ({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) => (
+  <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border bg-muted/50 p-3">
+    {options.map((avatar) => (
+      <button
+        key={avatar}
+        type="button"
+        onClick={() => onChange(avatar)}
+        className={cn(
+          "flex h-12 w-12 items-center justify-center rounded-full text-2xl leading-none select-none transition-all duration-200",
+          value === avatar
+            ? "bg-primary/20 ring-2 ring-primary/60 scale-110 [filter:drop-shadow(0_0_6px_rgba(244,63,94,0.65))]"
+            : "sm:hover:bg-muted-foreground/20",
+        )}
+        data-testid={`avatar-select-${HOST_AVATAR_MAP[avatar] ?? 'unknown'}`}
+      >
+        {avatar}
+      </button>
+    ))}
+  </div>
+);
 
 // Note: Zod schema messages are hardcoded here for simplicity, 
 // but you can use z.errorMap or pass t function if needed for validation errors.
@@ -43,7 +84,36 @@ const formSchema = z.object({
 export function CreateParty() {
   const router = useRouter();
   const t = useTranslations('create');
+  const tJoin = useTranslations('join');
   const [name, setName] = useLocalStorage({ key: "name", defaultValue: "" });
+
+  const [yourAvatar, setYourAvatar] = useState(emojiMap.variables.host_emoji_1);
+  const [hostAvatarOptions, setHostAvatarOptions] = useState(HOST_AVATARS);
+
+  useLayoutEffect(() => {
+    const shuffled = [...HOST_AVATARS].sort(() => Math.random() - 0.5);
+    setHostAvatarOptions(shuffled);
+
+    const stored = window.localStorage.getItem("hostAvatar");
+    if (!stored || stored === '""' || stored === 'null') {
+      const randomHostAvatar = HOST_AVATARS[Math.floor(Math.random() * HOST_AVATARS.length)]!;
+      setYourAvatar(randomHostAvatar);
+    } else {
+      let parsed = stored;
+      try {
+        const val: unknown = JSON.parse(stored);
+        if (typeof val === "string") {
+          parsed = val;
+        }
+      } catch (e) {}
+      if (HOST_AVATARS.includes(parsed)) {
+        setYourAvatar(parsed);
+      } else {
+        const randomHostAvatar = HOST_AVATARS[Math.floor(Math.random() * HOST_AVATARS.length)]!;
+        setYourAvatar(randomHostAvatar);
+      }
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,11 +127,13 @@ export function CreateParty() {
   const createParty = api.party.create.useMutation({
     onSuccess: (data) => {
       if (data.hash) {
-        setName(form.getValues("yourName"));
-        
+        const yourName = form.getValues("yourName");
         if (typeof window !== "undefined") {
-            window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
+          window.localStorage.setItem("name", JSON.stringify(yourName));
+          window.localStorage.setItem("hostAvatar", JSON.stringify(yourAvatar));
+          window.localStorage.setItem("karaoke-player-active-tab", JSON.stringify("settings"));
         }
+        setName(yourName);
 
         toast.success(t('toastSuccess', { name: data.name }));
         
@@ -92,7 +164,7 @@ export function CreateParty() {
         return;
       }
 
-      createParty.mutate({ name: values.partyName, singerName: values.yourName });
+      createParty.mutate({ name: values.partyName, singerName: values.yourName, avatar: yourAvatar });
 
     } catch (error) {
       toast.error(t('authFailed'));
@@ -148,6 +220,18 @@ export function CreateParty() {
                 </FormItem>
               )}
             />
+
+            <FormItem>
+              <FormLabel>{tJoin('chooseIcon')}</FormLabel>
+              <FormControl>
+                <AvatarPicker
+                  value={yourAvatar}
+                  onChange={setYourAvatar}
+                  options={hostAvatarOptions}
+                />
+              </FormControl>
+            </FormItem>
+
             <FormField
               control={form.control}
               name="adminPassword"

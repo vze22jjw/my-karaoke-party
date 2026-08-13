@@ -1,6 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as path from 'path';
+import { config as dotenvConfig } from 'dotenv';
 import { getReportDirName } from './src/lib/report-dir';
+
+dotenvConfig({ path: path.resolve(process.cwd(), '.env') });
+
+process.env.BASE_URL = process.env.BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+process.env.ADMIN_TOKEN = process.env.ADMIN_TOKEN || process.env.ADMIN_TOKEN;
 
 function getTestNameFromArgv(): string | null {
   const specArg = process.argv.slice(2).find((arg) => arg.includes('.spec.ts'));

@@ -9,10 +9,11 @@ import useSound from "use-sound";
 import { decode } from "html-entities";
 import { useLocalStorage } from "@mantine/hooks";
 import { env } from "~/env"; 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
+import emojiMap from "~/config/emoji-map.json";
 
-const APPLAUSE_EMOJI = "\ud83d\udc4f\ud83c\udffe"; 
+const APPLAUSE_EMOJI = emojiMap.variables.applause_emoji; 
 
 const getSoundUrls = () => {
     const envVar = env.NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL;
@@ -25,8 +26,36 @@ const getSoundUrls = () => {
 const SOUND_URLS = getSoundUrls();
 
 const SoundAgent = ({ url, index, onRegister }: { url: string, index: number, onRegister: (i: number, play: () => void) => void }) => {
-    const [play] = useSound(url, { volume: 0.5 });
-    
+    const localFallbackUrl = `/sounds/applause${index % 2}.mp3`;
+    const [effectiveUrl, setEffectiveUrl] = useState(localFallbackUrl);
+
+    useEffect(() => {
+        if (url === localFallbackUrl) return;
+
+        const audio = new Audio();
+        audio.preload = "metadata";
+
+        const handleCanPlay = () => setEffectiveUrl(url);
+        const handleError = () => setEffectiveUrl(localFallbackUrl);
+
+        audio.addEventListener("canplaythrough", handleCanPlay);
+        audio.addEventListener("error", handleError);
+        audio.src = url;
+        audio.load();
+
+        // If the remote URL is very slow, prefer local after 2.5s
+        const timeout = setTimeout(() => setEffectiveUrl(localFallbackUrl), 2500);
+
+        return () => {
+            audio.removeEventListener("canplaythrough", handleCanPlay);
+            audio.removeEventListener("error", handleError);
+            audio.src = "";
+            clearTimeout(timeout);
+        };
+    }, [url, index, localFallbackUrl]);
+
+    const [play] = useSound(effectiveUrl, { volume: 1 });
+
     useEffect(() => {
         if (play) {
             onRegister(index, play);

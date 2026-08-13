@@ -83,7 +83,14 @@ test.describe('Playback Modes', () => {
   test.afterAll(async () => {
     if (partyCode) {
         const apiContext = await request.newContext();
-        await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, { headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }, params: { hash: partyCode } }).catch(()=>{});
+        try {
+            const res = await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, { headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }, params: { hash: partyCode } });
+            console.log(`[Cleanup] DELETE party ${partyCode}: ${res.status()}`);
+            if (!res.ok()) console.error(`[Cleanup] Failed to delete party ${partyCode}: ${await res.text()}`);
+        } catch (e) {
+            console.error(`[Cleanup] Error deleting party ${partyCode}:`, e);
+        }
+        await apiContext.dispose();
     }
     await hostContext.close();
     await guestContext.close();

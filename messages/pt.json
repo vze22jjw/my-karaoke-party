@@ -59,7 +59,10 @@
     "chooseIcon": "Escolha seu Ícone",
     "joining": "Entrando...",
     "nameTip": "Dica: Seu nome diferencia maiúsculas. Use o mesmo nome para manter seu histórico!",
-    "backToList": "Voltar para lista de festas"
+    "backToList": "Voltar para lista de festas",
+    "changeIcon": "Change Icon",
+    "keepIcon": "Keep Icon",
+    "hostIconHidden": "This name matches the host. Tap below if you want a different icon."
   },
   "create": {
     "title": "Criar Nova Festa",
@@ -193,6 +196,10 @@
         "confirmTitle": "Tem certeza?",
         "confirmDesc": "Isso encerrará a festa para todos. Ela se tornará somente leitura.",
         "confirmBtn": "Sim, Encerrar Festa"
+      },
+      "avatar": {
+        "title": "Host Icon",
+        "info": "Choose the icon that represents you as the host."
       }
     },
     "card": {
