@@ -5,6 +5,7 @@ import { useRouter } from "~/navigation";
 import { toast } from "sonner";
 import { parseISO8601Duration } from "~/utils/string";
 import { useLocalStorage } from "@mantine/hooks";
+import emojiMap from "~/config/emoji-map.json";
 import { useTranslations } from "next-intl";
 import { debugLog } from "~/utils/debug-logger";
 
@@ -32,6 +33,8 @@ interface SocketActions {
   toggleManualSort: (isActive: boolean) => void;
   saveQueueOrder: (newOrderIds: string[]) => void;
   togglePriority: (videoId: string) => void;
+  updateHostAvatar: (avatar: string) => void;
+  updateMyAvatar: (avatar: string) => void;
 }
 
 type Participant = {
@@ -81,6 +84,7 @@ export function usePartySocket(
   partyHash: string,
   initialData: PartySocketData,
   singerName: string,
+  providedAvatar?: string | null,
 ): UsePartySocketReturn {
   const router = useRouter();
   const tToasts = useTranslations('toasts.socket');
@@ -92,7 +96,8 @@ export function usePartySocket(
 
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [avatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: "🎤" });
+  const [storedAvatar] = useLocalStorage<string | null>({ key: "avatar", defaultValue: emojiMap.variables.singer_emoji_1 });
+  const avatar = providedAvatar ?? storedAvatar;
 
   const [currentSong, setCurrentSong] = useState<VideoInPlaylist | null>(initialData.currentSong);
   const [unplayedPlaylist, setUnplayedPlaylist] = useState<VideoInPlaylist[]>(initialData.unplayed);
@@ -119,6 +124,18 @@ export function usePartySocket(
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevSongIdRef = useRef<string | null>(initialData.currentSong?.id ?? null);
   const lastAddRef = useRef<number>(0);
+  const lastAvatarUpdateRef = useRef<Map<string, number>>(new Map());
+
+  const throttleAvatarUpdate = (key: string): boolean => {
+    const now = Date.now();
+    const last = lastAvatarUpdateRef.current.get(key) ?? 0;
+    if (now - last < CLIENT_RATE_LIMIT_MS) {
+      toast.error(tToastsRef.current('rateLimit'));
+      return false;
+    }
+    lastAvatarUpdateRef.current.set(key, now);
+    return true;
+  };
 
   const hostName = useMemo(() => {
     const host = participants.find((p) => p.role === "Host");
@@ -344,6 +361,16 @@ export function usePartySocket(
     toggleManualSort: (isActive) => socketRef.current?.emit("toggle-manual-sort", { partyHash, isActive }),
     saveQueueOrder: (newOrderIds) => socketRef.current?.emit("save-queue-order", { partyHash, newOrderIds }),
     togglePriority: (videoId) => socketRef.current?.emit("toggle-priority", { partyHash, videoId }),
+    updateHostAvatar: (newAvatar) => {
+      if (throttleAvatarUpdate('host')) {
+        socketRef.current?.emit("update-host-avatar", { partyHash, avatar: newAvatar });
+      }
+    },
+    updateMyAvatar: (newAvatar) => {
+      if (throttleAvatarUpdate('my')) {
+        socketRef.current?.emit("update-my-avatar", { partyHash, avatar: newAvatar });
+      }
+    },
   }), [partyHash, singerName, avatar, sendApplauseHttp]);
 
   return {

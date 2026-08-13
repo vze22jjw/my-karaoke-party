@@ -117,6 +117,74 @@ export async function joinParty(page: Page, partyCode: string, name: string, ind
     });
 }
 
+export async function joinAsHost(page: Page, partyCode: string, name: string, avatarTestId?: string) {
+    console.log(`👤 Host joining...`);
+
+    await page.goto(`${BASE_URL}/en/join`);
+
+    await expect(async () => {
+        if (page.url().includes('/party/')) return;
+        if (!page.url().includes('/join')) await page.goto(`${BASE_URL}/en/join`);
+
+        await page.getByTestId('join-party-code-input').fill(partyCode);
+        await page.getByTestId('join-name-input').fill(name);
+
+        // Wait for host mode to activate
+        await expect(page.getByText('This name matches the host.')).toBeVisible({ timeout: 10000 });
+
+        // The host's current icon is shown; open the override picker to choose
+        await page.getByRole('button', { name: 'Change Icon' }).click();
+
+        // Wait for the host-specific avatar picker to appear
+        await expect(page.locator('button[data-testid="avatar-select-crown"]')).toBeVisible({ timeout: 10000 });
+
+        // Hosts should see only 5 host avatars, never the guest mic
+        await expect(page.locator('button[data-testid^="avatar-select-"]')).toHaveCount(5, { timeout: 10000 });
+        await expect(page.locator('button[data-testid="avatar-select-mic"]')).toHaveCount(0);
+
+        if (avatarTestId) {
+            await page.locator(`button[data-testid="${avatarTestId}"]`).click({ force: true });
+        } else {
+            await page.locator('button[data-testid^="avatar-select-"]').first().click({ force: true });
+        }
+
+        const joinBtn = page.getByTestId('join-submit-button');
+        await expect(joinBtn).toBeEnabled({ timeout: 5000 });
+        await joinBtn.click({ force: true });
+
+        try {
+            await expect(page).toHaveURL(/\/party\//, { timeout: 10000 });
+        } catch (e) {
+            console.log(`⚠️ Host join hung. Reloading page...`);
+            await page.reload();
+            await page.waitForLoadState('domcontentloaded');
+            throw e;
+        }
+    }).toPass({ timeout: 90000, intervals: [1000] });
+
+    const overlay = page.locator('[data-vaul-overlay]');
+
+    await expect(async () => {
+        if (!(await overlay.isVisible())) return;
+
+        console.log(`ℹ️  Dismissing tour overlay for host join...`);
+
+        const btn = page.locator('button').filter({ hasText: /Finish|Got it|Concluir|Next|Avance/i }).first();
+
+        if (await btn.isVisible()) {
+            await btn.click({ force: true });
+        } else {
+            await page.keyboard.press('Escape');
+        }
+
+        await page.waitForTimeout(300);
+        await expect(overlay).toBeHidden({ timeout: 1000 });
+    }).toPass({
+        timeout: 30000,
+        intervals: [200]
+    });
+}
+
 export async function addSong(page: Page, query: string) {
     console.log(`🎵 Helper: Adding song "${query}"...`);
     const tabAdd = page.getByTestId('tab-add');

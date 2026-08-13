@@ -59,7 +59,10 @@
     "chooseIcon": "アイコンを選択",
     "joining": "参加中...",
     "nameTip": "ヒント: 名前は大文字と小文字を区別します。同じ名前を使用して履歴を保持してください！",
-    "backToList": "パーティー一覧に戻る"
+    "backToList": "パーティー一覧に戻る",
+    "changeIcon": "Change Icon",
+    "keepIcon": "Keep Icon",
+    "hostIconHidden": "This name matches the host. Tap below if you want a different icon."
   },
   "create": {
     "title": "新規パーティー作成",
@@ -193,6 +196,10 @@
         "confirmTitle": "Are you sure?",
         "confirmDesc": "This will end the party for everyone. It becomes read-only.",
         "confirmBtn": "Yes, End Party"
+      },
+      "avatar": {
+        "title": "Host Icon",
+        "info": "Choose the icon that represents you as the host."
       }
     },
     "card": {

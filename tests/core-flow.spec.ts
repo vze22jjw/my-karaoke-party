@@ -3,7 +3,7 @@ import { test, expect, type Page, type BrowserContext, request } from '@playwrig
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { createParty, joinParty, addSong } from './helpers/party-utils';
+import { createParty, joinParty, joinAsHost, addSong } from './helpers/party-utils';
 import { getReportDirName } from '~/lib/report-dir';
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
@@ -82,6 +82,7 @@ async function walkthroughHostTour(page: Page) {
 }
 
 test.describe('Core Party Flow (Full Feature)', () => {
+  test.describe.configure({ mode: 'default' });
   test.setTimeout(600000); 
 
   test.beforeAll(async ({ browser }) => {
@@ -94,7 +95,14 @@ test.describe('Core Party Flow (Full Feature)', () => {
   test.afterAll(async () => {
     if (partyCode) {
         const apiContext = await request.newContext();
-        await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, { headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }, params: { hash: partyCode } }).catch(()=>{});
+        try {
+            const res = await apiContext.delete(`${BASE_URL}/api/admin/party/delete`, { headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` }, params: { hash: partyCode } });
+            console.log(`[Cleanup] DELETE party ${partyCode}: ${res.status()}`);
+            if (!res.ok()) console.error(`[Cleanup] Failed to delete party ${partyCode}: ${await res.text()}`);
+        } catch (e) {
+            console.error(`[Cleanup] Error deleting party ${partyCode}:`, e);
+        }
+        await apiContext.dispose();
     }
     await hostContext.close();
     if (playerContext) await playerContext.close();
@@ -145,6 +153,20 @@ test.describe('Core Party Flow (Full Feature)', () => {
         await joinParty(guestPages[i], partyCode, `Guest-${i}`, i);
     }
     await takeScreenshot(guestPages[0], 'guests-joined', testInfo);
+  });
+
+  test('2.5 Host joins through join page', async ({ browser }, testInfo) => {
+    const hostJoinContext = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+    const hostJoinPage = await hostJoinContext.newPage();
+    hostJoinPage.on('console', msg => console.log(`[HostJoin Console] ${msg.text()}`));
+    hostJoinPage.on('pageerror', err => console.error(`[HostJoin Error] ${err.message}`));
+
+    await joinAsHost(hostJoinPage, partyCode, 'Host', 'avatar-select-brain');
+    await expect(hostJoinPage.getByTestId('tab-singers')).toBeVisible({ timeout: 20000 });
+
+    await takeScreenshot(hostJoinPage, 'host-joined-via-join-page', testInfo);
+
+    await hostJoinContext.close();
   });
 
   test('3. Guests Add Songs', async ({}, testInfo) => {
@@ -235,12 +257,12 @@ test.describe('Core Party Flow (Full Feature)', () => {
         if (index === 0) {
             await page.getByTestId('tab-singers').click({ force: true });
             
-            const navApplauseBtn = page.locator('button, a, [role="button"]').filter({ hasText: /👏|Applaud/i }).first();
+            const navApplauseBtn = page.getByRole('link', { name: 'Send applause' });
             await expect(navApplauseBtn).toBeVisible({ timeout: 15000 });
             await navApplauseBtn.click();
             await expect(page).toHaveURL(/applause/);
             
-            const bigApplauseBtn = page.locator('button').filter({ hasText: /👏|Applaud/i }).first();
+            const bigApplauseBtn = page.getByRole('button', { name: /Applause for/i });
             for(let k=0; k<5; k++) { 
                 await bigApplauseBtn.click({ force: true }); 
                 await page.waitForTimeout(300); 

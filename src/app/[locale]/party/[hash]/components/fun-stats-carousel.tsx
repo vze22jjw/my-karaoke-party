@@ -8,6 +8,7 @@ import {
 import { formatCompactNumber } from "~/utils/number";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
+import emojiMap from "~/config/emoji-map.json";
 
 type GlobalStatsData = {
     topSingersBySongs: { name: string; count: number }[];
@@ -86,33 +87,33 @@ export function FunStatsCarousel({ stats }: Props) {
     const rawGridItems: (GridItem | null)[] = [
         {
             label: t('loyalFans'),
-            value: `${formatCompactNumber(globalStats.totalApplause)} 👏`,
+            value: `${formatCompactNumber(globalStats.totalApplause)} ${emojiMap.variables.applause_emoji}`,
             sub: t('totalClaps'),
-            icon: "👏"
+            icon: emojiMap.variables.applause_emoji
         },
         globalStats.marathonRunner ? {
             label: t('marathon'),
             value: `${Math.floor(globalStats.marathonRunner.totalDurationMs / 60000)}m`,
             sub: globalStats.marathonRunner.name,
-            icon: "🏃"
+            icon: emojiMap.variables.marathon_emoji
         } : null,
         globalStats.oneHitWonder ? {
             label: t('oneHitWonder'),
-            value: `${formatCompactNumber(globalStats.oneHitWonder.applauseCount)} 👏`,
+            value: `${formatCompactNumber(globalStats.oneHitWonder.applauseCount)} ${emojiMap.variables.applause_emoji}`,
             sub: globalStats.oneHitWonder.name,
-            icon: "🎯"
+            icon: emojiMap.variables.one_hit_emoji
         } : null,
         {
             label: t('totalPlayed'),
             value: formatCompactNumber(globalStats.totalSongs),
-            sub: t('songsCount', { count: globalStats.totalSongs }).replace(/\d+\s/, ''), 
-            icon: "🎵"
+            sub: t('songsCount', { count: globalStats.totalSongs }).replace(/\d+\s/, ''),
+            icon: emojiMap.variables.songs_emoji
         },
         globalStats.bestDressed ? {
             label: t('bestDressed'),
             value: `${formatCompactNumber(globalStats.bestDressed.count)}x`,
             sub: globalStats.bestDressed.avatar,
-            icon: "👔"
+            icon: emojiMap.variables.best_dressed_emoji
         } : null,
     ];
 
@@ -141,7 +142,7 @@ export function FunStatsCarousel({ stats }: Props) {
             data: topSongsByApplause.map((s, i) => ({
                 rank: i + 1,
                 label: s.title,
-                value: `${formatCompactNumber(s.applause)} 👏`,
+                value: `${formatCompactNumber(s.applause)} ${emojiMap.variables.applause_emoji}`,
                 subValue: s.singer 
             }))
         },
@@ -154,7 +155,7 @@ export function FunStatsCarousel({ stats }: Props) {
             data: topSingersByApplause.map((p, i) => ({
                 rank: i + 1,
                 label: p.name,
-                value: `${formatCompactNumber(p.applauseCount)} 👏`,
+                value: `${formatCompactNumber(p.applauseCount)} ${emojiMap.variables.applause_emoji}`,
                 subValue: null
             }))
         },

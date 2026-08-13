@@ -59,7 +59,10 @@
     "chooseIcon": "选择你的头像",
     "joining": "正在加入...",
     "nameTip": "提示: 你的名字区分大小写。使用完全相同的名字可以保留你的历史记录！",
-    "backToList": "返回派对列表"
+    "backToList": "返回派对列表",
+    "changeIcon": "Change Icon",
+    "keepIcon": "Keep Icon",
+    "hostIconHidden": "This name matches the host. Tap below if you want a different icon."
   },
   "create": {
     "title": "创建新派对",
@@ -193,6 +196,10 @@
         "confirmTitle": "你确定吗？",
         "confirmDesc": "这将结束所有人的派对，数据将变为只读状态。",
         "confirmBtn": "确认，结束派对"
+      },
+      "avatar": {
+        "title": "Host Icon",
+        "info": "Choose the icon that represents you as the host."
       }
     },
     "card": {

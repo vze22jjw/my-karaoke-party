@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { env } from "~/env";
 import { GlobalFooter } from "~/components/global-footer";
 import { PwaAutoReload } from "~/components/pwa-auto-reload";
+import { EmojiProvider } from "~/components/emoji-provider";
 
 const APP_NAME = "My Karaoke Party";
 const APP_DEFAULT_TITLE = "My Karaoke Party";
@@ -96,8 +97,10 @@ export default async function RootLayout({
       <body className="bg-gradient min-h-screen">
         <NextIntlClientProvider messages={messages}>
             <TRPCReactProvider>
-              {children}
-              <PwaAutoReload />
+              <EmojiProvider>
+                {children}
+                <PwaAutoReload />
+              </EmojiProvider>
             </TRPCReactProvider>
             <Analytics />
             <SpeedInsights />

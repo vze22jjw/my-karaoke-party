@@ -130,10 +130,13 @@ export function PartySceneTabs({
   }, [partyStatus, router]);
 
   useEffect(() => {
-    const value = readLocalStorageValue({ key: "name" });
-    if (!value) {
-      router.push(`/join/${party.hash}`);
-    }
+    const timeout = setTimeout(() => {
+      const value = readLocalStorageValue({ key: "name" });
+      if (!value) {
+        router.push(`/join/${party.hash}`);
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
   }, [router, party.hash]);
 
   const myCurrentSongs = useMemo(() => {
