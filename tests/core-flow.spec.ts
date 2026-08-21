@@ -199,6 +199,22 @@ test.describe('Core Party Flow (Full Feature)', () => {
             console.log(`Verified 16:9 player container: ${box.width}x${box.height} (ratio: ${ratio.toFixed(4)})`);
             expect(ratio).toBeCloseTo(16 / 9, 1);
         }
+
+        // Verify Up Next overlay is initially visible before playback starts
+        const upNextOverlay = playerPage.getByTestId('player-up-next-overlay');
+        await expect(upNextOverlay).toBeVisible({ timeout: 10000 });
+
+        // Start playback from host and verify Up Next overlay dismisses
+        await hostPage.bringToFront();
+        await hostPage.getByTestId('tab-playlist').click({ force: true });
+        const playBtn = hostPage.locator('button').filter({ has: hostPage.locator('svg.lucide-play') }).first();
+        if (await playBtn.isVisible()) {
+            await playBtn.click();
+        }
+
+        await playerPage.bringToFront();
+        await expect(upNextOverlay).toBeHidden({ timeout: 10000 });
+
         await takeScreenshot(playerPage, 'player-aspect-ratio-verified', testInfo);
     }
   });

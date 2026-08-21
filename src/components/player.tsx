@@ -287,8 +287,8 @@ export function Player({
           {!isReady && <div className="mt-20"><Spinner size={"large"} /></div>}
         </div>
 
-        {isReady && !isPlaying && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-[90%] max-w-lg">
+        {isReady && !isPlaying && !internalIsPlaying && (
+          <div data-testid="player-up-next-overlay" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-[90%] max-w-lg">
             <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-4">
               
               {/* Current Song Info */}
