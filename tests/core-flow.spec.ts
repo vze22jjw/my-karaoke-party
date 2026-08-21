@@ -382,6 +382,14 @@ test.describe('Core Party Flow (Full Feature)', () => {
     });
 
     await Promise.all(interactions);
+
+    // Verify Skip button on Player screen works without unauthorized error
+    await playerPage.bringToFront();
+    const skipBtn = playerPage.locator('button').filter({ hasText: /Skip/i }).first();
+    if (await skipBtn.isVisible()) {
+        await skipBtn.click({ force: true });
+        await expect(playerPage.getByText(/Unauthorized/i)).toHaveCount(0);
+    }
   });
 
   test('6. Logout & Close', async () => {

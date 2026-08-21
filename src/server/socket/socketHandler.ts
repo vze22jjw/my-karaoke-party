@@ -48,6 +48,14 @@ function ensureHost(socket: Socket): boolean {
   return true;
 }
 
+function ensureHostOrPlayer(socket: Socket): boolean {
+  if (socket.data.isHost === true || socket.data.singerName === "Player") {
+    return true;
+  }
+  socket.emit("error", { message: "unauthorized" });
+  return false;
+}
+
 async function checkAndResetQueueEntry(partyId: number, singerName: string) {
     const remaining = await db.playlistItem.count({
         where: { partyId, singerName, playedAt: null }
@@ -310,7 +318,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("mark-as-played", async (data: { partyHash: string; status?: "COMPLETED" | "SKIPPED" | "ERROR" }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensureHostOrPlayer(socket)) return;
       try {
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
@@ -409,7 +417,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("playback-play", async (data: { partyHash: string; currentTime?: number }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensureHostOrPlayer(socket)) return;
       try {
         const party = await db.party.findUnique({ 
             where: { hash: data.partyHash },
@@ -468,7 +476,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("playback-pause", async (data: { partyHash: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensureHostOrPlayer(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party?.currentSongStartedAt || party.currentSongRemainingDuration === null) return;
@@ -518,7 +526,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("playback-error", async (data: { partyHash: string; errorCode: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensureHostOrPlayer(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party || party.status === "OPEN") return;
@@ -533,7 +541,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("opened-on-youtube", async (data: { partyHash: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensureHostOrPlayer(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party || party.status === "OPEN") return;
@@ -618,7 +626,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("song-ended", async (data: { partyHash: string, id: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensureHostOrPlayer(socket)) return;
       socket.emit("mark-as-played", { partyHash: data.partyHash });
     });
   });
