@@ -60,7 +60,24 @@ export default function PlayerScene({ party, initialData }: Props) {
     "Player",
   );
   
-  const desktopScreen = useFullscreen();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => console.error("Fullscreen error:", err));
+    } else {
+      document.exitFullscreen().catch((err) => console.error("Exit fullscreen error:", err));
+    }
+  }, []);
+
   const nextSong = unplayedPlaylist[0];
 
   const isIntermissionMode = partyStatus === "OPEN" && playedPlaylist.length > 0;
@@ -152,9 +169,8 @@ export default function PlayerScene({ party, initialData }: Props) {
       <div className="flex h-full flex-col">
 
         <PlayerDesktopView
-          playerRef={desktopScreen.ref as RefCallback<HTMLDivElement>}
-          onToggleFullscreen={desktopScreen.toggle}
-          isFullscreen={desktopScreen.fullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          isFullscreen={isFullscreen}
           currentVideo={displayedVideo}
           isPlaybackDisabled={isPlaybackDisabled}
           currentSongErrorCode={currentSongErrorCode}

@@ -208,9 +208,10 @@
     "startSoon": "派对即将在几秒内开始...",
     "callToAction": "点歌了吗？开始歌唱吧！",
     "nextUp": "下一位歌手:",
-    "startingIn": "即将开始",
-    "skip": "切歌",
-    "openYoutube": "在 YouTube 中打开",
+    "startingIn": "即将开始于",
+    "skip": "跳过",
+    "restart": "重新开始",
+    "openYoutube": "在 YouTube 打开",
     "playbackDisabled": "此派对已禁用视频播放。",
     "cantEmbed": "此视频无法在应用内播放。"
   },

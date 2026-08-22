@@ -208,8 +208,9 @@
     "startSoon": "まもなくパーティーを開始します...",
     "callToAction": "歌いたい曲はありますか？歌いましょう！",
     "nextUp": "次の曲:",
-    "startingIn": "開始まであと",
+    "startingIn": "開始まで",
     "skip": "スキップ",
+    "restart": "最初から",
     "openYoutube": "YouTubeで開く",
     "playbackDisabled": "このパーティーでは再生が無効になっています。",
     "cantEmbed": "この動画はアプリ内で再生できません。"

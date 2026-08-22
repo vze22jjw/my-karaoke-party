@@ -162,6 +162,10 @@ export function usePartySocket(
         addTrailingSlash: false,
         reconnectionAttempts: 5,
         transports: ["polling", "websocket"],
+        auth: {
+          role: singerName === "Player" ? "Player" : (singerName === "Host" ? "Host" : "Guest"),
+          partyHash,
+        },
       });
 
       socketRef.current = newSocket;

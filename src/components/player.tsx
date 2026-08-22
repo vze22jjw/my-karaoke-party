@@ -187,9 +187,44 @@ export function Player({
       start: 0,
       autoplay: 0, 
       rel: 0,
-      controls: 1,
+      controls: 0,
       origin: typeof window !== "undefined" ? window.location.origin : "",
     },
+  };
+
+  const handleTogglePlayPause = () => {
+    if (!playerRef.current) return;
+    try {
+      if (internalIsPlaying || isPlaying) {
+        playerRef.current.pauseVideo();
+        setInternalIsPlaying(false);
+        onPause();
+      } else {
+        playerRef.current.playVideo();
+        setInternalIsPlaying(true);
+        let currentTime = 0;
+        try {
+          currentTime = playerRef.current.getCurrentTime?.() ?? 0;
+        } catch {
+          currentTime = 0;
+        }
+        onPlay(Math.floor(currentTime));
+      }
+    } catch (error) {
+      console.error("Failed to toggle play/pause:", error);
+    }
+  };
+
+  const handleRestart = () => {
+    if (!playerRef.current) return;
+    try {
+      playerRef.current.seekTo(0, true);
+      playerRef.current.playVideo();
+      setInternalIsPlaying(true);
+      onPlay(0);
+    } catch (error) {
+      console.error("Failed to restart video:", error);
+    }
   };
 
   const onPlayerReady: YouTubeProps["onReady"] = (event) => {
@@ -259,12 +294,16 @@ export function Player({
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black">
-      <div data-testid="player-aspect-video-container" className="relative w-full max-w-full max-h-full aspect-video z-0 bg-black">
+      <div 
+        data-testid="player-aspect-video-container" 
+        onClick={handleTogglePlayPause}
+        className="relative w-full max-w-full max-h-full aspect-video z-0 bg-black cursor-pointer"
+      >
         <YouTube
           key={video.id}
           loading="eager"
           className={`h-full w-full animate-in fade-in ${isReady ? "visible" : "invisible"}`}
-          iframeClassName="w-full h-full"
+          iframeClassName="w-full h-full pointer-events-none"
           videoId={video.id}
           opts={opts}
           onPlay={onPlayerPlay}
@@ -272,6 +311,13 @@ export function Player({
           onPause={onPlayerPause}
           onError={onPlayerError}
           onEnd={handlePlayerEnd}
+        />
+        
+        {/* Transparent click overlay to capture clicks anywhere on the video area */}
+        <div 
+          data-testid="player-click-overlay" 
+          className="absolute inset-0 z-10 cursor-pointer" 
+          onClick={handleTogglePlayPause}
         />
         
         <div className={cn("absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none", isReady ? "hidden" : "block")}>
@@ -288,8 +334,8 @@ export function Player({
         </div>
 
         {isReady && !isPlaying && !internalIsPlaying && (
-          <div data-testid="player-up-next-overlay" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-[90%] max-w-lg">
-            <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-4">
+          <div data-testid="player-up-next-overlay" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[90%] max-w-lg cursor-pointer">
+            <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-4 hover:border-primary/80 transition-colors">
               
               {/* Current Song Info */}
               <div className="flex flex-col items-center gap-1 w-full">
@@ -331,13 +377,31 @@ export function Player({
         )}
 
         <div className={cn("transition-opacity duration-500", showControls ? "opacity-100" : "opacity-0")}>
-           <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
-           <div className="absolute bottom-20 right-24 z-20">
+           <div onClick={(e) => e.stopPropagation()}>
+             <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
+           </div>
+           <div className="absolute bottom-20 right-24 z-20 flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+              <Button
+                data-testid="player-restart-btn"
+                variant={"secondary"}
+                size="default" 
+                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestart();
+                }}
+              >
+                <span className="text-base font-bold">↺</span>
+                {t('restart')}
+              </Button>
               <Button
                 variant={"secondary"}
                 size="default" 
-                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white"
-                onClick={() => onSkip()}
+                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSkip();
+                }}
               >
                 <SkipForward className="h-4 w-4" />
                 {t('skip')}

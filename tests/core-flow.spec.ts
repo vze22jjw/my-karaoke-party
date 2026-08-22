@@ -200,20 +200,26 @@ test.describe('Core Party Flow (Full Feature)', () => {
             expect(ratio).toBeCloseTo(16 / 9, 1);
         }
 
-        // Verify Up Next overlay is initially visible before playback starts
+        // 1. Verify Up Next overlay is initially visible before playback starts
         const upNextOverlay = playerPage.getByTestId('player-up-next-overlay');
         await expect(upNextOverlay).toBeVisible({ timeout: 10000 });
 
-        // Start playback from host and verify Up Next overlay dismisses
-        await hostPage.bringToFront();
-        await hostPage.getByTestId('tab-playlist').click({ force: true });
-        const playBtn = hostPage.locator('button').filter({ has: hostPage.locator('svg.lucide-play') }).first();
-        if (await playBtn.isVisible()) {
-            await playBtn.click();
-        }
-
-        await playerPage.bringToFront();
+        // 2. Click directly on Player screen / Up Next overlay to start playback
+        await upNextOverlay.click({ force: true });
         await expect(upNextOverlay).toBeHidden({ timeout: 10000 });
+        await expect(playerPage.getByText(/Unauthorized/i)).toHaveCount(0);
+
+        // 3. Click on playing Player screen to pause and verify overlay reappears
+        const clickOverlay = playerPage.getByTestId('player-click-overlay');
+        await clickOverlay.click({ force: true });
+        await expect(upNextOverlay).toBeVisible({ timeout: 10000 });
+
+        // 4. Click Restart button (↺) on Player and verify playback resumes & overlay hides
+        const restartBtn = playerPage.getByTestId('player-restart-btn');
+        await expect(restartBtn).toBeVisible({ timeout: 5000 });
+        await restartBtn.click({ force: true });
+        await expect(upNextOverlay).toBeHidden({ timeout: 10000 });
+        await expect(playerPage.getByText(/Unauthorized/i)).toHaveCount(0);
 
         await takeScreenshot(playerPage, 'player-aspect-ratio-verified', testInfo);
     }
