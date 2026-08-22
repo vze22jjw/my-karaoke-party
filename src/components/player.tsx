@@ -53,6 +53,7 @@ export function Player({
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
 
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -163,7 +164,21 @@ export function Player({
     setIsReady(false);
     setShowOpenInYouTubeButton(false);
     setInternalIsPlaying(false);
+    setIsSkipping(false);
   }, [video.id, clearEndCheck]);
+
+  const handleSkipClick = useCallback(() => {
+    if (isSkipping) return;
+    setIsSkipping(true);
+    try {
+      playerRef.current?.pauseVideo();
+    } catch (error) {
+      console.error("Failed to pause video on skip:", error);
+    }
+    setInternalIsPlaying(false);
+    onPause();
+    onSkip();
+  }, [isSkipping, onPause, onSkip]);
 
   useEffect(() => {
     return () => clearEndCheck();
@@ -286,7 +301,7 @@ export function Player({
         onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
         onSkip={onSkip}
         remainingTime={remainingTime}
-        isSkipping={false}
+        isSkipping={isSkipping}
         message={t('cantEmbed')}
       />
     );
@@ -319,42 +334,39 @@ export function Player({
           className="absolute inset-0 z-10 cursor-pointer" 
           onClick={handleTogglePlayPause}
         />
-        
-        <div className={cn("absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none", isReady ? "hidden" : "block")}>
-          <div className="flex w-full flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-            <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl text-white">
-              {decode(video.title)}
-            </h1>
-            <h2 className="text-outline mt-2 scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl text-white flex items-center gap-3">
-              <MicVocal className="text-primary" size={32} />
-              {video.singerName}
-            </h2>
-          </div>
-          {!isReady && <div className="mt-20"><Spinner size={"large"} /></div>}
-        </div>
 
-        {isReady && !isPlaying && !internalIsPlaying && (
-          <div data-testid="player-up-next-overlay" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[90%] max-w-lg cursor-pointer">
-            <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-4 hover:border-primary/80 transition-colors">
+        {/* Loading/Buffering State */}
+        {!isReady && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 transition-all duration-300">
+            <Spinner size={"large"} className="text-primary mb-4" />
+            <h2 className="text-2xl font-bold text-white text-center max-w-md px-4 truncate">
+              {decode(video.title)}
+            </h2>
+            <div className="flex items-center gap-2 text-white/70 mt-2">
+              <MicVocal className="h-5 w-5" />
+              <span className="text-lg">{video.singerName}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Big Play/Pause/Skip Overlay when Paused */}
+        {!internalIsPlaying && isReady && (
+          <div 
+            data-testid="player-paused-overlay" 
+            className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] z-10 transition-all duration-300"
+          >
+            <div className="flex flex-col items-center gap-4 text-center px-6 max-w-2xl animate-in zoom-in-95 duration-200">
+              <div className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-md mb-2 shadow-2xl">
+                <div className="w-0 h-0 border-y-[12px] border-y-transparent border-l-[20px] border-l-white ml-1" />
+              </div>
               
-              {/* Current Song Info */}
-              <div className="flex flex-col items-center gap-1 w-full">
-                <p className="text-white/70 text-xs md:text-sm font-bold uppercase tracking-widest">
-                  Now Playing
-                </p>
-                <h2 className="text-xl md:text-2xl font-extrabold text-white drop-shadow-md line-clamp-2">
-                  {decode(video.title)}
-                </h2>
-                
-                <div className="flex items-center gap-2 mt-2">
-                  <p className="text-white/70 text-xs md:text-sm font-bold uppercase tracking-widest">
-                    Now Singing
-                  </p>
-                  <div className="text-xl md:text-2xl font-bold text-primary flex items-center gap-2">
-                    <MicVocal className="h-5 w-5 md:h-6 md:w-6" />
-                    {video.singerName}
-                  </div>
-                </div>
+              <h2 className="text-2xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-md">
+                {decode(video.title)}
+              </h2>
+              
+              <div className="flex items-center gap-2 text-white/80 text-lg md:text-xl font-medium">
+                <MicVocal className="h-5 w-5 text-primary" />
+                <span>{video.singerName}</span>
               </div>
 
               {/* Next Up Info (Only shows if someone is next in the queue) */}
@@ -385,7 +397,8 @@ export function Player({
                 data-testid="player-restart-btn"
                 variant={"secondary"}
                 size="default" 
-                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium"
+                disabled={isSkipping}
+                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium disabled:opacity-50"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRestart();
@@ -395,15 +408,21 @@ export function Player({
                 {t('restart')}
               </Button>
               <Button
+                data-testid="player-skip-btn"
                 variant={"secondary"}
                 size="default" 
-                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium"
+                disabled={isSkipping}
+                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium disabled:opacity-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSkip();
+                  handleSkipClick();
                 }}
               >
-                <SkipForward className="h-4 w-4" />
+                {isSkipping ? (
+                  <Spinner size="small" className="text-white" />
+                ) : (
+                  <SkipForward className="h-4 w-4" />
+                )}
                 {t('skip')}
               </Button>
            </div>

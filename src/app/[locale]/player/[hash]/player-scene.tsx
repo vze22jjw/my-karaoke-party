@@ -99,7 +99,6 @@ export default function PlayerScene({ party, initialData }: Props) {
   const doTheSkip = useCallback((status: "COMPLETED" | "SKIPPED" | "ERROR") => {
     setForceAutoplay(false); 
     socketActions.markAsPlayed(status);
-    socketActions.playbackPause();
   }, [socketActions]);
 
   const handlePlayerEnd = async () => {
