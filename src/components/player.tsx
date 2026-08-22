@@ -9,6 +9,7 @@ import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { type VideoInPlaylist } from "~/types/app-types";
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
+import { cleanPlayerTitle } from "~/utils/string";
 import { Button } from "./ui/ui/button";
 import { MicVocal, SkipForward } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
@@ -28,7 +29,7 @@ type Props = {
   onAutoplayed: () => void;
   isPlaying: boolean;
   onPlay: (currentTime?: number, actualDuration?: number) => void;
-  onPause: () => void;
+  onPause: (currentTime?: number) => void;
   remainingTime: number; 
   onOpenYouTubeAndAutoSkip: () => void;
   onPlayerError?: (errorCode: string) => void;
@@ -162,13 +163,15 @@ export function Player({
   const handleSkipClick = useCallback(() => {
     if (isSkipping) return;
     setIsSkipping(true);
+    let currentTime = 0;
     try {
+      currentTime = playerRef.current?.getCurrentTime?.() ?? 0;
       playerRef.current?.pauseVideo();
     } catch (error) {
       console.error("Failed to pause video on skip:", error);
     }
     setInternalIsPlaying(false);
-    onPause();
+    onPause(Math.floor(currentTime));
     onSkip();
   }, [isSkipping, onPause, onSkip]);
 
@@ -204,10 +207,21 @@ export function Player({
   const handleTogglePlayPause = () => {
     if (!playerRef.current) return;
     try {
-      if (internalIsPlaying || isPlaying) {
+      let isCurrentlyPlaying = internalIsPlaying;
+      try {
+        const playerState = playerRef.current.getPlayerState?.();
+        if (playerState === 1) isCurrentlyPlaying = true;
+        else if (playerState === 2 || playerState === -1 || playerState === 0) isCurrentlyPlaying = false;
+      } catch {}
+
+      if (isCurrentlyPlaying) {
         playerRef.current.pauseVideo();
         setInternalIsPlaying(false);
-        onPause();
+        let currentTime = 0;
+        try {
+          currentTime = playerRef.current.getCurrentTime?.() ?? 0;
+        } catch {}
+        onPause(Math.floor(currentTime));
       } else {
         playerRef.current.playVideo();
         setInternalIsPlaying(true);
@@ -280,9 +294,13 @@ export function Player({
     }
   };
 
-  const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
+  const onPlayerPause: YouTubeProps["onPause"] = (event) => {
     setInternalIsPlaying(false);
-    if (isPlaying) onPause();
+    let currentTime = 0;
+    try {
+      currentTime = (event.target as any).getCurrentTime?.() ?? 0;
+    } catch {}
+    if (isPlaying) onPause(Math.floor(currentTime));
   };
 
   const onPlayerError: YouTubeProps["onError"] = (event) => {
@@ -305,6 +323,8 @@ export function Player({
       triggerPlayerEnd();
     }
   };
+
+  const cleanTitle = cleanPlayerTitle(decode(video.title));
 
   if (showOpenInYouTubeButton) {
     return (
@@ -355,7 +375,7 @@ export function Player({
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 transition-all duration-300">
             <Spinner size={"large"} className="text-primary mb-4" />
             <h2 className="text-xl sm:text-2xl font-bold text-white text-center max-w-md px-4 truncate">
-              {decode(video.title)}
+              {cleanTitle}
             </h2>
             <div className="flex items-center gap-2 text-white/70 mt-2">
               <MicVocal className="h-5 w-5" />
@@ -371,17 +391,19 @@ export function Player({
             className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-10 p-4 transition-all duration-300 pointer-events-none"
           >
             <div className="rounded-2xl border border-white/20 bg-black/85 p-6 sm:p-8 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-3 sm:gap-4 max-w-xl w-[90%] max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200 pointer-events-auto">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-md mb-1 shadow-2xl shrink-0">
-                <div className="w-0 h-0 border-y-[10px] sm:border-y-[12px] border-y-transparent border-l-[16px] sm:border-l-[20px] border-l-white ml-1" />
-              </div>
               
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-snug drop-shadow-md line-clamp-2 max-h-[4.5rem] break-words overflow-hidden text-ellipsis w-full">
-                {decode(video.title)}
+                {cleanTitle}
               </h2>
               
               <div className="flex items-center justify-center gap-2 text-white/80 text-base sm:text-lg md:text-xl font-medium shrink-0">
                 <MicVocal className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 <span className="truncate max-w-[300px]">{video.singerName}</span>
+              </div>
+
+              {/* Tap to Play / Resume instruction cue */}
+              <div className="flex items-center gap-1.5 text-white/50 text-xs sm:text-sm font-medium tracking-wide uppercase mt-0.5 shrink-0">
+                <span>{t('tapToPlay')}</span>
               </div>
 
               {/* Countdown Timer (Shows Next Up if someone queued, or Current Song remaining if alone) */}

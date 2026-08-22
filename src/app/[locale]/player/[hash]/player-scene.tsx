@@ -135,8 +135,8 @@ export default function PlayerScene({ party, initialData }: Props) {
     socketActions.playbackPlay(currentTime, actualDuration); 
   };
   
-  const handlePause = () => {
-    socketActions.playbackPause();
+  const handlePause = (currentTime?: number) => {
+    socketActions.playbackPause(currentTime);
   };
 
   const joinPartyUrl = getUrl(`/join/${party.hash}`);

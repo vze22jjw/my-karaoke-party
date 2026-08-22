@@ -78,3 +78,28 @@ export function secondsToISODuration(totalSeconds: number): string {
   return result;
 }
 
+/**
+ * Cleans noisy karaoke/instrumental tags and bracketed metadata for display on the player UI only.
+ * E.g.: "Starboy ft. Daft Punk - The Weeknd Karaoke 【With Guide Melody】 Instrumental" -> "Starboy ft. Daft Punk - The Weeknd"
+ */
+export function cleanPlayerTitle(title: string): string {
+  if (!title) return "";
+  let clean = title;
+
+  // Remove bracketed contents: (...), [...], {...}, 【...】, 〔...〕, （...）, 「...」, 『...』
+  clean = clean.replace(/[\(\[\{【〔（「『][^\)\]\}】〕）」』]*[\)\]\}】〕）」』]/g, " ");
+
+  // Remove common karaoke noise keywords case-insensitively
+  clean = clean.replace(/\b(official video|lyrics|karaoke|instrumental|hd|4k|version|with guide melody|guide melody|karafun|sing king|backing track|lower key|higher key|original key)\b/gi, " ");
+
+  // Clean trailing/leading dashes, pipes, dots, and colons
+  clean = clean.replace(/[-|:;•~_—–\s]+$/, "");
+  clean = clean.replace(/^[-|:;•~_—–\s]+/, "");
+
+  // Collapse multiple spaces
+  clean = clean.replace(/\s+/g, " ").trim();
+
+  // If cleaning resulted in an empty string (e.g. video was literally titled "Karaoke"), fallback to original
+  return clean || title;
+}
+

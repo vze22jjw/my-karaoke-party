@@ -506,14 +506,26 @@ export function registerSocketEvents(io: Server) {
       } catch (error) { console.error("Error starting playback:", error); }
     });
 
-    socket.on("playback-pause", async (data: { partyHash: string }) => {
+    socket.on("playback-pause", async (data: { partyHash: string; currentTime?: number }) => {
       if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
-        if (!party?.currentSongStartedAt || party.currentSongRemainingDuration === null) return;
+        if (!party || party.status === "OPEN") return;
 
-        const elapsed = Math.floor((new Date().getTime() - party.currentSongStartedAt.getTime()) / 1000);
-        const newRemaining = Math.max(0, party.currentSongRemainingDuration - elapsed);
+        let newRemaining = party.currentSongRemainingDuration ?? 0;
+
+        if (data.currentTime !== undefined && data.currentTime !== null && party.currentSongId) {
+          const currentItem = await db.playlistItem.findFirst({
+            where: { partyId: party.id, videoId: party.currentSongId, playedAt: null },
+          });
+          if (currentItem) {
+            const totalSec = Math.floor((parseISO8601Duration(currentItem.duration) ?? 0) / 1000);
+            newRemaining = Math.max(0, totalSec - Math.floor(data.currentTime));
+          }
+        } else if (party.currentSongStartedAt && party.currentSongRemainingDuration !== null) {
+          const elapsed = Math.floor((new Date().getTime() - party.currentSongStartedAt.getTime()) / 1000);
+          newRemaining = Math.max(0, party.currentSongRemainingDuration - elapsed);
+        }
 
         await db.party.update({
           where: { id: party.id },

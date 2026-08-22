@@ -19,7 +19,7 @@ interface SocketActions {
   closeParty: () => void;
   sendHeartbeat: () => void;
   playbackPlay: (currentTime?: number, actualDuration?: number) => void;
-  playbackPause: () => void;
+  playbackPause: (currentTime?: number) => void;
   playbackError: (errorCode: string) => void;
   openedOnYouTube: () => void;
   startParty: () => void;
@@ -325,7 +325,10 @@ export function usePartySocket(
     closeParty: () => socketRef.current?.emit("close-party", { partyHash }),
     sendHeartbeat: () => socketRef.current?.emit("heartbeat", { partyHash, singerName, avatar }),
     playbackPlay: (currentTime, actualDuration) => socketRef.current?.emit("playback-play", { partyHash, currentTime, actualDuration }),
-    playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
+    playbackPause: (currentTime) => {
+      stopCountdown();
+      socketRef.current?.emit("playback-pause", { partyHash, currentTime });
+    },
     playbackError: (errorCode) => socketRef.current?.emit("playback-error", { partyHash, errorCode }),
     openedOnYouTube: () => socketRef.current?.emit("opened-on-youtube", { partyHash }),
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),
