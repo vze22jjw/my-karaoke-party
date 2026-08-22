@@ -326,6 +326,14 @@ export function Player({
 
   const cleanTitle = cleanPlayerTitle(decode(video.title));
 
+  const getDynamicTitleClasses = (title: string) => {
+    const len = title.length;
+    if (len <= 25) return "text-2xl sm:text-3xl md:text-4xl";
+    if (len <= 45) return "text-xl sm:text-2xl md:text-3xl";
+    if (len <= 65) return "text-lg sm:text-xl md:text-2xl";
+    return "text-base sm:text-lg md:text-xl";
+  };
+
   if (showOpenInYouTubeButton) {
     return (
       <PlayerDisabledView
@@ -374,7 +382,7 @@ export function Player({
         {!isReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 transition-all duration-300">
             <Spinner size={"large"} className="text-primary mb-4" />
-            <h2 className="text-xl sm:text-2xl font-bold text-white text-center max-w-md px-4 truncate">
+            <h2 className={cn("font-bold text-white text-center max-w-md px-4 truncate", getDynamicTitleClasses(cleanTitle))}>
               {cleanTitle}
             </h2>
             <div className="flex items-center gap-2 text-white/70 mt-2">
@@ -392,7 +400,7 @@ export function Player({
           >
             <div className="rounded-2xl border border-white/20 bg-black/85 p-6 sm:p-8 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-3 sm:gap-4 max-w-xl w-[90%] max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200 pointer-events-auto">
               
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-snug drop-shadow-md line-clamp-2 max-h-[4.5rem] break-words overflow-hidden text-ellipsis w-full">
+              <h2 className={cn("font-extrabold text-white leading-snug drop-shadow-md line-clamp-3 break-words overflow-hidden text-ellipsis w-full", getDynamicTitleClasses(cleanTitle))}>
                 {cleanTitle}
               </h2>
               
