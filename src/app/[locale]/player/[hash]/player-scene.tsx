@@ -131,8 +131,8 @@ export default function PlayerScene({ party, initialData }: Props) {
     );
   };
   
-  const handlePlay = (currentTime?: number) => {
-    socketActions.playbackPlay(currentTime); 
+  const handlePlay = (currentTime?: number, actualDuration?: number) => {
+    socketActions.playbackPlay(currentTime, actualDuration); 
   };
   
   const handlePause = () => {

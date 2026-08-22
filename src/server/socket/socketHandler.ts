@@ -17,7 +17,7 @@ import {
 } from "./socketUtils";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import { type PlaylistItem } from "@prisma/client";
-import { parseISO8601Duration } from "~/utils/string";
+import { parseISO8601Duration, secondsToISODuration } from "~/utils/string";
 import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog } from "~/utils/debug-logger";
 
@@ -436,7 +436,7 @@ export function registerSocketEvents(io: Server) {
        await updateAndEmitPlaylist(io, data.partyHash, "refresh-party");
     });
 
-    socket.on("playback-play", async (data: { partyHash: string; currentTime?: number }) => {
+    socket.on("playback-play", async (data: { partyHash: string; currentTime?: number; actualDuration?: number }) => {
       if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({ 
@@ -473,7 +473,18 @@ export function registerSocketEvents(io: Server) {
 
         if (!current) return;
 
-        const totalSec = Math.floor((parseISO8601Duration(current.duration) ?? 0) / 1000);
+        let totalSec = Math.floor((parseISO8601Duration(current.duration) ?? 0) / 1000);
+        if (data.actualDuration && data.actualDuration > 0) {
+          totalSec = Math.round(data.actualDuration);
+          const newIso = secondsToISODuration(totalSec);
+          if (current.duration !== newIso) {
+            await db.playlistItem.update({
+              where: { id: current.id },
+              data: { duration: newIso }
+            });
+          }
+        }
+
         let remaining = (party.currentSongId === current.videoId && party.currentSongRemainingDuration !== null) ? party.currentSongRemainingDuration : totalSec;
         
         if (data.currentTime !== undefined && data.currentTime !== null) {

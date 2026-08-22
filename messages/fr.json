@@ -209,8 +209,10 @@
     "callToAction": "Une chanson en tête ? C'est parti !",
     "nextUp": "À suivre :",
     "startingIn": "Commence dans",
+    "currentSong": "Morceau actuel",
+    "remaining": "Restant",
     "skip": "Passer",
-    "restart": "Redémarrer",
+    "restart": "Recommencer",
     "openYoutube": "Ouvrir sur YouTube",
     "playbackDisabled": "La lecture est désactivée pour cette party.",
     "cantEmbed": "Cette vidéo ne peut pas être lue dans l'application."

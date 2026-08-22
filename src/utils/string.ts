@@ -62,3 +62,19 @@ export function parseISO8601Duration(durationString: string | undefined | null):
 
   return (hours * 3600 + minutes * 60 + seconds) * 1000;
 }
+
+/**
+ * Converts seconds into an ISO 8601 duration string (e.g. 225 -> "PT3M45S").
+ */
+export function secondsToISODuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  let result = "PT";
+  if (hours > 0) result += `${hours}H`;
+  if (minutes > 0 || hours > 0) result += `${minutes}M`;
+  result += `${seconds}S`;
+  return result;
+}
+
