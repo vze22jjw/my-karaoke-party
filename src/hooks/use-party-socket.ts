@@ -18,8 +18,8 @@ interface SocketActions {
   togglePlayback: (disablePlayback: boolean) => void;
   closeParty: () => void;
   sendHeartbeat: () => void;
-  playbackPlay: (currentTime?: number) => void;
-  playbackPause: () => void;
+  playbackPlay: (currentTime?: number, actualDuration?: number) => void;
+  playbackPause: (currentTime?: number) => void;
   playbackError: (errorCode: string) => void;
   openedOnYouTube: () => void;
   startParty: () => void;
@@ -162,6 +162,10 @@ export function usePartySocket(
         addTrailingSlash: false,
         reconnectionAttempts: 5,
         transports: ["polling", "websocket"],
+        auth: {
+          role: singerName === "Player" ? "Player" : (singerName === "Host" ? "Host" : "Guest"),
+          partyHash,
+        },
       });
 
       socketRef.current = newSocket;
@@ -320,8 +324,11 @@ export function usePartySocket(
     togglePlayback: (disablePlayback) => socketRef.current?.emit("toggle-playback", { partyHash, disablePlayback }),
     closeParty: () => socketRef.current?.emit("close-party", { partyHash }),
     sendHeartbeat: () => socketRef.current?.emit("heartbeat", { partyHash, singerName, avatar }),
-    playbackPlay: (currentTime) => socketRef.current?.emit("playback-play", { partyHash, currentTime }),
-    playbackPause: () => socketRef.current?.emit("playback-pause", { partyHash }),
+    playbackPlay: (currentTime, actualDuration) => socketRef.current?.emit("playback-play", { partyHash, currentTime, actualDuration }),
+    playbackPause: (currentTime) => {
+      stopCountdown();
+      socketRef.current?.emit("playback-pause", { partyHash, currentTime });
+    },
     playbackError: (errorCode) => socketRef.current?.emit("playback-error", { partyHash, errorCode }),
     openedOnYouTube: () => socketRef.current?.emit("opened-on-youtube", { partyHash }),
     startParty: () => socketRef.current?.emit("start-party", { partyHash }),

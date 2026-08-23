@@ -209,7 +209,11 @@
     "callToAction": "Tem uma música? Vamos cantar!",
     "nextUp": "A Seguir:",
     "startingIn": "Começando em",
+    "currentSong": "Música atual",
+    "remaining": "Restante",
+    "tapToPlay": "Toque em qualquer lugar para reproduzir",
     "skip": "Pular",
+    "restart": "Reiniciar",
     "openYoutube": "Abrir no YouTube",
     "playbackDisabled": "Reprodução desativada para esta festa.",
     "cantEmbed": "Este vídeo não pode ser reproduzido dentro do App."

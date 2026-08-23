@@ -10,7 +10,7 @@ import { PlayerDisabledView } from "~/components/player-disabled-view";
 import { cn } from "~/lib/utils";
 
 type Props = {
-  playerRef: RefCallback<HTMLDivElement>;
+  playerRef?: RefCallback<HTMLDivElement>;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
   currentVideo: VideoInPlaylist | undefined;

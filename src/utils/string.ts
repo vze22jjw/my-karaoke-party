@@ -62,3 +62,44 @@ export function parseISO8601Duration(durationString: string | undefined | null):
 
   return (hours * 3600 + minutes * 60 + seconds) * 1000;
 }
+
+/**
+ * Converts seconds into an ISO 8601 duration string (e.g. 225 -> "PT3M45S").
+ */
+export function secondsToISODuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  let result = "PT";
+  if (hours > 0) result += `${hours}H`;
+  if (minutes > 0 || hours > 0) result += `${minutes}M`;
+  result += `${seconds}S`;
+  return result;
+}
+
+/**
+ * Cleans noisy karaoke/instrumental tags and bracketed metadata for display on the player UI only.
+ * E.g.: "Starboy ft. Daft Punk - The Weeknd Karaoke 【With Guide Melody】 Instrumental" -> "Starboy ft. Daft Punk - The Weeknd"
+ */
+export function cleanPlayerTitle(title: string): string {
+  if (!title) return "";
+  let clean = title;
+
+  // Remove bracketed contents: (...), [...], {...}, 【...】, 〔...〕, （...）, 「...」, 『...』
+  clean = clean.replace(/[\(\[\{【〔（「『][^\)\]\}】〕）」』]*[\)\]\}】〕）」』]/g, " ");
+
+  // Remove common karaoke noise keywords case-insensitively
+  clean = clean.replace(/\b(official video|lyrics|karaoke|instrumental|hd|4k|version|with guide melody|guide melody|karafun|sing king|backing track|lower key|higher key|original key)\b/gi, " ");
+
+  // Clean trailing/leading dashes, pipes, dots, and colons
+  clean = clean.replace(/[-|:;•~_—–\s]+$/, "");
+  clean = clean.replace(/^[-|:;•~_—–\s]+/, "");
+
+  // Collapse multiple spaces
+  clean = clean.replace(/\s+/g, " ").trim();
+
+  // If cleaning resulted in an empty string (e.g. video was literally titled "Karaoke"), fallback to original
+  return clean || title;
+}
+

@@ -17,7 +17,7 @@ import {
 } from "./socketUtils";
 import { orderByRoundRobin, type FairnessPlaylistItem } from "~/utils/array";
 import { type PlaylistItem } from "@prisma/client";
-import { parseISO8601Duration } from "~/utils/string";
+import { parseISO8601Duration, secondsToISODuration } from "~/utils/string";
 import { getFreshPlaylist } from "~/server/lib/playlist-service";
 import { debugLog } from "~/utils/debug-logger";
 
@@ -40,8 +40,24 @@ function isSocketAdmin(socket: Socket): boolean {
   return !!adminCookie && adminCookie === env.ADMIN_TOKEN;
 }
 
+function isHostSocket(socket: Socket): boolean {
+  return socket.data.isHost === true || socket.data.role === "Host" || socket.data.singerName === "Host";
+}
+
+function canControlPlayback(socket: Socket): boolean {
+  return isHostSocket(socket) || socket.data.role === "Player" || socket.data.singerName === "Player";
+}
+
 function ensureHost(socket: Socket): boolean {
-  if (socket.data.isHost !== true) {
+  if (!isHostSocket(socket)) {
+    socket.emit("error", { message: "unauthorized" });
+    return false;
+  }
+  return true;
+}
+
+function ensurePlaybackAccess(socket: Socket): boolean {
+  if (!canControlPlayback(socket)) {
     socket.emit("error", { message: "unauthorized" });
     return false;
   }
@@ -106,8 +122,13 @@ async function createPlaylistItem(
 export function registerSocketEvents(io: Server) {
   io.on("connection", (socket: Socket) => {
     debugLog(LOG_TAG, `New Socket Connection Accepted: ${socket.id}`);
+    const authRole = socket.handshake.auth?.role as string | undefined;
+    const authPartyHash = socket.handshake.auth?.partyHash as string | undefined;
     socket.data.isHost = isSocketAdmin(socket);
-    socket.data.role = socket.data.isHost ? "Host" : undefined;
+    socket.data.role = authRole === "Player" ? "Player" : (socket.data.isHost ? "Host" : undefined);
+    if (authPartyHash) {
+      socket.data.partyHash = authPartyHash;
+    }
 
     socket.on("request-open-parties", async () => {
       try {
@@ -131,6 +152,13 @@ export function registerSocketEvents(io: Server) {
 
     socket.on("join-party", async (data: { partyHash: string; singerName: string; avatar: string | null }) => {
       const { partyHash, singerName, avatar } = data;
+      socket.data.partyHash = partyHash;
+      socket.data.singerName = singerName;
+      if (singerName === "Player") {
+        socket.data.role = "Player";
+      } else if (singerName === "Host" || socket.data.isHost) {
+        socket.data.role = "Host";
+      }
       void socket.join(partyHash);
       debugLog(LOG_TAG, `Socket ${socket.id} joined room ${partyHash} as ${singerName}`);
       
@@ -310,7 +338,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("mark-as-played", async (data: { partyHash: string; status?: "COMPLETED" | "SKIPPED" | "ERROR" }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({
           where: { hash: data.partyHash },
@@ -408,8 +436,8 @@ export function registerSocketEvents(io: Server) {
        await updateAndEmitPlaylist(io, data.partyHash, "refresh-party");
     });
 
-    socket.on("playback-play", async (data: { partyHash: string; currentTime?: number }) => {
-      if (!ensureHost(socket)) return;
+    socket.on("playback-play", async (data: { partyHash: string; currentTime?: number; actualDuration?: number }) => {
+      if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({ 
             where: { hash: data.partyHash },
@@ -445,7 +473,18 @@ export function registerSocketEvents(io: Server) {
 
         if (!current) return;
 
-        const totalSec = Math.floor((parseISO8601Duration(current.duration) ?? 0) / 1000);
+        let totalSec = Math.floor((parseISO8601Duration(current.duration) ?? 0) / 1000);
+        if (data.actualDuration && data.actualDuration > 0) {
+          totalSec = Math.round(data.actualDuration);
+          const newIso = secondsToISODuration(totalSec);
+          if (current.duration !== newIso) {
+            await db.playlistItem.update({
+              where: { id: current.id },
+              data: { duration: newIso }
+            });
+          }
+        }
+
         let remaining = (party.currentSongId === current.videoId && party.currentSongRemainingDuration !== null) ? party.currentSongRemainingDuration : totalSec;
         
         if (data.currentTime !== undefined && data.currentTime !== null) {
@@ -467,14 +506,26 @@ export function registerSocketEvents(io: Server) {
       } catch (error) { console.error("Error starting playback:", error); }
     });
 
-    socket.on("playback-pause", async (data: { partyHash: string }) => {
-      if (!ensureHost(socket)) return;
+    socket.on("playback-pause", async (data: { partyHash: string; currentTime?: number }) => {
+      if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
-        if (!party?.currentSongStartedAt || party.currentSongRemainingDuration === null) return;
+        if (!party || party.status === "OPEN") return;
 
-        const elapsed = Math.floor((new Date().getTime() - party.currentSongStartedAt.getTime()) / 1000);
-        const newRemaining = Math.max(0, party.currentSongRemainingDuration - elapsed);
+        let newRemaining = party.currentSongRemainingDuration ?? 0;
+
+        if (data.currentTime !== undefined && data.currentTime !== null && party.currentSongId) {
+          const currentItem = await db.playlistItem.findFirst({
+            where: { partyId: party.id, videoId: party.currentSongId, playedAt: null },
+          });
+          if (currentItem) {
+            const totalSec = Math.floor((parseISO8601Duration(currentItem.duration) ?? 0) / 1000);
+            newRemaining = Math.max(0, totalSec - Math.floor(data.currentTime));
+          }
+        } else if (party.currentSongStartedAt && party.currentSongRemainingDuration !== null) {
+          const elapsed = Math.floor((new Date().getTime() - party.currentSongStartedAt.getTime()) / 1000);
+          newRemaining = Math.max(0, party.currentSongRemainingDuration - elapsed);
+        }
 
         await db.party.update({
           where: { id: party.id },
@@ -518,7 +569,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("playback-error", async (data: { partyHash: string; errorCode: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party || party.status === "OPEN") return;
@@ -533,7 +584,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("opened-on-youtube", async (data: { partyHash: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensurePlaybackAccess(socket)) return;
       try {
         const party = await db.party.findUnique({ where: { hash: data.partyHash } });
         if (!party || party.status === "OPEN") return;
@@ -618,7 +669,7 @@ export function registerSocketEvents(io: Server) {
     });
 
     socket.on("song-ended", async (data: { partyHash: string, id: string }) => {
-      if (!ensureHost(socket)) return;
+      if (!ensurePlaybackAccess(socket)) return;
       socket.emit("mark-as-played", { partyHash: data.partyHash });
     });
   });

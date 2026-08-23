@@ -7,6 +7,7 @@ import { ExternalLink, MicVocal, SkipForward } from "lucide-react";
 import Image from "next/image";
 import { PlayerQrCode } from "./player-qr-code"; 
 import { Button } from "./ui/ui/button";
+import { Spinner } from "./ui/ui/spinner";
 import logo from "~/assets/my-karaoke-party-logo.png";
 import { SongCountdownTimer } from "./song-countdown-timer";
 import { useTranslations } from "next-intl";
@@ -30,6 +31,7 @@ export function PlayerDisabledView({
   joinPartyUrl,
   onOpenYouTubeAndAutoSkip,
   onSkip,
+  isSkipping,
   remainingTime,
   message,
 }: Props) {
@@ -95,12 +97,18 @@ export function PlayerDisabledView({
 
       <div className="absolute bottom-20 right-24 z-30">
           <Button
+            data-testid="player-disabled-skip-btn"
             variant={"secondary"}
             size="default"
-            className="shadow-xl border border-white/10 gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white"
+            disabled={isSkipping}
+            className="shadow-xl border border-white/10 gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white disabled:opacity-50"
             onClick={onSkip}
           >
-            <SkipForward className="h-4 w-4" />
+            {isSkipping ? (
+              <Spinner size="small" className="text-white" />
+            ) : (
+              <SkipForward className="h-4 w-4" />
+            )}
             {t('skip')}
           </Button>
       </div>

@@ -184,6 +184,23 @@ Based on [T3 App](https://create.t3.gg/)
 - 🐳 **Docker ready!** Deploy with Traefik + Portainer
 - 🔒 **Auto SSL!** Let's Encrypt integration via Traefik
 
+### 🪟 Windows (WSL2 / Podman / Docker) Troubleshooting
+
+If you are running Podman or Docker via WSL2 on Windows and are unable to reach `http://localhost:3000` (e.g. connection refused or timeouts):
+
+1. WSL2 default NAT networking can occasionally isolate container ports from the Windows host.
+2. Enable **Mirrored Networking** in WSL2 for automatic localhost bridging. Create or edit `C:\Users\<YourUsername>\.wslconfig`:
+   ```ini
+   [wsl2]
+   networkingMode=mirrored
+   ```
+3. Restart WSL from PowerShell:
+   ```powershell
+   wsl --shutdown
+   ```
+4. Start your container stack again (`podman compose up -d` or `docker compose up -d`). `localhost:3000` will now be directly and permanently reachable from Windows without requiring any port forwarding scripts.
+
+
 ## Production Deployment
 
 ### Deploy with Docker + Traefik + Portainer

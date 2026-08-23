@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import YouTube, { type YouTubeProps, type YouTubePlayer } from "react-youtube";
 import { type VideoInPlaylist } from "~/types/app-types";
 import { decode } from "html-entities";
 import { cn } from "~/lib/utils";
+import { cleanPlayerTitle } from "~/utils/string";
 import { Button } from "./ui/ui/button";
 import { MicVocal, SkipForward } from "lucide-react";
 import { Spinner } from "./ui/ui/spinner";
@@ -25,8 +28,8 @@ type Props = {
   forceAutoplay: boolean;
   onAutoplayed: () => void;
   isPlaying: boolean;
-  onPlay: (currentTime?: number) => void;
-  onPause: () => void;
+  onPlay: (currentTime?: number, actualDuration?: number) => void;
+  onPause: (currentTime?: number) => void;
   remainingTime: number; 
   onOpenYouTubeAndAutoSkip: () => void;
   onPlayerError?: (errorCode: string) => void;
@@ -53,15 +56,17 @@ export function Player({
   const [isReady, setIsReady] = useState(false);
   const [showOpenInYouTubeButton, setShowOpenInYouTubeButton] = useState(false);
   const [internalIsPlaying, setInternalIsPlaying] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
 
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const endCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasEndedRef = useRef(false);
-  const onPlayerEndRef = useRef(onPlayerEnd);
 
-  useEffect(() => {
-    onPlayerEndRef.current = onPlayerEnd;
+  const triggerPlayerEnd = useCallback(() => {
+    if (hasEndedRef.current) return;
+    hasEndedRef.current = true;
+    onPlayerEnd();
   }, [onPlayerEnd]);
 
   const clearEndCheck = useCallback(() => {
@@ -70,13 +75,6 @@ export function Player({
       endCheckIntervalRef.current = null;
     }
   }, []);
-
-  const triggerPlayerEnd = useCallback(() => {
-    if (hasEndedRef.current) return;
-    hasEndedRef.current = true;
-    clearEndCheck();
-    onPlayerEndRef.current();
-  }, [clearEndCheck]);
 
   const startEndCheck = useCallback(() => {
     clearEndCheck();
@@ -98,16 +96,12 @@ export function Player({
         const nearEnd = duration > 0 && currentTime > 0 && currentTime >= duration - 1.0;
         if (nearEnd) {
           if (state === 1) {
-            // Actively playing and within the last second. Normal end.
             console.log("Safety end check: currentTime near duration while playing", { currentTime, duration });
             triggerPlayerEnd();
           } else if (isPlaying) {
-            // The host/server still expects us to be playing, but the player has
-            // stopped/buffered (likely YouTube end screen or autopause). Treat as ended.
             console.log("Safety end check: currentTime near duration but player not playing", { state, currentTime, duration });
             triggerPlayerEnd();
           }
-          // If !isPlaying, the user/host explicitly paused, so do not auto-advance.
         }
       } catch (error) {
         console.error("Safety end check failed:", error);
@@ -125,7 +119,7 @@ export function Player({
     if (internalIsPlaying) {
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
-      }, 3000); // Hide after 3 seconds of inactivity
+      }, 3000);
     }
   }, [internalIsPlaying]);
 
@@ -163,7 +157,23 @@ export function Player({
     setIsReady(false);
     setShowOpenInYouTubeButton(false);
     setInternalIsPlaying(false);
+    setIsSkipping(false);
   }, [video.id, clearEndCheck]);
+
+  const handleSkipClick = useCallback(() => {
+    if (isSkipping) return;
+    setIsSkipping(true);
+    let currentTime = 0;
+    try {
+      currentTime = playerRef.current?.getCurrentTime?.() ?? 0;
+      playerRef.current?.pauseVideo();
+    } catch (error) {
+      console.error("Failed to pause video on skip:", error);
+    }
+    setInternalIsPlaying(false);
+    onPause(Math.floor(currentTime));
+    onSkip();
+  }, [isSkipping, onPause, onSkip]);
 
   useEffect(() => {
     return () => clearEndCheck();
@@ -187,13 +197,75 @@ export function Player({
       start: 0,
       autoplay: 0, 
       rel: 0,
-      controls: 1,
+      controls: 0,
+      cc_load_policy: 0,
+      iv_load_policy: 3,
       origin: typeof window !== "undefined" ? window.location.origin : "",
     },
   };
 
+  const handleTogglePlayPause = () => {
+    if (!playerRef.current) return;
+    try {
+      let isCurrentlyPlaying = internalIsPlaying;
+      try {
+        const playerState = playerRef.current.getPlayerState?.();
+        if (playerState === 1) isCurrentlyPlaying = true;
+        else if (playerState === 2 || playerState === -1 || playerState === 0) isCurrentlyPlaying = false;
+      } catch {}
+
+      if (isCurrentlyPlaying) {
+        playerRef.current.pauseVideo();
+        setInternalIsPlaying(false);
+        let currentTime = 0;
+        try {
+          currentTime = playerRef.current.getCurrentTime?.() ?? 0;
+        } catch {}
+        onPause(Math.floor(currentTime));
+      } else {
+        playerRef.current.playVideo();
+        setInternalIsPlaying(true);
+        let currentTime = 0;
+        let actualDuration = 0;
+        try {
+          currentTime = playerRef.current.getCurrentTime?.() ?? 0;
+          actualDuration = Math.round(playerRef.current.getDuration?.() ?? 0);
+        } catch {
+          currentTime = 0;
+        }
+        onPlay(Math.floor(currentTime), actualDuration);
+      }
+    } catch (error) {
+      console.error("Failed to toggle play/pause:", error);
+    }
+  };
+
+  const handleRestart = () => {
+    if (!playerRef.current) return;
+    try {
+      playerRef.current.seekTo(0, true);
+      playerRef.current.playVideo();
+      setInternalIsPlaying(true);
+      let actualDuration = 0;
+      try {
+        actualDuration = Math.round(playerRef.current.getDuration?.() ?? 0);
+      } catch {
+        actualDuration = 0;
+      }
+      onPlay(0, actualDuration);
+    } catch (error) {
+      console.error("Failed to restart video:", error);
+    }
+  };
+
   const onPlayerReady: YouTubeProps["onReady"] = (event) => {
     playerRef.current = event.target;
+    try {
+      (event.target as any).unloadModule?.("captions");
+      (event.target as any).unloadModule?.("cc");
+    } catch {
+      // Ignore module unload errors if not present
+    }
     const playerState = event.target.getPlayerState();
     if (playerState !== -1) {
       setIsReady(true);
@@ -209,15 +281,26 @@ export function Player({
 
   const onPlayerPlay: YouTubeProps["onPlay"] = (event) => {
     setInternalIsPlaying(true);
+    try {
+      (event.target as any).unloadModule?.("captions");
+      (event.target as any).unloadModule?.("cc");
+    } catch {
+      // Ignore module unload errors if not present
+    }
     if (!isPlaying) { 
       const currentTime = event.target.getCurrentTime() as number;
-      onPlay(Math.floor(currentTime)); 
+      const actualDuration = Math.round(event.target.getDuration() as number);
+      onPlay(Math.floor(currentTime), actualDuration); 
     }
   };
 
-  const onPlayerPause: YouTubeProps["onPause"] = (_event) => {
+  const onPlayerPause: YouTubeProps["onPause"] = (event) => {
     setInternalIsPlaying(false);
-    if (isPlaying) onPause();
+    let currentTime = 0;
+    try {
+      currentTime = (event.target as any).getCurrentTime?.() ?? 0;
+    } catch {}
+    if (isPlaying) onPause(Math.floor(currentTime));
   };
 
   const onPlayerError: YouTubeProps["onError"] = (event) => {
@@ -241,6 +324,16 @@ export function Player({
     }
   };
 
+  const cleanTitle = cleanPlayerTitle(decode(video.title));
+
+  const getDynamicTitleClasses = (title: string) => {
+    const len = title.length;
+    if (len <= 25) return "text-2xl sm:text-3xl md:text-4xl";
+    if (len <= 45) return "text-xl sm:text-2xl md:text-3xl";
+    if (len <= 65) return "text-lg sm:text-xl md:text-2xl";
+    return "text-base sm:text-lg md:text-xl";
+  };
+
   if (showOpenInYouTubeButton) {
     return (
       <PlayerDisabledView
@@ -251,7 +344,7 @@ export function Player({
         onOpenYouTubeAndAutoSkip={onOpenYouTubeAndAutoSkip}
         onSkip={onSkip}
         remainingTime={remainingTime}
-        isSkipping={false}
+        isSkipping={isSkipping}
         message={t('cantEmbed')}
       />
     );
@@ -259,12 +352,16 @@ export function Player({
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-black">
-      <div data-testid="player-aspect-video-container" className="relative w-full max-w-full max-h-full aspect-video z-0 bg-black">
+      <div 
+        data-testid="player-aspect-video-container" 
+        onClick={handleTogglePlayPause}
+        className="relative w-full max-w-full max-h-full aspect-video z-0 bg-black cursor-pointer"
+      >
         <YouTube
           key={video.id}
           loading="eager"
           className={`h-full w-full animate-in fade-in ${isReady ? "visible" : "invisible"}`}
-          iframeClassName="w-full h-full"
+          iframeClassName="w-full h-full pointer-events-none"
           videoId={video.id}
           opts={opts}
           onPlay={onPlayerPlay}
@@ -274,72 +371,112 @@ export function Player({
           onEnd={handlePlayerEnd}
         />
         
-        <div className={cn("absolute top-0 w-full text-center animate-in fade-in zoom-in pointer-events-none", isReady ? "hidden" : "block")}>
-          <div className="flex w-full flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-            <h1 className="text-outline scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl text-white">
-              {decode(video.title)}
-            </h1>
-            <h2 className="text-outline mt-2 scroll-m-20 text-3xl font-bold tracking-tight lg:text-4xl text-white flex items-center gap-3">
-              <MicVocal className="text-primary" size={32} />
-              {video.singerName}
-            </h2>
-          </div>
-          {!isReady && <div className="mt-20"><Spinner size={"large"} /></div>}
-        </div>
+        {/* Transparent click overlay to capture clicks anywhere on the video area */}
+        <div 
+          data-testid="player-click-overlay" 
+          className="absolute inset-0 z-10 cursor-pointer" 
+          onClick={handleTogglePlayPause}
+        />
 
-        {isReady && !isPlaying && !internalIsPlaying && (
-          <div data-testid="player-up-next-overlay" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-[90%] max-w-lg">
-            <div className="animate-in fade-in zoom-in rounded-xl border border-primary/50 bg-black/90 p-6 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-4">
+        {/* Loading/Buffering State */}
+        {!isReady && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 transition-all duration-300">
+            <Spinner size={"large"} className="text-primary mb-4" />
+            <h2 className={cn("font-bold text-white text-center max-w-md px-4 truncate", getDynamicTitleClasses(cleanTitle))}>
+              {cleanTitle}
+            </h2>
+            <div className="flex items-center gap-2 text-white/70 mt-2">
+              <MicVocal className="h-5 w-5" />
+              <span className="text-lg">{video.singerName}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Big Play/Pause/Skip Overlay when Paused */}
+        {!internalIsPlaying && isReady && (
+          <div 
+            data-testid="player-paused-overlay" 
+            className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-10 p-4 transition-all duration-300 pointer-events-none"
+          >
+            <div className="rounded-2xl border border-white/20 bg-black/85 p-6 sm:p-8 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-3 sm:gap-4 max-w-xl w-[90%] max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200 pointer-events-auto">
               
-              {/* Current Song Info */}
-              <div className="flex flex-col items-center gap-1 w-full">
-                <p className="text-white/70 text-xs md:text-sm font-bold uppercase tracking-widest">
-                  Now Playing
-                </p>
-                <h2 className="text-xl md:text-2xl font-extrabold text-white drop-shadow-md line-clamp-2">
-                  {decode(video.title)}
-                </h2>
-                
-                <div className="flex items-center gap-2 mt-2">
-                  <p className="text-white/70 text-xs md:text-sm font-bold uppercase tracking-widest">
-                    Now Singing
-                  </p>
-                  <div className="text-xl md:text-2xl font-bold text-primary flex items-center gap-2">
-                    <MicVocal className="h-5 w-5 md:h-6 md:w-6" />
-                    {video.singerName}
-                  </div>
-                </div>
+              <h2 className={cn("font-extrabold text-white leading-snug drop-shadow-md line-clamp-3 break-words overflow-hidden text-ellipsis w-full", getDynamicTitleClasses(cleanTitle))}>
+                {cleanTitle}
+              </h2>
+              
+              <div className="flex items-center justify-center gap-2 text-white/80 text-base sm:text-lg md:text-xl font-medium shrink-0">
+                <MicVocal className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <span className="truncate max-w-[300px]">{video.singerName}</span>
               </div>
 
-              {/* Next Up Info (Only shows if someone is next in the queue) */}
-              {nextSong && (
-                <>
-                  <div className="w-2/3 h-[1px] bg-white/20 rounded-full my-1" />
-                  
-                  <div className="flex flex-col items-center gap-1">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">
+              {/* Tap to Play / Resume instruction cue */}
+              <div className="flex items-center gap-1.5 text-white/50 text-xs sm:text-sm font-medium tracking-wide uppercase mt-0.5 shrink-0">
+                <span>{t('tapToPlay')}</span>
+              </div>
+
+              {/* Countdown Timer (Shows Next Up if someone queued, or Current Song remaining if alone) */}
+              <div className="w-2/3 h-[1px] bg-white/20 rounded-full my-1 shrink-0" />
+              
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                {nextSong ? (
+                  <>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white">
                       {t('nextUp')} <span className="text-primary">{nextSong.singerName}</span>
                     </h3>
-                    <div className="text-white/70 text-sm md:text-base font-mono mt-1">
-                      <SongCountdownTimer remainingTime={remainingTime} className="text-white font-bold text-lg md:text-xl" message={t('startingIn')} />
+                    <div className="text-white/70 text-xs sm:text-sm md:text-base font-mono mt-0.5">
+                      <SongCountdownTimer remainingTime={remainingTime} className="text-white font-bold text-base sm:text-lg md:text-xl" message={t('startingIn')} />
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white/90">
+                      {t('currentSong')}
+                    </h3>
+                    <div className="text-white/70 text-xs sm:text-sm md:text-base font-mono mt-0.5">
+                      <SongCountdownTimer remainingTime={remainingTime} className="text-white font-bold text-base sm:text-lg md:text-xl" message={t('remaining')} />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         <div className={cn("transition-opacity duration-500", showControls ? "opacity-100" : "opacity-0")}>
-           <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
-           <div className="absolute bottom-20 right-24 z-20">
+           <div onClick={(e) => e.stopPropagation()}>
+             <PlayerQrCode joinPartyUrl={joinPartyUrl} className="static bottom-auto left-auto animate-none absolute bottom-20 left-8" />
+           </div>
+           <div className="absolute bottom-20 right-24 z-20 flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
               <Button
+                data-testid="player-restart-btn"
                 variant={"secondary"}
                 size="default" 
-                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white"
-                onClick={() => onSkip()}
+                disabled={isSkipping}
+                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium disabled:opacity-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestart();
+                }}
               >
-                <SkipForward className="h-4 w-4" />
+                <span className="text-base font-bold">↺</span>
+                {t('restart')}
+              </Button>
+              <Button
+                data-testid="player-skip-btn"
+                variant={"secondary"}
+                size="default" 
+                disabled={isSkipping}
+                className="shadow-xl border border-white/10 gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white font-medium disabled:opacity-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSkipClick();
+                }}
+              >
+                {isSkipping ? (
+                  <Spinner size="small" className="text-white" />
+                ) : (
+                  <SkipForward className="h-4 w-4" />
+                )}
                 {t('skip')}
               </Button>
            </div>

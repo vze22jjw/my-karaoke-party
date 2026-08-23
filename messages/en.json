@@ -209,7 +209,11 @@
     "callToAction": "Got a Song? Let's Sing!",
     "nextUp": "Next Up:",
     "startingIn": "Starting in",
+    "currentSong": "Current Song",
+    "remaining": "Remaining",
+    "tapToPlay": "Tap anywhere to play",
     "skip": "Skip",
+    "restart": "Restart",
     "openYoutube": "Open on YouTube",
     "playbackDisabled": "Playback Is Disabled For This Party.",
     "cantEmbed": "This Video Cannot Be Played Inside The App."
