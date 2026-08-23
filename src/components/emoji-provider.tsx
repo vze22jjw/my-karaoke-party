@@ -13,7 +13,7 @@ type EmojiMap = {
 const emojiMapConfig = emojiMap as EmojiMap;
 
 const EMOJI_REGEX =
-  /\p{Emoji_Presentation}(?:\u200d\p{Emoji_Presentation})*(?:\uFE0F)?(?:[\u{1F3FB}-\u{1F3FF}])?/gu;
+  /(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(?:[\u{1F3FB}-\u{1F3FF}])?(?:\u200D(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(?:[\u{1F3FB}-\u{1F3FF}])?)*/gu;
 
 const getStyleForEmoji = (emoji: string, defaultStyle: string) => {
   const varKey = Object.keys(emojiMapConfig.variables).find(

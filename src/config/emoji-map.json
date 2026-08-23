@@ -9,8 +9,8 @@
     "singer_emoji_1": "🎤",
     "singer_emoji_2": "🎧",
     "singer_emoji_3": "🥁",
-    "singer_emoji_4": "🧑‍🎤",
-    "singer_emoji_5": "👩‍🎤",
+    "singer_emoji_4": "🧑🏼‍🎤",
+    "singer_emoji_5": "👩🏼‍🎤",
     "singer_emoji_6": "🔥",
     "singer_emoji_7": "🍺",
     "singer_emoji_8": "😎",
@@ -25,6 +25,8 @@
   },
   "styles": {
     "host_emoji_1": "google",
+    "singer_emoji_4": "facebook",
+    "singer_emoji_5": "facebook",
     "singer_emoji_7": "facebook"
   }
 }
