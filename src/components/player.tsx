@@ -395,7 +395,7 @@ export function Player({
         {/* Big Play/Pause/Skip Overlay when Paused */}
         {!internalIsPlaying && isReady && (
           <div 
-            data-testid="player-paused-overlay" 
+            data-testid="player-up-next-overlay" 
             className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-10 p-4 transition-all duration-300 pointer-events-none"
           >
             <div className="rounded-2xl border border-white/20 bg-black/85 p-6 sm:p-8 text-center shadow-2xl backdrop-blur-md flex flex-col items-center gap-3 sm:gap-4 max-w-xl w-[90%] max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200 pointer-events-auto">
