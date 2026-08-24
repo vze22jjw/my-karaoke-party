@@ -30,9 +30,12 @@ const config = {
         hostname: "i.ytimg.com"
       },
       {
-        hostname: "i.scdn.co" 
+        hostname: "i.scdn.co"
       }
     ]
+  },
+  experimental: {
+    instrumentationHook: true,
   }
 };
 

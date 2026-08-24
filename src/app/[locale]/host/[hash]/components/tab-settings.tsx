@@ -11,7 +11,8 @@ import { SettingsSpotify } from "./settings/settings-spotify";
 import { SettingsSearch } from "./settings/settings-search";
 import { SettingsExport } from "./settings/settings-export";
 import { SettingsDangerZone } from "./settings/settings-danger-zone";
-import { SettingsBackup } from "./settings/settings-backup"; 
+import { SettingsBackup } from "./settings/settings-backup";
+import { SettingsHostAvatar } from "./settings/settings-host-avatar"; 
 
 type ExtendedVideo = VideoInPlaylist & { spotifyId?: string | null };
 
@@ -44,6 +45,8 @@ type Props = {
   spotifyPlaylistId: string | null;
   spotifyLink?: string | null;
   isPartyClosed?: boolean;
+  hostAvatar: string | null;
+  onChangeHostAvatar: (avatar: string) => void;
 };
 
 export function TabSettings({
@@ -74,6 +77,8 @@ export function TabSettings({
   onUpdateThemeSuggestions,
   spotifyPlaylistId,
   spotifyLink,
+  hostAvatar,
+  onChangeHostAvatar,
 }: Props) {
   
   const isPartyClosed = partyStatus === "CLOSED";
@@ -115,6 +120,12 @@ export function TabSettings({
         onTogglePlayback={onTogglePlayback}
         isManualSortActive={isManualSortActive}
         onToggleManualSort={onToggleManualSort}
+        isPartyClosed={isPartyClosed}
+      />
+
+      <SettingsHostAvatar
+        hostAvatar={hostAvatar}
+        onChangeHostAvatar={onChangeHostAvatar}
         isPartyClosed={isPartyClosed}
       />
 

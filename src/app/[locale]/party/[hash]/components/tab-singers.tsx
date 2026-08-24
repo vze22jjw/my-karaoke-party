@@ -10,6 +10,7 @@ import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import { Link, useRouter } from "~/navigation"; 
 import { formatCompactNumber } from "~/utils/number";
 import { useTranslations } from "next-intl";
+import emojiMap from "~/config/emoji-map.json";
 
 type Participant = {
   name: string;
@@ -109,7 +110,7 @@ export function TabSingers({
                       className="text-white h-14 w-14 text-4xl font-bold flex-shrink-0 hover:bg-transparent" 
                       aria-label="Send applause"
                   >
-                      <a className="w-full h-full flex items-center justify-center pb-1">👏</a>
+                      <a className="w-full h-full flex items-center justify-center pb-1">{emojiMap.variables.applause_emoji}</a>
                   </Button>
               </Link>
             )}
@@ -158,7 +159,7 @@ export function TabSingers({
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className={cn("w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0", isCurrentSinger && "animate-pulse")}>
-                        {participant.avatar ? <span className="text-2xl">{participant.avatar}</span> : isHost ? <span className="text-2xl">👑</span> : <MicVocal className="h-5 w-5" />}
+                        {participant.avatar ? <span className="text-2xl">{participant.avatar}</span> : isHost ? <span className="text-2xl">{emojiMap.variables.host_emoji_1}</span> : <MicVocal className="h-5 w-5" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -201,7 +202,7 @@ export function TabSingers({
                   {showPlayed && (
                     <div className="mt-2 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                       <p className="text-xs font-medium text-muted-foreground">
-                          {t('claps')} {formatCompactNumber(participant.applauseCount)} 👏
+                          {t('claps')} {formatCompactNumber(participant.applauseCount)} {emojiMap.variables.applause_emoji}
                           <span className="mx-2">•</span>
                           <span>{playedSongs.length} {t('sang')}</span>
                           <span className="mx-2">•</span>
