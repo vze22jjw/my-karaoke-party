@@ -17,6 +17,12 @@ export const themeSuggestionsRouter = createTRPCRouter({
     };
   }),
 
+  getAllPresetSongs: publicProcedure
+    .output(z.record(z.array(SuggestedSongSchema)))
+    .query(async () => {
+      return await geminiSuggestionsService.getAllPresetSongs();
+    }),
+
   getThemedSongs: publicProcedure
     .input(
       z.object({

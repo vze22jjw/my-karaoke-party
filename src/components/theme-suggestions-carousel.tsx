@@ -155,6 +155,15 @@ export function ThemeSuggestionsCarousel({
   const [customPrompt, setCustomPrompt] = useState("");
   const [activeCustomPrompt, setActiveCustomPrompt] = useState<string | null>(null);
 
+  // 1. Preload ALL 24 preset pill songs in ONE request (30-day cache)
+  const { data: allPresetSongs, isLoading: isLoadingPresets } = api.themeSuggestions.getAllPresetSongs.useQuery(
+    undefined,
+    {
+      staleTime: 1000 * 60 * 60 * 24 * 30, // 30 days
+      refetchOnWindowFocus: false,
+    }
+  );
+
   // Restore custom vibe query from client storage on mount
   useEffect(() => {
     try {
@@ -218,14 +227,15 @@ export function ThemeSuggestionsCarousel({
   const isCustomCard = activeCategory.isCustom;
   const isHostThemesCard = activeCategory.isHostThemes;
   const isSpotifyCard = activeCategory.isSpotify;
+  const isPresetCard = !isCustomCard && !isHostThemesCard && !isSpotifyCard;
 
   const currentHostPill = isHostThemesCard
     ? activeCategory.pills.find((p) => p.id === activePillId)
     : undefined;
 
-  const { data: aiSongs, isLoading, isFetching } = api.themeSuggestions.getThemedSongs.useQuery(
+  // On-demand query for Custom Vibe and Host Themes only
+  const { data: dynamicAiSongs, isLoading: isLoadingDynamic } = api.themeSuggestions.getThemedSongs.useQuery(
     {
-      pillId: !isCustomCard && !isHostThemesCard && !isSpotifyCard ? activePillId : undefined,
       customPrompt: isCustomCard
         ? activeCustomPrompt ?? undefined
         : isHostThemesCard
@@ -234,10 +244,9 @@ export function ThemeSuggestionsCarousel({
     },
     {
       enabled:
-        (!isCustomCard && !isHostThemesCard && !isSpotifyCard && !!activePillId) ||
         (isCustomCard && !!activeCustomPrompt) ||
         (isHostThemesCard && !!currentHostPill?.promptGuide),
-      staleTime: 1000 * 60 * 60 * 24, // 24 hours
+      staleTime: 1000 * 60 * 60 * 24 * 30, // 30 days
       refetchOnWindowFocus: false,
     }
   );
@@ -267,8 +276,19 @@ export function ThemeSuggestionsCarousel({
 
   const CategoryIcon = ICON_MAP[activeCategory.iconName] ?? Sparkles;
 
-  // Choose which songs list to display (Spotify shows up to 10)
-  const displaySongs = isSpotifyCard ? spotifySongs.slice(0, 10) : aiSongs;
+  // Select songs to display:
+  // - Spotify: from props (up to 10)
+  // - Preset Cards: instantly from preloaded allPresetSongs dictionary (0ms latency!)
+  // - Custom / Host: from dynamicAiSongs query
+  const displaySongs = isSpotifyCard
+    ? spotifySongs.slice(0, 10)
+    : isPresetCard
+    ? allPresetSongs?.[activePillId] ?? []
+    : dynamicAiSongs;
+
+  const isCardLoading = isPresetCard
+    ? isLoadingPresets && !allPresetSongs
+    : !isSpotifyCard && isLoadingDynamic;
 
   return (
     <div
@@ -353,7 +373,7 @@ export function ThemeSuggestionsCarousel({
                 autoFocus={isCustomCard}
               />
             </div>
-            <Button type="submit" size="sm" className="h-9 px-3 text-xs gap-1.5 shrink-0" disabled={isLoading || isFetching}>
+            <Button type="submit" size="sm" className="h-9 px-3 text-xs gap-1.5 shrink-0" disabled={isLoadingDynamic}>
               <Wand2 className="h-3.5 w-3.5" />
               {t("generate") ?? "Generate"}
             </Button>
@@ -393,7 +413,7 @@ export function ThemeSuggestionsCarousel({
 
       {/* 3. Songs List Container (Exactly 5 songs visible, remaining scrollable) */}
       <div className="h-[295px] overflow-y-auto pr-1 space-y-1.5 custom-scrollbar">
-        {!isSpotifyCard && (isLoading || isFetching) ? (
+        {isCardLoading ? (
           <div className="space-y-2 py-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center justify-between p-2 rounded-lg border bg-background/50">

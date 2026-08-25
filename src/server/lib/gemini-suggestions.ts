@@ -239,4 +239,39 @@ Guidelines:
 
     debugLog(LOG_TAG, "All 24 preset pills successfully initialized in PostgreSQL DB!");
   },
+
+  /**
+   * Returns all 24 preset pill songs in a single dictionary for instant 0ms client-side switching
+   */
+  async getAllPresetSongs(): Promise<Record<string, SuggestedSong[]>> {
+    try {
+      const allDb = await db.suggestionCache.findMany();
+      const map: Record<string, SuggestedSong[]> = {};
+
+      for (const pill of ALL_PRESET_PILLS) {
+        const normalizedKey = `gemini_theme:${pill.promptGuide.toLowerCase().trim()}`;
+        const dbMatch = allDb.find((item) => item.cacheKey === normalizedKey);
+        if (dbMatch && Array.isArray(dbMatch.songs) && dbMatch.songs.length > 0) {
+          const parsed = z.array(SuggestedSongSchema).safeParse(dbMatch.songs);
+          if (parsed.success && parsed.data.length > 0) {
+            map[pill.id] = parsed.data;
+          }
+        }
+        // Fallback to seed data if not in DB yet
+        if (!map[pill.id] && PRESET_SEED_DATA[pill.id]) {
+          map[pill.id] = PRESET_SEED_DATA[pill.id]!.songs;
+        }
+      }
+
+      return map;
+    } catch (err) {
+      console.error(LOG_TAG, "Failed to get all preset songs:", err);
+      // Return static seed fallback
+      const fallbackMap: Record<string, SuggestedSong[]> = {};
+      for (const [key, val] of Object.entries(PRESET_SEED_DATA)) {
+        fallbackMap[key] = val.songs;
+      }
+      return fallbackMap;
+    }
+  },
 };
