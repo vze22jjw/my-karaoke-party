@@ -4,6 +4,7 @@ import { playlistRouter } from "./routers/playlist";
 import { youtubeRouter } from "./routers/youtube";
 import { idleMessageRouter } from "./routers/idleMessage"; 
 import { spotifyRouter } from "./routers/spotify";
+import { themeSuggestionsRouter } from "./routers/theme-suggestions";
 
 /**
  * This is the primary router for your server.
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   youtube: youtubeRouter,
   idleMessage: idleMessageRouter,
   spotify: spotifyRouter,
+  themeSuggestions: themeSuggestionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
