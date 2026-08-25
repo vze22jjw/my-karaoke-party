@@ -29,7 +29,7 @@ export const THEME_CATEGORIES: ThemeCategory[] = [
   },
   {
     id: "vocalists",
-    name: "Male / Female / Duet",
+    name: "♂ ♀ Vocals",
     iconName: "Users",
     pills: [
       {

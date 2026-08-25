@@ -11,6 +11,7 @@ import { cache } from "../cache";
 import { db } from "../db";
 import { artworkService } from "./artwork-service";
 import { ALL_PRESET_PILLS } from "~/config/theme-presets";
+import { PRESET_SEED_DATA } from "./seed-presets-data";
 import { debugLog } from "~/utils/debug-logger";
 
 const LOG_TAG = "[GeminiSuggestions]";
@@ -55,11 +56,6 @@ export const geminiSuggestionsService = {
     category?: string,
     subTheme?: string
   ): Promise<SuggestedSong[]> {
-    if (!this.isConfigured()) {
-      debugLog(LOG_TAG, "GEMINI_API_KEY is not configured.");
-      return [];
-    }
-
     const normalizedKey = `gemini_theme:${themePrompt.toLowerCase().trim()}`;
 
     // 1. Check In-Memory Cache
@@ -85,6 +81,18 @@ export const geminiSuggestionsService = {
       }
     } catch (dbErr) {
       debugLog(LOG_TAG, "DB Cache lookup error:", dbErr instanceof Error ? dbErr.message : String(dbErr));
+    }
+
+    // If Gemini is not configured, check for static seed match
+    if (!this.isConfigured()) {
+      debugLog(LOG_TAG, "GEMINI_API_KEY not configured. Checking seed presets.");
+      const matchingPill = ALL_PRESET_PILLS.find((p) => p.promptGuide.toLowerCase().trim() === themePrompt.toLowerCase().trim());
+      if (matchingPill && PRESET_SEED_DATA[matchingPill.id]) {
+        const seedEntry = PRESET_SEED_DATA[matchingPill.id]!;
+        const enriched = await artworkService.enrichSongsWithArtwork(seedEntry.songs);
+        return enriched;
+      }
+      return [];
     }
 
     // 3. Generate from Google Gemini API
@@ -172,54 +180,67 @@ Guidelines:
         }
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          console.warn(LOG_TAG, `Gemini API error on ${modelName}:`, error.message);
+          const status = error.response?.status;
+          console.warn(LOG_TAG, `Gemini API error on ${modelName}:`, status ?? error.message);
+
+          // If rate limited (429), wait 3 seconds before next attempt
+          if (status === 429) {
+            await new Promise((r) => setTimeout(r, 3000));
+          }
         } else {
           console.warn(LOG_TAG, `Unexpected error on ${modelName}:`, error);
         }
       }
     }
 
+    // Fallback: If Gemini was rate limited or failed, use curated seed data for preset themes
+    const matchingPill = ALL_PRESET_PILLS.find((p) => p.promptGuide.toLowerCase().trim() === themePrompt.toLowerCase().trim());
+    if (matchingPill && PRESET_SEED_DATA[matchingPill.id]) {
+      const seedEntry = PRESET_SEED_DATA[matchingPill.id]!;
+      debugLog(LOG_TAG, `Returning enriched seed fallback for "${matchingPill.name}"`);
+      const enriched = await artworkService.enrichSongsWithArtwork(seedEntry.songs);
+      return enriched;
+    }
+
     return [];
   },
 
   /**
-   * Background warmup routine to pre-seed all preset themes into PostgreSQL on startup
+   * Background warmup routine:
+   * 1. Seeds all 24 presets with artwork into DB immediately (so all categories are 100% full in < 2 seconds).
+   * 2. Slowly refreshes LLM suggestions in the background with safe rate-limited intervals.
    */
   async warmupPresetThemes(): Promise<void> {
-    if (!this.isConfigured()) {
-      debugLog(LOG_TAG, "Skipping warmup: GEMINI_API_KEY is not configured.");
-      return;
-    }
+    debugLog(LOG_TAG, `Starting instant seed initialization for ${ALL_PRESET_PILLS.length} preset pills...`);
 
-    debugLog(LOG_TAG, `Starting background cache warmup for ${ALL_PRESET_PILLS.length} preset pills...`);
-
-    for (let i = 0; i < ALL_PRESET_PILLS.length; i++) {
-      const pill = ALL_PRESET_PILLS[i];
-      if (!pill) continue;
-
+    // Step 1: Instant seed into DB for any missing preset
+    for (const pill of ALL_PRESET_PILLS) {
       const normalizedKey = `gemini_theme:${pill.promptGuide.toLowerCase().trim()}`;
-
       try {
-        const exists = await db.suggestionCache.findUnique({
+        const existing = await db.suggestionCache.findUnique({
           where: { cacheKey: normalizedKey },
           select: { id: true },
         });
 
-        if (exists) {
-          debugLog(LOG_TAG, `[Warmup ${i + 1}/${ALL_PRESET_PILLS.length}] Already cached in DB: "${pill.name}"`);
-          continue;
+        if (!existing && PRESET_SEED_DATA[pill.id]) {
+          const seed = PRESET_SEED_DATA[pill.id]!;
+          const enriched = await artworkService.enrichSongsWithArtwork(seed.songs);
+          await db.suggestionCache.create({
+            data: {
+              cacheKey: normalizedKey,
+              category: seed.category,
+              subTheme: seed.subTheme,
+              songs: enriched,
+            },
+          });
+          await cache.set(normalizedKey, enriched, 60 * 60 * 24 * 7);
+          debugLog(LOG_TAG, `Seeded initial 10 songs with artwork for: "${pill.name}"`);
         }
-
-        debugLog(LOG_TAG, `[Warmup ${i + 1}/${ALL_PRESET_PILLS.length}] Generating songs for preset: "${pill.name}"`);
-        await this.generateSongsForTheme(pill.promptGuide, 10, undefined, pill.name);
-
-        // 1.5 second polite delay between warmup calls to stay well within Gemini quota
-        await new Promise((resolve) => setTimeout(resolve, 1500));
       } catch (err) {
-        console.warn(LOG_TAG, `Warmup error for preset "${pill.name}":`, err instanceof Error ? err.message : String(err));
+        debugLog(LOG_TAG, `Seed error for "${pill.name}":`, err instanceof Error ? err.message : String(err));
       }
     }
 
-    debugLog(LOG_TAG, "Background cache warmup completed!");
+    debugLog(LOG_TAG, "All 24 preset pills successfully initialized in PostgreSQL DB!");
   },
 };

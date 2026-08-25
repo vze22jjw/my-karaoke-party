@@ -394,7 +394,7 @@ export function ThemeSuggestionsCarousel({
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
             <Music className="h-8 w-8 mb-2 opacity-30" />
-            <p className="text-xs">{t("noSongs") ?? "No suggestions available"}</p>
+            <p className="text-xs">{t("noSuggestions") ?? "No Song Suggestions Yet"}</p>
           </div>
         )}
       </div>
