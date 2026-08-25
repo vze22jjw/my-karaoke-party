@@ -26,6 +26,11 @@ export const SuggestedSongSchema = z.object({
 
 export type SuggestedSong = z.infer<typeof SuggestedSongSchema>;
 
+export type ThemedSuggestionsResponse = {
+  songs: SuggestedSong[];
+  isBlockedBySafety?: boolean;
+};
+
 type GeminiResponsePart = {
   text?: string;
 };
@@ -34,10 +39,20 @@ type GeminiCandidate = {
   content?: {
     parts?: GeminiResponsePart[];
   };
+  finishReason?: string;
+};
+
+type PromptFeedback = {
+  blockReason?: string;
+  safetyRatings?: Array<{
+    category: string;
+    probability: string;
+  }>;
 };
 
 type GeminiApiResponse = {
   candidates?: GeminiCandidate[];
+  promptFeedback?: PromptFeedback;
 };
 
 const GEMINI_MODELS = [
@@ -59,14 +74,14 @@ export const geminiSuggestionsService = {
     count = 10,
     category?: string,
     subTheme?: string
-  ): Promise<SuggestedSong[]> {
+  ): Promise<ThemedSuggestionsResponse> {
     const normalizedKey = `gemini_theme:${themePrompt.toLowerCase().trim()}`;
 
     // 1. Check In-Memory Cache
     const cached = await cache.get<SuggestedSong[]>(normalizedKey);
     if (cached && Array.isArray(cached) && cached.length > 0) {
       debugLog(LOG_TAG, `Memory Cache Hit for theme: "${themePrompt}" (${cached.length} songs)`);
-      return cached as SuggestedSong[];
+      return { songs: cached as SuggestedSong[] };
     }
 
     // 2. Check PostgreSQL Database Cache
@@ -80,7 +95,7 @@ export const geminiSuggestionsService = {
         if (parsed.success && parsed.data.length > 0) {
           debugLog(LOG_TAG, `DB Cache Hit for theme: "${themePrompt}" (${parsed.data.length} songs)`);
           await cache.set(normalizedKey, parsed.data, 60 * 60 * 24 * 7);
-          return parsed.data;
+          return { songs: parsed.data };
         }
       }
     } catch (dbErr) {
@@ -94,9 +109,9 @@ export const geminiSuggestionsService = {
       if (matchingPill && PRESET_SEED_DATA[matchingPill.id]) {
         const seedEntry = PRESET_SEED_DATA[matchingPill.id]!;
         const enriched = await artworkService.enrichSongsWithArtwork(seedEntry.songs);
-        return enriched;
+        return { songs: enriched };
       }
-      return [];
+      return { songs: [] };
     }
 
     // 3. Generate from Google Gemini API
@@ -108,6 +123,8 @@ Guidelines:
 - Ensure songs are well-known and commonly available as karaoke versions on YouTube.
 - Output fields for each item: title, artist, year.
 - Do not return duplicate songs.`;
+
+    let safetyBlocked = false;
 
     for (const modelName of GEMINI_MODELS) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
@@ -134,6 +151,16 @@ Guidelines:
             timeout: 35000,
           }
         );
+
+        // Check for Google safety blocks
+        const blockReason = response.data?.promptFeedback?.blockReason;
+        const candidateFinishReason = response.data?.candidates?.[0]?.finishReason;
+
+        if (blockReason === "SAFETY" || candidateFinishReason === "SAFETY") {
+          debugLog(LOG_TAG, `Prompt flagged by Gemini safety filters: "${themePrompt}"`);
+          safetyBlocked = true;
+          break; // Don't keep hammering other models if explicitly blocked by safety
+        }
 
         const rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) {
@@ -180,16 +207,25 @@ Guidelines:
           // 6. Cache in Memory
           await cache.set(normalizedKey, enrichedSongs, 60 * 60 * 24 * 7);
 
-          return enrichedSongs;
+          return { songs: enrichedSongs };
         }
       } catch (error) {
         if (axios.isAxiosError(error)) {
           const status = error.response?.status;
+          const data = error.response?.data as { promptFeedback?: PromptFeedback; error?: { message?: string } } | undefined;
+          if (data?.promptFeedback?.blockReason === "SAFETY" || data?.error?.message?.includes("SAFETY")) {
+            safetyBlocked = true;
+            break;
+          }
           console.warn(LOG_TAG, `Gemini API error on ${modelName}:`, status ?? error.message);
         } else {
           console.warn(LOG_TAG, `Unexpected error on ${modelName}:`, error);
         }
       }
+    }
+
+    if (safetyBlocked) {
+      return { songs: [], isBlockedBySafety: true };
     }
 
     // Fallback: If Gemini was rate limited or failed, use curated seed data for preset themes
@@ -198,10 +234,10 @@ Guidelines:
       const seedEntry = PRESET_SEED_DATA[matchingPill.id]!;
       debugLog(LOG_TAG, `Returning enriched seed fallback for "${matchingPill.name}"`);
       const enriched = await artworkService.enrichSongsWithArtwork(seedEntry.songs);
-      return enriched;
+      return { songs: enriched };
     }
 
-    return [];
+    return { songs: [] };
   },
 
   /**

@@ -3,6 +3,11 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { geminiSuggestionsService, SuggestedSongSchema } from "~/server/lib/gemini-suggestions";
 import { THEME_CATEGORIES, getPresetPillById } from "~/config/theme-presets";
 
+export const ThemedSongsResultSchema = z.object({
+  songs: z.array(SuggestedSongSchema),
+  isBlockedBySafety: z.boolean().optional(),
+});
+
 export const themeSuggestionsRouter = createTRPCRouter({
   isAvailable: publicProcedure.query(() => {
     return {
@@ -31,7 +36,7 @@ export const themeSuggestionsRouter = createTRPCRouter({
         customPrompt: z.string().optional(),
       })
     )
-    .output(z.array(SuggestedSongSchema))
+    .output(ThemedSongsResultSchema)
     .query(async ({ input }) => {
       let promptToUse = input.customPrompt?.trim();
       let subThemeName: string | undefined;
@@ -46,7 +51,7 @@ export const themeSuggestionsRouter = createTRPCRouter({
       }
 
       if (!promptToUse) {
-        return [];
+        return { songs: [] };
       }
 
       return await geminiSuggestionsService.generateSongsForTheme(promptToUse, 10, undefined, subThemeName);
@@ -74,10 +79,10 @@ export const themeSuggestionsRouter = createTRPCRouter({
 
       const results = await Promise.all(
         validThemes.map(async (theme) => {
-          const songs = await geminiSuggestionsService.generateSongsForTheme(theme, 10, "Party Themes", theme);
+          const res = await geminiSuggestionsService.generateSongsForTheme(theme, 10, "Party Themes", theme);
           return {
             theme,
-            songs,
+            songs: res.songs,
           };
         })
       );

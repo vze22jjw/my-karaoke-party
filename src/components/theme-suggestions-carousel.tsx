@@ -30,6 +30,7 @@ import {
   Mic2,
   Music2,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
@@ -234,7 +235,7 @@ export function ThemeSuggestionsCarousel({
     : undefined;
 
   // On-demand query for Custom Vibe and Host Themes only
-  const { data: dynamicAiSongs, isLoading: isLoadingDynamic } = api.themeSuggestions.getThemedSongs.useQuery(
+  const { data: dynamicResult, isLoading: isLoadingDynamic } = api.themeSuggestions.getThemedSongs.useQuery(
     {
       customPrompt: isCustomCard
         ? activeCustomPrompt ?? undefined
@@ -250,6 +251,9 @@ export function ThemeSuggestionsCarousel({
       refetchOnWindowFocus: false,
     }
   );
+
+  const isBlockedBySafety = dynamicResult?.isBlockedBySafety;
+  const dynamicAiSongs = dynamicResult?.songs ?? [];
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,7 +283,7 @@ export function ThemeSuggestionsCarousel({
   // Select songs to display:
   // - Spotify: from props (up to 10)
   // - Preset Cards: instantly from preloaded allPresetSongs dictionary (0ms latency!)
-  // - Custom / Host: from dynamicAiSongs query
+  // - Custom / Host: from dynamicAiSongs
   const displaySongs = isSpotifyCard
     ? spotifySongs.slice(0, 10)
     : isPresetCard
@@ -427,6 +431,28 @@ export function ThemeSuggestionsCarousel({
                 <Skeleton className="w-8 h-8 rounded-md shrink-0 ml-2" />
               </div>
             ))}
+          </div>
+        ) : isCustomCard && isBlockedBySafety ? (
+          /* Custom Vibe Safety Block Message */
+          <div className="h-full flex flex-col items-center justify-center text-center p-4">
+            <div className="w-10 h-10 rounded-full bg-rose-500/15 text-rose-500 flex items-center justify-center mb-2">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-semibold text-rose-500">
+              {t("safetyBlockedTitle") ?? "Prompt Restricted"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[260px] leading-relaxed">
+              {t("safetyBlockedDesc") ?? "This prompt could not be processed due to content safety policies. Please try a different theme, genre, or mood."}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClearCustomPrompt}
+              className="mt-3 text-xs h-7 px-3 border-rose-500/30 hover:bg-rose-500/10 text-rose-400"
+            >
+              {t("tryAnother") ?? "Try Another Vibe"}
+            </Button>
           </div>
         ) : displaySongs && displaySongs.length > 0 ? (
           displaySongs.map((song, idx) => (
