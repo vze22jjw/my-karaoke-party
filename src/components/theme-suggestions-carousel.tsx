@@ -28,6 +28,7 @@ import {
   Search,
   Lightbulb,
   Mic2,
+  Music2,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
@@ -39,8 +40,15 @@ import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
 import { THEME_CATEGORIES, type SubThemePill } from "~/config/theme-presets";
 
+type SpotifySong = {
+  title: string;
+  artist: string;
+  coverUrl?: string;
+};
+
 type Props = {
   themeSuggestions?: string[];
+  spotifySongs?: SpotifySong[];
   onSuggestionClick: (title: string, artist: string) => void;
   className?: string;
 };
@@ -66,6 +74,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Theater,
   Sun,
   Mic2,
+  Music2,
   Lightbulb,
 };
 
@@ -74,12 +83,14 @@ type CategoryCard = {
   name: string;
   iconName: string;
   isHostThemes?: boolean;
+  isSpotify?: boolean;
   isCustom?: boolean;
   pills: SubThemePill[];
 };
 
 export function ThemeSuggestionsCarousel({
   themeSuggestions = [],
+  spotifySongs = [],
   onSuggestionClick,
   className,
 }: Props) {
@@ -91,10 +102,14 @@ export function ThemeSuggestionsCarousel({
     [themeSuggestions]
   );
   const hasHostThemes = hostThemeStrings.length > 0;
+  const hasSpotify = spotifySongs && spotifySongs.length > 0;
 
-  // Build the list of category cards (Party Themes as Card #1)
+  // Build the list of category cards (Party Themes as Card #1, Spotify as Card #2 if present)
   const allCategories: CategoryCard[] = useMemo(() => {
-    const hostCategoryCard: CategoryCard = {
+    const cards: CategoryCard[] = [];
+
+    // 1. Party Themes
+    cards.push({
       id: "party-themes",
       name: "Party Themes",
       iconName: "Lightbulb",
@@ -105,19 +120,32 @@ export function ThemeSuggestionsCarousel({
         promptGuide: themeStr,
         iconName: "Sparkles",
       })),
-    };
+    });
 
-    return [
-      hostCategoryCard,
-      ...THEME_CATEGORIES.map((c) => ({
+    // 2. Spotify Hot Karaoke (if available)
+    if (hasSpotify) {
+      cards.push({
+        id: "spotify-hot",
+        name: "Hot Karaoke From Spotify",
+        iconName: "Music2",
+        isSpotify: true,
+        pills: [],
+      });
+    }
+
+    // 3. Preset Categories
+    for (const c of THEME_CATEGORIES) {
+      cards.push({
         id: c.id,
         name: c.name,
         iconName: c.iconName,
         isCustom: c.isCustom,
         pills: c.pills,
-      })),
-    ];
-  }, [hostThemeStrings]);
+      });
+    }
+
+    return cards;
+  }, [hostThemeStrings, hasSpotify]);
 
   const [activeCategoryIdx, setActiveCategoryIdx] = useState(0);
   const [activePillId, setActivePillId] = useState<string>("");
@@ -154,10 +182,8 @@ export function ThemeSuggestionsCarousel({
 
     if (Math.abs(diff) > 45) {
       if (diff > 0) {
-        // Swipe left -> Next category
         setActiveCategoryIdx((prev) => (prev + 1) % allCategories.length);
       } else {
-        // Swipe right -> Prev category
         setActiveCategoryIdx((prev) => (prev - 1 + allCategories.length) % allCategories.length);
       }
     }
@@ -175,14 +201,15 @@ export function ThemeSuggestionsCarousel({
   // Determine query parameters
   const isCustomCard = activeCategory.isCustom;
   const isHostThemesCard = activeCategory.isHostThemes;
+  const isSpotifyCard = activeCategory.isSpotify;
 
   const currentHostPill = isHostThemesCard
     ? activeCategory.pills.find((p) => p.id === activePillId)
     : undefined;
 
-  const { data: songs, isLoading, isFetching } = api.themeSuggestions.getThemedSongs.useQuery(
+  const { data: aiSongs, isLoading, isFetching } = api.themeSuggestions.getThemedSongs.useQuery(
     {
-      pillId: !isCustomCard && !isHostThemesCard ? activePillId : undefined,
+      pillId: !isCustomCard && !isHostThemesCard && !isSpotifyCard ? activePillId : undefined,
       customPrompt: isCustomCard
         ? activeCustomPrompt ?? undefined
         : isHostThemesCard
@@ -191,7 +218,7 @@ export function ThemeSuggestionsCarousel({
     },
     {
       enabled:
-        (!isCustomCard && !isHostThemesCard && !!activePillId) ||
+        (!isCustomCard && !isHostThemesCard && !isSpotifyCard && !!activePillId) ||
         (isCustomCard && !!activeCustomPrompt) ||
         (isHostThemesCard && !!currentHostPill?.promptGuide),
       staleTime: 1000 * 60 * 60 * 24, // 24 hours
@@ -207,6 +234,9 @@ export function ThemeSuggestionsCarousel({
   };
 
   const CategoryIcon = ICON_MAP[activeCategory.iconName] ?? Sparkles;
+
+  // Choose which songs list to display
+  const displaySongs = isSpotifyCard ? spotifySongs.slice(0, 10) : aiSongs;
 
   return (
     <div
@@ -264,7 +294,7 @@ export function ThemeSuggestionsCarousel({
             <Input
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder="e.g. songs about hair, 80s movie hits..."
+              placeholder="e.g. songs with a womans name, 80s rock..."
               className="pl-9 text-xs h-9 bg-background"
             />
           </div>
@@ -300,14 +330,14 @@ export function ThemeSuggestionsCarousel({
       ) : isHostThemesCard && !hasHostThemes ? (
         <div className="p-3 bg-muted/30 rounded-lg border border-dashed text-center">
           <p className="text-xs text-muted-foreground italic">
-            Host has not set party themes yet. Set themes in Host Settings to generate custom party songs.
+            Host has not set party themes yet. Set themes in Host Settings to populate this card.
           </p>
         </div>
       ) : null}
 
       {/* 3. Songs List Container (Exactly 5 songs visible, remaining scrollable) */}
       <div className="h-[295px] overflow-y-auto pr-1 space-y-1.5 custom-scrollbar">
-        {isLoading || isFetching ? (
+        {!isSpotifyCard && (isLoading || isFetching) ? (
           <div className="space-y-2 py-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center justify-between p-2 rounded-lg border bg-background/50">
@@ -322,8 +352,8 @@ export function ThemeSuggestionsCarousel({
               </div>
             ))}
           </div>
-        ) : songs && songs.length > 0 ? (
-          songs.map((song, idx) => (
+        ) : displaySongs && displaySongs.length > 0 ? (
+          displaySongs.map((song, idx) => (
             <div
               key={`${song.title}-${song.artist}-${idx}`}
               className="flex items-center justify-between p-2 rounded-lg border border-border/60 bg-background hover:bg-muted/40 transition-colors group"
@@ -354,9 +384,9 @@ export function ThemeSuggestionsCarousel({
                   </p>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate mt-0.5">
                     <span className="truncate">{song.artist}</span>
-                    {song.year && (
+                    {"year" in song && Boolean(song.year) && (
                       <span className="px-1.5 py-0.2 rounded bg-muted text-[10px] shrink-0 font-mono">
-                        {song.year}
+                        {String(song.year)}
                       </span>
                     )}
                   </div>
@@ -380,7 +410,7 @@ export function ThemeSuggestionsCarousel({
             <Wand2 className="h-8 w-8 mb-2 opacity-40 text-primary" />
             <p className="text-sm font-medium">Create a custom vibe</p>
             <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px]">
-              Type any prompt like &quot;songs about hair&quot; or &quot;beach party&quot; to generate 10 songs with album art.
+              Type any prompt like &quot;songs with a womans name&quot; or &quot;beach party&quot; to generate 10 songs with album art.
             </p>
           </div>
         ) : isHostThemesCard && !hasHostThemes ? (

@@ -41,6 +41,10 @@ type GeminiApiResponse = {
 };
 
 const GEMINI_MODELS = [
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash-lite",
+  "gemini-3-flash-preview",
   "gemini-3.6-flash",
   "gemini-3.7-flash",
 ];
@@ -127,7 +131,7 @@ Guidelines:
             headers: {
               "Content-Type": "application/json",
             },
-            timeout: 45000,
+            timeout: 35000,
           }
         );
 
@@ -182,11 +186,6 @@ Guidelines:
         if (axios.isAxiosError(error)) {
           const status = error.response?.status;
           console.warn(LOG_TAG, `Gemini API error on ${modelName}:`, status ?? error.message);
-
-          // If rate limited (429), wait 3 seconds before next attempt
-          if (status === 429) {
-            await new Promise((r) => setTimeout(r, 3000));
-          }
         } else {
           console.warn(LOG_TAG, `Unexpected error on ${modelName}:`, error);
         }
@@ -206,14 +205,11 @@ Guidelines:
   },
 
   /**
-   * Background warmup routine:
-   * 1. Seeds all 24 presets with artwork into DB immediately (so all categories are 100% full in < 2 seconds).
-   * 2. Slowly refreshes LLM suggestions in the background with safe rate-limited intervals.
+   * Background warmup routine to seed all 24 presets with artwork into DB immediately
    */
   async warmupPresetThemes(): Promise<void> {
     debugLog(LOG_TAG, `Starting instant seed initialization for ${ALL_PRESET_PILLS.length} preset pills...`);
 
-    // Step 1: Instant seed into DB for any missing preset
     for (const pill of ALL_PRESET_PILLS) {
       const normalizedKey = `gemini_theme:${pill.promptGuide.toLowerCase().trim()}`;
       try {
