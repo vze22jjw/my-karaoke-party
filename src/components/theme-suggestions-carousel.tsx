@@ -29,6 +29,7 @@ import {
   Lightbulb,
   Mic2,
   Music2,
+  X,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
@@ -39,6 +40,8 @@ import { Skeleton } from "~/components/ui/ui/skeleton";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
 import { THEME_CATEGORIES, type SubThemePill } from "~/config/theme-presets";
+
+const STORAGE_KEY_PROMPT = "mk_custom_vibe_prompt";
 
 type SpotifySong = {
   title: string;
@@ -152,6 +155,19 @@ export function ThemeSuggestionsCarousel({
   const [customPrompt, setCustomPrompt] = useState("");
   const [activeCustomPrompt, setActiveCustomPrompt] = useState<string | null>(null);
 
+  // Restore custom vibe query from client storage on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY_PROMPT);
+      if (stored && stored.trim().length > 0) {
+        setCustomPrompt(stored);
+        setActiveCustomPrompt(stored);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
   const activeCategory = allCategories[activeCategoryIdx] ?? allCategories[0]!;
 
   // Default to first pill whenever category changes
@@ -229,13 +245,29 @@ export function ThemeSuggestionsCarousel({
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (customPrompt.trim().length > 0) {
-      setActiveCustomPrompt(customPrompt.trim());
+      const cleanPrompt = customPrompt.trim();
+      setActiveCustomPrompt(cleanPrompt);
+      try {
+        sessionStorage.setItem(STORAGE_KEY_PROMPT, cleanPrompt);
+      } catch {
+        // Ignore storage errors
+      }
+    }
+  };
+
+  const handleClearCustomPrompt = () => {
+    setActiveCustomPrompt(null);
+    setCustomPrompt("");
+    try {
+      sessionStorage.removeItem(STORAGE_KEY_PROMPT);
+    } catch {
+      // Ignore storage errors
     }
   };
 
   const CategoryIcon = ICON_MAP[activeCategory.iconName] ?? Sparkles;
 
-  // Choose which songs list to display
+  // Choose which songs list to display (Spotify shows up to 10)
   const displaySongs = isSpotifyCard ? spotifySongs.slice(0, 10) : aiSongs;
 
   return (
@@ -288,21 +320,45 @@ export function ThemeSuggestionsCarousel({
 
       {/* 2. Sub-Theme Pills Row or Custom Input */}
       {isCustomCard ? (
-        <form onSubmit={handleCustomSubmit} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder="e.g. songs with a womans name, 80s rock..."
-              className="pl-9 text-xs h-9 bg-background"
-            />
+        activeCustomPrompt ? (
+          /* Active Custom Vibe Search Tag with Clear button */
+          <div className="flex items-center justify-between gap-2 p-1.5 px-2.5 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex items-center gap-2 min-w-0">
+              <Wand2 className="h-3.5 w-3.5 text-primary shrink-0" />
+              <p className="text-xs font-semibold text-foreground truncate">
+                &ldquo;{activeCustomPrompt}&rdquo;
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleClearCustomPrompt}
+              className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground hover:bg-background/80 shrink-0"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </Button>
           </div>
-          <Button type="submit" size="sm" className="h-9 px-3 text-xs gap-1.5 shrink-0" disabled={isLoading || isFetching}>
-            <Wand2 className="h-3.5 w-3.5" />
-            {t("generate") ?? "Generate"}
-          </Button>
-        </form>
+        ) : (
+          /* Input Field when no search is active */
+          <form onSubmit={handleCustomSubmit} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                placeholder="e.g. songs with a womans name, 80s rock..."
+                className="pl-9 text-xs h-9 bg-background"
+                autoFocus={isCustomCard}
+              />
+            </div>
+            <Button type="submit" size="sm" className="h-9 px-3 text-xs gap-1.5 shrink-0" disabled={isLoading || isFetching}>
+              <Wand2 className="h-3.5 w-3.5" />
+              {t("generate") ?? "Generate"}
+            </Button>
+          </form>
+        )
       ) : activeCategory.pills.length > 0 ? (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
           {activeCategory.pills.map((pill) => {

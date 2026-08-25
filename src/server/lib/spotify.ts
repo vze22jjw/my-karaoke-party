@@ -195,7 +195,7 @@ export const spotifyService = {
       const tracksRes = await axios.get<{ items?: { item?: SpotifyTrack; track?: SpotifyTrack }[] }>(
         `https://api.spotify.com/v1/playlists/${idToUse}/items`,
         {
-          params: { limit: 5 },
+          params: { limit: 10 },
           headers: { Authorization: `Bearer ${token}` },
         }
       );
