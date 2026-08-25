@@ -1,3 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import axios from "axios";
 import { z } from "zod";
 import { env } from "~/env";
@@ -46,7 +52,7 @@ export const geminiSuggestionsService = {
     const cached = await cache.get<SuggestedSong[]>(normalizedKey);
     if (cached && Array.isArray(cached) && cached.length > 0) {
       debugLog(LOG_TAG, `Returning cached results for theme: "${themePrompt}"`);
-      return cached;
+      return cached as SuggestedSong[];
     }
 
     const apiKey = env.GEMINI_API_KEY!;

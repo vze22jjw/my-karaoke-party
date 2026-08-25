@@ -59,6 +59,8 @@ services:
       ## Spotify API Credentials Optional
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      ## Gemini AI Suggestions
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       ## Optional links to extrnal applause sounds
       NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL: ${NEXT_PUBLIC_APPLAUSE_SOUND_CDN_URL}
       # Default Language (en or pt)

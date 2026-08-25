@@ -12,7 +12,6 @@ import {
   Sparkles,
   Snowflake,
   Plus,
-  Loader2,
   Wand2,
   X,
   Search,
@@ -49,8 +48,6 @@ export function ThemeSuggestionsCarousel({ onSuggestionClick, className }: Props
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [activeCustomVibe, setActiveCustomVibe] = useState<string | null>(null);
   const [isCustomOpen, setIsCustomOpen] = useState(false);
-
-  const activePreset = THEME_PRESETS.find((p) => p.id === selectedThemeId);
 
   const { data: songs, isLoading, isFetching } = api.themeSuggestions.getThemedSongs.useQuery(
     {
