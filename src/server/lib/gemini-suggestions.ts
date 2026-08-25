@@ -38,8 +38,6 @@ type GeminiApiResponse = {
 const GEMINI_MODELS = [
   "gemini-3.6-flash",
   "gemini-3.7-flash",
-  "gemini-flash-latest",
-  "gemini-pro-latest",
 ];
 
 export const geminiSuggestionsService = {
@@ -71,71 +69,59 @@ Guidelines:
 - Output fields for each item: title, artist, year.
 - Do not return duplicate songs.`;
 
-    // Try models in order until one succeeds
     for (const modelName of GEMINI_MODELS) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          debugLog(LOG_TAG, `Calling Gemini API (${modelName}, attempt ${attempt}) for theme: "${themePrompt}"`);
+      try {
+        debugLog(LOG_TAG, `Calling Gemini API (${modelName}) for theme: "${themePrompt}"`);
 
-          const response = await axios.post<GeminiApiResponse>(
-            url,
-            {
-              contents: [
-                {
-                  parts: [{ text: promptText }],
-                },
-              ],
-              generationConfig: {
-                responseMimeType: "application/json",
+        const response = await axios.post<GeminiApiResponse>(
+          url,
+          {
+            contents: [
+              {
+                parts: [{ text: promptText }],
               },
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
             },
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-              timeout: 15000,
-            }
-          );
-
-          const rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!rawText) {
-            debugLog(LOG_TAG, "Empty response received from Gemini API");
-            break;
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            timeout: 45000,
           }
+        );
 
-          const parsedJson = JSON.parse(rawText) as unknown;
-          const parsedArray = z.array(SuggestedSongSchema).safeParse(parsedJson);
+        const rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) {
+          debugLog(LOG_TAG, `Empty response received from Gemini API on ${modelName}`);
+          continue;
+        }
 
-          if (!parsedArray.success) {
-            console.warn(LOG_TAG, "Failed to parse structured JSON from Gemini:", parsedArray.error);
-            break;
-          }
+        const parsedJson = JSON.parse(rawText) as unknown;
+        const parsedArray = z.array(SuggestedSongSchema).safeParse(parsedJson);
 
-          const songs = parsedArray.data;
+        if (!parsedArray.success) {
+          console.warn(LOG_TAG, "Failed to parse structured JSON from Gemini:", parsedArray.error);
+          continue;
+        }
 
-          if (songs.length > 0) {
-            // Cache for 7 days
-            await cache.set(normalizedKey, songs, 60 * 60 * 24 * 7);
-            debugLog(LOG_TAG, `Successfully cached ${songs.length} songs for "${themePrompt}" using ${modelName}`);
-            return songs;
-          }
-        } catch (error) {
-          if (axios.isAxiosError(error)) {
-            const status = error.response?.status;
-            if (status === 404) {
-              debugLog(LOG_TAG, `Model ${modelName} returned 404. Trying next model.`);
-              break;
-            }
-            console.warn(LOG_TAG, `Gemini API error on ${modelName} (attempt ${attempt}):`, error.message);
-          } else {
-            console.warn(LOG_TAG, `Unexpected error on ${modelName}:`, error);
-          }
+        const songs = parsedArray.data;
 
-          if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          }
+        if (songs.length > 0) {
+          // Cache for 7 days
+          await cache.set(normalizedKey, songs, 60 * 60 * 24 * 7);
+          debugLog(LOG_TAG, `Successfully cached ${songs.length} songs for "${themePrompt}" using ${modelName}`);
+          return songs;
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.warn(LOG_TAG, `Gemini API error on ${modelName}:`, error.message);
+        } else {
+          console.warn(LOG_TAG, `Unexpected error on ${modelName}:`, error);
         }
       }
     }
