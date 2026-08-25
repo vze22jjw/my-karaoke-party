@@ -8,6 +8,9 @@ import axios from "axios";
 import { z } from "zod";
 import { env } from "~/env";
 import { cache } from "../cache";
+import { db } from "../db";
+import { artworkService } from "./artwork-service";
+import { ALL_PRESET_PILLS } from "~/config/theme-presets";
 import { debugLog } from "~/utils/debug-logger";
 
 const LOG_TAG = "[GeminiSuggestions]";
@@ -16,6 +19,7 @@ export const SuggestedSongSchema = z.object({
   title: z.string(),
   artist: z.string(),
   year: z.union([z.string(), z.number()]).transform((v) => String(v)).optional(),
+  coverUrl: z.string().optional(),
   reason: z.string().optional(),
 });
 
@@ -45,7 +49,12 @@ export const geminiSuggestionsService = {
     return !!env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim().length > 0;
   },
 
-  async generateSongsForTheme(themePrompt: string, count = 15): Promise<SuggestedSong[]> {
+  async generateSongsForTheme(
+    themePrompt: string,
+    count = 10,
+    category?: string,
+    subTheme?: string
+  ): Promise<SuggestedSong[]> {
     if (!this.isConfigured()) {
       debugLog(LOG_TAG, "GEMINI_API_KEY is not configured.");
       return [];
@@ -53,13 +62,32 @@ export const geminiSuggestionsService = {
 
     const normalizedKey = `gemini_theme:${themePrompt.toLowerCase().trim()}`;
 
-    // 1. Check Cache
+    // 1. Check In-Memory Cache
     const cached = await cache.get<SuggestedSong[]>(normalizedKey);
     if (cached && Array.isArray(cached) && cached.length > 0) {
-      debugLog(LOG_TAG, `Returning cached results for theme: "${themePrompt}" (${cached.length} songs)`);
+      debugLog(LOG_TAG, `Memory Cache Hit for theme: "${themePrompt}" (${cached.length} songs)`);
       return cached as SuggestedSong[];
     }
 
+    // 2. Check PostgreSQL Database Cache
+    try {
+      const dbEntry = await db.suggestionCache.findUnique({
+        where: { cacheKey: normalizedKey },
+      });
+
+      if (dbEntry && Array.isArray(dbEntry.songs) && dbEntry.songs.length > 0) {
+        const parsed = z.array(SuggestedSongSchema).safeParse(dbEntry.songs);
+        if (parsed.success && parsed.data.length > 0) {
+          debugLog(LOG_TAG, `DB Cache Hit for theme: "${themePrompt}" (${parsed.data.length} songs)`);
+          await cache.set(normalizedKey, parsed.data, 60 * 60 * 24 * 7);
+          return parsed.data;
+        }
+      }
+    } catch (dbErr) {
+      debugLog(LOG_TAG, "DB Cache lookup error:", dbErr instanceof Error ? dbErr.message : String(dbErr));
+    }
+
+    // 3. Generate from Google Gemini API
     const apiKey = env.GEMINI_API_KEY!;
     const promptText = `You are an expert Karaoke DJ and party curator.
 Return a JSON array containing EXACTLY ${count} unique, iconic, crowd-pleasing karaoke songs for the theme: "${themePrompt}".
@@ -109,13 +137,38 @@ Guidelines:
           continue;
         }
 
-        const songs = parsedArray.data;
+        const rawSongs = parsedArray.data.slice(0, count);
 
-        if (songs.length > 0) {
-          // Cache for 7 days
-          await cache.set(normalizedKey, songs, 60 * 60 * 24 * 7);
-          debugLog(LOG_TAG, `Successfully cached ${songs.length} songs for "${themePrompt}" using ${modelName}`);
-          return songs;
+        if (rawSongs.length > 0) {
+          // 4. Enrich songs with Album Cover Artwork
+          debugLog(LOG_TAG, `Enriching ${rawSongs.length} songs with cover artwork...`);
+          const enrichedSongs = await artworkService.enrichSongsWithArtwork(rawSongs);
+
+          // 5. Persist to PostgreSQL Database
+          try {
+            await db.suggestionCache.upsert({
+              where: { cacheKey: normalizedKey },
+              update: {
+                songs: enrichedSongs,
+                category: category ?? null,
+                subTheme: subTheme ?? null,
+              },
+              create: {
+                cacheKey: normalizedKey,
+                songs: enrichedSongs,
+                category: category ?? null,
+                subTheme: subTheme ?? null,
+              },
+            });
+            debugLog(LOG_TAG, `Persisted ${enrichedSongs.length} songs to PostgreSQL DB for "${themePrompt}"`);
+          } catch (dbSaveErr) {
+            console.error(LOG_TAG, "Failed to save songs to PostgreSQL DB:", dbSaveErr);
+          }
+
+          // 6. Cache in Memory
+          await cache.set(normalizedKey, enrichedSongs, 60 * 60 * 24 * 7);
+
+          return enrichedSongs;
         }
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -127,5 +180,46 @@ Guidelines:
     }
 
     return [];
+  },
+
+  /**
+   * Background warmup routine to pre-seed all preset themes into PostgreSQL on startup
+   */
+  async warmupPresetThemes(): Promise<void> {
+    if (!this.isConfigured()) {
+      debugLog(LOG_TAG, "Skipping warmup: GEMINI_API_KEY is not configured.");
+      return;
+    }
+
+    debugLog(LOG_TAG, `Starting background cache warmup for ${ALL_PRESET_PILLS.length} preset pills...`);
+
+    for (let i = 0; i < ALL_PRESET_PILLS.length; i++) {
+      const pill = ALL_PRESET_PILLS[i];
+      if (!pill) continue;
+
+      const normalizedKey = `gemini_theme:${pill.promptGuide.toLowerCase().trim()}`;
+
+      try {
+        const exists = await db.suggestionCache.findUnique({
+          where: { cacheKey: normalizedKey },
+          select: { id: true },
+        });
+
+        if (exists) {
+          debugLog(LOG_TAG, `[Warmup ${i + 1}/${ALL_PRESET_PILLS.length}] Already cached in DB: "${pill.name}"`);
+          continue;
+        }
+
+        debugLog(LOG_TAG, `[Warmup ${i + 1}/${ALL_PRESET_PILLS.length}] Generating songs for preset: "${pill.name}"`);
+        await this.generateSongsForTheme(pill.promptGuide, 10, undefined, pill.name);
+
+        // 1.5 second polite delay between warmup calls to stay well within Gemini quota
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      } catch (err) {
+        console.warn(LOG_TAG, `Warmup error for preset "${pill.name}":`, err instanceof Error ? err.message : String(err));
+      }
+    }
+
+    debugLog(LOG_TAG, "Background cache warmup completed!");
   },
 };

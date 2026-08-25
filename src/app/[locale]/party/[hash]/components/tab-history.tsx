@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Lightbulb, Flame, Loader2, Music2, Plus, Mic2, Star, Sparkles } from "lucide-react";
+import { Flame, Loader2, Music2, Plus, Mic2, Star } from "lucide-react";
 import { api } from "~/trpc/react";
 import { decode } from "html-entities";
 import Image from "next/image";
 import { Button } from "~/components/ui/ui/button";
-import { Skeleton } from "~/components/ui/ui/skeleton";
 import { cn } from "~/lib/utils";
 import { useTranslations } from "next-intl";
 import { FunStatsCarousel } from "./fun-stats-carousel";
@@ -68,128 +67,6 @@ type Props = {
 };
 
 // --- SUB-COMPONENTS ---
-
-function HostThemesSection({
-  themeSuggestions,
-  onSuggestionClick,
-}: {
-  themeSuggestions: string[];
-  onSuggestionClick: (t: string, a: string) => void;
-}) {
-  const t = useTranslations("guest.history");
-  const [activeHostTab, setActiveHostTab] = useState(0);
-
-  const { data: hostThemeSongs, isLoading } = api.themeSuggestions.getHostThemeSongs.useQuery(
-    { themes: themeSuggestions ?? [] },
-    {
-      enabled: !!themeSuggestions && themeSuggestions.length > 0,
-      staleTime: 1000 * 60 * 60 * 24,
-      refetchOnWindowFocus: false,
-    }
-  );
-
-  const hasAIResults = hostThemeSongs && hostThemeSongs.length > 0 && hostThemeSongs.some((h) => h.songs.length > 0);
-
-  return (
-    <div className="bg-card rounded-lg p-4 border space-y-3">
-      <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-        <Lightbulb className="h-5 w-5 text-yellow-500" />
-        {hasAIResults ? t("partyThemes") : t("suggestions")}
-      </h2>
-
-      {isLoading ? (
-        <div className="space-y-2 py-1">
-          <Skeleton className="h-10 w-full rounded-md" />
-          <Skeleton className="h-10 w-full rounded-md" />
-        </div>
-      ) : hasAIResults ? (
-        <div className="space-y-3">
-          {/* Multiple Host Theme Tabs if > 1 */}
-          {hostThemeSongs.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-              {hostThemeSongs.map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setActiveHostTab(idx)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border",
-                    activeHostTab === idx
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/60 text-muted-foreground border-white/10 hover:bg-muted"
-                  )}
-                >
-                  <Sparkles className="h-3 w-3 inline mr-1 text-yellow-400" />
-                  {item.theme}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Active Host Theme Songs List */}
-          {hostThemeSongs[activeHostTab] && (
-            <div className="space-y-1.5">
-              {hostThemeSongs.length === 1 && (
-                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
-                  {hostThemeSongs[0]?.theme}
-                </p>
-              )}
-              <ul className="space-y-1.5">
-                {hostThemeSongs[activeHostTab]?.songs.map((song, idx) => (
-                  <li
-                    key={`${song.title}-${song.artist}-${idx}`}
-                    className="flex items-center justify-between p-2 rounded-lg border bg-background hover:bg-muted/30 transition-colors group"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[11px] font-semibold shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate text-foreground">{decode(song.title)}</p>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
-                          <span className="truncate">{song.artist}</span>
-                          {song.year && (
-                            <span className="px-1.5 py-0.2 rounded bg-muted/80 text-[10px] shrink-0 font-mono">
-                              {song.year}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="default"
-                      className="h-8 w-8 shrink-0 shadow-sm"
-                      aria-label={`Search and queue ${song.title}`}
-                      onClick={() => onSuggestionClick(decode(song.title), song.artist)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      ) : themeSuggestions && themeSuggestions.length > 0 ? (
-        <ul className="space-y-2">
-          {themeSuggestions.map((suggestion, index) => (
-            <li key={index} className="flex items-start gap-3 p-2 rounded transition-colors">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                {index + 1}
-              </div>
-              <div className="flex-1 min-w-0 mt-1.5">
-                <p className="text-sm font-medium leading-relaxed">{suggestion}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="italic text-muted-foreground text-sm pl-2 py-1">{t("hostPlaceholder")}</p>
-      )}
-    </div>
-  );
-}
 
 function SpotifySection({
   songs,
@@ -472,14 +349,11 @@ export function TabHistory({
 
   return (
     <div className="space-y-4 pb-6">
-      {/* 1. Host Party Themes (Populated with AI Songs if configured) */}
-      <HostThemesSection
+      {/* 1. Unified Themed Suggestions Carousel (Party Themes, Trending, Decades, Rock, Hip-Hop, Movies, International, Custom Vibe) */}
+      <ThemeSuggestionsCarousel
         themeSuggestions={themeSuggestions}
         onSuggestionClick={onSuggestionClick}
       />
-
-      {/* 2. Gemini Themed Suggestions Carousel (80s, 90s, 00s, Male, Divas, Duets, Custom) */}
-      <ThemeSuggestionsCarousel onSuggestionClick={onSuggestionClick} />
 
       {/* 3. Spotify Playlist & History Stats Carousel (Fallback & Community Trends) */}
       <div

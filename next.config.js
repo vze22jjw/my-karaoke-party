@@ -27,12 +27,33 @@ const config = {
   images: {
     remotePatterns: [
       {
-        hostname: "i.ytimg.com"
+        hostname: "i.ytimg.com",
       },
       {
-        hostname: "i.scdn.co"
-      }
-    ]
+        hostname: "i.scdn.co",
+      },
+      {
+        hostname: "*.mzstatic.com",
+      },
+      {
+        hostname: "is*-ssl.mzstatic.com",
+      },
+      {
+        hostname: "is1-ssl.mzstatic.com",
+      },
+      {
+        hostname: "is2-ssl.mzstatic.com",
+      },
+      {
+        hostname: "is3-ssl.mzstatic.com",
+      },
+      {
+        hostname: "is4-ssl.mzstatic.com",
+      },
+      {
+        hostname: "is5-ssl.mzstatic.com",
+      },
+    ],
   },
   experimental: {
     instrumentationHook: true,
