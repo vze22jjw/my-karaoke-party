@@ -232,9 +232,13 @@ Delete all parties from the system:
 # Preview (shows what would be deleted)
 pnpm cleanup:all
 
-# Delete all parties (with confirmation)
-pnpm cleanup:all --confirm
-```
+## 🧪 Testing Custom Vibe Safety Filters
+
+To test negative patterns and verify the **Prompt Restricted** safety alert UI in the Custom Vibe carousel card without needing to enter harmful terms, use the built-in test trigger:
+
+* **Test Trigger Phrase:** `twelve rubber chicken soup set on fire`
+
+Entering this phrase (or including it in any custom prompt) will immediately simulate a Google Gemini safety block, showing the rose shield alert, the restricted prompt notice, and the "Try Another Vibe" reset button.
 
 ## 🤖 AI Assistance Disclaimer
 

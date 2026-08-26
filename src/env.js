@@ -13,6 +13,7 @@ export const env = createEnv({
     ADMIN_TOKEN: z.string(),
     EMOJI_CACHE_DIR: z.string().default(".cache/emoji-cache"),
     EMOJI_CDN_BASE_URL: z.string().url().default("https://emojicdn.elk.sh"),
+    GEMINI_API_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
@@ -32,6 +33,7 @@ export const env = createEnv({
     YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
     EVENT_DEBUG: process.env.EVENT_DEBUG,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_EVENT_DEBUG: process.env.NEXT_PUBLIC_EVENT_DEBUG,
     NEXT_PUBLIC_MKP_APP_VER: process.env.NEXT_PUBLIC_MKP_APP_VER,

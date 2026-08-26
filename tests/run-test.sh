@@ -39,7 +39,10 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 # Source variables from the provided env file
-export $(grep -v '^#' "$ENV_FILE" | xargs)
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
 
 # Apply overrides if provided
 if [ ! -z "$URL_OVERRIDE" ]; then export BASE_URL="$URL_OVERRIDE"; fi
@@ -56,8 +59,12 @@ echo "🚀 Running test: $TEST_FILE"
 echo "🌐 URL: $BASE_URL"
 echo "📁 Report dir: $PLAYWRIGHT_REPORT_DIR"
 
-# Run Docker Compose
-docker compose -f tests/docker-compose.test.yml up --build --abort-on-container-exit
+# Run Docker Compose / docker-compose
+if command -v docker-compose &> /dev/null; then
+    docker-compose -f tests/docker-compose.test.yml up --build --abort-on-container-exit
+else
+    docker compose -f tests/docker-compose.test.yml up --build --abort-on-container-exit
+fi
 
 # Clean up exported variables
 unset BASE_URL

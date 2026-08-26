@@ -99,3 +99,15 @@ model IdleMessage {
   createdAt DateTime @default(now())
   @@index([hostName])
 }
+
+model SuggestionCache {
+  id        Int      @id @default(autoincrement())
+  cacheKey  String   @unique
+  category  String?
+  subTheme  String?
+  songs     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cacheKey])
+}
