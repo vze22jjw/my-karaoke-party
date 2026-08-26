@@ -64,6 +64,8 @@ const GEMINI_MODELS = [
   "gemini-3.7-flash",
 ];
 
+export const TEST_SAFETY_TRIGGER = "twelve rubber chicken soup set on fire";
+
 export const geminiSuggestionsService = {
   isConfigured(): boolean {
     return !!env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim().length > 0;
@@ -75,7 +77,15 @@ export const geminiSuggestionsService = {
     category?: string,
     subTheme?: string
   ): Promise<ThemedSuggestionsResponse> {
-    const normalizedKey = `gemini_theme:${themePrompt.toLowerCase().trim()}`;
+    const normalizedPrompt = themePrompt.toLowerCase().trim();
+
+    // 0. Test Trigger for testing safety filter UI and negative test patterns
+    if (normalizedPrompt.includes(TEST_SAFETY_TRIGGER)) {
+      debugLog(LOG_TAG, `Safety test trigger matched: "${themePrompt}"`);
+      return { songs: [], isBlockedBySafety: true };
+    }
+
+    const normalizedKey = `gemini_theme:${normalizedPrompt}`;
 
     // 1. Check In-Memory Cache
     const cached = await cache.get<SuggestedSong[]>(normalizedKey);
@@ -152,20 +162,38 @@ Guidelines:
           }
         );
 
-        // Check for Google safety blocks
+        // Check for Google safety blocks & prohibited content
         const blockReason = response.data?.promptFeedback?.blockReason;
         const candidateFinishReason = response.data?.candidates?.[0]?.finishReason;
 
-        if (blockReason === "SAFETY" || candidateFinishReason === "SAFETY") {
-          debugLog(LOG_TAG, `Prompt flagged by Gemini safety filters: "${themePrompt}"`);
+        if (
+          blockReason === "SAFETY" ||
+          blockReason === "PROHIBITED_CONTENT" ||
+          blockReason === "BLOCKLIST" ||
+          candidateFinishReason === "SAFETY" ||
+          candidateFinishReason === "PROHIBITED_CONTENT"
+        ) {
+          debugLog(LOG_TAG, `Prompt flagged by Gemini safety filter (${blockReason ?? candidateFinishReason}): "${themePrompt}"`);
           safetyBlocked = true;
-          break; // Don't keep hammering other models if explicitly blocked by safety
+          break;
         }
 
         const rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) {
           debugLog(LOG_TAG, `Empty response received from Gemini API on ${modelName}`);
           continue;
+        }
+
+        // Check if Gemini returned a conversational safety refusal
+        if (
+          rawText.toLowerCase().includes("cannot fulfill this request") ||
+          rawText.toLowerCase().includes("unable to fulfill this request") ||
+          rawText.toLowerCase().includes("i cannot provide") ||
+          rawText.toLowerCase().includes("i am unable to provide")
+        ) {
+          debugLog(LOG_TAG, `Refusal text returned by Gemini on ${modelName} for "${themePrompt}"`);
+          safetyBlocked = true;
+          break;
         }
 
         const parsedJson = JSON.parse(rawText) as unknown;

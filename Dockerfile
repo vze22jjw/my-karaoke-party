@@ -74,10 +74,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/pnpm-workspace.yaml* ./
-
-## clean up runner image
-RUN pnpm add -w prisma@5.22.0 --prod && rm -rf /home/nextjs/.{cache,npm} /root/.cache /root/.local/share/pnpm
+COPY --from=builder /app/node_modules ./node_modules
 
 COPY --chmod=755 --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
 
