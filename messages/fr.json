@@ -297,6 +297,8 @@
       "showTop": "Afficher le Top 5",
       "showRare": "Afficher les Rares",
       "noSongs": "Aucune chanson jouée pour le moment.",
+      "noSuggestions": "Pas encore de suggestions de chansons",
+      "noTokenCachedSongs": "Aucun Jeton Fourni, Chansons en Cache",
       "noSingers": "Aucun chanteur pour le moment.",
       "noArtists": "Aucun artiste joué pour le moment.",
       "sortBySongs": "Chansons",

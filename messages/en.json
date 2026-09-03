@@ -298,6 +298,7 @@
       "showRare": "Show Rare",
       "noSongs": "No songs played yet.",
       "noSuggestions": "No Song Suggestions Yet",
+      "noTokenCachedSongs": "No Token Provided, Cached Songs",
       "safetyBlockedTitle": "Prompt Restricted",
       "safetyBlockedDesc": "This prompt could not be processed due to content safety policies. Please try a different theme, genre, or mood.",
       "tryAnother": "Try Another Vibe",

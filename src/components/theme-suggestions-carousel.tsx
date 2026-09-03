@@ -165,6 +165,13 @@ export function ThemeSuggestionsCarousel({
     }
   );
 
+  // Check if Gemini token is configured and available
+  const { data: availabilityData } = api.themeSuggestions.isAvailable.useQuery(undefined, {
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+  });
+  const isGeminiAvailable = availabilityData?.isAvailable ?? false;
+
   // Restore custom vibe query from client storage on mount
   useEffect(() => {
     try {
@@ -510,9 +517,15 @@ export function ThemeSuggestionsCarousel({
         ) : isCustomCard && !activeCustomPrompt ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
             <Wand2 className="h-8 w-8 mb-2 opacity-40 text-primary" />
-            <p className="text-sm font-medium">Create a custom vibe</p>
+            <p className="text-sm font-medium">
+              {!isGeminiAvailable
+                ? (t("noTokenCachedSongs") ?? "No Token Provided, Cached Songs")
+                : (t("noSuggestions") ?? "No Song Suggestions Yet")}
+            </p>
             <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px]">
-              Type any prompt like &quot;songs with a womans name&quot; or &quot;beach party&quot; to generate 10 songs with album art.
+              {!isGeminiAvailable
+                ? "Browse curated preset themes or configure GEMINI_API_KEY for dynamic AI generation."
+                : 'Type any prompt like "songs with a womans name" or "beach party" to generate 10 songs with album art.'}
             </p>
           </div>
         ) : isHostThemesCard && !hasHostThemes ? (
@@ -526,7 +539,11 @@ export function ThemeSuggestionsCarousel({
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
             <Music className="h-8 w-8 mb-2 opacity-30" />
-            <p className="text-xs">{t("noSuggestions") ?? "No Song Suggestions Yet"}</p>
+            <p className="text-xs">
+              {!isGeminiAvailable
+                ? (t("noTokenCachedSongs") ?? "No Token Provided, Cached Songs")
+                : (t("noSuggestions") ?? "No Song Suggestions Yet")}
+            </p>
           </div>
         )}
       </div>
