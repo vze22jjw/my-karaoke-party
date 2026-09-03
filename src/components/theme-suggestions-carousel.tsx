@@ -112,19 +112,21 @@ export function ThemeSuggestionsCarousel({
   const allCategories: CategoryCard[] = useMemo(() => {
     const cards: CategoryCard[] = [];
 
-    // 1. Party Themes
-    cards.push({
-      id: "party-themes",
-      name: "Party Themes",
-      iconName: "Lightbulb",
-      isHostThemes: true,
-      pills: hostThemeStrings.map((themeStr, idx) => ({
-        id: `host-theme-${idx}`,
-        name: themeStr,
-        promptGuide: themeStr,
-        iconName: "Sparkles",
-      })),
-    });
+    // 1. Party Themes (only if configured by host)
+    if (hasHostThemes) {
+      cards.push({
+        id: "party-themes",
+        name: "Party Themes",
+        iconName: "Lightbulb",
+        isHostThemes: true,
+        pills: hostThemeStrings.map((themeStr, idx) => ({
+          id: `host-theme-${idx}`,
+          name: themeStr,
+          promptGuide: themeStr,
+          iconName: "Sparkles",
+        })),
+      });
+    }
 
     // 2. Spotify Hot Karaoke (if available)
     if (hasSpotify) {
@@ -414,12 +416,6 @@ export function ThemeSuggestionsCarousel({
             );
           })}
         </div>
-      ) : isHostThemesCard && !hasHostThemes ? (
-        <div className="p-3 bg-muted/30 rounded-lg border border-dashed text-center">
-          <p className="text-xs text-muted-foreground italic">
-            Host has not set party themes yet. Set themes in Host Settings to populate this card.
-          </p>
-        </div>
       ) : null}
 
       {/* 3. Songs List Container (Exactly 5 songs visible, remaining scrollable) */}
@@ -526,14 +522,6 @@ export function ThemeSuggestionsCarousel({
               {!isGeminiAvailable
                 ? "Browse curated preset themes or configure GEMINI_API_KEY for dynamic AI generation."
                 : 'Type any prompt like "songs with a womans name" or "beach party" to generate 10 songs with album art.'}
-            </p>
-          </div>
-        ) : isHostThemesCard && !hasHostThemes ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
-            <Lightbulb className="h-8 w-8 mb-2 opacity-40 text-yellow-500" />
-            <p className="text-sm font-medium">No Party Themes Configured</p>
-            <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px]">
-              The host can set custom themes in Party Settings to populate this card.
             </p>
           </div>
         ) : (
