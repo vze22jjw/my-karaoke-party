@@ -2,7 +2,7 @@
 
 import type { VideoInPlaylist } from "~/types/app-types";
 import { Button } from "~/components/ui/ui/button";
-import { Play, Pause, SkipForward, ChevronDown } from "lucide-react"; 
+import { Play, Pause, SkipForward, ChevronDown, Loader2 } from "lucide-react"; 
 import { SongCountdownTimer } from "~/components/song-countdown-timer";
 import { cn } from "~/lib/utils"; 
 import { decode } from "html-entities";
@@ -33,6 +33,11 @@ export function PlaybackControls({
 }: Props) {
   const tCommon = useTranslations('common');
   const [isMarqueeActive, setIsMarqueeActive] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  useEffect(() => {
+    setIsPending(false);
+  }, [isPlaying]);
 
   useEffect(() => {
     setIsMarqueeActive(false);
@@ -40,13 +45,15 @@ export function PlaybackControls({
     return () => clearTimeout(timer);
   }, [currentSong.id]);
 
-
   const handlePlayPause = () => {
+    if (isPending) return;
+    setIsPending(true);
     if (isPlaying) {
       onPause();
     } else {
       onPlay();
     }
+    setTimeout(() => setIsPending(false), 5000);
   };
 
   return (
@@ -95,10 +102,13 @@ export function PlaybackControls({
         <Button
           variant="outline"
           size="icon"
-          className="h-10 w-10 rounded-full bg-background border-border shadow-sm hover:bg-accent"
+          disabled={isPending}
+          className="h-10 w-10 rounded-full bg-background border-border shadow-sm hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handlePlayPause}
         >
-          {isPlaying ? (
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isPlaying ? (
             <Pause className="h-4 w-4 fill-current" />
           ) : (
             <Play className="h-4 w-4 pl-0.5 fill-current" />
