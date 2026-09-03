@@ -108,7 +108,14 @@ export function ThemeSuggestionsCarousel({
   const hasHostThemes = hostThemeStrings.length > 0;
   const hasSpotify = spotifySongs && spotifySongs.length > 0;
 
-  // Build the list of category cards (Party Themes as Card #1, Spotify as Card #2 if present)
+  // Check if Gemini token is configured and available
+  const { data: availabilityData } = api.themeSuggestions.isAvailable.useQuery(undefined, {
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+  });
+  const isGeminiAvailable = availabilityData?.isAvailable ?? false;
+
+  // Build the list of category cards (Party Themes as Card #1, Spotify as Card #2 if present, Custom Vibe only if Gemini token provided)
   const allCategories: CategoryCard[] = useMemo(() => {
     const cards: CategoryCard[] = [];
 
@@ -139,8 +146,11 @@ export function ThemeSuggestionsCarousel({
       });
     }
 
-    // 3. Preset Categories
+    // 3. Preset Categories (exclude custom-vibe if no Gemini token is provided)
     for (const c of THEME_CATEGORIES) {
+      if (c.isCustom && !isGeminiAvailable) {
+        continue;
+      }
       cards.push({
         id: c.id,
         name: c.name,
@@ -151,7 +161,7 @@ export function ThemeSuggestionsCarousel({
     }
 
     return cards;
-  }, [hostThemeStrings, hasSpotify]);
+  }, [hostThemeStrings, hasSpotify, hasHostThemes, isGeminiAvailable]);
 
   const [activeCategoryIdx, setActiveCategoryIdx] = useState(0);
   const [activePillId, setActivePillId] = useState<string>("");
@@ -166,13 +176,6 @@ export function ThemeSuggestionsCarousel({
       refetchOnWindowFocus: false,
     }
   );
-
-  // Check if Gemini token is configured and available
-  const { data: availabilityData } = api.themeSuggestions.isAvailable.useQuery(undefined, {
-    staleTime: 1000 * 60 * 60, // 1 hour
-    refetchOnWindowFocus: false,
-  });
-  const isGeminiAvailable = availabilityData?.isAvailable ?? false;
 
   // Restore custom vibe query from client storage on mount
   useEffect(() => {
@@ -513,25 +516,15 @@ export function ThemeSuggestionsCarousel({
         ) : isCustomCard && !activeCustomPrompt ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
             <Wand2 className="h-8 w-8 mb-2 opacity-40 text-primary" />
-            <p className="text-sm font-medium">
-              {!isGeminiAvailable
-                ? (t("noTokenCachedSongs") ?? "No Token Provided, Cached Songs")
-                : (t("noSuggestions") ?? "No Song Suggestions Yet")}
-            </p>
+            <p className="text-sm font-medium">{t("noSuggestions") ?? "No Song Suggestions Yet"}</p>
             <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px]">
-              {!isGeminiAvailable
-                ? "Browse curated preset themes or configure GEMINI_API_KEY for dynamic AI generation."
-                : 'Type any prompt like "songs with a womans name" or "beach party" to generate 10 songs with album art.'}
+              Type any prompt like &quot;songs with a womans name&quot; or &quot;beach party&quot; to generate 10 songs with album art.
             </p>
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
             <Music className="h-8 w-8 mb-2 opacity-30" />
-            <p className="text-xs">
-              {!isGeminiAvailable
-                ? (t("noTokenCachedSongs") ?? "No Token Provided, Cached Songs")
-                : (t("noSuggestions") ?? "No Song Suggestions Yet")}
-            </p>
+            <p className="text-xs">{t("noSuggestions") ?? "No Song Suggestions Yet"}</p>
           </div>
         )}
       </div>
