@@ -537,6 +537,7 @@ export function ThemeSuggestionsCarousel({
           <button
             key={idx}
             type="button"
+            data-testid={`history-dot-${idx}`}
             onClick={() => setActiveCategoryIdx(idx)}
             className={cn(
               "h-1.5 rounded-full transition-all duration-300 focus:outline-none",

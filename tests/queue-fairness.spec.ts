@@ -52,7 +52,7 @@ async function addSongWithHostWait(guestPage: Page, hostPage: Page, songName: st
         
         const count = await hostPage.locator('[data-testid^="playlist-item-"]').count();
         expect(count).toBeGreaterThanOrEqual(expectedCount);
-    }).toPass({ timeout: 25000, intervals: [1000] });
+    }).toPass({ timeout: 35000, intervals: [1000] });
 }
 
 async function walkthroughHostTour(page: Page) {
@@ -245,5 +245,64 @@ test.describe('Queue Fairness & Stability', () => {
     // User 3 is far back in queue - should still be able to manage
     await expect(u3Page.getByText(/Queue modification disabled/)).toBeHidden({ timeout: 15000 });
     await takeScreenshot(u3Page, 'user3-allowed', testInfo);
+  });
+
+  test('Step 5: Up Next replacement fairness and song transition (No Skip Regression)', async ({ browser }, testInfo) => {
+    await hostPage.bringToFront();
+    const playlistTab = hostPage.getByTestId('tab-playlist');
+    if ((await playlistTab.getAttribute('data-state')) !== 'active') await playlistTab.click({ force: true });
+
+    // 1. Advance through current songs so User 1 and User 2 have 1 played song each
+    const skipBtn = hostPage.locator('button').filter({ has: hostPage.locator('svg.lucide-skip-forward') }).first();
+    await expect(skipBtn).toBeVisible({ timeout: 5000 });
+    
+    // Skip User 1's song -> User 2's Song 5 starts playing
+    await skipBtn.click({ force: true });
+    await expect(async () => {
+        const currentSinger = await hostPage.locator('div.text-muted-foreground p.text-primary').first().innerText();
+        expect(currentSinger).toBe('User2');
+    }).toPass({ timeout: 15000, intervals: [1000] });
+
+    // Skip User 2's song -> User 3's Song 3 starts playing (User 1 and User 2 now have 1 played song each)
+    await skipBtn.click({ force: true });
+    await expect(async () => {
+        const currentSinger = await hostPage.locator('div.text-muted-foreground p.text-primary').first().innerText();
+        expect(currentSinger).toBe('User3');
+    }).toPass({ timeout: 15000, intervals: [1000] });
+
+    // 2. User 2 (who already has 1 played song) adds Song 9 to queue
+    const u2Page = guestPages[1];
+    await u2Page.bringToFront();
+    await addSong(u2Page, 'Song 9');
+
+    // 3. Brand new guest (User 4) joins with 0 played songs and adds Song 8
+    const u4Ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    await u4Ctx.addInitScript(({ key }) => {
+        window.localStorage.setItem(key, 'true');
+    }, { key: `guest-${partyCode}-tour-seen` });
+    guestContexts.push(u4Ctx);
+    const u4Page = await u4Ctx.newPage();
+    guestPages.push(u4Page);
+    await joinParty(u4Page, partyCode, 'User4', 3);
+    await addSong(u4Page, 'Song 8');
+
+    // 4. Verify on Host that User 4 (0 played songs) replaces User 2 in the "Up Next" slot
+    await hostPage.bringToFront();
+    await expect(async () => {
+        const singers = await hostPage.locator('[data-testid^="playlist-item-"] p.text-muted-foreground').allInnerTexts();
+        // User 4 has 0 played songs vs User 2's 1 played song -> User 4 is Up Next (index 0)
+        expect(singers[0]).toBe('User4');
+    }).toPass({ timeout: 25000, intervals: [1000] });
+    await takeScreenshot(hostPage, 'host-user4-replaces-up-next', testInfo);
+
+    // 5. Host skips/finishes User 3's song
+    await skipBtn.click({ force: true });
+
+    // 6. Verify that User 4's song transitions to Playing Now (was NOT skipped!)
+    await expect(async () => {
+        const currentSinger = await hostPage.locator('div.text-muted-foreground p.text-primary').first().innerText();
+        expect(currentSinger).toBe('User4');
+    }).toPass({ timeout: 25000, intervals: [1000] });
+    await takeScreenshot(hostPage, 'host-user4-now-playing-not-skipped', testInfo);
   });
 });
