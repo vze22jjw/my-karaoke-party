@@ -119,8 +119,8 @@ export function ThemeSuggestionsCarousel({
   const allCategories: CategoryCard[] = useMemo(() => {
     const cards: CategoryCard[] = [];
 
-    // 1. Party Themes (only if configured by host)
-    if (hasHostThemes) {
+    // 1. Party Themes (only if configured by host AND Gemini token is available)
+    if (hasHostThemes && isGeminiAvailable) {
       cards.push({
         id: "party-themes",
         name: "Party Themes",
