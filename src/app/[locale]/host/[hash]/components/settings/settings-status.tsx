@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Play, Coffee, Activity, Info, Lock } from "lucide-react";
+import { Play, Coffee, Activity, Info, Lock, Loader2 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import type { VideoInPlaylist } from "~/types/app-types";
 import { useTranslations } from "next-intl";
@@ -31,6 +31,11 @@ export function SettingsStatus({
 
   const t = useTranslations('host.settings.status');
   const [showInfo, setShowInfo] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  useEffect(() => {
+    setIsPending(false);
+  }, [partyStatus]);
 
   const isIntermission = partyStatus === "OPEN" && playedPlaylist.length > 0;
   const isFreshStart = partyStatus === "OPEN" && playedPlaylist.length === 0;
@@ -39,6 +44,22 @@ export function SettingsStatus({
   if (isPartyClosed) statusText = t('closed');
   else if (partyStatus === "STARTED") statusText = t('started');
   else if (isIntermission) statusText = t('intermission');
+
+  const handleStart = () => {
+    if (isPending || isPartyClosed) return;
+    setIsPending(true);
+    if (IS_DEBUG) console.log("[SettingsStatus] Starting party");
+    onStartParty();
+    setTimeout(() => setIsPending(false), 5000);
+  };
+
+  const handleToggle = () => {
+    if (isPending || isPartyClosed) return;
+    setIsPending(true);
+    if (IS_DEBUG) console.log("[SettingsStatus] Toggling intermission");
+    onToggleIntermission();
+    setTimeout(() => setIsPending(false), 5000);
+  };
 
   return (
     <div className={cn(
@@ -79,13 +100,15 @@ export function SettingsStatus({
       {!isPartyClosed && isFreshStart && (
         <Button
           type="button"
-          className="w-full bg-green-600 hover:bg-green-700"
-          onClick={() => {
-            if (IS_DEBUG) console.log("[SettingsStatus] Starting party");
-            onStartParty();
-          }}
+          disabled={isPending}
+          className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleStart}
         >
-          <Play className="mr-2 h-4 w-4" />
+          {isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Play className="mr-2 h-4 w-4" />
+          )}
           {t('start')}
         </Button>
       )}
@@ -94,27 +117,22 @@ export function SettingsStatus({
          <Button
            type="button"
            variant="default"
+           disabled={isPending}
            className={cn(
-             "w-full",
+             "w-full disabled:opacity-50 disabled:cursor-not-allowed",
              partyStatus === "OPEN" && "bg-green-600 hover:bg-green-700",
              partyStatus === "STARTED" && "hover:bg-primary"
            )}
-           onClick={() => {
-             if (IS_DEBUG) console.log("[SettingsStatus] Toggling intermission");
-             onToggleIntermission();
-           }}
+           onClick={handleToggle}
          >
-           {partyStatus === "STARTED" ? (
-             <>
-               <Coffee className="mr-2 h-4 w-4" />
-               {t('pause')}
-             </>
+           {isPending ? (
+             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+           ) : partyStatus === "STARTED" ? (
+             <Coffee className="mr-2 h-4 w-4" />
            ) : (
-             <>
-               <Play className="mr-2 h-4 w-4" />
-               {t('resume')}
-             </>
+             <Play className="mr-2 h-4 w-4" />
            )}
+           {partyStatus === "STARTED" ? t('pause') : t('resume')}
          </Button>
       )}
     </div>

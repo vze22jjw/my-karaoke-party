@@ -108,23 +108,32 @@ export function ThemeSuggestionsCarousel({
   const hasHostThemes = hostThemeStrings.length > 0;
   const hasSpotify = spotifySongs && spotifySongs.length > 0;
 
-  // Build the list of category cards (Party Themes as Card #1, Spotify as Card #2 if present)
+  // Check if Gemini token is configured and available
+  const { data: availabilityData } = api.themeSuggestions.isAvailable.useQuery(undefined, {
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+  });
+  const isGeminiAvailable = availabilityData?.isAvailable ?? false;
+
+  // Build the list of category cards (Party Themes as Card #1, Spotify as Card #2 if present, Custom Vibe only if Gemini token provided)
   const allCategories: CategoryCard[] = useMemo(() => {
     const cards: CategoryCard[] = [];
 
-    // 1. Party Themes
-    cards.push({
-      id: "party-themes",
-      name: "Party Themes",
-      iconName: "Lightbulb",
-      isHostThemes: true,
-      pills: hostThemeStrings.map((themeStr, idx) => ({
-        id: `host-theme-${idx}`,
-        name: themeStr,
-        promptGuide: themeStr,
-        iconName: "Sparkles",
-      })),
-    });
+    // 1. Party Themes (only if configured by host AND Gemini token is available)
+    if (hasHostThemes && isGeminiAvailable) {
+      cards.push({
+        id: "party-themes",
+        name: "Party Themes",
+        iconName: "Lightbulb",
+        isHostThemes: true,
+        pills: hostThemeStrings.map((themeStr, idx) => ({
+          id: `host-theme-${idx}`,
+          name: themeStr,
+          promptGuide: themeStr,
+          iconName: "Sparkles",
+        })),
+      });
+    }
 
     // 2. Spotify Hot Karaoke (if available)
     if (hasSpotify) {
@@ -137,8 +146,11 @@ export function ThemeSuggestionsCarousel({
       });
     }
 
-    // 3. Preset Categories
+    // 3. Preset Categories (exclude custom-vibe if no Gemini token is provided)
     for (const c of THEME_CATEGORIES) {
+      if (c.isCustom && !isGeminiAvailable) {
+        continue;
+      }
       cards.push({
         id: c.id,
         name: c.name,
@@ -149,7 +161,7 @@ export function ThemeSuggestionsCarousel({
     }
 
     return cards;
-  }, [hostThemeStrings, hasSpotify]);
+  }, [hostThemeStrings, hasSpotify, hasHostThemes, isGeminiAvailable]);
 
   const [activeCategoryIdx, setActiveCategoryIdx] = useState(0);
   const [activePillId, setActivePillId] = useState<string>("");
@@ -407,12 +419,6 @@ export function ThemeSuggestionsCarousel({
             );
           })}
         </div>
-      ) : isHostThemesCard && !hasHostThemes ? (
-        <div className="p-3 bg-muted/30 rounded-lg border border-dashed text-center">
-          <p className="text-xs text-muted-foreground italic">
-            Host has not set party themes yet. Set themes in Host Settings to populate this card.
-          </p>
-        </div>
       ) : null}
 
       {/* 3. Songs List Container (Exactly 5 songs visible, remaining scrollable) */}
@@ -510,17 +516,9 @@ export function ThemeSuggestionsCarousel({
         ) : isCustomCard && !activeCustomPrompt ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
             <Wand2 className="h-8 w-8 mb-2 opacity-40 text-primary" />
-            <p className="text-sm font-medium">Create a custom vibe</p>
+            <p className="text-sm font-medium">{t("noSuggestions") ?? "No Song Suggestions Yet"}</p>
             <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px]">
               Type any prompt like &quot;songs with a womans name&quot; or &quot;beach party&quot; to generate 10 songs with album art.
-            </p>
-          </div>
-        ) : isHostThemesCard && !hasHostThemes ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
-            <Lightbulb className="h-8 w-8 mb-2 opacity-40 text-yellow-500" />
-            <p className="text-sm font-medium">No Party Themes Configured</p>
-            <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px]">
-              The host can set custom themes in Party Settings to populate this card.
             </p>
           </div>
         ) : (
@@ -537,6 +535,7 @@ export function ThemeSuggestionsCarousel({
           <button
             key={idx}
             type="button"
+            data-testid={`history-dot-${idx}`}
             onClick={() => setActiveCategoryIdx(idx)}
             className={cn(
               "h-1.5 rounded-full transition-all duration-300 focus:outline-none",

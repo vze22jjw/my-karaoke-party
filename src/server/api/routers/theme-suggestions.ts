@@ -16,9 +16,12 @@ export const themeSuggestionsRouter = createTRPCRouter({
   }),
 
   getCategories: publicProcedure.query(() => {
+    const isConfigured = geminiSuggestionsService.isConfigured();
     return {
-      categories: THEME_CATEGORIES,
-      isAvailable: geminiSuggestionsService.isConfigured(),
+      categories: isConfigured
+        ? THEME_CATEGORIES
+        : THEME_CATEGORIES.filter((c) => !c.isCustom),
+      isAvailable: isConfigured,
     };
   }),
 
@@ -38,6 +41,11 @@ export const themeSuggestionsRouter = createTRPCRouter({
     )
     .output(ThemedSongsResultSchema)
     .query(async ({ input }) => {
+      // If custom prompt is requested and Gemini is not configured, do not process
+      if (input.customPrompt && !geminiSuggestionsService.isConfigured()) {
+        return { songs: [] };
+      }
+
       let promptToUse = input.customPrompt?.trim();
       let subThemeName: string | undefined;
 

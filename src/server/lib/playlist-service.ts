@@ -79,7 +79,7 @@ export async function getFreshPlaylist(partyHash: string): Promise<{
           (latest.playedAt?.getTime() ?? 0) > (current.playedAt?.getTime() ?? 0) ? latest : current,
         )
       : null;
-    const singerToDeprioritize = lastPlayedSong?.singerName ?? null;
+    const singerToDeprioritize = pinnedCurrentSong?.singerName ?? lastPlayedSong?.singerName ?? null;
 
     const singerEntryTimes: Record<string, Date | null> = {};
     party.participants.forEach(p => {
