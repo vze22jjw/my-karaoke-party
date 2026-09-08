@@ -130,7 +130,11 @@
         "title": "Temas / Sugerencias de la Fiesta",
         "placeholder": "ej. 'Canciones con un color en el título'",
         "empty": "Aún no se han añadido sugerencias.",
-        "info": "¡Añade sugerencias numeradas para ayudar a tus invitados a elegir canciones! Estas aparecen en la pestaña de historial."
+        "info": "¡Añade sugerencias numeradas para ayudar a tus invitados a elegir canciones! Estas aparecen en la pestaña de historial.",
+        "refreshThemes": "Actualizar Temas de IA",
+        "refreshing": "Actualizando Sugerencias de IA...",
+        "refreshSuccess": "¡Sugerencias de temas de IA actualizadas desde Gemini!",
+        "refreshError": "Error al actualizar las sugerencias. Comprueba tu clave de API de Gemini."
       },
       "messages": {
         "title": "Biblioteca de Mensajes Compartida",

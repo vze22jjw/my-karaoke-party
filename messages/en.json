@@ -130,7 +130,11 @@
         "title": "Party Theme / Suggestions",
         "placeholder": "e.g. 'Songs featuring a color in the title'",
         "empty": "No suggestions added yet.",
-        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab."
+        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab.",
+        "refreshThemes": "Refresh AI Themes",
+        "refreshing": "Refreshing AI Suggestions...",
+        "refreshSuccess": "AI theme suggestions refreshed from Gemini!",
+        "refreshError": "Failed to refresh suggestions. Please check your Gemini API key."
       },
       "messages": {
         "title": "Shared Message Library",

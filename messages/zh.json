@@ -130,7 +130,11 @@
         "title": "派对主题 / 建议选项",
         "placeholder": "例如: '歌名中带有颜色的歌曲'",
         "empty": "尚未添加任何建议。",
-        "info": "添加带编号的提示，帮助你的宾客选择歌曲！这些将显示在历史记录标签中。"
+        "info": "添加带编号的提示，帮助你的宾客选择歌曲！这些将显示在历史记录标签中。",
+        "refreshThemes": "刷新 AI 主题推荐",
+        "refreshing": "正在刷新 AI 推荐...",
+        "refreshSuccess": "已成功通过 Gemini 刷新 AI 主题推荐！",
+        "refreshError": "刷新推荐失败，请检查 Gemini API 密钥。"
       },
       "messages": {
         "title": "共享留言库",

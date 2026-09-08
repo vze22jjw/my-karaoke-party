@@ -97,4 +97,12 @@ export const themeSuggestionsRouter = createTRPCRouter({
 
       return results;
     }),
+
+  refreshAllPresets: publicProcedure.mutation(async () => {
+    if (!geminiSuggestionsService.isConfigured()) {
+      return { success: false, updatedCount: 0, message: "Gemini API key not configured" };
+    }
+    const result = await geminiSuggestionsService.refreshAllPresetsFromGemini();
+    return result;
+  }),
 });
