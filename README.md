@@ -232,6 +232,41 @@ Delete all parties from the system:
 # Preview (shows what would be deleted)
 pnpm cleanup:all
 
+## 🤖 AI Theme Suggestions & Prompt Customization
+
+The app features AI-powered theme suggestions powered by Google Gemini and enriched with high-resolution Apple iTunes album artwork.
+
+### Global Prompt Formatting & Prefixing
+All prompts sent to Google Gemini are automatically processed by `formatThemePrompt()` in [`src/server/lib/gemini-suggestions.ts`](src/server/lib/gemini-suggestions.ts):
+* **Automatic Prefix:** Every prompt is automatically prefixed with `"karaoke singalongs: "` (for example, entering `"80s synth rock"` becomes `"karaoke singalongs: 80s synth rock"`).
+* **Automatic Keyword Stripping:** Words like `"karaoke"`, `"singalong"`, and `"singalongs"` are automatically stripped from individual prompt inputs to eliminate redundancy and improve Gemini token efficiency.
+* **Writing Prompts:** When defining preset themes, setting host party themes, or entering a Custom Vibe as a guest, **you do not need to include the words "karaoke" or "singalong"**—simply describe the genre, decade, mood, or artist style directly (e.g. `"iconic 90s boybands and pop hits"`).
+
+### Customizing Preset Categories & Prompts
+To add or modify preset categories and sub-theme pills in the future:
+1. Open [`src/config/theme-presets.ts`](src/config/theme-presets.ts).
+2. Edit or add categories and pills inside `THEME_CATEGORIES`:
+   ```ts
+   {
+     id: "country",
+     name: "Country",
+     iconName: "Flame",
+     pills: [
+       {
+         id: "classic-country",
+         name: "Classic Country",
+         promptGuide: "90s country anthems, storytelling ballads, and honky-tonk favorites", // No need to include 'karaoke' or 'singalong'
+         iconName: "Music",
+       },
+     ],
+   }
+   ```
+3. Rebuild or restart the application (`docker compose up -d --build`).
+
+### Cache Retention & On-Demand Refresh
+* **7-Day TTL Auto-Refresh:** Suggestions cached in PostgreSQL are stored with a 7-day TTL. Any entry older than 1 week is automatically refreshed from Gemini in the background with rate-limit pacing.
+* **On-Demand Refresh:** Hosts can click **"Refresh AI Themes"** in Host Settings under the **Party Theme / Suggestions** card to force regeneration of all 24 presets anytime.
+
 ## 🧪 Testing Custom Vibe Safety Filters
 
 To test negative patterns and verify the **Prompt Restricted** safety alert UI in the Custom Vibe carousel card without needing to enter harmful terms, use the built-in test trigger:
