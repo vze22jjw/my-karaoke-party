@@ -130,7 +130,11 @@
         "title": "Thème de la Party / Suggestions",
         "placeholder": "ex., « Chansons avec une couleur dans le titre »",
         "empty": "No suggestions added yet.",
-        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab."
+        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab.",
+        "refreshThemes": "Actualiser les thèmes IA",
+        "refreshing": "Actualisation des suggestions IA...",
+        "refreshSuccess": "Suggestions de thèmes IA actualisées depuis Gemini !",
+        "refreshError": "Échec de l'actualisation des suggestions. Veuillez vérifier votre clé d'API Gemini."
       },
       "messages": {
         "title": "Bibliothèque de Messages Partagés",

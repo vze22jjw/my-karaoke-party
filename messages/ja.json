@@ -130,7 +130,11 @@
         "title": "パーティーのテーマ / 提案",
         "placeholder": "例: 「タイトルに色が含まれる曲」",
         "empty": "No suggestions added yet.",
-        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab."
+        "info": "Add numbered prompts to help your guests pick songs! These appear in the History tab.",
+        "refreshThemes": "AIテーマを更新",
+        "refreshing": "AI提案を更新中...",
+        "refreshSuccess": "GeminiからAIテーマの提案が更新されました！",
+        "refreshError": "提案の更新に失敗しました。Gemini APIキーを確認してください。"
       },
       "messages": {
         "title": "共有メッセージライブラリ",

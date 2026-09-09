@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   TrendingUp,
   Users,
@@ -204,30 +204,6 @@ export function ThemeSuggestionsCarousel({
     }
   }, [activeCategoryIdx, activeCategory]);
 
-  // Touch Swipe handlers
-  const touchStartRef = useRef<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches[0]) {
-      touchStartRef.current = e.touches[0].clientX;
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartRef.current === null || !e.changedTouches[0]) return;
-    const touchEnd = e.changedTouches[0].clientX;
-    const diff = touchStartRef.current - touchEnd;
-
-    if (Math.abs(diff) > 45) {
-      if (diff > 0) {
-        setActiveCategoryIdx((prev) => (prev + 1) % allCategories.length);
-      } else {
-        setActiveCategoryIdx((prev) => (prev - 1 + allCategories.length) % allCategories.length);
-      }
-    }
-    touchStartRef.current = null;
-  };
-
   const nextCategory = () => {
     setActiveCategoryIdx((prev) => (prev + 1) % allCategories.length);
   };
@@ -309,11 +285,9 @@ export function ThemeSuggestionsCarousel({
   return (
     <div
       className={cn(
-        "bg-card rounded-xl p-4 border border-border shadow-sm flex flex-col space-y-3 select-none touch-pan-y",
+        "bg-card rounded-xl p-4 border border-border shadow-sm flex flex-col space-y-3",
         className
       )}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
       {/* 1. Category Header & Navigation */}
       <div className="flex items-center justify-between border-b border-border/50 pb-2.5">

@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Button } from "~/components/ui/ui/button";
 import { Input } from "~/components/ui/ui/input";
 import { Alert, AlertDescription } from "~/components/ui/ui/alert";
-import { Lightbulb, Info, Plus, X } from "lucide-react";
+import { Lightbulb, Info, Plus, X, RefreshCw, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FitText } from "~/components/fit-text";
+import { api } from "~/trpc/react";
+import { toast } from "sonner";
 
 const IS_DEBUG = process.env.NEXT_PUBLIC_EVENT_DEBUG === "true";
 
@@ -26,6 +28,23 @@ export function SettingsSuggestions({
   const [newSuggestion, setNewSuggestion] = useState("");
   const [showSuggestionsInfo, setShowSuggestionsInfo] = useState(false);
 
+  const utils = api.useUtils();
+  const { data: availabilityData } = api.themeSuggestions.isAvailable.useQuery(undefined, {
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
+  });
+  const isGeminiAvailable = availabilityData?.isAvailable ?? false;
+
+  const refreshMutation = api.themeSuggestions.refreshAllPresets.useMutation({
+    onSuccess: () => {
+      void utils.themeSuggestions.getAllPresetSongs.invalidate();
+      toast.success(t('refreshSuccess') ?? "AI theme suggestions refreshed from Gemini!");
+    },
+    onError: () => {
+      toast.error(t('refreshError') ?? "Failed to refresh suggestions. Please check your Gemini API key.");
+    },
+  });
+
   const handleAddSuggestion = () => {
     if (!newSuggestion.trim()) return;
     if (IS_DEBUG) console.log("[SettingsSuggestions] Adding:", newSuggestion);
@@ -38,6 +57,11 @@ export function SettingsSuggestions({
     if (IS_DEBUG) console.log("[SettingsSuggestions] Deleting index:", index);
     const updated = themeSuggestions.filter((_, i) => i !== index);
     onUpdateThemeSuggestions(updated);
+  };
+
+  const handleRefreshPresets = () => {
+    if (refreshMutation.isPending || isPartyClosed) return;
+    refreshMutation.mutate();
   };
 
   return (
@@ -123,6 +147,34 @@ export function SettingsSuggestions({
           </p>
         )}
       </div>
+
+      {isGeminiAvailable && (
+        <div className="pt-2 border-t border-border/40 flex flex-wrap justify-between items-center gap-2">
+          <p className="text-xs text-muted-foreground">
+            AI Theme Presets (Auto-refreshes weekly)
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={refreshMutation.isPending || (isPartyClosed ?? false)}
+            onClick={handleRefreshPresets}
+            className="text-xs h-8 gap-1.5"
+          >
+            {refreshMutation.isPending ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span>{t('refreshing') ?? "Refreshing AI Suggestions..."}</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 text-primary" />
+                <span>{t('refreshThemes') ?? "Refresh AI Themes"}</span>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

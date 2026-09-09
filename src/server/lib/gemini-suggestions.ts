@@ -56,22 +56,45 @@ type GeminiApiResponse = {
 };
 
 const GEMINI_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.7-flash",
   "gemini-3.5-flash",
   "gemini-3.1-flash-lite",
   "gemini-3.5-flash-lite",
   "gemini-3-flash-preview",
-  "gemini-3.6-flash",
-  "gemini-3.7-flash",
 ];
 
 export const TEST_SAFETY_TRIGGER = "twelve rubber chicken soup set on fire";
+export const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+
+/**
+ * Normalizes and formats theme prompts by removing redundant keywords
+ * and prefixing all prompts with "karaoke singalongs".
+ */
+export function formatThemePrompt(themePrompt: string): string {
+  const cleaned = themePrompt
+    .replace(/\bkaraoke\b/gi, "")
+    .replace(/\bsingalongs?\b/gi, "")
+    .replace(/\bcrowd[- ]pleasers?\b/gi, "")
+    .replace(/\bchart[- ]toppers?\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned.length > 0
+    ? `karaoke singalongs: ${cleaned}`
+    : `karaoke singalongs: popular party hits`;
+}
 
 export const geminiSuggestionsService = {
   isConfigured(): boolean {
     return !!env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim().length > 0;
   },
 
-  async generateSongsForTheme(
+  /**
+   * Directly calls Google Gemini API to generate songs, enriches with iTunes artwork,
+   * and persists into PostgreSQL suggestionCache.
+   */
+  async fetchSongsFromGemini(
     themePrompt: string,
     count = 10,
     category?: string,
@@ -79,58 +102,20 @@ export const geminiSuggestionsService = {
   ): Promise<ThemedSuggestionsResponse> {
     const normalizedPrompt = themePrompt.toLowerCase().trim();
 
-    // 0. Test Trigger for testing safety filter UI and negative test patterns
+    // 0. Safety trigger test pattern
     if (normalizedPrompt.includes(TEST_SAFETY_TRIGGER)) {
       debugLog(LOG_TAG, `Safety test trigger matched: "${themePrompt}"`);
       return { songs: [], isBlockedBySafety: true };
     }
 
     const normalizedKey = `gemini_theme:${normalizedPrompt}`;
-
-    // 1. Check In-Memory Cache
-    const cached = await cache.get<SuggestedSong[]>(normalizedKey);
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      debugLog(LOG_TAG, `Memory Cache Hit for theme: "${themePrompt}" (${cached.length} songs)`);
-      return { songs: cached as SuggestedSong[] };
-    }
-
-    // 2. Check PostgreSQL Database Cache
-    try {
-      const dbEntry = await db.suggestionCache.findUnique({
-        where: { cacheKey: normalizedKey },
-      });
-
-      if (dbEntry && Array.isArray(dbEntry.songs) && dbEntry.songs.length > 0) {
-        const parsed = z.array(SuggestedSongSchema).safeParse(dbEntry.songs);
-        if (parsed.success && parsed.data.length > 0) {
-          debugLog(LOG_TAG, `DB Cache Hit for theme: "${themePrompt}" (${parsed.data.length} songs)`);
-          await cache.set(normalizedKey, parsed.data, 60 * 60 * 24 * 7);
-          return { songs: parsed.data };
-        }
-      }
-    } catch (dbErr) {
-      debugLog(LOG_TAG, "DB Cache lookup error:", dbErr instanceof Error ? dbErr.message : String(dbErr));
-    }
-
-    // If Gemini is not configured, check for static seed match
-    if (!this.isConfigured()) {
-      debugLog(LOG_TAG, "GEMINI_API_KEY not configured. Checking seed presets.");
-      const matchingPill = ALL_PRESET_PILLS.find((p) => p.promptGuide.toLowerCase().trim() === themePrompt.toLowerCase().trim());
-      if (matchingPill && PRESET_SEED_DATA[matchingPill.id]) {
-        const seedEntry = PRESET_SEED_DATA[matchingPill.id]!;
-        const enriched = await artworkService.enrichSongsWithArtwork(seedEntry.songs);
-        return { songs: enriched };
-      }
-      return { songs: [] };
-    }
-
-    // 3. Generate from Google Gemini API
     const apiKey = env.GEMINI_API_KEY!;
+    const effectiveTheme = formatThemePrompt(themePrompt);
     const promptText = `You are an expert Karaoke DJ and party curator.
-Return a JSON array containing EXACTLY ${count} unique, iconic, crowd-pleasing karaoke songs for the theme: "${themePrompt}".
+Return a JSON array containing EXACTLY ${count} unique, iconic songs for the theme: "${effectiveTheme}".
 Guidelines:
-- Pick famous songs that people love to sing along with.
-- Ensure songs are well-known and commonly available as karaoke versions on YouTube.
+- Provide a diverse, high-energy rotation of famous songs across different artists in this style.
+- Pick songs that people love to sing along with and are available on YouTube.
 - Output fields for each item: title, artist, year.
 - Do not return duplicate songs.`;
 
@@ -140,7 +125,7 @@ Guidelines:
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
       try {
-        debugLog(LOG_TAG, `Calling Gemini API (${modelName}) for theme: "${themePrompt}"`);
+        debugLog(LOG_TAG, `Calling Gemini API (${modelName}) for theme: "${effectiveTheme}"`);
 
         const response = await axios.post<GeminiApiResponse>(
           url,
@@ -152,6 +137,8 @@ Guidelines:
             ],
             generationConfig: {
               responseMimeType: "application/json",
+              temperature: 1.0,
+              topP: 0.95,
             },
           },
           {
@@ -162,7 +149,7 @@ Guidelines:
           }
         );
 
-        // Check for Google safety blocks & prohibited content
+        // Check for Google safety blocks
         const blockReason = response.data?.promptFeedback?.blockReason;
         const candidateFinishReason = response.data?.candidates?.[0]?.finishReason;
 
@@ -184,7 +171,7 @@ Guidelines:
           continue;
         }
 
-        // Check if Gemini returned a conversational safety refusal
+        // Check if Gemini returned a refusal
         if (
           rawText.toLowerCase().includes("cannot fulfill this request") ||
           rawText.toLowerCase().includes("unable to fulfill this request") ||
@@ -207,11 +194,11 @@ Guidelines:
         const rawSongs = parsedArray.data.slice(0, count);
 
         if (rawSongs.length > 0) {
-          // 4. Enrich songs with Album Cover Artwork
+          // Enrich with iTunes high-res artwork
           debugLog(LOG_TAG, `Enriching ${rawSongs.length} songs with cover artwork...`);
           const enrichedSongs = await artworkService.enrichSongsWithArtwork(rawSongs);
 
-          // 5. Persist to PostgreSQL Database
+          // Persist to PostgreSQL Database with updated timestamp
           try {
             await db.suggestionCache.upsert({
               where: { cacheKey: normalizedKey },
@@ -219,6 +206,7 @@ Guidelines:
                 songs: enrichedSongs,
                 category: category ?? null,
                 subTheme: subTheme ?? null,
+                updatedAt: new Date(),
               },
               create: {
                 cacheKey: normalizedKey,
@@ -232,7 +220,7 @@ Guidelines:
             console.error(LOG_TAG, "Failed to save songs to PostgreSQL DB:", dbSaveErr);
           }
 
-          // 6. Cache in Memory
+          // Cache in Memory (7 days)
           await cache.set(normalizedKey, enrichedSongs, 60 * 60 * 24 * 7);
 
           return { songs: enrichedSongs };
@@ -256,6 +244,78 @@ Guidelines:
       return { songs: [], isBlockedBySafety: true };
     }
 
+    return { songs: [] };
+  },
+
+  async generateSongsForTheme(
+    themePrompt: string,
+    count = 10,
+    category?: string,
+    subTheme?: string,
+    forceFresh = false
+  ): Promise<ThemedSuggestionsResponse> {
+    const normalizedPrompt = themePrompt.toLowerCase().trim();
+
+    // 0. Safety trigger test pattern
+    if (normalizedPrompt.includes(TEST_SAFETY_TRIGGER)) {
+      debugLog(LOG_TAG, `Safety test trigger matched: "${themePrompt}"`);
+      return { songs: [], isBlockedBySafety: true };
+    }
+
+    const normalizedKey = `gemini_theme:${normalizedPrompt}`;
+
+    // 1. If not forcing fresh, check In-Memory Cache
+    if (!forceFresh) {
+      const cached = await cache.get<SuggestedSong[]>(normalizedKey);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        debugLog(LOG_TAG, `Memory Cache Hit for theme: "${themePrompt}" (${cached.length} songs)`);
+        return { songs: cached as SuggestedSong[] };
+      }
+
+      // 2. Check PostgreSQL Database Cache (with 1-week TTL validation)
+      try {
+        const dbEntry = await db.suggestionCache.findUnique({
+          where: { cacheKey: normalizedKey },
+        });
+
+        if (dbEntry && Array.isArray(dbEntry.songs) && dbEntry.songs.length > 0) {
+          const ageMs = Date.now() - new Date(dbEntry.updatedAt ?? dbEntry.createdAt).getTime();
+          const isStale = this.isConfigured() && ageMs > ONE_WEEK_MS;
+
+          if (!isStale) {
+            const parsed = z.array(SuggestedSongSchema).safeParse(dbEntry.songs);
+            if (parsed.success && parsed.data.length > 0) {
+              debugLog(LOG_TAG, `DB Cache Hit for theme: "${themePrompt}" (${parsed.data.length} songs)`);
+              await cache.set(normalizedKey, parsed.data, 60 * 60 * 24 * 7);
+              return { songs: parsed.data };
+            }
+          } else {
+            debugLog(LOG_TAG, `DB Cache Stale (>1 week old) for theme: "${themePrompt}". Refreshing from Gemini.`);
+          }
+        }
+      } catch (dbErr) {
+        debugLog(LOG_TAG, "DB Cache lookup error:", dbErr instanceof Error ? dbErr.message : String(dbErr));
+      }
+    }
+
+    // If Gemini is not configured, check for static seed match
+    if (!this.isConfigured()) {
+      debugLog(LOG_TAG, "GEMINI_API_KEY not configured. Checking seed presets.");
+      const matchingPill = ALL_PRESET_PILLS.find((p) => p.promptGuide.toLowerCase().trim() === themePrompt.toLowerCase().trim());
+      if (matchingPill && PRESET_SEED_DATA[matchingPill.id]) {
+        const seedEntry = PRESET_SEED_DATA[matchingPill.id]!;
+        const enriched = await artworkService.enrichSongsWithArtwork(seedEntry.songs);
+        return { songs: enriched };
+      }
+      return { songs: [] };
+    }
+
+    // 3. Generate from Google Gemini API
+    const geminiResult = await this.fetchSongsFromGemini(themePrompt, count, category, subTheme);
+    if (geminiResult.songs.length > 0 || geminiResult.isBlockedBySafety) {
+      return geminiResult;
+    }
+
     // Fallback: If Gemini was rate limited or failed, use curated seed data for preset themes
     const matchingPill = ALL_PRESET_PILLS.find((p) => p.promptGuide.toLowerCase().trim() === themePrompt.toLowerCase().trim());
     if (matchingPill && PRESET_SEED_DATA[matchingPill.id]) {
@@ -269,39 +329,88 @@ Guidelines:
   },
 
   /**
-   * Background warmup routine to seed all 24 presets with artwork into DB immediately
+   * Background warmup routine:
+   * - If Gemini is configured: checks all presets, refreshing any that are older than 1 week or un-seeded.
+   * - If Gemini is not configured: seeds all 24 presets with static offline data + artwork.
    */
   async warmupPresetThemes(): Promise<void> {
-    debugLog(LOG_TAG, `Starting instant seed initialization for ${ALL_PRESET_PILLS.length} preset pills...`);
+    debugLog(LOG_TAG, `Starting preset themes warmup (Gemini Configured: ${this.isConfigured()})...`);
 
     for (const pill of ALL_PRESET_PILLS) {
       const normalizedKey = `gemini_theme:${pill.promptGuide.toLowerCase().trim()}`;
       try {
         const existing = await db.suggestionCache.findUnique({
           where: { cacheKey: normalizedKey },
-          select: { id: true },
         });
 
-        if (!existing && PRESET_SEED_DATA[pill.id]) {
-          const seed = PRESET_SEED_DATA[pill.id]!;
-          const enriched = await artworkService.enrichSongsWithArtwork(seed.songs);
-          await db.suggestionCache.create({
-            data: {
-              cacheKey: normalizedKey,
-              category: seed.category,
-              subTheme: seed.subTheme,
-              songs: enriched,
-            },
-          });
-          await cache.set(normalizedKey, enriched, 60 * 60 * 24 * 7);
-          debugLog(LOG_TAG, `Seeded initial 10 songs with artwork for: "${pill.name}"`);
+        if (this.isConfigured()) {
+          const isStale = !existing || (Date.now() - new Date(existing.updatedAt ?? existing.createdAt).getTime() > ONE_WEEK_MS);
+          if (isStale) {
+            debugLog(LOG_TAG, `Warmup refreshing "${pill.name}" from Gemini...`);
+            const res = await this.fetchSongsFromGemini(pill.promptGuide, 10, pill.id, pill.name);
+            if (res.songs.length === 0 && !existing && PRESET_SEED_DATA[pill.id]) {
+              // Seed fallback if Gemini fails on initial run
+              const seed = PRESET_SEED_DATA[pill.id]!;
+              const enriched = await artworkService.enrichSongsWithArtwork(seed.songs);
+              await db.suggestionCache.upsert({
+                where: { cacheKey: normalizedKey },
+                update: { songs: enriched, category: seed.category, subTheme: seed.subTheme },
+                create: { cacheKey: normalizedKey, category: seed.category, subTheme: seed.subTheme, songs: enriched },
+              });
+            }
+            await new Promise((r) => setTimeout(r, 500));
+          }
+        } else {
+          // Offline / No Gemini key mode: seed static data if missing
+          if (!existing && PRESET_SEED_DATA[pill.id]) {
+            const seed = PRESET_SEED_DATA[pill.id]!;
+            const enriched = await artworkService.enrichSongsWithArtwork(seed.songs);
+            await db.suggestionCache.create({
+              data: {
+                cacheKey: normalizedKey,
+                category: seed.category,
+                subTheme: seed.subTheme,
+                songs: enriched,
+              },
+            });
+            await cache.set(normalizedKey, enriched, 60 * 60 * 24 * 7);
+            debugLog(LOG_TAG, `Seeded initial 10 songs with artwork for: "${pill.name}"`);
+          }
         }
       } catch (err) {
-        debugLog(LOG_TAG, `Seed error for "${pill.name}":`, err instanceof Error ? err.message : String(err));
+        debugLog(LOG_TAG, `Warmup error for "${pill.name}":`, err instanceof Error ? err.message : String(err));
       }
     }
 
-    debugLog(LOG_TAG, "All 24 preset pills successfully initialized in PostgreSQL DB!");
+    debugLog(LOG_TAG, "Preset themes warmup routine completed!");
+  },
+
+  /**
+   * On-Demand Host Refresh:
+   * Forces regeneration of all 24 preset pills via Gemini and refreshes the database cache.
+   */
+  async refreshAllPresetsFromGemini(): Promise<{ success: boolean; updatedCount: number }> {
+    if (!this.isConfigured()) {
+      return { success: false, updatedCount: 0 };
+    }
+
+    debugLog(LOG_TAG, `Manual on-demand refresh triggered for ${ALL_PRESET_PILLS.length} presets from Gemini...`);
+    let updatedCount = 0;
+
+    for (const pill of ALL_PRESET_PILLS) {
+      try {
+        const res = await this.fetchSongsFromGemini(pill.promptGuide, 10, pill.id, pill.name);
+        if (res.songs.length > 0) {
+          updatedCount++;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      } catch (err) {
+        console.error(LOG_TAG, `Failed to manually refresh "${pill.name}":`, err);
+      }
+    }
+
+    debugLog(LOG_TAG, `Manual on-demand refresh finished! Updated ${updatedCount}/${ALL_PRESET_PILLS.length} presets.`);
+    return { success: true, updatedCount };
   },
 
   /**

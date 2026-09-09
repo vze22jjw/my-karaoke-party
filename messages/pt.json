@@ -130,7 +130,11 @@
         "title": "Tema / Sugestões",
         "placeholder": "ex: 'Músicas com cores no título'",
         "empty": "Nenhuma sugestão adicionada.",
-        "info": "Adicione sugestões numeradas para ajudar seus convidados! Elas aparecem na aba Histórico."
+        "info": "Adicione sugestões numeradas para ajudar seus convidados! Elas aparecem na aba Histórico.",
+        "refreshThemes": "Atualizar Temas de IA",
+        "refreshing": "Atualizando Sugestões de IA...",
+        "refreshSuccess": "Sugestões de temas de IA atualizadas pelo Gemini!",
+        "refreshError": "Falha ao atualizar sugestões. Verifique sua chave de API Gemini."
       },
       "messages": {
         "title": "Biblioteca de Mensagens",
