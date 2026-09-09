@@ -67,6 +67,22 @@ const GEMINI_MODELS = [
 export const TEST_SAFETY_TRIGGER = "twelve rubber chicken soup set on fire";
 export const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 
+/**
+ * Normalizes and formats theme prompts by removing redundant keywords
+ * and prefixing all prompts with "karaoke singalongs".
+ */
+export function formatThemePrompt(themePrompt: string): string {
+  const cleaned = themePrompt
+    .replace(/\bkaraoke\b/gi, "")
+    .replace(/\bsingalongs?\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned.length > 0
+    ? `karaoke singalongs: ${cleaned}`
+    : `karaoke singalongs: crowd-pleasers`;
+}
+
 export const geminiSuggestionsService = {
   isConfigured(): boolean {
     return !!env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim().length > 0;
@@ -92,8 +108,9 @@ export const geminiSuggestionsService = {
 
     const normalizedKey = `gemini_theme:${normalizedPrompt}`;
     const apiKey = env.GEMINI_API_KEY!;
+    const effectiveTheme = formatThemePrompt(themePrompt);
     const promptText = `You are an expert Karaoke DJ and party curator.
-Return a JSON array containing EXACTLY ${count} unique, iconic, crowd-pleasing karaoke songs for the theme: "${themePrompt}".
+Return a JSON array containing EXACTLY ${count} unique, iconic, crowd-pleasing songs for the theme: "${effectiveTheme}".
 Guidelines:
 - Pick famous songs that people love to sing along with.
 - Ensure songs are well-known and commonly available as karaoke versions on YouTube.
@@ -106,7 +123,7 @@ Guidelines:
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
       try {
-        debugLog(LOG_TAG, `Calling Gemini API (${modelName}) for theme: "${themePrompt}"`);
+        debugLog(LOG_TAG, `Calling Gemini API (${modelName}) for theme: "${effectiveTheme}"`);
 
         const response = await axios.post<GeminiApiResponse>(
           url,
