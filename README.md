@@ -236,11 +236,12 @@ pnpm cleanup:all
 
 The app features AI-powered theme suggestions powered by Google Gemini and enriched with high-resolution Apple iTunes album artwork.
 
-### Global Prompt Formatting & Prefixing
+### Global Prompt Formatting & Token Efficiency
 All prompts sent to Google Gemini are automatically processed by `formatThemePrompt()` in [`src/server/lib/gemini-suggestions.ts`](src/server/lib/gemini-suggestions.ts):
 * **Automatic Prefix:** Every prompt is automatically prefixed with `"karaoke singalongs: "` (for example, entering `"80s synth rock"` becomes `"karaoke singalongs: 80s synth rock"`).
-* **Automatic Keyword Stripping:** Words like `"karaoke"`, `"singalong"`, and `"singalongs"` are automatically stripped from individual prompt inputs to eliminate redundancy and improve Gemini token efficiency.
-* **Writing Prompts:** When defining preset themes, setting host party themes, or entering a Custom Vibe as a guest, **you do not need to include the words "karaoke" or "singalong"**—simply describe the genre, decade, mood, or artist style directly (e.g. `"iconic 90s boybands and pop hits"`).
+* **Automatic Keyword & Filler Stripping:** Words like `"karaoke"`, `"singalong"`, `"singalongs"`, `"crowd-pleasers"`, and `"chart-toppers"` are automatically stripped from individual prompt inputs to eliminate redundancy and maximize Gemini token efficiency.
+* **Writing Prompts:** When defining preset themes, setting host party themes, or entering a Custom Vibe as a guest, **you do not need to include filler words or the words "karaoke" or "singalong"**—simply provide concise, unique context keywords describing the musical subgenre, era, or artist style directly (e.g. `"90s grunge, indie rock, and alternative bands"`).
+* **Dynamic Variation:** Requests are sampled with `temperature: 1.0` and `topP: 0.95` so that each on-demand or periodic refresh discovers a fresh, high-energy rotation of hits across different artists rather than repeating the same static top tracks.
 
 ### Customizing Preset Categories & Prompts
 To add or modify preset categories and sub-theme pills in the future:
@@ -255,7 +256,7 @@ To add or modify preset categories and sub-theme pills in the future:
        {
          id: "classic-country",
          name: "Classic Country",
-         promptGuide: "90s country anthems, storytelling ballads, and honky-tonk favorites", // No need to include 'karaoke' or 'singalong'
+         promptGuide: "90s country, storytelling ballads, and honky-tonk", // Concise context keywords only
          iconName: "Music",
        },
      ],

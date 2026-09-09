@@ -75,12 +75,14 @@ export function formatThemePrompt(themePrompt: string): string {
   const cleaned = themePrompt
     .replace(/\bkaraoke\b/gi, "")
     .replace(/\bsingalongs?\b/gi, "")
+    .replace(/\bcrowd[- ]pleasers?\b/gi, "")
+    .replace(/\bchart[- ]toppers?\b/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 
   return cleaned.length > 0
     ? `karaoke singalongs: ${cleaned}`
-    : `karaoke singalongs: crowd-pleasers`;
+    : `karaoke singalongs: popular party hits`;
 }
 
 export const geminiSuggestionsService = {
@@ -110,10 +112,10 @@ export const geminiSuggestionsService = {
     const apiKey = env.GEMINI_API_KEY!;
     const effectiveTheme = formatThemePrompt(themePrompt);
     const promptText = `You are an expert Karaoke DJ and party curator.
-Return a JSON array containing EXACTLY ${count} unique, iconic, crowd-pleasing songs for the theme: "${effectiveTheme}".
+Return a JSON array containing EXACTLY ${count} unique, iconic songs for the theme: "${effectiveTheme}".
 Guidelines:
-- Pick famous songs that people love to sing along with.
-- Ensure songs are well-known and commonly available as karaoke versions on YouTube.
+- Provide a diverse, high-energy rotation of famous songs across different artists in this style.
+- Pick songs that people love to sing along with and are available on YouTube.
 - Output fields for each item: title, artist, year.
 - Do not return duplicate songs.`;
 
@@ -135,6 +137,8 @@ Guidelines:
             ],
             generationConfig: {
               responseMimeType: "application/json",
+              temperature: 1.0,
+              topP: 0.95,
             },
           },
           {
